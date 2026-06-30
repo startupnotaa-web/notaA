@@ -1,47 +1,41 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import serverless from 'serverless-http';
 import { AppModule } from '../src/app.module';
 
-let handler: any;
+let app: NestFastifyApplication;
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter()
-  );
-  
-  // Middleware global de log de CORS e Requisições
-  const fastify = app.getHttpAdapter().getInstance();
-  fastify.addHook('onRequest', (request: any, reply: any, done: any) => {
-    const origin = request.headers.origin;
-    if (origin) {
-      console.log(`[CORS Log] Method: ${request.method} | URL: ${request.url} | Origin: ${origin}`);
-    }
-    done();
-  });
+  if (!app) {
+    app = await NestFactory.create<NestFastifyApplication>(
+      AppModule,
+      new FastifyAdapter()
+    );
+    
+    app.enableCors({
+      origin: (origin, callback) => {
+        // Permite requisições sem origem (como do próprio servidor SSR), domínios oficiais, localhost, e os previews genéricos da Vercel
+        if (!origin || /notaa\.com\.br$/.test(origin) || /localhost:3000$/.test(origin) || /\.vercel\.app$/.test(origin)) {
+          callback(null, true);
+        } else {
+          callback(null, false); // Não bloqueamos com erro para evitar crash, apenas enviamos headers CORS restritos
+        }
+      },
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept'],
+      credentials: true,
+    });
 
-  app.enableCors({
-    origin: [
-      'https://notaa.com.br',
-      'https://www.notaa.com.br',
-      'http://localhost:3000',
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept'],
-    credentials: true,
-  });
-
-  await app.init();
-  
-  // O serverless-http empacota a instância raw do Fastify para lidar com (req, res) da Vercel Node Runtime
-  return serverless(fastify as any);
+    await app.init();
+    
+    const instance = app.getHttpAdapter().getInstance();
+    await instance.ready(); // Fastify exige o .ready() para compilar as rotas internas!
+  }
 }
 
-// O @vercel/node suporta AWS Lambda Signature e HTTP signature
 export default async function (req: any, res: any) {
-  if (!handler) {
-    handler = await bootstrap();
-  }
-  return handler(req, res);
+  await bootstrap();
+  const instance = app.getHttpAdapter().getInstance();
+  // O Vercel Node Runtime fornece (req, res) nativos do Node HTTP.
+  // Fastify os intercepta emitindo um evento 'request' direto no servidor base.
+  instance.server.emit('request', req, res);
 }
