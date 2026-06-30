@@ -51,9 +51,10 @@ async function main() {
     sourcemap: false,
     legalComments: 'none',
     logLevel: 'info',
-    // reflect-metadata precisa rodar antes de qualquer decorator; o entry já o
-    // importa, mas garantimos a ordem com um banner.
-    banner: { js: "require('reflect-metadata');" },
+    // reflect-metadata é inlinado pelo esbuild via `import 'reflect-metadata'`
+    // no topo do entry (api/index.ts) — roda antes de qualquer decorator.
+    // NÃO usar banner com require('reflect-metadata'): banner é texto não
+    // bundlado e vira require externo, que falha no Lambda (sem node_modules).
   });
 
   // Build Output API v3 — roteia tudo para a função única `index`.
