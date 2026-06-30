@@ -1,9 +1,10 @@
-import { Controller, Get, Req, Inject } from '@nestjs/common';
-import type { MeResponse, Eixo4D } from '@notaa/contracts';
+import { Body, Controller, Get, Patch, Req, Inject } from '@nestjs/common';
+import { UpdateMeRequestSchema, type MeResponse, type Eixo4D, type UpdateMeRequest } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { DB_CLIENT } from '../../db/db.tokens';
-import { Database, usuario, perfilCognitivo4d } from '@notaa/db';
-import { eq } from 'drizzle-orm';
+import { Database, usuario, perfilCognitivo4d, assinatura, plano } from '@notaa/db';
+import { desc, eq } from 'drizzle-orm';
 import { calcularProgressaoNivel } from '../gamificacao/nivel';
 
 // doc 05 §2 — GET /me, papéis: todos (sem @Roles() => qualquer papel autenticado).
@@ -35,7 +36,21 @@ export class MeController {
 
     const nome = userRecord?.nome ?? null;
     const p4d = userRecord?.p4d;
-    
+
+    // Assinatura vigente do usuário (doc 04 §8). Sem linha em `assinatura` =>
+    // plano null (a UI mostra "Plano Gratuito"). Pega a mais recente por vigência.
+    const [assinaturaRecord] = await this.db
+      .select({ tipo: plano.tipo, status: assinatura.status })
+      .from(assinatura)
+      .innerJoin(plano, eq(plano.id, assinatura.planoId))
+      .where(eq(assinatura.usuarioId, sub))
+      .orderBy(desc(assinatura.vigenciaInicio))
+      .limit(1);
+
+    const planoResp = assinaturaRecord
+      ? { tipo: assinaturaRecord.tipo, status: assinaturaRecord.status }
+      : null;
+
     let gamificacao = null;
     let perfilCognitivo = null;
     
@@ -74,9 +89,27 @@ export class MeController {
       email: email ?? '',
       tipoPerfil: app_metadata.papel,
       escolaId: app_metadata.escola_id ?? null,
-      plano: null,
+      plano: planoResp,
       gamificacao,
       perfilCognitivo,
     };
+  }
+
+  // doc 05 §2 — PATCH /me: edita dados pessoais do próprio usuário (hoje, só o
+  // nome). `email` é credencial do Supabase Auth e não é alterável por aqui.
+  // Reusa getMe() para devolver o perfil completo e fresco após salvar.
+  @Patch()
+  async updateMe(
+    @Req() request: AuthenticatedRequest,
+    @Body(new ZodValidationPipe(UpdateMeRequestSchema)) body: UpdateMeRequest,
+  ): Promise<MeResponse> {
+    const { sub } = request.user;
+
+    await this.db
+      .update(usuario)
+      .set({ nome: body.nome, atualizadoEm: new Date() })
+      .where(eq(usuario.id, sub));
+
+    return this.getMe(request);
   }
 }

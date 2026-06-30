@@ -4,6 +4,7 @@ import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { DbModule } from './db/db.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EscolaModule } from './modules/escola/escola.module';
@@ -29,6 +30,7 @@ import { SocraticModule } from './modules/socratic/socratic.module';
     GamificacaoModule,
     EscolaModule,
     AdminModule,
+    AiModule,
   ],
   providers: [
     // Ordem importa: AuthGuard roda primeiro (anexa request.user), RolesGuard

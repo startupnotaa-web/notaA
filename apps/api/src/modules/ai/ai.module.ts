@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ProfilerModule } from '../profiler/profiler.module';
 import { PROFILER_REPOSITORY } from '../profiler/profiler.tokens';
 import { LLM_PROVIDER, RISK_REPOSITORY } from './ai.tokens';
+import { AiController } from './ai.controller';
 import { ContextBuilderService } from './context-builder.service';
+import { GeminiAdapter } from './gemini.adapter';
 import { LLMProviderMock } from './llm-provider.mock';
 import { RiskDetectorService } from './risk-detector.service';
 import { RiskRepositoryDrizzle } from './risk.repository';
@@ -22,10 +24,14 @@ import { RiskRepositoryDrizzle } from './risk.repository';
  */
 @Module({
   imports: [ProfilerModule],
+  controllers: [AiController],
   providers: [
-    // TODO (Fase 2): trocar por adaptador real quando o provedor de IA for escolhido.
+    // Provedor padrão de produção: ainda o mock. O GeminiAdapter já está pronto
+    // e injetável (usado por /ai/test); para promovê-lo, troque o useClass abaixo
+    // por `GeminiAdapter` — nenhum consumidor de LLM_PROVIDER muda.
     { provide: LLM_PROVIDER, useClass: LLMProviderMock },
     { provide: RISK_REPOSITORY, useClass: RiskRepositoryDrizzle },
+    GeminiAdapter,
     ContextBuilderService,
     RiskDetectorService,
   ],

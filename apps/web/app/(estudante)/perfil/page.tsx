@@ -2,20 +2,64 @@
 
 import { useEffect, useState } from 'react';
 import type { MeResponse, Eixo4D } from '@notaa/contracts';
-import { Card, CardHeader, SectionHeader, Skeleton, Badge, cn } from '@notaa/ui';
+import { Button, Card, CardHeader, Input, Label, SectionHeader, Skeleton, Badge, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+
+const PLANO_ROTULO: Record<NonNullable<MeResponse['plano']>['tipo'], string> = {
+  free: 'Gratuito',
+  plus: 'Premium',
+  escola: 'Escola',
+};
 
 export default function PerfilPage() {
   const [perfil, setPerfil] = useState<MeResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
+  // Estado do formulário de Informações Pessoais.
+  const [nome, setNome] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [feedback, setFeedback] = useState<{ tipo: 'ok' | 'erro'; msg: string } | null>(null);
+
+  // Mensagem da seção de assinatura (botões ainda são stubs — sem billing).
+  const [assinaturaMsg, setAssinaturaMsg] = useState<string | null>(null);
+
   useEffect(() => {
     apiFetch<MeResponse>('/me')
-      .then(setPerfil)
+      .then((data) => {
+        setPerfil(data);
+        setNome(data.nome ?? '');
+      })
       .catch((e) => {
         setErro(e instanceof ApiError ? e.message : 'Não foi possível carregar seu perfil.');
       });
   }, []);
+
+  async function handleSalvarPerfil(e: React.FormEvent) {
+    e.preventDefault();
+    const nomeLimpo = nome.trim();
+    if (!nomeLimpo) {
+      setFeedback({ tipo: 'erro', msg: 'Informe seu nome.' });
+      return;
+    }
+    setSalvando(true);
+    setFeedback(null);
+    try {
+      const atualizado = await apiFetch<MeResponse>('/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ nome: nomeLimpo }),
+      });
+      setPerfil(atualizado);
+      setNome(atualizado.nome ?? '');
+      setFeedback({ tipo: 'ok', msg: 'Informações salvas com sucesso.' });
+    } catch (err) {
+      setFeedback({
+        tipo: 'erro',
+        msg: err instanceof ApiError ? err.message : 'Não foi possível salvar suas informações.',
+      });
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   if (erro) {
     return (
@@ -32,6 +76,10 @@ export default function PerfilPage() {
   }
 
   const { gamificacao, perfilCognitivo } = perfil;
+  const planoTipo = perfil.plano?.tipo ?? 'free';
+  const planoRotulo = PLANO_ROTULO[planoTipo];
+  const isPremium = planoTipo === 'plus';
+  const nomeInalterado = nome.trim() === (perfil.nome ?? '').trim();
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
@@ -45,11 +93,115 @@ export default function PerfilPage() {
           </p>
         </div>
         <Badge variant={perfil.plano?.status === 'ativa' ? 'brand' : 'neutral'}>
-          {perfil.plano?.tipo ? `Plano ${perfil.plano.tipo}` : 'Plano Gratuito'}
+          {`Plano ${planoRotulo}`}
         </Badge>
       </header>
 
-      {/* Seção 1: Gamificação */}
+      {/* Seção 1: Informações Pessoais (editável) */}
+      <section className="space-y-3">
+        <SectionHeader
+          title="Informações"
+          accent="Pessoais"
+          description="Mantenha seus dados de cadastro atualizados."
+          as="h2"
+        />
+        <Card>
+          <CardHeader>
+            <form className="space-y-4" onSubmit={handleSalvarPerfil}>
+              <div className="space-y-1.5">
+                <Label htmlFor="perfil-nome">Nome</Label>
+                <Input
+                  id="perfil-nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  placeholder="Como você quer ser chamado(a)"
+                  maxLength={120}
+                  autoComplete="name"
+                  disabled={salvando}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="perfil-email">E-mail</Label>
+                <Input id="perfil-email" type="email" value={perfil.email} disabled readOnly />
+                <p className="text-xs text-text-muted">
+                  O e-mail é sua credencial de acesso e não pode ser alterado por aqui.
+                </p>
+              </div>
+
+              {feedback && (
+                <p
+                  role={feedback.tipo === 'erro' ? 'alert' : 'status'}
+                  className={cn('text-sm', feedback.tipo === 'erro' ? 'text-error' : 'text-success')}
+                >
+                  {feedback.msg}
+                </p>
+              )}
+
+              <div className="flex justify-end">
+                <Button type="submit" disabled={salvando || nomeInalterado}>
+                  {salvando ? 'Salvando…' : 'Salvar alterações'}
+                </Button>
+              </div>
+            </form>
+          </CardHeader>
+        </Card>
+      </section>
+
+      {/* Seção 2: Gerenciamento de Assinatura */}
+      <section className="space-y-3">
+        <SectionHeader
+          title="Sua"
+          accent="Assinatura"
+          description="Gerencie seu plano e desbloqueie todo o potencial da Nota A."
+          as="h2"
+        />
+        <Card className={cn('border-brand-primary/20', isPremium && 'bg-brand-primary/5')}>
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
+                  Plano atual
+                </p>
+                <p className="text-xl font-extrabold text-text">{planoRotulo}</p>
+                {perfil.plano?.status && perfil.plano.status !== 'ativa' && (
+                  <Badge variant="neutral">Status: {perfil.plano.status}</Badge>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="cta"
+                  disabled={isPremium}
+                  onClick={() =>
+                    setAssinaturaMsg(
+                      'Os pagamentos chegam em breve — deixamos seu interesse no Premium registrado. 🚀',
+                    )
+                  }
+                >
+                  {isPremium ? 'Você é Premium ✨' : 'Tornar-se Premium'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={!isPremium}
+                  onClick={() =>
+                    setAssinaturaMsg('O downgrade estará disponível assim que ativarmos os pagamentos.')
+                  }
+                >
+                  Fazer downgrade
+                </Button>
+              </div>
+            </div>
+
+            {assinaturaMsg && (
+              <p role="status" className="mt-4 text-sm text-text-muted">
+                {assinaturaMsg}
+              </p>
+            )}
+          </CardHeader>
+        </Card>
+      </section>
+
+      {/* Seção 3: Gamificação */}
       <section className="space-y-3">
         <SectionHeader
           title="Sua"
@@ -77,7 +229,7 @@ export default function PerfilPage() {
                 </div>
               </CardHeader>
             </Card>
-            
+
             <Card className="flex flex-col items-center justify-center p-6 border-warning/30 bg-warning/5">
               <span className="text-4xl drop-shadow-md mb-2" aria-hidden="true">🔥</span>
               <span className="text-3xl font-extrabold text-warning">{gamificacao.ofensivaDias}</span>
@@ -93,7 +245,7 @@ export default function PerfilPage() {
         )}
       </section>
 
-      {/* Seção 2: Perfil Cognitivo 4D */}
+      {/* Seção 4: Perfil Cognitivo 4D */}
       <section className="space-y-3">
         <SectionHeader
           title="Métricas"

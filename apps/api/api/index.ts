@@ -11,16 +11,30 @@ async function bootstrap() {
       new FastifyAdapter()
     );
     
+    // Origens oficiais explícitas (inclui https://notaa.com.br). Mantemos os
+    // previews da Vercel via regex ANCORADA (`^…$`) — a versão antiga
+    // (`/\.vercel\.app$/`, `/notaa\.com\.br$/`) era frouxa e casava domínios
+    // como `xnotaa.com.br`. localhost:3000 só vale em dev.
+    const ALLOWED_ORIGINS = [
+      'https://notaa.com.br',
+      'https://www.notaa.com.br',
+      'http://localhost:3000',
+    ];
+
     app.enableCors({
       origin: (origin, callback) => {
-        // Permite requisições sem origem (como do próprio servidor SSR), domínios oficiais, localhost, e os previews genéricos da Vercel
-        if (!origin || /notaa\.com\.br$/.test(origin) || /localhost:3000$/.test(origin) || /\.vercel\.app$/.test(origin)) {
+        // Sem origem (SSR/curl), domínio oficial explícito, ou preview da Vercel.
+        if (
+          !origin ||
+          ALLOWED_ORIGINS.includes(origin) ||
+          /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)
+        ) {
           callback(null, true);
         } else {
           callback(null, false); // Não bloqueamos com erro para evitar crash, apenas enviamos headers CORS restritos
         }
       },
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept'],
       credentials: true,
     });

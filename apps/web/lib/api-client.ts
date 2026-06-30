@@ -2,6 +2,18 @@ import { supabaseBrowser } from './supabase-browser';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Junta a base com o path deixando EXATAMENTE uma barra entre eles. Sem isto,
+ * uma `NEXT_PUBLIC_API_URL` com `/` no fim + path começando com `/` gera `//`
+ * (ex.: `…vercel.app//me/dashboard`), o que dispara um redirect 308 na Vercel e
+ * quebra o preflight de CORS ("Redirect is not allowed for a preflight request").
+ */
+function buildUrl(base: string | undefined, path: string): string {
+  const cleanBase = (base ?? '').replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${cleanBase}${cleanPath}`;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -35,7 +47,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     Object.assign(headers, init.headers);
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(buildUrl(API_URL, path), {
     ...init,
     headers,
   });

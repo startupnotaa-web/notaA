@@ -40,6 +40,14 @@ export const MeResponseSchema = z.object({
 });
 export type MeResponse = z.infer<typeof MeResponseSchema>;
 
+// doc 05 §2 — PATCH /me. Edição de dados pessoais do próprio usuário. Hoje só
+// `nome`: o e-mail é credencial do Supabase Auth e trocá-lo exige fluxo de
+// reconfirmação por e-mail (fora deste escopo).
+export const UpdateMeRequestSchema = z.object({
+  nome: z.string().trim().min(1, 'Informe seu nome.').max(120, 'Nome muito longo.'),
+});
+export type UpdateMeRequest = z.infer<typeof UpdateMeRequestSchema>;
+
 export const PasswordResetRequestSchema = z.object({
   email: z.string().email(),
 });
