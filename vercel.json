@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "pnpm --filter @notaa/web build",
+  "buildCommand": "npx turbo run build --filter=@notaa/web",
   "installCommand": "pnpm install",
   "outputDirectory": "apps/web/.next"
 }
