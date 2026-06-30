@@ -1,0 +1,9 @@
+/**
+ * Ponto de entrada único dos design tokens do Nota A.
+ * Importar este arquivo UMA vez na raiz do app (apps/web), nunca redefinir
+ * tokens soltos em componentes — ver docs/07-design-system.md §1 ("tokens primeiro").
+ */
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './motion.css';

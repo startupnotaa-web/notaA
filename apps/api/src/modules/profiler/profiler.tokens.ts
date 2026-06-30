@@ -1,0 +1,1 @@
+export const PROFILER_REPOSITORY = Symbol('PROFILER_REPOSITORY');

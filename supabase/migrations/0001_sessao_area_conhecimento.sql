@@ -1,0 +1,1 @@
+ALTER TABLE "sessao_avaliativa" ADD COLUMN "area_conhecimento" "area_conhecimento";

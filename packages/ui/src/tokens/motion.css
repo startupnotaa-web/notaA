@@ -1,0 +1,30 @@
+/**
+ * Movimento (docs/07-design-system.md §6).
+ * Gamificação DEVE ser desativável — via SO (prefers-reduced-motion) E via
+ * kill-switch do usuário ([data-anim="off"]). Essencial para o público neurodivergente.
+ */
+
+:root {
+  --motion-fast: 120ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --easing: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-anim='off'] *,
+[data-anim='off'] *::before,
+[data-anim='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+}

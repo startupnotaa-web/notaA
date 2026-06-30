@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1782621992904,
+      "tag": "0000_equal_cerebro",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782657902621,
+      "tag": "0001_sessao_area_conhecimento",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782833828735,
+      "tag": "0002_sticky_jubilee",
+      "breakpoints": true
+    }
+  ]
+}

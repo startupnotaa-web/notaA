@@ -1,0 +1,14 @@
+{
+  "name": "@notaa/worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo \"worker: consumidor pg-boss entra junto ao E7 (Fase 2) — docs/03 §3.3\"",
+    "build": "echo \"worker: build pendente\"",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

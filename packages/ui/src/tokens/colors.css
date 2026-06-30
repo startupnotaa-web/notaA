@@ -1,0 +1,72 @@
+/**
+ * Tokens de cor — paleta extraída da logo (docs/07-design-system.md §2).
+ * Tema escuro é o default da marca; :root carrega os valores escuros diretamente
+ * (sem precisar de [data-theme="dark"]) e [data-theme="light"] sobrescreve.
+ */
+
+:root {
+  /* Gradiente principal da marca (135°, azul → magenta) */
+  --brand-grad-1: #1c9fe7;
+  --brand-grad-2: #2e92e8;
+  --brand-grad-3: #5878e9;
+  --brand-grad-4: #8c54e3;
+  --brand-grad-5: #9b42df;
+  --brand-grad-6: #d31fe2;
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--brand-grad-1) 0%,
+    var(--brand-grad-2) 18%,
+    var(--brand-grad-3) 38%,
+    var(--brand-grad-4) 58%,
+    var(--brand-grad-5) 78%,
+    var(--brand-grad-6) 100%
+  );
+
+  /* Sólidas derivadas */
+  --brand-primary: #2699e9; /* azul */
+  --brand-secondary: #7b4fe0; /* roxo — botão padrão (único sólido com AA sobre fundo escuro + texto branco) */
+  --brand-accent: #d022e3; /* magenta */
+  --brand-tassel: #4b86fe; /* azul vivo */
+
+  /* Fundos da marca (uso direto, ex.: splash) */
+  --bg-splash: #000000;
+  --bg-deep-purple: #41014d;
+
+  /* Fundos semânticos — tema ESCURO (default) */
+  --bg-base: #080e32;
+  --bg-surface: #0c0a49;
+  --bg-surface-2: #310a62;
+
+  /* Semânticos (escuro) */
+  --color-bg: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-surface-2: var(--bg-surface-2);
+  --color-text: #f4f6ff;
+  --color-text-muted: #aeb6e0;
+  --color-border: #2a2f66;
+  --color-primary: var(--brand-secondary);
+  --color-on-primary: #ffffff;
+  --color-focus: #8fc4ff;
+
+  /* Estado (acessíveis sobre fundo escuro) */
+  --color-success: #3ddc97;
+  --color-warning: #ffc24b;
+  --color-error: #ff6b6b;
+  --color-info: #5ab0ff;
+
+  /* Glow/brilho de marca — só em destaques (doc 07 §5) */
+  --glow-brand: 0 0 24px rgba(208, 34, 227, 0.35);
+}
+
+/* Tema CLARO (acessível, opt-in) */
+[data-theme='light'] {
+  --color-bg: #f7f8fc;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0fb;
+  --color-text: #10142e;
+  --color-text-muted: #4a4f73;
+  --color-border: #dce0f0;
+  --color-on-primary: #ffffff;
+  --color-focus: #1c5fb8;
+  /* gradiente e sólidas da marca permanecem; contraste revalidado no doc 07 §8 */
+}

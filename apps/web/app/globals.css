@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens (docs/07-design-system.md) — fonte única de verdade visual.
+   Nunca redefinir cor/espaçamento solto em componentes (doc 07 §1). */
+@import '@notaa/ui/tokens/colors.css';
+@import '@notaa/ui/tokens/typography.css';
+@import '@notaa/ui/tokens/spacing.css';
+@import '@notaa/ui/tokens/motion.css';
+
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

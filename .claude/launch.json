@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@notaa/web", "run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@notaa/api", "run", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "worker (placeholder — consumidor pg-boss chega na Fase 2)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@notaa/worker", "run", "dev"],
+      "port": null
+    }
+  ]
+}
