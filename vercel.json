@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "pnpm --filter @notaa/web build",
+  "installCommand": "pnpm install",
+  "outputDirectory": "apps/web/.next"
+}
