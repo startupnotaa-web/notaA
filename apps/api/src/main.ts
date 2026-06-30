@@ -17,7 +17,16 @@ async function bootstrap() {
     done();
   });
 
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'https://notaa.com.br',
+      'https://www.notaa.com.br',
+      'http://localhost:3000',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept'],
+    credentials: true,
+  });
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port, '0.0.0.0');
   console.log(`API (Orquestração) ouvindo em http://localhost:${port}`);
