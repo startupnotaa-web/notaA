@@ -35,7 +35,7 @@ export class AiController {
       });
       return {
         ok: true,
-        modelo: process.env.GEMINI_MODEL ?? 'gemini-1.5-flash',
+        modelo: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
         resposta: data,
         uso,
       };
@@ -46,6 +46,38 @@ export class AiController {
         ok: false,
         erro: err instanceof Error ? err.message : 'Falha desconhecida ao chamar a IA.',
       };
+    }
+  }
+
+  /**
+   * Diagnóstico: lista os modelos que a GEMINI_API_KEY atual realmente enxerga
+   * (ListModels da API do Google), filtrando os que suportam `generateContent`.
+   * Serve para escolher um nome de modelo válido sem chutar (evita 404) e ver o
+   * que a conta tem acesso. @Public para inspeção rápida via curl.
+   */
+  @Public()
+  @Get('models')
+  async models() {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return { ok: false, erro: 'GEMINI_API_KEY não configurado no ambiente da API.' };
+    }
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${apiKey}`,
+      );
+      const data: any = await res.json();
+      if (!res.ok) {
+        return { ok: false, status: res.status, erro: data?.error?.message ?? 'falha ao listar modelos' };
+      }
+      const models = Array.isArray(data.models)
+        ? data.models
+            .filter((m: any) => (m.supportedGenerationMethods ?? []).includes('generateContent'))
+            .map((m: any) => m.name?.replace(/^models\//, ''))
+        : [];
+      return { ok: true, total: models.length, models };
+    } catch (err) {
+      return { ok: false, erro: err instanceof Error ? err.message : 'falha ao listar modelos' };
     }
   }
 }
