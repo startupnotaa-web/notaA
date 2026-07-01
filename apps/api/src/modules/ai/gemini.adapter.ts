@@ -25,6 +25,7 @@ export class GeminiAdapter implements LLMProviderPort {
 
   async complete<T>(input: {
     sistema: string;
+    prompt?: string;
     contexto: object;
     schema: z.ZodSchema<T>;
   }): Promise<{ data: T; uso: UsoTokens }> {
@@ -44,6 +45,7 @@ export class GeminiAdapter implements LLMProviderPort {
     });
 
     const prompt =
+      (input.prompt ? `Input do Usuário: ${input.prompt}\n\n` : '') +
       `Contexto (JSON):\n${JSON.stringify(input.contexto)}\n\n` +
       'Responda SOMENTE com um objeto JSON válido conforme o contrato do sistema, sem texto fora do JSON.';
 

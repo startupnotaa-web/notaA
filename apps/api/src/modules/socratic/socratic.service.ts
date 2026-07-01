@@ -137,6 +137,7 @@ export class SocraticService {
 
     const { data: respostaLLM } = await this.llm.complete({
       sistema: SISTEMA_SOCRATICO,
+      prompt: mensagem,
       contexto,
       schema: SocraticResponseSchema,
     });

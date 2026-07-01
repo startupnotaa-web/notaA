@@ -17,6 +17,7 @@ export class LLMProviderMock implements LLMProviderPort {
 
   async complete<T>(input: {
     sistema: string;
+    prompt?: string;
     contexto: object;
     schema: z.ZodSchema<T>;
   }): Promise<{ data: T; uso: UsoTokens }> {

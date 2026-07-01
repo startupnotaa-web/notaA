@@ -21,6 +21,7 @@ export interface UsoTokens {
 export interface LLMProviderPort {
   complete<T>(input: {
     sistema: string; // prompt de sistema versionado (packages/prompts)
+    prompt?: string; // a pergunta dinâmica do usuário
     contexto: object; // pacote montado pelo Context Builder — nunca pelo cliente
     schema: z.ZodSchema<T>;
   }): Promise<{ data: T; uso: UsoTokens }>;
