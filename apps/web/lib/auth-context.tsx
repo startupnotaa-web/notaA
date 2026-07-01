@@ -25,12 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         for (const registration of registrations) {
           registration.unregister();
         }
+      }).catch(() => {
+        // Falha ao desregistrar SW em dev — não-crítico, apenas ignora.
       });
     }
 
     supabaseBrowser.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
+    }).catch((err) => {
+      console.error('Falha ao recuperar sessão do Supabase:', err);
+      setLoading(false); // Libera o loading para não travar a UI infinitamente.
     });
     const { data: subscription } = supabaseBrowser.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);

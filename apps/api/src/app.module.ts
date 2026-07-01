@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { DbModule } from './db/db.module';
@@ -33,6 +34,10 @@ import { SocraticModule } from './modules/socratic/socratic.module';
     AiModule,
   ],
   providers: [
+    // Filtro global de exceções — loga erros com stack trace e padroniza a
+    // resposta JSON para o frontend (doc 03 §4). DEVE ser registrado ANTES
+    // dos guards para capturar exceções deles também.
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
     // Ordem importa: AuthGuard roda primeiro (anexa request.user), RolesGuard
     // depois (decide com base nele). Nest executa APP_GUARD na ordem registrada.
     { provide: APP_GUARD, useClass: AuthGuard },

@@ -14,6 +14,28 @@ function buildUrl(base: string | undefined, path: string): string {
   return `${cleanBase}${cleanPath}`;
 }
 
+/**
+ * Detecta se um erro é de rede/conexão (e não da nossa API). Inclui erros
+ * injetados por extensões do navegador (password managers, ad blockers) que
+ * tentam interceptar o fetch.
+ */
+function isNetworkOrExtensionError(error: unknown): boolean {
+  if (error instanceof TypeError) return true; // "Failed to fetch", "NetworkError", etc.
+  if (error instanceof DOMException) return true; // "AbortError", etc.
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    return (
+      msg.includes('failed to fetch') ||
+      msg.includes('network') ||
+      msg.includes('could not establish connection') ||
+      msg.includes('receiving end does not exist') ||
+      msg.includes('load failed') ||
+      msg.includes('aborted')
+    );
+  }
+  return false;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -47,10 +69,27 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     Object.assign(headers, init.headers);
   }
 
-  const res = await fetch(buildUrl(API_URL, path), {
-    ...init,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(buildUrl(API_URL, path), {
+      ...init,
+      headers,
+    });
+  } catch (error) {
+    // Erros de rede (DNS, conexão recusada, offline) ou de extensões do navegador.
+    if (isNetworkOrExtensionError(error)) {
+      console.warn(
+        `[apiFetch] Erro de rede ao chamar ${path}:`,
+        error instanceof Error ? error.message : error,
+      );
+      throw new ApiError(
+        0,
+        'NETWORK_ERROR',
+        'Sem conexão com o servidor. Verifique sua internet e tente novamente.',
+      );
+    }
+    throw error; // Erro inesperado — propaga como está.
+  }
 
   const body = await res.json().catch(() => null);
 
@@ -64,3 +103,4 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   return body as T;
 }
+

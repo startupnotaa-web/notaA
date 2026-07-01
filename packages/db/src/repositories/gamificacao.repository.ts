@@ -152,14 +152,23 @@ export class GamificacaoRepositoryDb implements GamificacaoRepositoryPort {
     estudanteId: string,
     cache: { xpTotal: number; nivelAtual: number; ofensivaDias: number },
   ): Promise<void> {
-    await this.db
-      .update(perfilCognitivo4d)
-      .set({
-        xpTotal: cache.xpTotal,
-        nivelAtual: cache.nivelAtual,
-        ofensivaDias: cache.ofensivaDias,
-        atualizadoEm: new Date(),
-      })
-      .where(eq(perfilCognitivo4d.estudanteId, estudanteId));
+    // UPDATE sem WHERE-match (novo usuário sem perfil_cognitivo_4d) é silencioso
+    // — 0 rows afetadas, sem erro. O cache será escrito quando o profiler criar
+    // a primeira linha de perfil_cognitivo_4d (doc 04 §9).
+    try {
+      await this.db
+        .update(perfilCognitivo4d)
+        .set({
+          xpTotal: cache.xpTotal,
+          nivelAtual: cache.nivelAtual,
+          ofensivaDias: cache.ofensivaDias,
+          atualizadoEm: new Date(),
+        })
+        .where(eq(perfilCognitivo4d.estudanteId, estudanteId));
+    } catch (error) {
+      // Não propaga — falha no cache não deve impedir a operação principal
+      // (grantXp, registrarAtividadeValida). Loga para diagnóstico.
+      console.error(`[GamificacaoRepository] syncCachePerfil falhou para ${estudanteId}:`, error);
+    }
   }
 }

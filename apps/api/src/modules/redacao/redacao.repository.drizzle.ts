@@ -7,8 +7,9 @@ import {
   redacao,
   rubricaRedacao,
   usuario,
+  asc,
+  eq,
 } from '@notaa/db';
-import { asc, eq } from 'drizzle-orm';
 import type { EssayCitation, EssayEvaluation, RedacaoStatus } from '@notaa/contracts';
 import {
   MOCK_DEV_USER_ID,

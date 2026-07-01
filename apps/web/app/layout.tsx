@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '../lib/auth-context';
+import { ErrorSuppressor } from './components/ErrorSuppressor';
 import './globals.css';
 
 // Tema escuro é o default da marca (docs/07-design-system.md §1) — data-theme
@@ -26,8 +27,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" data-theme="dark">
       <body>
+        <ErrorSuppressor />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
 }
+

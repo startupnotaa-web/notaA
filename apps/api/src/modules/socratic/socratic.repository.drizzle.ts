@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
 import type { Database } from '@notaa/db';
-import { conversaSocratica, mensagemSocratica, usuario } from '@notaa/db';
-import { asc, eq } from 'drizzle-orm';
+import { conversaSocratica, mensagemSocratica, usuario, asc, eq } from '@notaa/db';
 import {
   MOCK_DEV_USER_ID,
   MOCK_DEV_USER_EMAIL,

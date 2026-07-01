@@ -30,23 +30,41 @@ export default function DashboardPage() {
   const [toastMsg, setToastMsg] = useState<{ type: string; msg: string } | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      apiFetch<DashboardResponse>('/me/dashboard'),
-      apiFetch<AchievementsResponse>('/me/achievements'),
-    ])
-      .then(([d, a]) => {
-        setDashboard(d);
-        setAchievements(a);
-      })
-      .catch((e) => {
-        if (e instanceof ApiError && e.status === 401) {
-          setUseMock(true); // ponte enquanto o api-client trata a sessão
-        } else {
-          setErro(e instanceof ApiError ? e.message : 'Não foi possível carregar o painel.');
+    let cancelled = false;
+    
+    async function loadDashboard() {
+      try {
+        const [d, a] = await Promise.all([
+          apiFetch<DashboardResponse>('/me/dashboard'),
+          apiFetch<AchievementsResponse>('/me/achievements'),
+        ]);
+        if (!cancelled) {
+          setDashboard(d);
+          setAchievements(a);
         }
-      });
+      } catch (e) {
+        if (cancelled) return;
+        if (e instanceof ApiError) {
+          if (e.status === 401) {
+            setUseMock(true); // ponte enquanto o api-client trata a sessão
+          } else if (e.code === 'NETWORK_ERROR') {
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente novamente.');
+          } else {
+            setErro(e.message);
+          }
+        } else {
+          console.error('[Dashboard] Erro inesperado:', e);
+          setErro('Não foi possível carregar o painel. Tente recarregar a página.');
+        }
+      }
+    }
+    
+    loadDashboard();
+    return () => { cancelled = true; };
+  }, []);
 
-    // Custom Event Listener para simulação de Toast de Gamificação
+  // Custom Event Listener para simulação de Toast de Gamificação
+  useEffect(() => {
     const handleToast = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail && detail.msg) {

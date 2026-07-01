@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import { verifySupabaseJwt } from '../../modules/auth/verify-jwt';
@@ -50,7 +50,9 @@ export class AuthGuard implements CanActivate {
     const secret = process.env.SUPABASE_JWT_SECRET;
     if (!secret) {
       // Falha de configuração do ambiente, não do cliente — não confundir com 401 de negócio.
-      throw new Error('SUPABASE_JWT_SECRET não configurado no ambiente da API.');
+      throw new InternalServerErrorException({
+        error: { code: 'CONFIG_MISSING', message: 'Configuração de autenticação ausente no servidor.' },
+      });
     }
 
     try {

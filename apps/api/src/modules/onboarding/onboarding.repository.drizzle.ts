@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
 import type { Database } from '@notaa/db';
-import { perfilOnboarding, perfilCognitivo4d, usuario } from '@notaa/db';
-import { eq } from 'drizzle-orm';
+import { perfilOnboarding, perfilCognitivo4d, usuario, eq } from '@notaa/db';
 import type { OnboardingRepositoryPort, OnboardingState } from '@notaa/contracts';
 import {
   MOCK_DEV_USER_ID,

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Controller, Get, InternalServerErrorException, Logger, Query, Req } from '@nestjs/common';
 import { PaginationQuerySchema } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -8,6 +8,8 @@ import { GamificacaoService } from './gamificacao.service';
 // (doc 10 §1) — estudanteId sempre vem de req.user.sub, nunca de params/query.
 @Controller('me')
 export class GamificacaoController {
+  private readonly logger = new Logger(GamificacaoController.name);
+
   constructor(private readonly gamificacao: GamificacaoService) {}
 
   @Get('xp')
@@ -15,16 +17,47 @@ export class GamificacaoController {
     @Req() req: AuthenticatedRequest,
     @Query(new ZodValidationPipe(PaginationQuerySchema)) query: { cursor?: string; limit: number },
   ) {
-    return this.gamificacao.getXpLedger(req.user.sub, query);
+    try {
+      return await this.gamificacao.getXpLedger(req.user.sub, query);
+    } catch (error) {
+      this.logger.error(
+        `Falha ao buscar XP ledger para estudante ${req.user.sub}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new InternalServerErrorException({
+        error: { code: 'XP_LOAD_FAILED', message: 'Não foi possível carregar o histórico de XP.' },
+      });
+    }
   }
 
   @Get('streak')
-  getStreak(@Req() req: AuthenticatedRequest) {
-    return this.gamificacao.getStreak(req.user.sub);
+  async getStreak(@Req() req: AuthenticatedRequest) {
+    try {
+      return await this.gamificacao.getStreak(req.user.sub);
+    } catch (error) {
+      this.logger.error(
+        `Falha ao buscar streak para estudante ${req.user.sub}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new InternalServerErrorException({
+        error: { code: 'STREAK_LOAD_FAILED', message: 'Não foi possível carregar a ofensiva.' },
+      });
+    }
   }
 
   @Get('achievements')
-  getAchievements(@Req() req: AuthenticatedRequest) {
-    return this.gamificacao.getAchievements(req.user.sub);
+  async getAchievements(@Req() req: AuthenticatedRequest) {
+    try {
+      return await this.gamificacao.getAchievements(req.user.sub);
+    } catch (error) {
+      this.logger.error(
+        `Falha ao buscar conquistas para estudante ${req.user.sub}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new InternalServerErrorException({
+        error: { code: 'ACHIEVEMENTS_LOAD_FAILED', message: 'Não foi possível carregar as conquistas.' },
+      });
+    }
   }
 }
+
