@@ -15,9 +15,12 @@ const logger = new Logger('DbModule');
       useFactory: () => {
         const databaseUrl = process.env.DATABASE_URL;
         if (!databaseUrl) {
-          logger.error('DATABASE_URL não encontrada no ambiente. Verifique as variáveis de ambiente da Vercel.');
-          throw new Error('DATABASE_URL não configurado no ambiente da API.');
+          logger.error('DATABASE_URL não encontrada. As rotas que usam banco falharão com erro 500.');
+          // Não lançamos erro síncrono aqui! Se lançarmos, o Vercel Serverless
+          // falha no cold start e retorna um 500 opaco, ignorando nosso filtro.
+          return createDbClient(undefined);
         }
+        
         // Log seguro: mostra apenas host/porta para diagnóstico, nunca a senha.
         try {
           const parsed = new URL(databaseUrl);
