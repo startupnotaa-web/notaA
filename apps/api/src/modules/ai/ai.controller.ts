@@ -35,7 +35,7 @@ export class AiController {
       });
       return {
         ok: true,
-        modelo: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
+        modelo: process.env.GEMINI_MODEL ?? 'gemini-1.5-flash',
         resposta: data,
         uso,
       };

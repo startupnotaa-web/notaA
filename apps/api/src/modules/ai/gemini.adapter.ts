@@ -21,7 +21,7 @@ import type { LLMProviderPort, UsoTokens } from '@notaa/contracts';
 @Injectable()
 export class GeminiAdapter implements LLMProviderPort {
   private readonly logger = new Logger('LLMProvider');
-  private readonly modelo = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
+  private readonly modelo = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash';
 
   async complete<T>(input: {
     sistema: string;
