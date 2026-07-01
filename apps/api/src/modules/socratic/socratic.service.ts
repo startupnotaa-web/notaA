@@ -2,6 +2,8 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SocraticResponseSchema, type LLMProviderPort, type SocraticResponse } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { ContextBuilderService } from '../ai/context-builder.service';
+import { GeminiAdapter } from '../ai/gemini.adapter';
+import { StudentContextService } from '../ai/student-context.service';
 import { fallbackGuiado } from '../ai/guardrails';
 import { RiskDetectorService } from '../ai/risk-detector.service';
 import type { SocraticRepositoryPort } from './socratic.repository.memory';
@@ -23,7 +25,39 @@ export class SocraticService {
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
     private readonly risk: RiskDetectorService,
+    private readonly gemini: GeminiAdapter,
+    private readonly studentContext: StudentContextService,
   ) {}
+
+  /**
+   * Agente 3 — tutor socrático DIRETO (POST /socratic/chat): stateless, usa o
+   * Gemini REAL (não o LLM_PROVIDER mock) com um system prompt em linguagem
+   * natural montado pelo StudentContextService (onboarding + Perfil 4D).
+   *
+   * Mantém a triagem de risco da ENTRADA (I6, doc 01 §1.5): segurança não é
+   * opcional num canal aluno↔IA. Sem conversa persistida aqui, a ocorrência
+   * referencia o próprio estudante (referencia_id é uuid notNull).
+   */
+  async chatDireto(
+    estudanteId: string,
+    mensagem: string,
+  ): Promise<{ resposta: string; origem: 'gemini' | 'care_protocol' }> {
+    const triagem = this.risk.triagem(mensagem);
+    if (triagem.risco) {
+      const cuidado = await this.risk.acionarCuidado({
+        estudanteId,
+        origem: 'socratica',
+        referenciaId: estudanteId,
+        sinais: triagem.sinais,
+        severidade: triagem.severidade,
+      });
+      return { resposta: cuidado.mensagem, origem: 'care_protocol' };
+    }
+
+    const systemPrompt = await this.studentContext.buildSocraticSystemPrompt(estudanteId);
+    const resposta = await this.gemini.generateSocraticResponse(mensagem, systemPrompt);
+    return { resposta, origem: 'gemini' };
+  }
 
   /**
    * Abre uma nova sessão de conversa socrática (doc 05 §7).

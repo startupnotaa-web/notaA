@@ -81,4 +81,31 @@ export class GeminiAdapter implements LLMProviderPort {
 
     return { data: parsed.data, uso };
   }
+
+  /**
+   * Agente 1 — geração de TEXTO LIVRE para o tutor socrático direto
+   * (POST /socratic/chat). Diferente de `complete()`, NÃO força JSON nem valida
+   * schema: devolve a resposta do Gemini como string, guiada pelo
+   * `systemInstruction` (montado pelo StudentContextService com o perfil do aluno).
+   */
+  async generateSocraticResponse(prompt: string, systemInstruction: string): Promise<string> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY não configurado no ambiente da API.');
+    }
+
+    const inicio = Date.now();
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: this.modelo, systemInstruction });
+
+    const result = await model.generateContent(prompt);
+    const texto = result.response.text();
+
+    const usage = result.response.usageMetadata;
+    this.logger.log(
+      `← socrático [gemini:${this.modelo}] tokensIn=${usage?.promptTokenCount ?? 0} tokensOut=${usage?.candidatesTokenCount ?? 0} latenciaMs=${Date.now() - inicio}`,
+    );
+
+    return texto;
+  }
 }

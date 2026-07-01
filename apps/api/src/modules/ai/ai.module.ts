@@ -5,6 +5,7 @@ import { LLM_PROVIDER, RISK_REPOSITORY } from './ai.tokens';
 import { AiController } from './ai.controller';
 import { ContextBuilderService } from './context-builder.service';
 import { GeminiAdapter } from './gemini.adapter';
+import { StudentContextService } from './student-context.service';
 import { LLMProviderMock } from './llm-provider.mock';
 import { RiskDetectorService } from './risk-detector.service';
 import { RiskRepositoryDrizzle } from './risk.repository';
@@ -32,9 +33,18 @@ import { RiskRepositoryDrizzle } from './risk.repository';
     { provide: LLM_PROVIDER, useClass: LLMProviderMock },
     { provide: RISK_REPOSITORY, useClass: RiskRepositoryDrizzle },
     GeminiAdapter,
+    StudentContextService,
     ContextBuilderService,
     RiskDetectorService,
   ],
-  exports: [LLM_PROVIDER, ContextBuilderService, RiskDetectorService],
+  // GeminiAdapter + StudentContextService exportados para o SocraticModule
+  // (POST /socratic/chat). LLM_PROVIDER segue sendo o mock por padrão.
+  exports: [
+    LLM_PROVIDER,
+    ContextBuilderService,
+    RiskDetectorService,
+    GeminiAdapter,
+    StudentContextService,
+  ],
 })
 export class AiModule {}

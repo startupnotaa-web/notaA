@@ -50,4 +50,18 @@ export class SocraticController {
   listMessages(@Req() req: AuthenticatedRequest, @Param('id') conversaId: string) {
     return this.socratic.listarMensagens(conversaId, req.user.sub);
   }
+
+  /**
+   * Tutor socrático DIRETO (stateless) — usa o Gemini real com o contexto do
+   * aluno (onboarding + Perfil 4D). Protegida pelo AuthGuard global: o
+   * estudanteId vem SEMPRE do JWT (req.user.sub), nunca do corpo.
+   */
+  @Post('chat')
+  chat(
+    @Req() req: AuthenticatedRequest,
+    @Body(new ZodValidationPipe(SendSocraticMessageRequestSchema))
+    body: { mensagem: string },
+  ) {
+    return this.socratic.chatDireto(req.user.sub, body.mensagem);
+  }
 }
