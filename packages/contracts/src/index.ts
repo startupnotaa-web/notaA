@@ -12,3 +12,4 @@ export * from './redacao';
 export * from './socratic';
 export * from './engines';
 export * from './ports';
+export * from './study-trails';

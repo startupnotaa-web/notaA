@@ -50,7 +50,7 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
     return {
       passoAtual: row.passoAtual,
       dados: {
-        ...(user?.nome ? { passo1: { nome: user.nome } } : {}),
+        ...(user?.nome ? { passo1: { nome: user.nome, idade: row.idade ?? undefined, serie: row.serie ?? undefined } } : {}),
         ...(row.objetivoEnem ? { passo2: { objetivoEnem: row.objetivoEnem } } : {}),
         ...(row.estiloAprendizagemAutodeclarado
           ? { passo3: { estiloAprendizagemAutodeclarado: row.estiloAprendizagemAutodeclarado } }
@@ -102,6 +102,10 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
     // Cada passo grava SÓ o seu campo interno (não o envelope inteiro `dados`,
     // que duplicaria a chave — ex.: passo 3 grava o objeto de estilo, não
     // { estiloAprendizagemAutodeclarado: {...} }).
+    if (passo === 1) {
+      if ((dados as any).idade !== undefined) updates.idade = (dados as any).idade;
+      if ((dados as any).serie !== undefined) updates.serie = (dados as any).serie;
+    }
     if (passo === 2) updates.objetivoEnem = (dados as any).objetivoEnem ?? null;
     if (passo === 3) updates.estiloAprendizagemAutodeclarado = (dados as any).estiloAprendizagemAutodeclarado;
     if (passo === 4) updates.dificuldades = (dados as any).dificuldades;

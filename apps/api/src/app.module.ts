@@ -16,6 +16,7 @@ import { ProfilerModule } from './modules/profiler/profiler.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { RedacaoModule } from './modules/redacao/redacao.module';
 import { SocraticModule } from './modules/socratic/socratic.module';
+import { StudyTrailsModule } from './modules/study-trails/study-trails.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SocraticModule } from './modules/socratic/socratic.module';
     DashboardModule,
     RedacaoModule,
     SocraticModule,
+    StudyTrailsModule,
     GamificacaoModule,
     EscolaModule,
     AdminModule,

@@ -47,6 +47,8 @@ export default function OnboardingPage() {
 
   // Campos de cada passo (pré-preenchidos ao retomar um onboarding em andamento).
   const [nome, setNome] = useState('');
+  const [idade, setIdade] = useState('');
+  const [serie, setSerie] = useState<string | null>(null);
   const [curso, setCurso] = useState<string | null>(null);
   const [comoAprende, setComoAprende] = useState<string[]>([]);
   const [dificuldades, setDificuldades] = useState<string[]>([]);
@@ -73,7 +75,11 @@ export default function OnboardingPage() {
         // reconstrói exatamente o payload aceito por PUT /onboarding/steps/:n),
         // então o pré-preenchimento ao retomar lê o mesmo caminho que enviou.
         const d = estado.dados as Record<string, Record<string, any> | undefined>;
-        if (d.passo1) setNome((d.passo1.nome as string) ?? '');
+        if (d.passo1) {
+          setNome((d.passo1.nome as string) ?? '');
+          if (d.passo1.idade) setIdade(String(d.passo1.idade));
+          if (d.passo1.serie) setSerie(d.passo1.serie as string);
+        }
         if (d.passo2) setCurso((d.passo2.objetivoEnem as string) ?? null);
         if (d.passo3?.estiloAprendizagemAutodeclarado)
           setComoAprende((d.passo3.estiloAprendizagemAutodeclarado.comoAprendeMelhor as string[]) ?? []);
@@ -106,7 +112,7 @@ export default function OnboardingPage() {
   function payloadDoPasso(passo: number): Record<string, unknown> {
     switch (passo) {
       case 1:
-        return { nome };
+        return { nome, idade: Number(idade), serie };
       case 2:
         return { objetivoEnem: curso };
       case 3:
@@ -176,7 +182,7 @@ export default function OnboardingPage() {
   }
 
   const podeAvancar =
-    (step === 1 && nome.trim().length > 0) ||
+    (step === 1 && nome.trim().length > 0 && idade !== '' && Number(idade) > 0 && serie != null) ||
     (step === 2 && curso != null) ||
     step === 3 ||
     step === 4 ||
@@ -197,15 +203,37 @@ export default function OnboardingPage() {
             <Image src="/brand/logo-full.png" alt="Nota A" width={200} height={130} priority />
             <h1 className="text-2xl font-bold">Boas-vindas ao Nota A</h1>
             <p className="text-text-muted">Vamos montar um plano de estudos que se adapta a você.</p>
-            <div className="w-full space-y-1 pt-2 text-left">
-              <Label htmlFor="nome">Como podemos te chamar?</Label>
-              <Input
-                id="nome"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Seu nome"
-                autoFocus
-              />
+            <div className="w-full space-y-4 pt-2 text-left">
+              <div className="space-y-1">
+                <Label htmlFor="nome">Como podemos te chamar?</Label>
+                <Input
+                  id="nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  placeholder="Seu nome"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="idade">Qual é a sua idade?</Label>
+                <Input
+                  id="idade"
+                  type="number"
+                  min={1}
+                  value={idade}
+                  onChange={(e) => setIdade(e.target.value)}
+                  placeholder="Sua idade"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="serie">Em qual ano escolar você está?</Label>
+                <div role="radiogroup" aria-label="Série Escolar" className="space-y-2">
+                  <OptionCard title="Ensino Médio - 1º Ano" selected={serie === 'EM1'} onClick={() => setSerie('EM1')} />
+                  <OptionCard title="Ensino Médio - 2º Ano" selected={serie === 'EM2'} onClick={() => setSerie('EM2')} />
+                  <OptionCard title="Ensino Médio - 3º Ano" selected={serie === 'EM3'} onClick={() => setSerie('EM3')} />
+                  <OptionCard title="Pré-vestibular / Cursinho" selected={serie === 'CURSINHO'} onClick={() => setSerie('CURSINHO')} />
+                </div>
+              </div>
             </div>
           </Step>
         )}
@@ -334,6 +362,7 @@ export default function OnboardingPage() {
             <div className="w-full rounded-lg border border-border bg-surface-2 p-4 text-left shadow-1">
               <h2 className="mb-3 text-lg font-bold text-text">Resumo das suas escolhas:</h2>
               <ul className="space-y-2 text-sm text-text-muted">
+                <li><strong className="text-text">Idade e Série:</strong> {idade} anos, {serie}</li>
                 <li><strong className="text-text">Curso:</strong> {CURSOS.find(c => c.id === curso)?.titulo || '-'}</li>
                 <li><strong className="text-text">Estilo:</strong> {comoAprende.join(', ') || '-'}</li>
                 <li><strong className="text-text">Tempo:</strong> {minutosPorDia ? `${minutosPorDia} min/dia` : '-'}</li>

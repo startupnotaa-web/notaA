@@ -7,7 +7,11 @@ import { z } from 'zod';
 // doc 05; os demais são DRAFT de implementação — ajustar quando a UX de cada
 // tela for desenhada, sem mudar o contrato de fundo (passoAtual incremental).
 
-export const OnboardingStep1Schema = z.object({ nome: z.string().min(1) });
+export const OnboardingStep1Schema = z.object({ 
+  nome: z.string().min(1),
+  idade: z.number().int().min(1),
+  serie: z.string().min(1),
+});
 
 export const OnboardingStep2Schema = z.object({
   objetivoEnem: z.string().min(1),

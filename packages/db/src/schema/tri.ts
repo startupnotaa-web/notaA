@@ -78,6 +78,7 @@ export const tentativaResposta = pgTable(
     acerto: boolean('acerto').notNull(),
     tempoRespostaMs: integer('tempo_resposta_ms').notNull(),
     idempotencyKey: text('idempotency_key').notNull(),
+    temasErro: jsonb('temas_erro'), // Array de temas/competências (ex: ['Matemática Básica', 'Frações'])
     criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

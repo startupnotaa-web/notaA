@@ -11,8 +11,9 @@ import type { BancoDeItemRegistro } from '@notaa/contracts';
  */
 export const ITENS_SEED: BancoDeItemRegistro[] = [
   {
-    itemId: '00000000-0000-0000-0000-000000000001',
+    itemId: 'c0b89f89-8d76-4d05-b1a7-09d10e8b15d0',
     area: 'matematica',
+    competencia: 'Matemática Básica',
     paramA: 0.8,
     paramB: -1,
     paramC: 0.2,
@@ -29,6 +30,7 @@ export const ITENS_SEED: BancoDeItemRegistro[] = [
   {
     itemId: '00000000-0000-0000-0000-000000000002',
     area: 'matematica',
+    competencia: 'Álgebra Básica',
     paramA: 1.2,
     paramB: 0,
     paramC: 0.2,
@@ -45,6 +47,7 @@ export const ITENS_SEED: BancoDeItemRegistro[] = [
   {
     itemId: '00000000-0000-0000-0000-000000000003',
     area: 'matematica',
+    competencia: 'Cálculo Diferencial',
     paramA: 1.5,
     paramB: 1,
     paramC: 0.2,
@@ -61,6 +64,7 @@ export const ITENS_SEED: BancoDeItemRegistro[] = [
   {
     itemId: '00000000-0000-0000-0000-000000000004',
     area: 'matematica',
+    competencia: 'Logaritmos',
     paramA: 1.8,
     paramB: 2,
     paramC: 0.2,
@@ -75,8 +79,9 @@ export const ITENS_SEED: BancoDeItemRegistro[] = [
     naoCalibrado: true,
   },
   {
-    itemId: '00000000-0000-0000-0000-000000000005',
+    itemId: '11223344-5566-7788-9900-aabbccddeeff',
     area: 'linguagens',
+    competencia: 'Interpretação de Texto',
     paramA: 1,
     paramB: 0,
     paramC: 0.25,

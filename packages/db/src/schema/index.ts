@@ -8,3 +8,4 @@ export * from './erro';
 export * from './estudo';
 export * from './gamificacao';
 export * from './comercial';
+export * from './study-trails';

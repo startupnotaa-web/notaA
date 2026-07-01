@@ -51,6 +51,7 @@ export interface OnboardingRepositoryPort {
 // ItemPublicoSchema (contracts/quiz.ts) é o que de fato vai ao cliente, SEM
 // gabarito (H2.1, doc 08) — nunca confundir os dois tipos.
 export interface BancoDeItemRegistro extends ItemParams {
+  competencia: string;
   enunciado: string;
   alternativas: { id: string; texto: string }[];
   gabarito: string;
@@ -91,6 +92,7 @@ export interface QuizRepositoryPort {
     acerto: boolean;
     tempoRespostaMs: number;
     idempotencyKey: string;
+    temasErro?: string[];
   }): Promise<{ duplicate: boolean; tentativaId: string | null }>;
   finishSession(sessaoId: string): Promise<void>;
   /**

@@ -82,6 +82,7 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
     acerto: boolean;
     tempoRespostaMs: number;
     idempotencyKey: string;
+    temasErro?: string[];
   }): Promise<{ duplicate: boolean; tentativaId: string | null }> {
     if (this.idempotencyKeysVistas.has(input.idempotencyKey)) {
       return { duplicate: true, tentativaId: null };

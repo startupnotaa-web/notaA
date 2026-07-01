@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Início', Icon: HomeIcon },
   { href: '/quiz', label: 'Quiz', Icon: TargetIcon },
   { href: '/estudo', label: 'Estudo', Icon: BookIcon },
+  { href: '/trilhas', label: 'Trilhas', Icon: CompassIcon },
   { href: '/perfil', label: 'Perfil', Icon: UserIcon },
 ] as const;
 
@@ -161,6 +162,23 @@ function UserIcon(props: IconProps) {
     >
       <circle cx="12" cy="8" r="4" />
       <path d="M5 21a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
+
+function CompassIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
     </svg>
   );
 }

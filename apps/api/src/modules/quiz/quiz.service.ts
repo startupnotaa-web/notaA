@@ -99,6 +99,7 @@ export class QuizService {
       acerto,
       tempoRespostaMs: body.tempoRespostaMs,
       idempotencyKey,
+      temasErro: !acerto ? [item.competencia] : undefined,
     });
 
     const habilidadeAtual = await this.repo.getHabilidade(estudanteId, sessao.area);

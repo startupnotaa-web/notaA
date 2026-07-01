@@ -7,6 +7,7 @@ function toRegistro(row: typeof bancoDeItens.$inferSelect): BancoDeItemRegistro 
   return {
     itemId: row.id,
     area: row.areaConhecimento,
+    competencia: row.competencia,
     paramA: Number(row.paramA),
     paramB: Number(row.paramB),
     paramC: Number(row.paramC),

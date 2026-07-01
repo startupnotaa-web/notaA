@@ -27,6 +27,8 @@ export const perfilOnboarding = pgTable('perfil_onboarding', {
   dificuldades: jsonb('dificuldades'),
   rotinaEstudo: jsonb('rotina_estudo'),
   autopercepcao: jsonb('autopercepcao'),
+  idade: integer('idade'),
+  serie: text('serie'),
   passoAtual: integer('passo_atual').notNull().default(1), // salvamento incremental (A6)
   concluidoEm: timestamp('concluido_em', { withTimezone: true }),
   criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
