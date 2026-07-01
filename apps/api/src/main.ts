@@ -24,7 +24,7 @@ async function bootstrap() {
       'http://localhost:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept', 'idempotency-key', 'Idempotency-Key'],
     credentials: true,
   });
   const port = Number(process.env.PORT ?? 3001);
