@@ -21,7 +21,7 @@ import type { LLMProviderPort, UsoTokens } from '@notaa/contracts';
 @Injectable()
 export class GeminiAdapter implements LLMProviderPort {
   private readonly logger = new Logger('LLMProvider');
-  private readonly modelo = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
+  private readonly modelo = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
 
   async complete<T>(input: {
     sistema: string;
@@ -107,5 +107,26 @@ export class GeminiAdapter implements LLMProviderPort {
     );
 
     return texto;
+  }
+
+  /**
+   * Diagnóstico: faz uma geração mínima com o modelo indicado (ou o default) e
+   * devolve ok/erro — permite descobrir qual modelo a chave atende COM cota,
+   * sem redeployar (via GET /ai/ping?model=...).
+   */
+  async ping(modelName?: string): Promise<{ ok: boolean; modelo: string; texto?: string; erro?: string }> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const modelo = modelName?.trim() || this.modelo;
+    if (!apiKey) {
+      return { ok: false, modelo, erro: 'GEMINI_API_KEY não configurado no ambiente da API.' };
+    }
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: modelo });
+      const result = await model.generateContent('Responda apenas com a palavra: OK');
+      return { ok: true, modelo, texto: result.response.text().slice(0, 80) };
+    } catch (err) {
+      return { ok: false, modelo, erro: err instanceof Error ? err.message : 'falha ao chamar a IA' };
+    }
   }
 }

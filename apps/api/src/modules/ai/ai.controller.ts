@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { z } from 'zod';
 import { Public } from '../../common/decorators/public.decorator';
 import { GeminiAdapter } from './gemini.adapter';
@@ -35,7 +35,7 @@ export class AiController {
       });
       return {
         ok: true,
-        modelo: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
+        modelo: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
         resposta: data,
         uso,
       };
@@ -55,6 +55,17 @@ export class AiController {
    * Serve para escolher um nome de modelo válido sem chutar (evita 404) e ver o
    * que a conta tem acesso. @Public para inspeção rápida via curl.
    */
+  /**
+   * Sonda de modelo: testa um `generateContent` mínimo no modelo indicado
+   * (?model=gemini-2.5-flash) ou no default. Serve para achar um modelo com
+   * cota disponível sem precisar redeployar a cada tentativa.
+   */
+  @Public()
+  @Get('ping')
+  async ping(@Query('model') model?: string) {
+    return this.gemini.ping(model);
+  }
+
   @Public()
   @Get('models')
   async models() {
