@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { LLMProviderPort, UsoTokens } from '@notaa/contracts';
 
 /**
@@ -44,10 +45,12 @@ export class GeminiAdapter implements LLMProviderPort {
       generationConfig: { responseMimeType: 'application/json' },
     });
 
+    const jsonSchema = zodToJsonSchema(input.schema as any, 'ResponseSchema');
     const prompt =
       (input.prompt ? `Input do Usuário: ${input.prompt}\n\n` : '') +
       `Contexto (JSON):\n${JSON.stringify(input.contexto)}\n\n` +
-      'Responda SOMENTE com um objeto JSON válido conforme o contrato do sistema, sem texto fora do JSON.';
+      `Contrato Esperado (JSON Schema):\n${JSON.stringify(jsonSchema)}\n\n` +
+      'Responda SOMENTE com um objeto JSON válido estritamente aderente ao JSON Schema acima, sem texto fora do JSON.';
 
     const result = await model.generateContent(prompt);
     const texto = result.response.text();
