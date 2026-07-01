@@ -27,10 +27,8 @@ import { RiskRepositoryDrizzle } from './risk.repository';
   imports: [ProfilerModule],
   controllers: [AiController],
   providers: [
-    // Provedor padrão de produção: ainda o mock. O GeminiAdapter já está pronto
-    // e injetável (usado por /ai/test); para promovê-lo, troque o useClass abaixo
-    // por `GeminiAdapter` — nenhum consumidor de LLM_PROVIDER muda.
-    { provide: LLM_PROVIDER, useClass: LLMProviderMock },
+    // Provedor padrão de produção: agora usa o Gemini real.
+    { provide: LLM_PROVIDER, useClass: GeminiAdapter },
     { provide: RISK_REPOSITORY, useClass: RiskRepositoryDrizzle },
     GeminiAdapter,
     StudentContextService,
