@@ -280,7 +280,6 @@ export default function DashboardPage() {
             title="Certificados"
             description="Conquistas verificáveis."
             href="/certificados"
-            emBreve
           />
           <ShortcutCard
             icon="👨‍👩‍👧"
