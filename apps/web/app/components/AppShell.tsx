@@ -1,8 +1,4 @@
 'use client';
-// App Shell do Estudante (docs/01 §4 + docs/07 §3): logo na barra superior,
-// barra de XP em gradiente e navegação inferior com ícones SVG + estado ativo
-// (aria-current + indicador de forma, não só cor — doc 07 §7). Dados reais
-// (θ→nota, XP) chegam na fatia vertical E1→E2; aqui a estrutura visual importa.
 import type { ReactNode, SVGProps } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,14 +7,6 @@ import { cn } from '@notaa/ui';
 import { useUser } from '../../lib/user-context';
 
 type IconProps = SVGProps<SVGSVGElement>;
-
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Início', Icon: HomeIcon },
-  { href: '/quiz', label: 'Quiz', Icon: TargetIcon },
-  { href: '/redacao', label: 'Redação', Icon: BookIcon },
-  { href: '/simulado', label: 'Simulado', Icon: CompassIcon },
-  { href: '/tutor', label: 'Tutor', Icon: UserIcon },
-] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -34,13 +22,11 @@ function TopBar() {
   const { xp, level, streak, perfil, loading } = useUser();
   const isPremium = perfil?.plano && (perfil.plano.tipo === 'plus' || perfil.plano.tipo === 'escola');
   
-  // Exemplo de cálculo de % para a barra de xp (fictício baseado no level)
-  // Supondo 100 XP por level, o % é o XP atual módulo 100.
   const progressoPorcento = Math.min((xp % 100) / 100 * 100, 100);
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-surface">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
+      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-4 py-2.5">
         <Link
           href="/dashboard"
           aria-label="Nota A — ir para o início"
@@ -67,7 +53,6 @@ function TopBar() {
           )}
         </div>
       </div>
-      {/* Barra de XP em gradiente (doc 07 §3) — preenche conforme o aluno evolui. */}
       <div className="h-1 w-full overflow-hidden bg-surface-2" aria-hidden="true">
         <div 
           className="h-full bg-gradient-brand transition-[width] duration-1000" 
@@ -80,13 +65,30 @@ function TopBar() {
 
 function BottomNav() {
   const pathname = usePathname();
+  const { role, loading, perfil } = useUser();
+  
+  // Condição para exibir aba da Escola
+  const isEscola = role === 'escola' || (perfil?.plano && perfil.plano.tipo === 'escola');
+
+  const navItems = [
+    { href: '/dashboard', label: 'Início', Icon: HomeIcon },
+    { href: '/trilhas', label: 'Trilha', Icon: CompassIcon },
+    { href: '/estudo', label: 'Estudo', Icon: BookIcon },
+    { href: '/arena', label: 'Arena', Icon: TargetIcon },
+    { href: '/perfil', label: 'Perfil', Icon: UserIcon },
+  ];
+
+  if (isEscola) {
+    navItems.push({ href: '/escola', label: 'Escola', Icon: SchoolIcon });
+  }
+
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface shadow-[0_-10px_30px_rgba(0,0,0,0.05)]"
     >
-      <div className="mx-auto flex w-full max-w-3xl justify-around">
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
+      <div className="mx-auto flex w-full max-w-4xl justify-around">
+        {navItems.map(({ href, label, Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/');
           return (
             <Link
@@ -94,17 +96,20 @@ function BottomNav() {
               href={href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors duration-fast',
-                active ? 'text-text' : 'text-text-muted hover:text-text',
+                'group flex min-h-[56px] min-w-[56px] flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all duration-300',
+                active ? 'text-brand-primary' : 'text-text-muted hover:text-text',
               )}
             >
-              <Icon className="h-5 w-5" aria-hidden="true" />
+              <div className={cn("relative flex h-7 w-7 items-center justify-center transition-transform duration-300", active && "-translate-y-1 scale-110")}>
+                 <Icon className="h-6 w-6" aria-hidden="true" />
+                 {active && <span className="absolute -inset-1 rounded-full bg-brand-primary/20 blur-md -z-10" />}
+              </div>
               <span>{label}</span>
               <span
                 aria-hidden="true"
                 className={cn(
-                  'h-0.5 w-6 rounded-full',
-                  active ? 'bg-gradient-brand' : 'bg-transparent',
+                  'h-1 rounded-t-lg transition-all duration-300 absolute bottom-0',
+                  active ? 'bg-brand-primary w-8' : 'bg-transparent w-0 group-hover:w-4 group-hover:bg-border',
                 )}
               />
             </Link>
@@ -115,88 +120,64 @@ function BottomNav() {
   );
 }
 
+// Icons
 function HomeIcon(props: IconProps) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M3 10.5 12 3l9 7.5" />
       <path d="M5 9.5V21h5v-6h4v6h5V9.5" />
     </svg>
   );
 }
 
-function TargetIcon(props: IconProps) {
+function CompassIcon(props: IconProps) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="5" />
-      <circle cx="12" cy="12" r="1.5" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
     </svg>
   );
 }
 
 function BookIcon(props: IconProps) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z" />
-      <path d="M18 3v16" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+    </svg>
+  );
+}
+
+function TargetIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14.5 4h5v5" />
+      <path d="m19.5 4-8.2 8.2" />
+      <path d="m13.2 13.2-3.4 3.4" />
+      <path d="m9.3 17.3 3.4 3.4" />
+      <path d="m4.8 19.2 3.4-3.4" />
+      <path d="M4.8 14.8v4.4h4.4" />
     </svg>
   );
 }
 
 function UserIcon(props: IconProps) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M5 21a7 7 0 0 1 14 0" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }
 
-function CompassIcon(props: IconProps) {
+function SchoolIcon(props: IconProps) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M22 9 12 4 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2z" />
+      <path d="M10 22v-6a2 2 0 0 1 2-2v0a2 2 0 0 1 2 2v6" />
+      <path d="M14 10h.01" />
+      <path d="M10 10h.01" />
+      <path d="M14 14h.01" />
+      <path d="M10 14h.01" />
     </svg>
   );
 }

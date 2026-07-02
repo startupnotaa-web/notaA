@@ -216,83 +216,19 @@ export default function DashboardPage() {
       )}
 
       {/* Atalhos para o estudo aprofundado (com progresso real) */}
-      <section className="space-y-3">
-        <SectionHeader title="Continuar" accent="estudando" as="h2" />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <ShortcutCard
-            icon="⚡"
-            title="Quiz com IA"
-            description="Questões personalizadas por tema."
-            href="/quiz"
-          />
-          <ShortcutCard
-            icon="✍️"
-            title="Redação"
-            description="Correção nas 5 competências do ENEM."
-            metric={`${progresso.redacoesEnviadas} redação(ões)`}
-            href="/redacao"
-          />
-          <ShortcutCard
-            icon="📊"
-            title="Simulado Adaptativo"
-            description="Dificuldade calibrada em tempo real."
-            href="/simulado"
-          />
-          <ShortcutCard
-            icon="🏛️"
-            title="IA Socrática"
-            description="Aprenda descobrindo com o Tutor."
-            metric={`${progresso.sessoesSocraticas} sessão(ões)`}
-            href="/tutor"
-          />
-          <ShortcutCard
-            icon="⚔️"
-            title="Modo Batalha PvP"
-            description="Duelo em tempo real."
-            href="/batalha"
-          />
-          <ShortcutCard
-            icon="🏟️"
-            title="Batalha Coletiva"
-            description="Turmas e escolas ao vivo."
-            href="/batalha-coletiva"
-          />
-          <ShortcutCard
-            icon="🗺️"
-            title="Mapa do Conhecimento"
-            description="Grafo visual de lacunas."
-            href="/mapa-conhecimento"
-          />
-          <ShortcutCard
-            icon="🎯"
-            title="Previsão de Nota"
-            description="IA prevê seu desempenho no ENEM."
-            href="/previsao-nota"
-          />
-          <ShortcutCard
-            icon="📖"
-            title="Minha Narrativa"
-            description="Conecte seu sonho ao estudo."
-            href="/minha-narrativa"
-          />
-          <ShortcutCard
-            icon="🏆"
-            title="Certificados"
-            description="Conquistas verificáveis."
-            href="/certificados"
-          />
-          <ShortcutCard
-            icon="👨‍👩‍👧"
-            title="Relatório Familiar"
-            description="Progresso para os pais."
-            href="/relatorio-familiar"
-          />
-          <ShortcutCard
-            icon="👥"
-            title="Comunidade"
-            description="Dicas e desafios com colegas."
-            href="/comunidade"
-          />
+      <section className="space-y-6 pt-6">
+        <div className="flex flex-col items-center justify-center text-center space-y-4 rounded-3xl bg-surface-2 p-8 border border-brand-primary/20 shadow-lg relative overflow-hidden">
+           <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-primary/10 blur-[80px] pointer-events-none" />
+           <h2 className="text-2xl font-black text-text">Pronto para o próximo passo?</h2>
+           <p className="text-text-muted max-w-md">Continue sua jornada de estudos pelas trilhas sugeridas pela IA ou escolha uma ferramenta prática no Hub de Estudos.</p>
+           
+           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center pt-2">
+              <Link href="/estudo" className="w-full sm:w-auto">
+                 <button className="w-full rounded-full bg-brand-primary px-8 py-4 text-sm font-bold text-brand-primary-foreground transition-all hover:bg-brand-primary-hover hover:scale-105 shadow-[0_0_20px_rgba(38,153,233,0.3)] focus:outline-none focus:ring-4 focus:ring-brand-primary/50">
+                    Continuar Estudando →
+                 </button>
+              </Link>
+           </div>
         </div>
       </section>
 
@@ -512,54 +448,7 @@ function AxisRow({ eixo }: { eixo: Eixo4D }) {
 
 // ─────────────────────────── Cards de atalho ───────────────────────────
 
-function ShortcutCard({
-  icon,
-  title,
-  description,
-  metric,
-  href,
-  emBreve = false,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-  metric?: string;
-  href?: string;
-  emBreve?: boolean;
-}) {
-  const inner = (
-    <div
-      className={cn(
-        'group flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface/60 p-5 backdrop-blur-md transition-all',
-        href && 'hover:border-brand-primary/50 hover:bg-surface-2',
-        emBreve && 'opacity-80',
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-3xl" aria-hidden="true">
-          {icon}
-        </span>
-        {emBreve ? (
-          <Badge variant="neutral">Em breve</Badge>
-        ) : (
-          <span className="text-brand-primary transition-transform group-hover:translate-x-0.5" aria-hidden="true">
-            →
-          </span>
-        )}
-      </div>
-      <h3 className="text-base font-bold text-text">{title}</h3>
-      <p className="text-sm text-text-muted">{description}</p>
-      {metric && <p className="mt-auto pt-1 text-xs font-semibold text-text-muted">{metric}</p>}
-    </div>
-  );
-  return href ? (
-    <Link href={href} className="block">
-      {inner}
-    </Link>
-  ) : (
-    inner
-  );
-}
+
 
 // ─────────────────────────── Loading ───────────────────────────
 
