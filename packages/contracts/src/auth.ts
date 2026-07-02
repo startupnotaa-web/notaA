@@ -37,6 +37,8 @@ export const MeResponseSchema = z.object({
       eixos: z.array(Eixo4DSchema),
     })
     .nullable(),
+  objetivo: z.string().nullable().optional(),
+  estiloAprendizagem: z.array(z.string()).nullable().optional(),
 });
 export type MeResponse = z.infer<typeof MeResponseSchema>;
 

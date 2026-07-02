@@ -14,6 +14,15 @@ export class SocraticController {
   constructor(private readonly socratic: SocraticService) {}
 
   /**
+   * Retorna o histórico de conversas socráticas (todas as sessões salvas).
+   */
+  @Get('history')
+  async listHistory(@Req() req: AuthenticatedRequest) {
+    const historico = await this.socratic.listarHistorico(req.user.sub);
+    return { historico };
+  }
+
+  /**
    * Abre uma nova sessão de conversa socrática.
    * Opcionalmente vinculada a um tema ou a uma sessão de quiz.
    */

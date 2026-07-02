@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { AppShell } from '../components/AppShell';
 import { Toaster } from '../components/toast';
 import { useAuth } from '../../lib/auth-context';
+import { UserProvider } from '../../lib/user-context';
 
 export default function EstudanteLayout({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -24,9 +25,11 @@ export default function EstudanteLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AppShell>
-      {children}
-      <Toaster />
-    </AppShell>
+    <UserProvider>
+      <AppShell>
+        {children}
+        <Toaster />
+      </AppShell>
+    </UserProvider>
   );
 }

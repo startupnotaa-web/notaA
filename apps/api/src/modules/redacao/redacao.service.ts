@@ -13,6 +13,8 @@ import { RiskDetectorService } from '../ai/risk-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import type { RedacaoRepositoryPort } from './redacao.repository.memory';
 import { REDACAO_REPOSITORY } from './redacao.tokens';
+import { DB_CLIENT } from '../../db/db.tokens';
+import { Database, assinatura, plano, eq, desc } from '@notaa/db';
 
 // Prompt de sistema para o Corretor de Redação (doc 06 §3).
 // Em produção, viria de packages/prompts com versionamento.
@@ -31,6 +33,7 @@ const XP_REDACAO = 30;
 export class RedacaoService {
   constructor(
     @Inject(REDACAO_REPOSITORY) private readonly repo: RedacaoRepositoryPort,
+    @Inject(DB_CLIENT) private readonly db: Database,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
     private readonly gamificacao: GamificacaoService,
@@ -54,6 +57,8 @@ export class RedacaoService {
     estudanteId: string,
     body: CreateRedacaoRequest,
   ): Promise<CreateRedacaoResponse> {
+    await this.checkAndEnforceFreemiumLimits(estudanteId);
+
     // 1. Persiste redação.
     const { redacaoId } = await this.repo.criarRedacao({
       estudanteId,
@@ -129,5 +134,27 @@ export class RedacaoService {
     }
 
     return avaliacao;
+  }
+
+  /**
+   * Retorna o histórico de redações submetidas pelo estudante.
+   */
+  async listarHistorico(estudanteId: string) {
+    return this.repo.listarRedacoes(estudanteId);
+  }
+
+  private async checkAndEnforceFreemiumLimits(estudanteId: string) {
+    const [assinaturaRecord] = await this.db
+      .select({ tipo: plano.tipo })
+      .from(assinatura)
+      .innerJoin(plano, eq(plano.id, assinatura.planoId))
+      .where(eq(assinatura.usuarioId, estudanteId))
+      .orderBy(desc(assinatura.vigenciaInicio))
+      .limit(1);
+
+    const isPremium = assinaturaRecord && (assinaturaRecord.tipo === 'plus' || assinaturaRecord.tipo === 'escola');
+    if (!isPremium) {
+      await this.repo.manterLimiteRedacao(estudanteId, 3);
+    }
   }
 }

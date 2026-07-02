@@ -30,8 +30,11 @@ export interface SocraticRepositoryPort {
   ): Promise<{ id: string; papel: string; conteudo: string; criadoEm: string }[]>;
 
   atualizarResumoContexto(conversaId: string, resumo: string): Promise<void>;
-}
 
+  contarConversas(estudanteId: string): Promise<number>;
+  listarConversas(estudanteId: string): Promise<{ id: string; temaAtivo: string | null; criadoEm: string }[]>;
+  manterLimiteSocratico(estudanteId: string, limite: number): Promise<void>;
+}
 /**
  * Implementação in-memory de SocraticRepositoryPort — usada até o projeto
  * Supabase estar provisionado. Único ponto de troca (ai.module.ts).
@@ -100,6 +103,34 @@ export class SocraticRepositoryMemory implements SocraticRepositoryPort {
     const conversa = this.conversas.get(conversaId);
     if (conversa) {
       conversa.resumoContexto = resumo;
+    }
+  }
+
+  async contarConversas(estudanteId: string): Promise<number> {
+    return Array.from(this.conversas.values()).filter((c) => c.estudanteId === estudanteId).length;
+  }
+
+  async listarConversas(estudanteId: string): Promise<{ id: string; temaAtivo: string | null; criadoEm: string }[]> {
+    const conversasFiltradas = Array.from(this.conversas.values()).filter((c) => c.estudanteId === estudanteId);
+    return conversasFiltradas.map((c) => ({
+      id: c.id,
+      temaAtivo: c.temaAtivo,
+      criadoEm: new Date().toISOString(), // In memory doesn't store date by default, mocking it
+    }));
+  }
+
+  async manterLimiteSocratico(estudanteId: string, limite: number): Promise<void> {
+    const conversasFiltradas = Array.from(this.conversas.values()).filter((c) => c.estudanteId === estudanteId);
+    if (conversasFiltradas.length >= limite) {
+      // Deleta as mais antigas (primeiras inseridas)
+      const paraDeletar = conversasFiltradas.length - limite + 1;
+      for (let i = 0; i < paraDeletar; i++) {
+        const velha = conversasFiltradas[i];
+        if (velha) {
+          this.conversas.delete(velha.id);
+          this.mensagens.delete(velha.id);
+        }
+      }
     }
   }
 }

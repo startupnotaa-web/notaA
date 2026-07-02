@@ -81,3 +81,17 @@ export const CreateRedacaoResponseSchema = z.object({
   status: RedacaoStatusSchema,
 });
 export type CreateRedacaoResponse = z.infer<typeof CreateRedacaoResponseSchema>;
+
+export const RedacaoHistoryItemSchema = z.object({
+  id: z.string().uuid(),
+  temaId: z.string().uuid().nullable().optional(),
+  temaLivre: z.string().nullable().optional(),
+  status: RedacaoStatusSchema,
+  enviadoEm: z.string(),
+});
+export type RedacaoHistoryItem = z.infer<typeof RedacaoHistoryItemSchema>;
+
+export const RedacaoHistoryResponseSchema = z.object({
+  historico: z.array(RedacaoHistoryItemSchema),
+});
+export type RedacaoHistoryResponse = z.infer<typeof RedacaoHistoryResponseSchema>;

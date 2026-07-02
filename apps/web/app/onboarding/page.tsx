@@ -13,6 +13,7 @@ import type { OnboardingState } from '@notaa/contracts';
 import { Button, Chip, Input, Label, OptionCard, Progress, Switch, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../lib/api-client';
 import { useAuth } from '../../lib/auth-context';
+import { useUser } from '../../lib/user-context';
 
 const TOTAL = 8;
 
@@ -39,6 +40,7 @@ const AUTOPERCEPCAO = [
 export default function OnboardingPage() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
+  const { refreshPerfil } = useUser();
 
   const [carregandoEstado, setCarregandoEstado] = useState(true);
   const [step, setStep] = useState(1);
@@ -146,6 +148,7 @@ export default function OnboardingPage() {
       if (step === TOTAL) {
         await apiFetch('/onboarding/complete', { method: 'POST' });
         localStorage.removeItem('notaA_onboarding');
+        await refreshPerfil();
         // Após o passo 8 concluído (201), vai direto ao Dashboard.
         router.push('/dashboard');
         return;

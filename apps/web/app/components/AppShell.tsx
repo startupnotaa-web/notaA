@@ -8,15 +8,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@notaa/ui';
+import { useUser } from '../../lib/user-context';
 
 type IconProps = SVGProps<SVGSVGElement>;
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Início', Icon: HomeIcon },
   { href: '/quiz', label: 'Quiz', Icon: TargetIcon },
-  { href: '/estudo', label: 'Estudo', Icon: BookIcon },
-  { href: '/trilhas', label: 'Trilhas', Icon: CompassIcon },
-  { href: '/perfil', label: 'Perfil', Icon: UserIcon },
+  { href: '/redacao', label: 'Redação', Icon: BookIcon },
+  { href: '/simulado', label: 'Simulado', Icon: CompassIcon },
+  { href: '/tutor', label: 'Tutor', Icon: UserIcon },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -30,6 +31,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function TopBar() {
+  const { xp, level, streak, perfil, loading } = useUser();
+  const isPremium = perfil?.plano && (perfil.plano.tipo === 'plus' || perfil.plano.tipo === 'escola');
+  
+  // Exemplo de cálculo de % para a barra de xp (fictício baseado no level)
+  // Supondo 100 XP por level, o % é o XP atual módulo 100.
+  const progressoPorcento = Math.min((xp % 100) / 100 * 100, 100);
+
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-surface">
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
@@ -41,20 +49,30 @@ function TopBar() {
           <Image src="/brand/logo-full.png" alt="Nota A" width={46} height={30} priority />
         </Link>
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs text-text-muted">
-            Estimativa <strong className="font-semibold text-text">— *</strong>
-          </span>
-          <span
-            className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs text-text-muted"
-            aria-label="Uso de IA hoje"
-          >
-            IA 0/∞
-          </span>
+          {!loading && (
+            <>
+              <span className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs text-text-muted" title={`XP Total: ${xp}`}>
+                Nível <strong className="font-semibold text-text">{level}</strong>
+              </span>
+              <span className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs text-text-muted">
+                🔥 <strong className="font-semibold text-text">{streak}</strong>
+              </span>
+              <span
+                className={cn("rounded-full border border-border px-2.5 py-1 text-xs font-semibold", isPremium ? "bg-brand-accent/10 text-brand-accent" : "bg-surface-2 text-text-muted")}
+                aria-label="Plano de IA"
+              >
+                {isPremium ? 'PRO' : 'Free'}
+              </span>
+            </>
+          )}
         </div>
       </div>
       {/* Barra de XP em gradiente (doc 07 §3) — preenche conforme o aluno evolui. */}
       <div className="h-1 w-full overflow-hidden bg-surface-2" aria-hidden="true">
-        <div className="h-full w-0 bg-gradient-brand transition-[width] duration-base" />
+        <div 
+          className="h-full bg-gradient-brand transition-[width] duration-1000" 
+          style={{ width: `${progressoPorcento}%` }} 
+        />
       </div>
     </header>
   );

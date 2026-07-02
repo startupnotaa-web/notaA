@@ -25,6 +25,10 @@ export interface RedacaoRepositoryPort {
   salvarAvaliacao(redacaoId: string, avaliacao: EssayEvaluation): Promise<void>;
 
   buscarAvaliacao(redacaoId: string): Promise<EssayEvaluation | null>;
+
+  contarRedacoes(estudanteId: string): Promise<number>;
+  listarRedacoes(estudanteId: string): Promise<{ id: string; temaId: string | null; temaLivre: string | null; status: RedacaoStatus; enviadoEm: string }[]>;
+  manterLimiteRedacao(estudanteId: string, limite: number): Promise<void>;
 }
 
 /**
@@ -74,5 +78,34 @@ export class RedacaoRepositoryMemory implements RedacaoRepositoryPort {
 
   async buscarAvaliacao(redacaoId: string): Promise<EssayEvaluation | null> {
     return this.avaliacoes.get(redacaoId) ?? null;
+  }
+
+  async contarRedacoes(estudanteId: string): Promise<number> {
+    return Array.from(this.redacoes.values()).filter((r) => r.estudanteId === estudanteId).length;
+  }
+
+  async listarRedacoes(estudanteId: string): Promise<{ id: string; temaId: string | null; temaLivre: string | null; status: RedacaoStatus; enviadoEm: string }[]> {
+    const filtradas = Array.from(this.redacoes.values()).filter((r) => r.estudanteId === estudanteId);
+    return filtradas.map((r) => ({
+      id: r.id,
+      temaId: r.temaId ?? null,
+      temaLivre: r.temaLivre ?? null,
+      status: r.status,
+      enviadoEm: new Date().toISOString(),
+    }));
+  }
+
+  async manterLimiteRedacao(estudanteId: string, limite: number): Promise<void> {
+    const filtradas = Array.from(this.redacoes.values()).filter((r) => r.estudanteId === estudanteId);
+    if (filtradas.length >= limite) {
+      const paraDeletar = filtradas.length - limite + 1;
+      for (let i = 0; i < paraDeletar; i++) {
+        const velha = filtradas[i];
+        if (velha) {
+          this.redacoes.delete(velha.id);
+          this.avaliacoes.delete(velha.id);
+        }
+      }
+    }
   }
 }

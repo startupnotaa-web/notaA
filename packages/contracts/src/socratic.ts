@@ -52,3 +52,15 @@ export const SendSocraticMessageRequestSchema = z.object({
   mensagem: z.string().min(1),
 });
 export type SendSocraticMessageRequest = z.infer<typeof SendSocraticMessageRequestSchema>;
+
+export const SocraticHistoryItemSchema = z.object({
+  id: z.string().uuid(),
+  temaAtivo: z.string().nullable().optional(),
+  criadoEm: z.string(),
+});
+export type SocraticHistoryItem = z.infer<typeof SocraticHistoryItemSchema>;
+
+export const SocraticHistoryResponseSchema = z.object({
+  historico: z.array(SocraticHistoryItemSchema),
+});
+export type SocraticHistoryResponse = z.infer<typeof SocraticHistoryResponseSchema>;

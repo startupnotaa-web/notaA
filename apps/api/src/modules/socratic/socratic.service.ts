@@ -8,6 +8,8 @@ import { fallbackGuiado } from '../ai/guardrails';
 import { RiskDetectorService } from '../ai/risk-detector.service';
 import type { SocraticRepositoryPort } from './socratic.repository.memory';
 import { SOCRATIC_REPOSITORY } from './socratic.tokens';
+import { DB_CLIENT } from '../../db/db.tokens';
+import { Database, assinatura, plano, eq, desc } from '@notaa/db';
 
 // Prompt de sistema versionado — em produção, viria de packages/prompts (doc 06 §2.2).
 const SISTEMA_SOCRATICO = `Você é um tutor socrático para estudantes do ENEM. Regras:
@@ -22,6 +24,7 @@ export class SocraticService {
 
   constructor(
     @Inject(SOCRATIC_REPOSITORY) private readonly repo: SocraticRepositoryPort,
+    @Inject(DB_CLIENT) private readonly db: Database,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
     private readonly risk: RiskDetectorService,
@@ -68,6 +71,8 @@ export class SocraticService {
     estudanteId: string,
     input: { temaAtivo?: string; sessaoId?: string },
   ): Promise<{ conversaId: string }> {
+    await this.checkAndEnforceFreemiumLimits(estudanteId);
+
     const { conversaId } = await this.repo.criarConversa({
       estudanteId,
       temaAtivo: input.temaAtivo,
@@ -181,6 +186,29 @@ export class SocraticService {
     await this.getConversaDoEstudante(conversaId, estudanteId);
     const todas = await this.repo.listarMensagens(conversaId);
     return todas.filter((m) => m.papel !== 'sistema');
+  }
+
+  /**
+   * Retorna o histórico de conversas socráticas (limitado a 3 para free).
+   */
+  async listarHistorico(estudanteId: string) {
+    return this.repo.listarConversas(estudanteId);
+  }
+
+  private async checkAndEnforceFreemiumLimits(estudanteId: string) {
+    const [assinaturaRecord] = await this.db
+      .select({ tipo: plano.tipo })
+      .from(assinatura)
+      .innerJoin(plano, eq(plano.id, assinatura.planoId))
+      .where(eq(assinatura.usuarioId, estudanteId))
+      .orderBy(desc(assinatura.vigenciaInicio))
+      .limit(1);
+
+    const isPremium = assinaturaRecord && (assinaturaRecord.tipo === 'plus' || assinaturaRecord.tipo === 'escola');
+    if (!isPremium) {
+      // Deleta as mais antigas para que o usuário possa inserir uma nova sem passar de 3
+      await this.repo.manterLimiteSocratico(estudanteId, 3);
+    }
   }
 
   /** 404 (não 403) para não confirmar existência de conversa de outro usuário (doc 10). */

@@ -3,7 +3,7 @@ import { UpdateMeRequestSchema, type MeResponse, type Eixo4D, type UpdateMeReque
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { DB_CLIENT } from '../../db/db.tokens';
-import { Database, usuario, perfilCognitivo4d, assinatura, plano, desc, eq } from '@notaa/db';
+import { Database, usuario, perfilCognitivo4d, perfilOnboarding, assinatura, plano, desc, eq } from '@notaa/db';
 import { calcularProgressaoNivel } from '../gamificacao/nivel';
 
 // doc 05 §2 — GET /me, papéis: todos (sem @Roles() => qualquer papel autenticado).
@@ -29,15 +29,21 @@ export class MeController {
             confianca: perfilCognitivo4d.confianca,
             xpTotal: perfilCognitivo4d.xpTotal,
             ofensivaDias: perfilCognitivo4d.ofensivaDias,
+          },
+          onb: {
+            objetivoEnem: perfilOnboarding.objetivoEnem,
+            estiloAprendizagem: perfilOnboarding.estiloAprendizagemAutodeclarado,
           }
         })
         .from(usuario)
         .leftJoin(perfilCognitivo4d, eq(perfilCognitivo4d.estudanteId, usuario.id))
+        .leftJoin(perfilOnboarding, eq(perfilOnboarding.estudanteId, usuario.id))
         .where(eq(usuario.id, sub))
         .limit(1);
 
       const nome = userRecord?.nome ?? null;
       const p4d = userRecord?.p4d;
+      const onb = userRecord?.onb;
 
       // Assinatura vigente do usuário (doc 04 §8). Sem linha em `assinatura` =>
       // plano null (a UI mostra "Plano Gratuito"). Pega a mais recente por vigência.
@@ -85,6 +91,11 @@ export class MeController {
         };
       }
 
+      let estiloArr = null;
+      if (onb?.estiloAprendizagem && typeof onb.estiloAprendizagem === 'object' && 'comoAprendeMelhor' in onb.estiloAprendizagem) {
+        estiloArr = (onb.estiloAprendizagem as any).comoAprendeMelhor;
+      }
+
       return {
         id: sub,
         nome,
@@ -94,6 +105,8 @@ export class MeController {
         plano: planoResp,
         gamificacao,
         perfilCognitivo,
+        objetivo: onb?.objetivoEnem ?? null,
+        estiloAprendizagem: estiloArr,
       };
     } catch (error) {
       this.logger.error(

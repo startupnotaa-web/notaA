@@ -8,7 +8,10 @@ import {
   rubricaRedacao,
   usuario,
   asc,
+  desc,
   eq,
+  inArray,
+  count,
 } from '@notaa/db';
 import type { EssayCitation, EssayEvaluation, RedacaoStatus } from '@notaa/contracts';
 import {
@@ -171,6 +174,61 @@ export class RedacaoRepositoryDrizzle implements RedacaoRepositoryPort {
       feedbackGeral: cab.feedbackGeral as EssayEvaluation['feedbackGeral'],
       criadoEm: cab.criadoEm.toISOString(),
     };
+  }
+
+  async contarRedacoes(estudanteId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ value: count() })
+      .from(redacao)
+      .where(eq(redacao.estudanteId, estudanteId));
+    return Number(row?.value ?? 0);
+  }
+
+  async listarRedacoes(estudanteId: string): Promise<{ id: string; temaId: string | null; temaLivre: string | null; status: RedacaoStatus; enviadoEm: string }[]> {
+    const rows = await this.db
+      .select({
+        id: redacao.id,
+        temaId: redacao.temaId,
+        temaLivre: redacao.temaLivre,
+        status: redacao.status,
+        enviadoEm: redacao.enviadoEm,
+      })
+      .from(redacao)
+      .where(eq(redacao.estudanteId, estudanteId))
+      .orderBy(desc(redacao.enviadoEm));
+
+    return rows.map((r) => ({
+      ...r,
+      status: r.status as RedacaoStatus,
+      enviadoEm: r.enviadoEm.toISOString(),
+    }));
+  }
+
+  async manterLimiteRedacao(estudanteId: string, limite: number): Promise<void> {
+    const rows = await this.db
+      .select({ id: redacao.id })
+      .from(redacao)
+      .where(eq(redacao.estudanteId, estudanteId))
+      .orderBy(asc(redacao.enviadoEm));
+    
+    if (rows.length >= limite) {
+      const quantidadeDeletar = rows.length - limite + 1;
+      const idsParaDeletar = rows.slice(0, quantidadeDeletar).map((r) => r.id);
+      
+      if (idsParaDeletar.length > 0) {
+        // As tabelas dependentes (avaliacao_redacao) precisam ser deletadas ou ter ON DELETE CASCADE
+        // O schema de avaliacao_redacao foi criado com onDelete: 'restrict' nas versões anteriores (estudo.ts:70)
+        // Precisamos apagar as dependências explicitamente
+        await this.db.delete(avaliacaoCompetencia).where(
+          inArray(
+            avaliacaoCompetencia.avaliacaoId,
+            this.db.select({ id: avaliacaoRedacao.id }).from(avaliacaoRedacao).where(inArray(avaliacaoRedacao.redacaoId, idsParaDeletar))
+          )
+        );
+        await this.db.delete(avaliacaoRedacao).where(inArray(avaliacaoRedacao.redacaoId, idsParaDeletar));
+        await this.db.delete(redacao).where(inArray(redacao.id, idsParaDeletar));
+      }
+    }
   }
 
   /**

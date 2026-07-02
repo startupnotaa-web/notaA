@@ -17,6 +17,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
 import { RedacaoModule } from './modules/redacao/redacao.module';
 import { SocraticModule } from './modules/socratic/socratic.module';
 import { StudyTrailsModule } from './modules/study-trails/study-trails.module';
+import { ClassModule } from './modules/class/class.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { StudyTrailsModule } from './modules/study-trails/study-trails.module';
     EscolaModule,
     AdminModule,
     AiModule,
+    ClassModule,
   ],
   providers: [
     // Filtro global de exceções — loga erros com stack trace e padroniza a

@@ -10,6 +10,15 @@ export class RedacaoController {
   constructor(private readonly redacao: RedacaoService) {}
 
   /**
+   * Retorna o histórico de redações submetidas pelo estudante.
+   */
+  @Get('history')
+  async listHistory(@Req() req: AuthenticatedRequest) {
+    const historico = await this.redacao.listarHistorico(req.user.sub);
+    return { historico };
+  }
+
+  /**
    * Submete uma redação para correção IA.
    * O body aceita `temaId` (tema catalogado) OU `temaLivre` (tema livre),
    * nunca ambos (validado pelo schema, doc 05 §6).

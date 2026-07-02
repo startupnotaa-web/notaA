@@ -2,6 +2,7 @@
 // Orquestração e Motores (doc 05 §9). Fonte única de schemas Zod e ports —
 // nunca redefinir um destes tipos localmente em outro pacote/app.
 export * from './common';
+export * from './class/class.schemas';
 export * from './errors';
 export * from './auth';
 export * from './jwt';
