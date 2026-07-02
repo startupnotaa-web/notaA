@@ -19,6 +19,7 @@ import { SocraticModule } from './modules/socratic/socratic.module';
 import { StudyTrailsModule } from './modules/study-trails/study-trails.module';
 import { ClassModule } from './modules/class/class.module';
 import { BattleModule } from './modules/battle/battle.module';
+import { SimuladoModule } from './modules/simulado/simulado.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BattleModule } from './modules/battle/battle.module';
     AiModule,
     ClassModule,
     BattleModule,
+    SimuladoModule,
   ],
   providers: [
     // Filtro global de exceções — loga erros com stack trace e padroniza a

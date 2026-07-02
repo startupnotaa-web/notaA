@@ -61,26 +61,18 @@ export default function SimuladoPage() {
   const obterProximaQuestao = async (nivelDesejado: NivelDificuldade) => {
     try {
       setCarregando(true);
-      const res = await apiFetch('/quiz/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          tema: 'Assuntos do ENEM (Matemática, Linguagens, Humanas ou Natureza)',
-          dificuldadeDesejada: nivelDesejado === 1 ? 'Fácil' : nivelDesejado === 2 ? 'Média' : 'Difícil'
-        })
+      const res = await apiFetch(`/simulado/next-item?nivel=${nivelDesejado}`, {
+        method: 'GET',
       });
       const data = await res.json();
       
       return {
-        id: Math.random().toString(36).substring(7),
+        id: data.id,
         enunciado: data.enunciado,
-        alternativas: data.alternativas.map((alt: string, index: number) => ({
-          id: String.fromCharCode(97 + index), // a, b, c, d, e
-          texto: alt,
-          correta: index === data.correta
-        })),
+        alternativas: data.alternativas,
         nivel: nivelDesejado,
-        area: 'Simulado Adaptativo IA',
-        dicaPerfil: data.dica_perfil,
+        area: data.area,
+        dicaPerfil: data.dicaPerfil,
         explicacao: data.explicacao
       };
     } catch (err) {
