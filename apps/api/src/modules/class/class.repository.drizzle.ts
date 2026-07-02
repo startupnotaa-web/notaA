@@ -88,7 +88,7 @@ export class ClassRepository {
 
     if (!stats.length) return null;
 
-    let lowest = stats[0];
+    let lowest = stats[0]!;
     for (const stat of stats) {
       if (Number(stat.mediaAcertos) < Number(lowest.mediaAcertos)) {
         lowest = stat;

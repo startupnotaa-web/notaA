@@ -18,6 +18,7 @@ import { RedacaoModule } from './modules/redacao/redacao.module';
 import { SocraticModule } from './modules/socratic/socratic.module';
 import { StudyTrailsModule } from './modules/study-trails/study-trails.module';
 import { ClassModule } from './modules/class/class.module';
+import { BattleModule } from './modules/battle/battle.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ClassModule } from './modules/class/class.module';
     AdminModule,
     AiModule,
     ClassModule,
+    BattleModule,
   ],
   providers: [
     // Filtro global de exceções — loga erros com stack trace e padroniza a

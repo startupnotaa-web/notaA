@@ -1,14 +1,14 @@
-import { Controller, Get, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ClassService } from './class.service';
 import type { ClassAnalyticsResponse } from '@notaa/contracts';
-import { RequireAuth } from '../auth/require-auth.decorator';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('class')
+@UseGuards(AuthGuard)
 export class ClassController {
   constructor(private readonly classService: ClassService) {}
 
   @Get('analytics')
-  @RequireAuth()
   async getAnalytics(@Req() req: any): Promise<ClassAnalyticsResponse> {
     const userId = req.user.sub;
     const role = req.user.tipoPerfil;

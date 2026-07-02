@@ -14,7 +14,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { usuario } from './identidade';
-import { duelStatusEnum, duelTipoEnum, rankingEscopoEnum, xpOrigemEnum } from './enums';
+import { areaConhecimentoEnum, duelStatusEnum, duelTipoEnum, rankingEscopoEnum, xpOrigemEnum } from './enums';
 
 // doc 04 §7 — Gamificação
 
@@ -106,4 +106,23 @@ export const rankingSnapshot = pgTable(
     geradoEm: timestamp('gerado_em', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('idx_ranking_snapshot_escopo_periodo').on(t.escopo, t.escopoId, t.periodo)],
+);
+
+export const batalhaPvp = pgTable(
+  'batalhas_pvp',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'cascade' }),
+    area: areaConhecimentoEnum('area').notNull(),
+    questoes: jsonb('questoes').notNull(), // As 5 questões da partida
+    tempoRespostas: jsonb('tempo_respostas').notNull(), // array de { idQuestao, tempoSegundos, acertou }
+    scoreFinal: integer('score_final').notNull(), // pontuação XP ou acertos
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_batalha_pvp_area_score').on(t.area, t.scoreFinal),
+    index('idx_batalha_pvp_criado').on(t.criadoEm),
+  ],
 );
