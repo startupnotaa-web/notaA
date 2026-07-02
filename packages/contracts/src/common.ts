@@ -4,7 +4,16 @@ import { z } from 'zod';
 // docs/04-modelo-de-dados.md, mas são definidos aqui de propósito (não importam
 // @notaa/db) — apps/web nunca pode depender do pacote de persistência (doc 09 §2).
 
-export const AreaConhecimentoSchema = z.enum(['linguagens', 'humanas', 'natureza', 'matematica']);
+export const AreaConhecimentoSchema = z.enum([
+  'linguagens', 
+  'humanas', 
+  'natureza', 
+  'matematica',
+  'redacao',
+  'fin',
+  'soc',
+  'art'
+]);
 export type AreaConhecimento = z.infer<typeof AreaConhecimentoSchema>;
 
 export const TipoPerfilPublicoSchema = z.enum(['estudante', 'professor', 'escola']);
