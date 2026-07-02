@@ -292,7 +292,6 @@ export default function DashboardPage() {
             title="Comunidade"
             description="Dicas e desafios com colegas."
             href="/comunidade"
-            emBreve
           />
         </div>
       </section>
