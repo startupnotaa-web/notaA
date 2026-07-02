@@ -263,7 +263,6 @@ export default function DashboardPage() {
             title="Mapa do Conhecimento"
             description="Grafo visual de lacunas."
             href="/mapa-conhecimento"
-            emBreve
           />
           <ShortcutCard
             icon="🎯"
