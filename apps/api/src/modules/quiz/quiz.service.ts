@@ -49,25 +49,38 @@ export class QuizService {
   async generateQuiz(
     estudanteId: string,
     tema: string,
+    area: AreaConhecimento,
     dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil'
   ): Promise<any> {
     const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, { temaAtivo: tema });
     
-    // Opcional: injetar a dificuldade desejada
-    const diffText = dificuldadeDesejada ? `Dificuldade desejada: ${dificuldadeDesejada}.` : '';
+    let nivel_atual_na_area = 50; // default (Média)
+    try {
+      const areaSafe = area || 'matematica';
+      const habilidade = await this.repo.getHabilidade(estudanteId, areaSafe);
+      if (habilidade) {
+        // Theta padronizado: -3 a +3. Convertendo grosseiramente para escala de 0 a 100
+        const prof = Math.round(((habilidade.theta + 3) / 6) * 100);
+        nivel_atual_na_area = Math.max(0, Math.min(100, prof));
+      }
+    } catch (e) {
+      // Ignora erro de habilidade não encontrada (primeiro acesso)
+    }
 
-    const sistema = `Você é um tutor. O aluno aprende melhor de forma {ESTILO}. Crie uma questão sobre ${tema}. ${diffText}
-Retorne APENAS um JSON estrito: { 'enunciado': '...', 'alternativas': ['A) ...', 'B) ...', 'C) ...', 'D) ...', 'E) ...'], 'correta': 0, 'explicacao': '...', 'dica_perfil': 'dica focada no estilo do aluno', 'dificuldade': 'Fácil|Média|Difícil' }. Use as instruções pedagógicas fornecidas no contexto.`;
+    const sistema = `Você é um gerador de Quiz. O aluno tem um nível de proficiência de ${nivel_atual_na_area} (de 0 a 100) nesta área. Gere uma questão TOTALMENTE INÉDITA e criativa sobre ${tema}. O nível de complexidade da questão deve ser proporcional à proficiência do aluno. Retorne estritamente este JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica focada no aluno", "dificuldade": "Fácil|Média|Difícil" }.`;
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 
-    const { data } = await this.llm.complete({
-      sistema,
-      contexto,
-      schema: GenerateQuizResponseSchema,
-    });
-
-    return data;
+    try {
+      const { data } = await this.llm.complete({
+        sistema,
+        contexto,
+        schema: GenerateQuizResponseSchema,
+      });
+      return data;
+    } catch (error) {
+      throw new BadRequestException({ error: { code: 'AI_ERROR', message: 'Erro interno na inteligência artificial ao gerar questão inédita. Tente novamente em instantes.' }});
+    }
   }
 
   async startSession(

@@ -23,9 +23,9 @@ export class QuizController {
   @Post('generate')
   generateQuiz(
     @Req() req: AuthenticatedRequest,
-    @Body() body: { tema: string; dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil' },
+    @Body() body: { tema: string; area: 'linguagens' | 'humanas' | 'natureza' | 'matematica' | 'redacao' | 'fin' | 'soc' | 'art'; dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil' },
   ) {
-    return this.quiz.generateQuiz(req.user.sub, body.tema, body.dificuldadeDesejada);
+    return this.quiz.generateQuiz(req.user.sub, body.tema, body.area as any, body.dificuldadeDesejada);
   }
 
   @Get('sessions/:id/next-item')
