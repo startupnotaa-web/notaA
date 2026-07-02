@@ -3,6 +3,7 @@ import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, perfilOnboarding, tentativaResposta, trilhaEstudo, desc, eq, and } from '@notaa/db';
 import { GeminiAdapter } from '../ai/gemini.adapter';
 import { GeminiStudyTrailSchema, StudyTrailResponse } from '@notaa/contracts';
+import { z } from 'zod';
 
 @Injectable()
 export class StudyTrailsService {
@@ -60,11 +61,30 @@ O aluno de ${idade} anos do ${serie} acabou de errar questões sobre os seguinte
 Crie uma trilha de estudo em 3 passos curtos e práticos para ele recuperar esse conhecimento.
 Retorne o resultado estritamente em formato JSON contendo titulo, descricao e os passos.`;
 
-    const { data } = await this.gemini.complete({
-      sistema,
-      contexto: { temasErrados: uniqueThemes },
-      schema: GeminiStudyTrailSchema,
-    });
+    let data: z.infer<typeof GeminiStudyTrailSchema>;
+    try {
+      const result = await this.gemini.complete({
+        sistema,
+        contexto: { temasErrados: uniqueThemes },
+        schema: GeminiStudyTrailSchema,
+      });
+      data = result.data;
+    } catch (e: any) {
+      if (e.message?.includes('GEMINI_API_KEY não configurado')) {
+        this.logger.warn('GEMINI_API_KEY ausente. Retornando trilha mockada.');
+        data = {
+          titulo: 'Revisão Rápida (Mock)',
+          descricao: 'Esta é uma trilha gerada offline pois a chave de API da IA não está configurada localmente.',
+          passos: [
+            { titulo: 'Passo 1', descricao: 'Revise as fórmulas principais.', dica: 'Anote-as em post-its.' },
+            { titulo: 'Passo 2', descricao: 'Refaça 3 questões fáceis.', dica: 'Sem pressa.' },
+            { titulo: 'Passo 3', descricao: 'Resolva 1 questão difícil.', dica: 'Aplique o método socrático.' }
+          ]
+        };
+      } else {
+        throw e;
+      }
+    }
 
     // 5. Save to DB
     const inserted = await this.db.insert(trilhaEstudo).values({

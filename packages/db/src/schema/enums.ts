@@ -22,6 +22,10 @@ export const areaConhecimentoEnum = pgEnum('area_conhecimento', [
   'humanas',
   'natureza',
   'matematica',
+  'redacao',
+  'fin',
+  'soc',
+  'art',
 ]);
 
 export const sessaoTipoEnum = pgEnum('sessao_tipo', ['quiz', 'simulado', 'duelo']);

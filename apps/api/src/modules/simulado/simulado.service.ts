@@ -24,6 +24,9 @@ export class SimuladoService {
     }
 
     const q = questoes[0];
+    if (!q) {
+      return this.getMockFallback(nivel);
+    }
 
     return {
       id: q.id,

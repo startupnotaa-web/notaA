@@ -179,26 +179,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Herói: medidor circular da Nota Estimada */}
-      <Card>
-        <CardHeader className="gap-6 sm:flex-row sm:items-center">
-          <Gauge value={estimativaNota.geral} max={1000} naoCalibrado={estimativaNota.naoCalibrado} />
-          <div className="flex flex-1 items-center justify-center">
-            <div className="text-center">
-               <p className="text-sm font-semibold text-text-muted">Sua estimativa de nota baseada no histórico.</p>
-               <button 
-                  onClick={() => {
-                    const event = new CustomEvent('toast-gamificacao', { detail: { type: 'xp', msg: '+30 XP Ganho!' } });
-                    window.dispatchEvent(event);
-                  }}
-                  className="mt-4 rounded-full bg-brand-primary/10 px-4 py-2 text-xs font-bold text-brand-primary transition-colors hover:bg-brand-primary/20"
-               >
-                 Simular Ganho de XP
-               </button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+
 
       {/* Perfil Cognitivo 4D — radar */}
       <section className="space-y-3">
@@ -226,25 +207,7 @@ export default function DashboardPage() {
         </Card>
       </section>
 
-      {/* θ por área */}
-      {areasTheta.length > 0 && (
-        <Card>
-          <CardHeader className="gap-3">
-            <h2 className="text-base font-bold">Domínio por área (θ)</h2>
-            <ul className="space-y-3">
-              {areasTheta.map(([area, info]) => (
-                <li key={area} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="capitalize text-text-muted">{area}</span>
-                    <span className="text-text">{info.atual.toFixed(2)}</span>
-                  </div>
-                  <ProgressBar fraction={(Math.max(-3, Math.min(3, info.atual)) + 3) / 6} />
-                </li>
-              ))}
-            </ul>
-          </CardHeader>
-        </Card>
-      )}
+
 
       {/* Atalhos para o estudo aprofundado (com progresso real) */}
       <section className="space-y-6 pt-6">
@@ -263,19 +226,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Conquistas */}
-      {achievements && achievements.desbloqueadas.length > 0 && (
-        <section className="space-y-3">
-          <SectionHeader title="Suas" accent="conquistas" as="h2" />
-          <div className="flex flex-wrap gap-2">
-            {achievements.desbloqueadas.map((c) => (
-              <Badge key={c.codigo} variant="brand" icon={<span aria-hidden="true">🏆</span>}>
-                {c.codigo}
-              </Badge>
-            ))}
-          </div>
-        </section>
-      )}
+
       
       {/* Toast Animado */}
       {toastMsg && (
