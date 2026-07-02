@@ -9,11 +9,14 @@ import { Badge, Button, Card, OptionCard, Progress, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { toast } from '../../components/toast';
 
-const AREAS: { valor: AreaConhecimento; label: string }[] = [
-  { valor: 'matematica', label: 'Matemática' },
-  { valor: 'linguagens', label: 'Linguagens' },
-  { valor: 'humanas', label: 'Humanas' },
-  { valor: 'natureza', label: 'Natureza' },
+const AREAS: { valor: AreaConhecimento; label: string; icon?: string; colorClass?: string }[] = [
+  { valor: 'matematica', label: 'Matemática', icon: '📐', colorClass: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' },
+  { valor: 'linguagens', label: 'Linguagens', icon: '📚', colorClass: 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' },
+  { valor: 'humanas', label: 'Humanas', icon: '🌍', colorClass: 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' },
+  { valor: 'natureza', label: 'Natureza', icon: '🔬', colorClass: 'bg-green-500/10 text-green-500 hover:bg-green-500/20' },
+  { valor: 'fin', label: 'Educação Financeira', icon: '💰', colorClass: 'bg-success/10 text-success hover:bg-success/20 border-success/30' },
+  { valor: 'soc', label: 'Socioemocional', icon: '🧠', colorClass: 'bg-brand-secondary/10 text-brand-secondary hover:bg-brand-secondary/20 border-brand-secondary/30' },
+  { valor: 'art', label: 'Artes', icon: '🎨', colorClass: 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-brand-primary/30' },
 ];
 
 type Resultado = SubmitAnswerResponse | null;
@@ -48,7 +51,8 @@ export default function QuizPage() {
       if (e instanceof ApiError && e.status === 401) {
         // Redirecionamento já está em andamento pelo interceptor
       } else {
-        setErro(e instanceof ApiError ? e.message : 'Não foi possível iniciar o quiz.');
+        toast('A IA encontrou uma instabilidade ao gerar sua questão. Tente novamente.', { variant: 'error' });
+        setErro(null);
       }
     } finally {
       setCarregando(false);
@@ -106,8 +110,16 @@ export default function QuizPage() {
         {erro && <p role="alert" className="text-sm text-error">{erro}</p>}
         <div className="grid gap-3 sm:grid-cols-2">
           {AREAS.map((a) => (
-            <Button key={a.valor} variant="secondary" size="lg" disabled={carregando} onClick={() => iniciar(a.valor)}>
-              {a.label}
+            <Button 
+              key={a.valor} 
+              variant="secondary" 
+              size="lg" 
+              className={cn("flex flex-col items-center gap-2 h-auto py-6 border transition-all", a.colorClass)}
+              disabled={carregando} 
+              onClick={() => iniciar(a.valor)}
+            >
+              <span className="text-3xl" aria-hidden="true">{a.icon}</span>
+              <span className="font-semibold">{a.label}</span>
             </Button>
           ))}
         </div>
