@@ -275,7 +275,6 @@ export default function DashboardPage() {
             title="Minha Narrativa"
             description="Conecte seu sonho ao estudo."
             href="/minha-narrativa"
-            emBreve
           />
           <ShortcutCard
             icon="🏆"
