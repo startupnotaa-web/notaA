@@ -61,10 +61,9 @@ export default function SimuladoPage() {
   const obterProximaQuestao = async (nivelDesejado: NivelDificuldade) => {
     try {
       setCarregando(true);
-      const res = await apiFetch(`/simulado/next-item?nivel=${nivelDesejado}`, {
+      const data = await apiFetch<any>(`/simulado/next-item?nivel=${nivelDesejado}`, {
         method: 'GET',
       });
-      const data = await res.json();
       
       return {
         id: data.id,
@@ -76,7 +75,7 @@ export default function SimuladoPage() {
         explicacao: data.explicacao
       };
     } catch (err) {
-      toast({ title: 'Erro ao gerar questão', description: 'Tente novamente.', variant: 'error' });
+      toast('Erro ao gerar questão. Tente novamente.', { variant: 'error' });
       return null;
     } finally {
       setCarregando(false);
