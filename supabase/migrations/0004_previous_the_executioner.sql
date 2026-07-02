@@ -1,0 +1,1 @@
+ALTER TABLE "questoes_enem" ADD COLUMN "imagem_url" text;

@@ -22,4 +22,5 @@ export const questoesEnem = pgTable('questoes_enem', {
   correta: integer('correta').notNull(), // índice 0 a 4
   habilidadeBncc: varchar('habilidade_bncc', { length: 255 }),
   dificuldadeTri: dificuldadeTriEnum('dificuldade_tri').notNull(),
+  imagemUrl: text('imagem_url'),
 });
