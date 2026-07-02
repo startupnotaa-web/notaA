@@ -1,4 +1,4 @@
-import { Controller, Get, InternalServerErrorException, Logger, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, InternalServerErrorException, Logger, Query, Req } from '@nestjs/common';
 import { PaginationQuerySchema } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -41,6 +41,21 @@ export class GamificacaoController {
       );
       throw new InternalServerErrorException({
         error: { code: 'STREAK_LOAD_FAILED', message: 'Não foi possível carregar a ofensiva.' },
+      });
+    }
+  }
+
+  @Post('recover-streak')
+  async recoverStreak(@Req() req: AuthenticatedRequest) {
+    try {
+      return await this.gamificacao.recoverStreak(req.user.sub);
+    } catch (error) {
+      this.logger.error(
+        `Falha ao recuperar streak para estudante ${req.user.sub}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new InternalServerErrorException({
+        error: { code: 'STREAK_RECOVERY_FAILED', message: 'Não foi possível recuperar a ofensiva.' },
       });
     }
   }

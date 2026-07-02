@@ -38,6 +38,11 @@ const MARCOS_XP = [
 const MARCOS_STREAK = [
   { dias: 3, codigo: 'streak_3_dias' },
   { dias: 7, codigo: 'streak_7_dias' },
+  { dias: 15, codigo: 'streak_15_dias' },
+  { dias: 30, codigo: 'streak_30_dias' },
+  { dias: 60, codigo: 'streak_60_dias' },
+  { dias: 120, codigo: 'streak_120_dias' },
+  { dias: 240, codigo: 'streak_240_dias' },
 ] as const;
 
 function hojeISO(): string {
@@ -163,6 +168,40 @@ export class GamificacaoService {
 
   async getStreak(estudanteId: string): Promise<StreakResponse> {
     return toStreakResponse(await this.repo.getStreak(estudanteId));
+  }
+
+  /**
+   * Missão de Recuperação: se o usuário perdeu o streak ontem (gap === 2),
+   * essa função restaura artificialmente a última atividade para ontem,
+   * permitindo que a atividade de hoje incremente o streak.
+   */
+  async recoverStreak(estudanteId: string): Promise<StreakResponse> {
+    const hoje = hojeISO();
+    const atual = await this.repo.getStreak(estudanteId);
+    
+    if (!atual.ultimaAtividadeValida) {
+      return toStreakResponse(atual);
+    }
+    
+    const gap = diferencaEmDias(atual.ultimaAtividadeValida, hoje);
+    
+    if (gap === 2) {
+      // Retroage a última atividade para ontem
+      const dataHoje = new Date();
+      dataHoje.setDate(dataHoje.getDate() - 1);
+      const ontem = dataHoje.toISOString().slice(0, 10);
+      
+      const novoEstado = {
+        diasConsecutivos: atual.diasConsecutivos,
+        ultimaAtividadeValida: ontem,
+        freezesDisponiveis: atual.freezesDisponiveis,
+      };
+      
+      await this.repo.setStreak(estudanteId, novoEstado);
+      return toStreakResponse(novoEstado);
+    }
+    
+    return toStreakResponse(atual);
   }
 
   async getXpTotal(estudanteId: string): Promise<number> {

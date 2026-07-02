@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { MeResponse } from '@notaa/contracts';
+import type { MeResponse, AchievementsResponse } from '@notaa/contracts';
 import { Button, Card, CardHeader, Input, Label, SectionHeader, Skeleton, Badge, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { useAuth } from '../../../lib/auth-context';
@@ -16,6 +16,7 @@ const PLANO_ROTULO: Record<NonNullable<MeResponse['plano']>['tipo'], string> = {
 export default function PerfilPage() {
   const { signOut } = useAuth();
   const [perfil, setPerfil] = useState<MeResponse | null>(null);
+  const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   // Estado do formulário de Informações Pessoais.
@@ -27,10 +28,14 @@ export default function PerfilPage() {
   const [assinaturaMsg, setAssinaturaMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<MeResponse>('/me')
-      .then((data) => {
-        setPerfil(data);
-        setNome(data.nome ?? '');
+    Promise.all([
+      apiFetch<MeResponse>('/me'),
+      apiFetch<AchievementsResponse>('/me/achievements')
+    ])
+      .then(([perfilData, achData]) => {
+        setPerfil(perfilData);
+        setNome(perfilData.nome ?? '');
+        setAchievements(achData);
       })
       .catch((e) => {
         setErro(e instanceof ApiError ? e.message : 'Não foi possível carregar seu perfil.');
@@ -140,6 +145,48 @@ export default function PerfilPage() {
           />
         </div>
       </section>
+
+      {/* Seção: Galeria de Certificados de Ofensiva */}
+      {achievements && (
+        <section className="space-y-4">
+          <SectionHeader title="Certificados de" accent="Ofensiva" as="h2" />
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { dias: 3, label: '3 Dias', codigo: 'streak_3_dias' },
+                  { dias: 7, label: '7 Dias', codigo: 'streak_7_dias' },
+                  { dias: 15, label: '15 Dias', codigo: 'streak_15_dias' },
+                  { dias: 30, label: '1 Mês', codigo: 'streak_30_dias' },
+                  { dias: 60, label: '2 Meses', codigo: 'streak_60_dias' },
+                  { dias: 120, label: '4 Meses', codigo: 'streak_120_dias' },
+                  { dias: 240, label: '8 Meses', codigo: 'streak_240_dias' },
+                ].map((marco) => {
+                  const unlocked = achievements.desbloqueadas.some((a) => a.codigo === marco.codigo);
+                  return (
+                    <div
+                      key={marco.codigo}
+                      className={cn(
+                        'flex flex-col items-center justify-center rounded-xl border p-4 w-[110px] text-center transition-all',
+                        unlocked
+                          ? 'border-brand-primary/40 bg-brand-primary/10 shadow-[0_0_15px_rgba(38,153,233,0.15)]'
+                          : 'border-border bg-surface-2 grayscale opacity-60'
+                      )}
+                    >
+                      <span className="text-3xl mb-2" aria-hidden="true">
+                        {unlocked ? '🏆' : '🔒'}
+                      </span>
+                      <span className={cn('text-xs font-bold uppercase', unlocked ? 'text-brand-primary' : 'text-text-muted')}>
+                        {marco.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardHeader>
+          </Card>
+        </section>
+      )}
 
       {/* Seção: Informações Pessoais (editável) */}
       <section className="space-y-4">

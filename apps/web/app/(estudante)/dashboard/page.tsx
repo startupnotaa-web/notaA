@@ -119,6 +119,37 @@ export default function DashboardPage() {
         )}
       </header>
 
+      {/* Card de Missão de Recuperação */}
+      {streak.ultimaAtividade && 
+       Math.round((new Date().setHours(0,0,0,0) - new Date(`${streak.ultimaAtividade}T00:00:00`).getTime()) / (24 * 60 * 60 * 1000)) === 2 && 
+       streak.diasConsecutivos > 0 && (
+        <Card className="border-warning bg-warning/10 shadow-lg shadow-warning/20">
+          <CardHeader className="items-center justify-between sm:flex-row">
+            <div>
+              <h2 className="text-lg font-bold text-warning flex items-center gap-2">
+                <span aria-hidden="true">⚠️</span> Missão de Recuperação
+              </h2>
+              <p className="text-sm font-medium text-text mt-1">
+                Não perca seu ritmo! Estude mais 20 minutos hoje no Quiz ou Tutor Socrático e recupere sua ofensiva!
+              </p>
+            </div>
+            <button 
+              onClick={async () => {
+                try {
+                  await apiFetch('/me/recover-streak', { method: 'POST' });
+                  window.location.reload();
+                } catch (e) {
+                  setErro('Falha ao recuperar ofensiva');
+                }
+              }}
+              className="mt-4 shrink-0 rounded-full bg-warning px-6 py-2 text-sm font-bold text-warning-foreground transition-transform hover:scale-105 sm:mt-0"
+            >
+              Recuperar Ofensiva
+            </button>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Card de Gamificação Premium (Passo C) */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary/30 via-surface to-brand-accent/30 p-[1px] shadow-lg">
         <div className="flex flex-col gap-5 rounded-2xl bg-surface/70 p-6 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
