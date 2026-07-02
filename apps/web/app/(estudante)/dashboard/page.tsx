@@ -218,38 +218,87 @@ export default function DashboardPage() {
       {/* Atalhos para o estudo aprofundado (com progresso real) */}
       <section className="space-y-3">
         <SectionHeader title="Continuar" accent="estudando" as="h2" />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           <ShortcutCard
             icon="⚡"
-            title="Quiz Adaptativo"
-            description="Questões que se ajustam ao seu nível em tempo real."
+            title="Quiz com IA"
+            description="Questões personalizadas por tema."
             href="/quiz"
           />
           <ShortcutCard
             icon="✍️"
-            title="Correção de Redação"
-            description="Nota por competência (0–200) com feedback do seu texto."
+            title="Redação"
+            description="Correção nas 5 competências do ENEM."
             metric={`${progresso.redacoesEnviadas} redação(ões)`}
             href="/redacao"
           />
           <ShortcutCard
             icon="📊"
             title="Simulado Adaptativo"
-            description="Teste seus conhecimentos em formato de simulado."
+            description="Dificuldade calibrada em tempo real."
             href="/simulado"
           />
           <ShortcutCard
             icon="🏛️"
-            title="Tutor Socrático"
-            description="Tire dúvidas com um tutor que guia o seu raciocínio."
+            title="IA Socrática"
+            description="Aprenda descobrindo com o Tutor."
             metric={`${progresso.sessoesSocraticas} sessão(ões)`}
             href="/tutor"
           />
           <ShortcutCard
             icon="⚔️"
             title="Modo Batalha PvP"
-            description="Enfrente fantasmas de outros alunos em duelos."
+            description="Duelo em tempo real."
             href="/batalha"
+          />
+          <ShortcutCard
+            icon="🏟️"
+            title="Batalha Coletiva"
+            description="Turmas e escolas ao vivo."
+            href="/batalha-coletiva"
+            emBreve
+          />
+          <ShortcutCard
+            icon="🗺️"
+            title="Mapa do Conhecimento"
+            description="Grafo visual de lacunas."
+            href="/mapa-conhecimento"
+            emBreve
+          />
+          <ShortcutCard
+            icon="🎯"
+            title="Previsão de Nota"
+            description="IA prevê seu desempenho no ENEM."
+            href="/previsao-nota"
+            emBreve
+          />
+          <ShortcutCard
+            icon="📖"
+            title="Minha Narrativa"
+            description="Conecte seu sonho ao estudo."
+            href="/minha-narrativa"
+            emBreve
+          />
+          <ShortcutCard
+            icon="🏆"
+            title="Certificados"
+            description="Conquistas verificáveis."
+            href="/certificados"
+            emBreve
+          />
+          <ShortcutCard
+            icon="👨‍👩‍👧"
+            title="Relatório Familiar"
+            description="Progresso para os pais."
+            href="/relatorio-familiar"
+            emBreve
+          />
+          <ShortcutCard
+            icon="👥"
+            title="Comunidade"
+            description="Dicas e desafios com colegas."
+            href="/comunidade"
+            emBreve
           />
         </div>
       </section>
