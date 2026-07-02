@@ -256,7 +256,6 @@ export default function DashboardPage() {
             title="Batalha Coletiva"
             description="Turmas e escolas ao vivo."
             href="/batalha-coletiva"
-            emBreve
           />
           <ShortcutCard
             icon="🗺️"
