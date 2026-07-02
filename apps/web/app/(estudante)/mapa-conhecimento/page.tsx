@@ -125,7 +125,7 @@ export default function MapaConhecimentoPage() {
                      <p className="text-xs text-text-muted">Proficiência atual: {Math.round(lacuna.normalized * 100)}%</p>
                    </div>
                  </div>
-                 <Button asChild className="mt-2 w-full" variant="outline">
+                 <Button asChild className="mt-2 w-full" variant="secondary">
                    <Link href="/quiz">Praticar {lacuna.label}</Link>
                  </Button>
               </Card>

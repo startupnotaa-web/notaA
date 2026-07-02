@@ -7,7 +7,7 @@ export class SupabaseAuthAdminAdapter implements AuthAdminPort {
   constructor(private readonly client: SupabaseClient) {}
 
   async setPapel(authUid: string, papel: Papel, escolaId: string | null): Promise<void> {
-    const { error } = await this.client.auth.admin.updateUserById(authUid, {
+    const { error } = await (this.client.auth as any).admin.updateUserById(authUid, {
       app_metadata: { papel, escola_id: escolaId },
     });
     if (error) {

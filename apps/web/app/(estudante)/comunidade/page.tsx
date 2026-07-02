@@ -87,7 +87,7 @@ export default function ComunidadePage() {
     const post: Post = {
       id: Date.now().toString(),
       autor: data.perfil.nome || 'Estudante',
-      nivel: data.nivel.atual.nivel,
+      nivel: data.nivel.atual,
       tipo: 'dica',
       conteudo: novoPost,
       curtidas: 0,
@@ -126,8 +126,8 @@ export default function ComunidadePage() {
   
   // Atualiza o XP do usuário no ranking mockado
   const ranking = [...MOCK_LEADERBOARD];
-  ranking[1].xp = data.xpTotal;
-  ranking[1].nome = data.perfil.nome || 'Você';
+  ranking[1]!.xp = data.xpTotal;
+  ranking[1]!.nome = data.perfil.nome || 'Você';
   // Ordena por XP
   ranking.sort((a, b) => b.xp - a.xp);
 
@@ -151,7 +151,7 @@ export default function ComunidadePage() {
           <Card className="p-4 bg-surface-2 border-border shadow-sm">
             <div className="flex gap-4">
                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary/20 text-brand-primary font-bold">
-                  {nomeCurto.charAt(0)}
+                  {nomeCurto?.charAt(0)}
                </div>
                <div className="flex-1 space-y-3">
                   <textarea 
@@ -185,7 +185,7 @@ export default function ComunidadePage() {
                          <p className="font-bold text-text text-sm flex items-center gap-2">
                            {post.autor}
                            {post.tipo !== 'conquista' && (
-                             <Badge variant="outline" className="text-[10px] py-0">Nv {post.nivel}</Badge>
+                             <Badge variant="neutral" className="text-[10px] py-0">Nv {post.nivel}</Badge>
                            )}
                          </p>
                          <p className="text-[10px] text-text-muted">{post.tempoAtras}</p>

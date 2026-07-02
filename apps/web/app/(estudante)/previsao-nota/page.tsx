@@ -120,7 +120,7 @@ export default function PrevisaoNotaPage() {
         <Card className="overflow-hidden border-border bg-gradient-to-br from-surface to-surface-2/30">
            <div className="p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-2">
-                 <Badge variant={chance === 'Alta' ? 'success' : chance === 'Média' ? 'warning' : 'danger'}>
+                 <Badge variant={chance === 'Alta' ? 'success' : chance === 'Média' ? 'warning' : 'error'}>
                    Chance: {chance}
                  </Badge>
                  <h3 className="text-2xl font-bold text-text">Objetivo: {objetivoStr}</h3>

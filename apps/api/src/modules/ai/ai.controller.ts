@@ -74,7 +74,7 @@ export class AiController {
       return { ok: false, erro: 'GEMINI_API_KEY não configurado no ambiente da API.' };
     }
     try {
-      const res = await fetch(
+      const res: any = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${apiKey}`,
       );
       const data: any = await res.json();

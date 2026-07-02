@@ -81,7 +81,7 @@ export default function BatalhaColetivaPage() {
               <p className="font-bold text-text">{perfil.nome || 'Estudante'}</p>
            </div>
            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary/20 text-brand-primary font-black">
-              {nivel.atual.nivel}
+              {nivel.atual}
            </div>
         </div>
       </header>
@@ -155,7 +155,7 @@ export default function BatalhaColetivaPage() {
         <div className="space-y-4">
            <div className="flex items-center justify-between">
               <SectionHeader title="Jogadores" accent="no Lobby" as="h2" />
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="neutral" className="text-xs">
                 {connected ? MOCK_PLAYERS.length + 1 : MOCK_PLAYERS.length} Online
               </Badge>
            </div>
@@ -170,7 +170,7 @@ export default function BatalhaColetivaPage() {
                      <p className="text-[10px] text-text-muted">Sua Escola</p>
                    </div>
                  </div>
-                 <div className="text-xs font-black text-brand-primary">Nv {nivel.atual.nivel}</div>
+                 <div className="text-xs font-black text-brand-primary">Nv {nivel.atual}</div>
                </div>
              )}
 

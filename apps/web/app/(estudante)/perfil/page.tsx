@@ -99,7 +99,7 @@ export default function PerfilPage() {
           <h1 className="text-2xl font-bold text-text">{perfil.nome ? perfil.nome : 'Estudante Nota A'}</h1>
           <p className="text-sm font-medium text-text-muted">{perfil.email}</p>
           <div className="flex items-center gap-2 mt-1">
-             <Badge variant="outline" className="text-xs">
+             <Badge variant="neutral" className="text-xs">
                Nível {perfil.gamificacao?.nivel?.atual || 1}
              </Badge>
              <Badge variant={perfil.plano?.status === 'ativa' ? 'brand' : 'neutral'} className="text-xs">

@@ -151,7 +151,7 @@ export default function RelatorioFamiliarPage() {
              <h3 className="text-xl font-bold text-text">Além do Básico</h3>
              <p className="text-text-muted">
                Com <strong className="text-brand-primary">{xpTotal} XP</strong> acumulados, 
-               já alcançou o <strong className="text-text">Nível {nivel.atual.nivel}</strong>.
+               já alcançou o <strong className="text-text">Nível {nivel.atual}</strong>.
              </p>
              <p className="text-text-muted">
                Além das questões normais, completou <strong className="text-text">{atividadesExtras} atividades extras</strong> 

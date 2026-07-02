@@ -106,7 +106,7 @@ export default function MinhaNarrativaPage() {
       id: 'primeiros-passos',
       icon: '⭐',
       title: 'Despertar do Conhecimento',
-      description: `Você já acumulou ${xpTotal} XP respondendo aos nossos desafios e atingiu o Nível ${nivel.atual.nivel}.`,
+      description: `Você já acumulou ${xpTotal} XP respondendo aos nossos desafios e atingiu o Nível ${nivel.atual}.`,
       date: 'Evolução',
       completed: true,
     });
@@ -168,15 +168,15 @@ export default function MinhaNarrativaPage() {
       {/* Hero do Arquétipo */}
       <Card className="relative overflow-hidden border-brand-primary/30 bg-gradient-to-br from-surface to-surface-2 p-8 text-center sm:p-12">
          <div className="absolute -right-10 -top-10 text-[150px] opacity-5 pointer-events-none select-none">
-           {arquetipo.emoji}
+           {arquetipo?.emoji}
          </div>
          <Badge variant="info" className="mx-auto mb-4 w-fit">Seu Arquétipo Cognitivo</Badge>
-         <div className="mb-2 text-6xl" aria-hidden="true">{arquetipo.emoji}</div>
+         <div className="mb-2 text-6xl" aria-hidden="true">{arquetipo?.emoji}</div>
          <h2 className="mb-2 text-4xl font-black tracking-tight text-text">
-           {nomeAluno}, <span className="text-brand-primary">{arquetipo.titulo}</span>
+           {nomeAluno}, <span className="text-brand-primary">{arquetipo?.titulo}</span>
          </h2>
          <p className="mx-auto max-w-xl text-lg text-text-muted">
-           {arquetipo.descricao}
+           {arquetipo?.descricao}
          </p>
       </Card>
 
@@ -209,7 +209,7 @@ export default function MinhaNarrativaPage() {
                   )}>
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-2xl" aria-hidden="true">{item.icon}</span>
-                      <Badge variant={item.completed ? (item.isFinale ? 'info' : 'success') : 'outline'}>{item.date}</Badge>
+                      <Badge variant={item.completed ? (item.isFinale ? 'info' : 'success') : 'neutral'}>{item.date}</Badge>
                     </div>
                     <h3 className={cn("mb-2 text-lg font-bold", item.completed && !item.isFinale ? "text-success" : "text-text")}>
                       {item.title}

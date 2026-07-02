@@ -120,8 +120,8 @@ export default function DashboardPage() {
       </header>
 
       {/* Card de Missão de Recuperação */}
-      {streak.ultimaAtividade && 
-       Math.round((new Date().setHours(0,0,0,0) - new Date(`${streak.ultimaAtividade}T00:00:00`).getTime()) / (24 * 60 * 60 * 1000)) === 2 && 
+      {(streak as any).ultimaAtividade && 
+       Math.round((new Date().setHours(0,0,0,0) - new Date(`${(streak as any).ultimaAtividade}T00:00:00`).getTime()) / (24 * 60 * 60 * 1000)) === 2 && 
        streak.diasConsecutivos > 0 && (
         <Card className="border-warning bg-warning/10 shadow-lg shadow-warning/20">
           <CardHeader className="items-center justify-between sm:flex-row">

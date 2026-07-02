@@ -35,7 +35,7 @@ export default function EscolaHubPage() {
            Em breve você poderá visualizar relatórios consolidados, gerenciar turmas, agendar simulados globais e monitorar o engajamento da sua instituição.
          </p>
          <div className="mt-4 animate-pulse">
-            <Badge variant="outline">Disponível na próxima fase</Badge>
+            <Badge variant="neutral">Disponível na próxima fase</Badge>
          </div>
       </div>
     </div>
