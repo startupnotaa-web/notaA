@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardResponse, Eixo4D } from '@notaa/contracts';
 import { Card, SectionHeader, Skeleton, Badge, cn, Button } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../../lib/api-client';
+import { apiFetch, ApiError } from '../../../lib/api-client';
 
 const ARQUETIPOS: Record<string, { titulo: string, descricao: string, emoji: string }> = {
   Visual: { titulo: 'O Observador', descricao: 'Você capta o mundo através de imagens e mapas mentais.', emoji: '👁️' },

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardResponse } from '@notaa/contracts';
 import { Card, SectionHeader, Skeleton, cn, Button } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../../lib/api-client';
+import { apiFetch, ApiError } from '../../../lib/api-client';
 
 const AREA_LABELS: Record<string, string> = {
   linguagens: 'Linguagens',
