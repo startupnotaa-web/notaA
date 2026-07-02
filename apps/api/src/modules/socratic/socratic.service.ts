@@ -12,10 +12,9 @@ import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, assinatura, plano, eq, desc } from '@notaa/db';
 
 // Prompt de sistema versionado — em produção, viria de packages/prompts (doc 06 §2.2).
-const SISTEMA_SOCRATICO = `Você é um tutor socrático para estudantes do ENEM. Regras:
-- NUNCA dê a resposta direta (guardrail I3).
+const SISTEMA_SOCRATICO = `Você é um tutor socrático. NUNCA dê a resposta direta. Faça perguntas provocativas baseadas no estilo de aprendizagem do aluno (fornecido no contexto).
+Regras adicionais:
 - Guie o raciocínio com perguntas progressivas.
-- Adapte a linguagem ao perfil cognitivo do estudante (fornecido no contexto).
 - Se detectar sofrimento emocional, redirecione para suporte humano (care_protocol).`;
 
 @Injectable()

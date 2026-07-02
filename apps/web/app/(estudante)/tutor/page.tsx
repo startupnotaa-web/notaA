@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 import type { SocraticResponse, SocraticHistoryItem, MeResponse } from '@notaa/contracts';
 import { Button, cn } from '@notaa/ui';
 import { apiFetch } from '../../../lib/api-client';
+import { useUser } from '../../../lib/user-context';
 import { toast } from '../../components/toast';
 
 const ERRO_IA = 'Nossos servidores de IA estão lotados. Tente novamente em instantes.';
@@ -34,6 +35,8 @@ export default function SocraticoPage() {
   const fimRef = useRef<HTMLDivElement>(null);
   const [historico, setHistorico] = useState<SocraticHistoryItem[]>([]);
   const [me, setMe] = useState<MeResponse | null>(null);
+  const { addXP } = useUser();
+  const [interacoesAtuais, setInteracoesAtuais] = useState(0);
 
   // Abre a sessão ao montar e carrega histórico + me
   useEffect(() => {
@@ -90,6 +93,15 @@ export default function SocraticoPage() {
         ...m,
         { id: tmpId(), papel: 'tutor', conteudo: resposta.mensagem, resposta },
       ]);
+
+      setInteracoesAtuais(prev => {
+        const next = prev + 1;
+        if (next % 4 === 0) {
+          addXP(20);
+          toast('+20 XP! Belo raciocínio socrático.', { variant: 'success' });
+        }
+        return next;
+      });
     } catch {
       setMensagens((m) => m.filter((x) => x.id !== otimista.id));
       setRascunho(texto);
