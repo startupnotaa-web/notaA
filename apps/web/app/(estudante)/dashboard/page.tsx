@@ -220,24 +220,36 @@ export default function DashboardPage() {
         <SectionHeader title="Continuar" accent="estudando" as="h2" />
         <div className="grid gap-4 sm:grid-cols-2">
           <ShortcutCard
-            icon="💬"
-            title="Chat Socrático"
-            description="Tire dúvidas com um tutor que guia o seu raciocínio."
-            metric={`${progresso.sessoesSocraticas} sessão(ões)`}
-            href="/estudo/socratico"
-          />
-          <ShortcutCard
-            icon="✍️"
-            title="Corretor de Redação"
-            description="Nota por competência (0–200) com feedback do seu texto."
-            metric={`${progresso.redacoesEnviadas} redação(ões)`}
-            href="/estudo/redacao"
-          />
-          <ShortcutCard
-            icon="🎯"
+            icon="⚡"
             title="Quiz Adaptativo"
             description="Questões que se ajustam ao seu nível em tempo real."
             href="/quiz"
+          />
+          <ShortcutCard
+            icon="✍️"
+            title="Correção de Redação"
+            description="Nota por competência (0–200) com feedback do seu texto."
+            metric={`${progresso.redacoesEnviadas} redação(ões)`}
+            href="/redacao"
+          />
+          <ShortcutCard
+            icon="📊"
+            title="Simulado Adaptativo"
+            description="Teste seus conhecimentos em formato de simulado."
+            href="/simulado"
+          />
+          <ShortcutCard
+            icon="🏛️"
+            title="Tutor Socrático"
+            description="Tire dúvidas com um tutor que guia o seu raciocínio."
+            metric={`${progresso.sessoesSocraticas} sessão(ões)`}
+            href="/tutor"
+          />
+          <ShortcutCard
+            icon="⚔️"
+            title="Modo Batalha PvP"
+            description="Enfrente fantasmas de outros alunos em duelos."
+            href="/batalha"
           />
         </div>
       </section>
