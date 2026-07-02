@@ -269,7 +269,6 @@ export default function DashboardPage() {
             title="Previsão de Nota"
             description="IA prevê seu desempenho no ENEM."
             href="/previsao-nota"
-            emBreve
           />
           <ShortcutCard
             icon="📖"
