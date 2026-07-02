@@ -31,6 +31,10 @@ function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
   };
 }
 
+import { ContextBuilderService } from '../ai/context-builder.service';
+import { LLM_PROVIDER } from '../ai/ai.tokens';
+import type { LLMProviderPort } from '@notaa/contracts';
+
 @Injectable()
 export class QuizService {
   constructor(
@@ -38,7 +42,33 @@ export class QuizService {
     private readonly gamificacao: GamificacaoService,
     private readonly profiler: ProfilerService,
     private readonly errorDetector: ErrorDetectorService,
+    @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
+    private readonly contextBuilder: ContextBuilderService,
   ) {}
+
+  async generateQuiz(
+    estudanteId: string,
+    tema: string,
+    dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil'
+  ): Promise<any> {
+    const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, { temaAtivo: tema });
+    
+    // Opcional: injetar a dificuldade desejada
+    const diffText = dificuldadeDesejada ? `Dificuldade desejada: ${dificuldadeDesejada}.` : '';
+
+    const sistema = `Você é um tutor. O aluno aprende melhor de forma {ESTILO}. Crie uma questão sobre ${tema}. ${diffText}
+Retorne APENAS um JSON estrito: { 'enunciado': '...', 'alternativas': ['A) ...', 'B) ...', 'C) ...', 'D) ...', 'E) ...'], 'correta': 0, 'explicacao': '...', 'dica_perfil': 'dica focada no estilo do aluno', 'dificuldade': 'Fácil|Média|Difícil' }. Use as instruções pedagógicas fornecidas no contexto.`;
+
+    const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
+
+    const { data } = await this.llm.complete({
+      sistema,
+      contexto,
+      schema: GenerateQuizResponseSchema,
+    });
+
+    return data;
+  }
 
   async startSession(
     estudanteId: string,

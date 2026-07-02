@@ -20,6 +20,14 @@ export class QuizController {
     return this.quiz.startSession(req.user.sub, body.area);
   }
 
+  @Post('generate')
+  generateQuiz(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { tema: string; dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil' },
+  ) {
+    return this.quiz.generateQuiz(req.user.sub, body.tema, body.dificuldadeDesejada);
+  }
+
   @Get('sessions/:id/next-item')
   nextItem(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.quiz.nextItem(id, req.user.sub);

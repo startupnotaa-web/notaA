@@ -4,12 +4,13 @@ import { DB_CLIENT } from '../../db/db.tokens';
 import { ErrorDetectorModule } from '../error-detector/error-detector.module';
 import { GamificacaoModule } from '../gamificacao/gamificacao.module';
 import { ProfilerModule } from '../profiler/profiler.module';
+import { AiModule } from '../ai/ai.module';
 import { QuizController } from './quiz.controller';
 import { QuizService } from './quiz.service';
 import { QUIZ_REPOSITORY } from './quiz.tokens';
 
 @Module({
-  imports: [GamificacaoModule, ProfilerModule, ErrorDetectorModule],
+  imports: [GamificacaoModule, ProfilerModule, ErrorDetectorModule, AiModule],
   controllers: [QuizController],
   providers: [
     QuizService,

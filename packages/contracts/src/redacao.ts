@@ -36,6 +36,7 @@ export const EssayFeedbackGeralSchema = z.object({
   pontosFortes: z.array(z.string()),
   pontosMelhoria: z.array(z.string()),
   proximoPasso: z.string(),
+  dicaPerfil: z.string().optional(),
 });
 export type EssayFeedbackGeral = z.infer<typeof EssayFeedbackGeralSchema>;
 

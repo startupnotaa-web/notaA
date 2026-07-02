@@ -270,6 +270,15 @@ function Resultado({ avaliacao, onNova }: { avaliacao: EssayEvaluation; onNova: 
               <p className="mb-1 text-sm font-bold text-text">Próximo passo</p>
               <p className="text-sm text-text-muted">{avaliacao.feedbackGeral.proximoPasso}</p>
             </div>
+            {avaliacao.feedbackGeral.dicaPerfil && (
+              <div className="mt-4 rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">✨</span>
+                  <p className="text-sm font-bold text-brand-primary">Dica Especial para Você</p>
+                </div>
+                <p className="text-sm text-text-muted leading-relaxed">{avaliacao.feedbackGeral.dicaPerfil}</p>
+              </div>
+            )}
           </CardHeader>
         </Card>
       </section>

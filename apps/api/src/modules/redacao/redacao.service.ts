@@ -24,7 +24,8 @@ const SISTEMA_CORRETOR = `Você é um corretor de redação do ENEM. Regras:
 - A nota total é a soma das 5 competências (0 a 1000).
 - Cite trechos específicos do texto ao justificar cada nota (guardrail G-R2).
 - NUNCA invente competências extras ou omita alguma (guardrail I4).
-- Adapte a linguagem do feedback ao perfil cognitivo do estudante.`;
+- Adapte a linguagem do feedback ao perfil cognitivo do estudante.
+- Em 'feedbackGeral', crie uma 'dicaPerfil' personalizada baseada nas instruções pedagógicas.`;
 
 // XP concedido por submissão de redação (doc 04 §7).
 const XP_REDACAO = 30;

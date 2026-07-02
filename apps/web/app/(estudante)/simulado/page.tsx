@@ -58,17 +58,40 @@ export default function SimuladoPage() {
   const [revelado, setRevelado] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
-  const obterProximaQuestao = (nivelDesejado: NivelDificuldade) => {
-    const questoesDoNivel = MOCK_QUESTOES.filter(q => q.nivel === nivelDesejado && !questoesJogadas.has(q.id));
-    if (questoesDoNivel.length > 0) {
-      // Pega uma aleatória do nível
-      return questoesDoNivel[Math.floor(Math.random() * questoesDoNivel.length)];
+  const obterProximaQuestao = async (nivelDesejado: NivelDificuldade) => {
+    try {
+      setCarregando(true);
+      const res = await apiFetch('/quiz/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          tema: 'Assuntos do ENEM (Matemática, Linguagens, Humanas ou Natureza)',
+          dificuldadeDesejada: nivelDesejado === 1 ? 'Fácil' : nivelDesejado === 2 ? 'Média' : 'Difícil'
+        })
+      });
+      const data = await res.json();
+      
+      return {
+        id: Math.random().toString(36).substring(7),
+        enunciado: data.enunciado,
+        alternativas: data.alternativas.map((alt: string, index: number) => ({
+          id: String.fromCharCode(97 + index), // a, b, c, d, e
+          texto: alt,
+          correta: index === data.correta
+        })),
+        nivel: nivelDesejado,
+        area: 'Simulado Adaptativo IA',
+        dicaPerfil: data.dica_perfil,
+        explicacao: data.explicacao
+      };
+    } catch (err) {
+      toast({ title: 'Erro ao gerar questão', description: 'Tente novamente.', variant: 'error' });
+      return null;
+    } finally {
+      setCarregando(false);
     }
-    // Fallback: se não achar no nível desejado, pega qualquer uma que não jogou
-    return MOCK_QUESTOES.find(q => !questoesJogadas.has(q.id)) || null;
   };
 
-  const iniciarSimulado = () => {
+  const iniciarSimulado = async () => {
     setFase('simulado');
     setRespondidas(0);
     setAcertos(0);
@@ -78,7 +101,7 @@ export default function SimuladoPage() {
     setPicked(null);
     setRevelado(false);
     
-    const primeira = obterProximaQuestao(2);
+    const primeira = await obterProximaQuestao(2);
     if (primeira) {
       setQuestaoAtual(primeira);
       setQuestoesJogadas(new Set([primeira.id]));
@@ -89,11 +112,11 @@ export default function SimuladoPage() {
     if (!picked || !questaoAtual) return;
     
     setRevelado(true);
-    const acertou = questaoAtual.alternativas.find(a => a.id === picked)?.correta;
+    const acertou = questaoAtual.alternativas.find((a: any) => a.id === picked)?.correta;
     
     if (acertou) {
       setAcertos(prev => prev + 1);
-      const xpGanho = XP_POR_ACERTO * nivelAtual; // Ganha mais XP se a dificuldade for maior
+      const xpGanho = XP_POR_ACERTO * nivelAtual; 
       setPontuacaoAcumulada(prev => prev + xpGanho);
     }
   };
@@ -101,7 +124,7 @@ export default function SimuladoPage() {
   const proximaQuestao = async () => {
     if (!questaoAtual) return;
 
-    const acertou = questaoAtual.alternativas.find(a => a.id === picked)?.correta;
+    const acertou = questaoAtual.alternativas.find((a: any) => a.id === picked)?.correta;
     
     // Algoritmo de Adaptação de Dificuldade
     let proximoNivel = nivelAtual;
@@ -116,9 +139,9 @@ export default function SimuladoPage() {
     if (respondidas + 1 >= TOTAL_QUESTOES) {
       finalizarSimulado();
     } else {
-      const prox = obterProximaQuestao(proximoNivel);
+      const prox = await obterProximaQuestao(proximoNivel);
       if (prox) {
-        setQuestaoAtual(prox);
+        setQuestaoAtual(prox as any);
         setQuestoesJogadas(prev => new Set(prev).add(prox.id));
         setPicked(null);
         setRevelado(false);

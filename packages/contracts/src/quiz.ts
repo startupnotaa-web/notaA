@@ -51,3 +51,19 @@ export const SubmitAnswerResponseSchema = z.object({
   proximaQuestao: ItemPublicoSchema.nullable(),
 });
 export type SubmitAnswerResponse = z.infer<typeof SubmitAnswerResponseSchema>;
+
+export const GenerateQuizRequestSchema = z.object({
+  tema: z.string().min(1),
+  dificuldadeDesejada: z.enum(['Fácil', 'Média', 'Difícil']).optional(),
+});
+export type GenerateQuizRequest = z.infer<typeof GenerateQuizRequestSchema>;
+
+export const GenerateQuizResponseSchema = z.object({
+  enunciado: z.string(),
+  alternativas: z.array(z.string()).length(5),
+  correta: z.number().min(0).max(4),
+  explicacao: z.string(),
+  dica_perfil: z.string(),
+  dificuldade: z.enum(['Fácil', 'Média', 'Difícil']),
+});
+export type GenerateQuizResponse = z.infer<typeof GenerateQuizResponseSchema>;
