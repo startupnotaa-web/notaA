@@ -286,7 +286,6 @@ export default function DashboardPage() {
             title="Relatório Familiar"
             description="Progresso para os pais."
             href="/relatorio-familiar"
-            emBreve
           />
           <ShortcutCard
             icon="👥"
