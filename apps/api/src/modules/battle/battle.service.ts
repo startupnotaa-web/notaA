@@ -1,7 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { Database, batalhaPvp, usuario, eq, and, sql } from '@notaa/db';
-import { not } from 'drizzle-orm';
+import { Database, batalhaPvp, usuario, eq, and, sql, ne } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import type { LLMProviderPort, MatchmakeResponse } from '@notaa/contracts';
@@ -30,7 +29,7 @@ export class BattleService {
     .where(
       and(
         eq(batalhaPvp.area, area as any),
-        not(eq(batalhaPvp.usuarioId, estudanteId))
+        ne(batalhaPvp.usuarioId, estudanteId)
       )
     )
     .orderBy(sql`RANDOM()`)
