@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import type { QuestaoSimuladoResponse } from '@notaa/contracts';
 import { Badge, Button, Card, OptionCard, Progress, cn } from '@notaa/ui';
 import { useUser } from '../../../lib/user-context';
 import { apiFetch } from '../../../lib/api-client';
@@ -13,7 +14,7 @@ const XP_POR_ACERTO = 50; // XP base por acerto (pode ser multiplicado pelo nív
 type NivelDificuldade = 1 | 2 | 3;
 type FaseSimulado = 'config' | 'simulado' | 'resultado';
 
-interface MockQuestao {
+interface QuestaoSimulado {
   id: string;
   enunciado: string;
   alternativas: { id: string; texto: string; correta: boolean }[];
@@ -21,34 +22,13 @@ interface MockQuestao {
   area: string;
 }
 
-// Mocks de Questões (Substituir pela IA futuramente)
-const MOCK_QUESTOES: MockQuestao[] = [
-  { id: 'f1', enunciado: 'Quanto é 2 + 2?', alternativas: [{ id: 'a', texto: '3', correta: false }, { id: 'b', texto: '4', correta: true }], nivel: 1, area: 'Matemática' },
-  { id: 'f2', enunciado: 'O sol é uma estrela?', alternativas: [{ id: 'a', texto: 'Sim', correta: true }, { id: 'b', texto: 'Não', correta: false }], nivel: 1, area: 'Natureza' },
-  { id: 'f3', enunciado: 'Capital do Brasil?', alternativas: [{ id: 'a', texto: 'RJ', correta: false }, { id: 'b', texto: 'Brasília', correta: true }], nivel: 1, area: 'Humanas' },
-  { id: 'f4', enunciado: 'A água ferve a 100°C?', alternativas: [{ id: 'a', texto: 'Sim', correta: true }, { id: 'b', texto: 'Não', correta: false }], nivel: 1, area: 'Natureza' },
-  { id: 'f5', enunciado: 'Qual o maior planeta?', alternativas: [{ id: 'a', texto: 'Terra', correta: false }, { id: 'b', texto: 'Júpiter', correta: true }], nivel: 1, area: 'Natureza' },
-  
-  { id: 'm1', enunciado: 'Qual a raiz de 144?', alternativas: [{ id: 'a', texto: '12', correta: true }, { id: 'b', texto: '14', correta: false }], nivel: 2, area: 'Matemática' },
-  { id: 'm2', enunciado: 'Quem descobriu o Brasil?', alternativas: [{ id: 'a', texto: 'Pedro Álvares Cabral', correta: true }, { id: 'b', texto: 'Cristóvão Colombo', correta: false }], nivel: 2, area: 'Humanas' },
-  { id: 'm3', enunciado: 'Cálculo de área de um triângulo?', alternativas: [{ id: 'a', texto: 'b*h/2', correta: true }, { id: 'b', texto: 'b*h', correta: false }], nivel: 2, area: 'Matemática' },
-  { id: 'm4', enunciado: 'O que é fotossíntese?', alternativas: [{ id: 'a', texto: 'Processo das plantas', correta: true }, { id: 'b', texto: 'Respiração', correta: false }], nivel: 2, area: 'Natureza' },
-  { id: 'm5', enunciado: 'Traduza "Book" para português.', alternativas: [{ id: 'a', texto: 'Livro', correta: true }, { id: 'b', texto: 'Caderno', correta: false }], nivel: 2, area: 'Linguagens' },
-
-  { id: 'd1', enunciado: 'Qual a derivada de x²?', alternativas: [{ id: 'a', texto: '2x', correta: true }, { id: 'b', texto: 'x', correta: false }], nivel: 3, area: 'Matemática' },
-  { id: 'd2', enunciado: 'O que é a Teoria da Relatividade?', alternativas: [{ id: 'a', texto: 'Física Clássica', correta: false }, { id: 'b', texto: 'E=mc²', correta: true }], nivel: 3, area: 'Natureza' },
-  { id: 'd3', enunciado: 'Qual autor escreveu Dom Casmurro?', alternativas: [{ id: 'a', texto: 'Machado de Assis', correta: true }, { id: 'b', texto: 'José de Alencar', correta: false }], nivel: 3, area: 'Linguagens' },
-  { id: 'd4', enunciado: 'Fórmula de Bhaskara?', alternativas: [{ id: 'a', texto: '(-b +- raiz(delta))/2a', correta: true }, { id: 'b', texto: 'b² - 4ac', correta: false }], nivel: 3, area: 'Matemática' },
-  { id: 'd5', enunciado: 'O que foi a Guerra Fria?', alternativas: [{ id: 'a', texto: 'Conflito ideológico', correta: true }, { id: 'b', texto: 'Guerra de inverno', correta: false }], nivel: 3, area: 'Humanas' },
-];
-
 export default function SimuladoPage() {
   const { addXP } = useUser();
   const [fase, setFase] = useState<FaseSimulado>('config');
   const [nivelAtual, setNivelAtual] = useState<NivelDificuldade>(2); // Inicia no médio
   
   const [questoesJogadas, setQuestoesJogadas] = useState<Set<string>>(new Set());
-  const [questaoAtual, setQuestaoAtual] = useState<MockQuestao | null>(null);
+  const [questaoAtual, setQuestaoAtual] = useState<QuestaoSimulado | null>(null);
   
   const [respondidas, setRespondidas] = useState(0);
   const [acertos, setAcertos] = useState(0);
@@ -58,24 +38,31 @@ export default function SimuladoPage() {
   const [revelado, setRevelado] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
-  const obterProximaQuestao = async (nivelDesejado: NivelDificuldade) => {
+  const obterProximaQuestao = async (
+    nivelDesejado: NivelDificuldade | undefined,
+    excluirIds: string[],
+  ): Promise<QuestaoSimulado | null> => {
     try {
       setCarregando(true);
-      const data = await apiFetch<any>(`/simulado/next-item?nivel=${nivelDesejado}`, {
+      const params = new URLSearchParams();
+      if (nivelDesejado !== undefined) params.set('nivel', String(nivelDesejado));
+      if (excluirIds.length > 0) params.set('excluir', excluirIds.join(','));
+
+      // Sem "nivel" na 1ª chamada: o backend ancora a dificuldade inicial na
+      // proficiência real do aluno (habilidade TRI), em vez de sempre começar em "Médio".
+      const data = await apiFetch<QuestaoSimuladoResponse>(`/simulado/next-item?${params.toString()}`, {
         method: 'GET',
       });
-      
+
       return {
         id: data.id,
         enunciado: data.enunciado,
         alternativas: data.alternativas,
-        nivel: nivelDesejado,
+        nivel: data.nivel as NivelDificuldade,
         area: data.area,
-        dicaPerfil: data.dicaPerfil,
-        explicacao: data.explicacao
       };
     } catch (err) {
-      toast('Erro ao gerar questão. Tente novamente.', { variant: 'error' });
+      toast('Erro ao carregar questão do banco. Tente novamente.', { variant: 'error' });
       return null;
     } finally {
       setCarregando(false);
@@ -88,26 +75,28 @@ export default function SimuladoPage() {
     setAcertos(0);
     setPontuacaoAcumulada(0);
     setQuestoesJogadas(new Set());
-    setNivelAtual(2);
     setPicked(null);
     setRevelado(false);
-    
-    const primeira = await obterProximaQuestao(2);
+
+    const primeira = await obterProximaQuestao(undefined, []);
     if (primeira) {
+      setNivelAtual(primeira.nivel);
       setQuestaoAtual(primeira);
       setQuestoesJogadas(new Set([primeira.id]));
+    } else {
+      setFase('config');
     }
   };
 
   const handleResponder = () => {
     if (!picked || !questaoAtual) return;
-    
+
     setRevelado(true);
-    const acertou = questaoAtual.alternativas.find((a: any) => a.id === picked)?.correta;
-    
+    const acertou = questaoAtual.alternativas.find((a) => a.id === picked)?.correta;
+
     if (acertou) {
       setAcertos(prev => prev + 1);
-      const xpGanho = XP_POR_ACERTO * nivelAtual; 
+      const xpGanho = XP_POR_ACERTO * nivelAtual;
       setPontuacaoAcumulada(prev => prev + xpGanho);
     }
   };
@@ -115,8 +104,8 @@ export default function SimuladoPage() {
   const proximaQuestao = async () => {
     if (!questaoAtual) return;
 
-    const acertou = questaoAtual.alternativas.find((a: any) => a.id === picked)?.correta;
-    
+    const acertou = questaoAtual.alternativas.find((a) => a.id === picked)?.correta;
+
     // Algoritmo de Adaptação de Dificuldade
     let proximoNivel = nivelAtual;
     if (acertou) {
@@ -126,13 +115,13 @@ export default function SimuladoPage() {
     }
     setNivelAtual(proximoNivel);
     setRespondidas(prev => prev + 1);
-    
+
     if (respondidas + 1 >= TOTAL_QUESTOES) {
       finalizarSimulado();
     } else {
-      const prox = await obterProximaQuestao(proximoNivel);
+      const prox = await obterProximaQuestao(proximoNivel, Array.from(questoesJogadas));
       if (prox) {
-        setQuestaoAtual(prox as any);
+        setQuestaoAtual(prox);
         setQuestoesJogadas(prev => new Set(prev).add(prox.id));
         setPicked(null);
         setRevelado(false);

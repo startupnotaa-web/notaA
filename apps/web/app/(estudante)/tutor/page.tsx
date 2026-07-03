@@ -75,6 +75,42 @@ export default function SocraticoPage() {
     fimRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [mensagens, pensando]);
 
+  async function carregarSessaoAntiga(id: string) {
+    if (pensando) return;
+    setAbrindo(true);
+    try {
+      const msgs = await apiFetch<any[]>(`/socratic/sessions/${id}/messages`);
+      const msgsFormatadas = msgs.map(m => ({
+        id: m.id || tmpId(),
+        papel: m.papel,
+        conteudo: m.conteudo,
+      }));
+      setConversaId(id);
+      setMensagens(msgsFormatadas);
+    } catch {
+      toast('Não foi possível carregar a sessão.', { variant: 'error' });
+    } finally {
+      setAbrindo(false);
+    }
+  }
+
+  async function novaSessao() {
+    if (pensando) return;
+    setAbrindo(true);
+    try {
+      const s = await apiFetch<{ conversaId: string }>('/socratic/sessions', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      setConversaId(s.conversaId);
+      setMensagens([]);
+    } catch {
+      toast('Não foi possível abrir nova sessão.', { variant: 'error' });
+    } finally {
+      setAbrindo(false);
+    }
+  }
+
   async function enviar() {
     const texto = rascunho.trim();
     if (!texto || !conversaId || pensando) return;
@@ -125,13 +161,25 @@ export default function SocraticoPage() {
     <div className="mx-auto flex h-[calc(100vh-9rem)] w-full max-w-5xl gap-4 p-4">
       {/* Sidebar de Histórico */}
       <aside className="hidden w-64 flex-col rounded-2xl border border-border bg-surface p-4 md:flex">
-        <h2 className="mb-4 font-bold">Histórico (Socrático)</h2>
-        <div className="flex-1 overflow-y-auto space-y-2">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-bold">Histórico</h2>
+          <Button variant="ghost" size="sm" onClick={novaSessao} title="Nova Sessão">
+            +
+          </Button>
+        </div>
+        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
           {historico.length === 0 ? (
             <p className="text-sm text-text-muted">Nenhuma conversa salva.</p>
           ) : (
             historico.map((h) => (
-              <div key={h.id} className="rounded-xl border border-border p-3 text-sm">
+              <div 
+                key={h.id} 
+                onClick={() => carregarSessaoAntiga(h.id)}
+                className={cn(
+                  "cursor-pointer rounded-xl border p-3 text-sm transition-colors hover:border-brand",
+                  conversaId === h.id ? "border-brand bg-brand/5" : "border-border"
+                )}
+              >
                 <p className="font-semibold">{h.temaAtivo ?? 'Sessão Livre'}</p>
                 <p className="text-xs text-text-muted">{new Date(h.criadoEm).toLocaleDateString()}</p>
               </div>

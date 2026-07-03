@@ -54,6 +54,7 @@ export type SubmitAnswerResponse = z.infer<typeof SubmitAnswerResponseSchema>;
 
 export const GenerateQuizRequestSchema = z.object({
   tema: z.string().min(1),
+  area: AreaConhecimentoSchema,
   dificuldadeDesejada: z.enum(['Fácil', 'Média', 'Difícil']).optional(),
 });
 export type GenerateQuizRequest = z.infer<typeof GenerateQuizRequestSchema>;

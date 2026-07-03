@@ -28,6 +28,7 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
   private readonly habilidades = new Map<string, { theta: number; erroPadrao: number }>();
   private readonly idempotencyKeysVistas = new Set<string>();
   private readonly tentativas: TentativaMemoria[] = [];
+  private readonly perguntasIA: { estudanteId: string; area: AreaConhecimento; enunciado: string }[] = [];
 
   async createSession(estudanteId: string, area: AreaConhecimento): Promise<{ sessaoId: string }> {
     const id = randomUUID();
@@ -114,5 +115,16 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
       .filter((t) => t.estudanteId === estudanteId && t.area === area)
       .slice(-limit)
       .map(({ itemId, acerto, tempoMs, criadoEm }) => ({ itemId, acerto, tempoMs, criadoEm }));
+  }
+
+  async getHistoricoPerguntasIA(estudanteId: string, area: AreaConhecimento, limit: number): Promise<string[]> {
+    return this.perguntasIA
+      .filter((p) => p.estudanteId === estudanteId && p.area === area)
+      .slice(-limit)
+      .map((p) => p.enunciado);
+  }
+
+  async registrarPerguntaIA(estudanteId: string, area: AreaConhecimento, _tema: string, enunciado: string): Promise<void> {
+    this.perguntasIA.push({ estudanteId, area, enunciado });
   }
 }

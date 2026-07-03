@@ -82,7 +82,11 @@ export class DashboardService {
       estimativaNota: { geral, porArea, naoCalibrado: true },
       nivel: calcularProgressaoNivel(xpTotal),
       xpTotal,
-      streak: { diasConsecutivos: streak.diasConsecutivos, freezesDisponiveis: streak.freezesDisponiveis },
+      streak: {
+        diasConsecutivos: streak.diasConsecutivos,
+        freezesDisponiveis: streak.freezesDisponiveis,
+        ultimaAtividade: streak.ultimaAtividade,
+      },
       perfilCognitivo4d: { confianca: p4d?.confianca ?? 0, eixos },
       theta: resumo as DashboardResponse['theta'],
       progresso: {

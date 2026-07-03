@@ -1,7 +1,14 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { AreaConhecimento, BancoDeItemRegistro, QuizRepositoryPort, Tentativa } from '@notaa/contracts';
 import type { Database } from '../client';
-import { bancoDeItens, habilidadeEstudante, sessaoAvaliativa, tentativaResposta, thetaEvento } from '../schema';
+import {
+  bancoDeItens,
+  habilidadeEstudante,
+  quizIaGerado,
+  sessaoAvaliativa,
+  tentativaResposta,
+  thetaEvento,
+} from '../schema';
 
 function toRegistro(row: typeof bancoDeItens.$inferSelect): BancoDeItemRegistro {
   return {
@@ -166,5 +173,28 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
       .orderBy(desc(tentativaResposta.criadoEm))
       .limit(limit);
     return rows.map((r) => ({ ...r, criadoEm: r.criadoEm.toISOString() })).reverse();
+  }
+
+  async getHistoricoPerguntasIA(
+    estudanteId: string,
+    area: AreaConhecimento,
+    limit: number,
+  ): Promise<string[]> {
+    const rows = await this.db
+      .select({ enunciado: quizIaGerado.enunciado })
+      .from(quizIaGerado)
+      .where(and(eq(quizIaGerado.estudanteId, estudanteId), eq(quizIaGerado.areaConhecimento, area)))
+      .orderBy(desc(quizIaGerado.criadoEm))
+      .limit(limit);
+    return rows.map((r) => r.enunciado);
+  }
+
+  async registrarPerguntaIA(
+    estudanteId: string,
+    area: AreaConhecimento,
+    tema: string,
+    enunciado: string,
+  ): Promise<void> {
+    await this.db.insert(quizIaGerado).values({ estudanteId, areaConhecimento: area, tema, enunciado });
   }
 }

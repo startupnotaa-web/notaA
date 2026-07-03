@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type {
   AchievementsResponse,
   GamificacaoRepositoryPort,
@@ -171,37 +171,56 @@ export class GamificacaoService {
   }
 
   /**
-   * Missão de Recuperação: se o usuário perdeu o streak ontem (gap === 2),
-   * essa função restaura artificialmente a última atividade para ontem,
-   * permitindo que a atividade de hoje incremente o streak.
+   * Recuperação de ofensiva via item da loja (Missão 3) — consome 1 freeze de
+   * `freezesDisponiveis` para retroagir a última atividade a ontem, permitindo
+   * que a atividade de hoje reconecte o streak em vez de zerá-lo. Só se aplica
+   * quando exatamente 1 dia foi perdido (gap === 2) — qualquer outro caso é
+   * erro real (400), nunca um no-op silencioso.
    */
   async recoverStreak(estudanteId: string): Promise<StreakResponse> {
     const hoje = hojeISO();
     const atual = await this.repo.getStreak(estudanteId);
-    
+
     if (!atual.ultimaAtividadeValida) {
-      return toStreakResponse(atual);
+      throw new BadRequestException({
+        error: {
+          code: 'STREAK_SEM_HISTORICO',
+          message: 'Você ainda não tem uma ofensiva ativa para recuperar.',
+        },
+      });
     }
-    
+
     const gap = diferencaEmDias(atual.ultimaAtividadeValida, hoje);
-    
-    if (gap === 2) {
-      // Retroage a última atividade para ontem
-      const dataHoje = new Date();
-      dataHoje.setDate(dataHoje.getDate() - 1);
-      const ontem = dataHoje.toISOString().slice(0, 10);
-      
-      const novoEstado = {
-        diasConsecutivos: atual.diasConsecutivos,
-        ultimaAtividadeValida: ontem,
-        freezesDisponiveis: atual.freezesDisponiveis,
-      };
-      
-      await this.repo.setStreak(estudanteId, novoEstado);
-      return toStreakResponse(novoEstado);
+    if (gap !== 2) {
+      throw new BadRequestException({
+        error: {
+          code: 'STREAK_NAO_RECUPERAVEL',
+          message: 'A recuperação só está disponível quando exatamente 1 dia de ofensiva foi perdido.',
+        },
+      });
     }
-    
-    return toStreakResponse(atual);
+
+    if (atual.freezesDisponiveis <= 0) {
+      throw new BadRequestException({
+        error: {
+          code: 'SEM_FREEZE_DISPONIVEL',
+          message: 'Você não tem nenhum item de recuperação de ofensiva disponível na loja.',
+        },
+      });
+    }
+
+    const dataHoje = new Date();
+    dataHoje.setDate(dataHoje.getDate() - 1);
+    const ontem = dataHoje.toISOString().slice(0, 10);
+
+    const novoEstado = {
+      diasConsecutivos: atual.diasConsecutivos,
+      ultimaAtividadeValida: ontem,
+      freezesDisponiveis: atual.freezesDisponiveis - 1,
+    };
+
+    await this.repo.setStreak(estudanteId, novoEstado);
+    return toStreakResponse(novoEstado);
   }
 
   async getXpTotal(estudanteId: string): Promise<number> {

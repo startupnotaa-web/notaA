@@ -24,6 +24,8 @@ export interface LLMProviderPort {
     prompt?: string; // a pergunta dinâmica do usuário
     contexto: object; // pacote montado pelo Context Builder — nunca pelo cliente
     schema: z.ZodSchema<T>;
+    /** Opcional — eleva a variabilidade da amostragem (ex.: geração de quiz, evita repetição). */
+    temperature?: number;
   }): Promise<{ data: T; uso: UsoTokens }>;
 }
 
@@ -102,6 +104,15 @@ export interface QuizRepositoryPort {
    * chamado, doc 09 §6) — baseline comportamental para o ErrorDetector (E5).
    */
   getHistoricoRecente(estudanteId: string, area: AreaConhecimento, limit: number): Promise<Tentativa[]>;
+  /** Últimos enunciados gerados por IA para este estudante+área (Missão 1) — evita repetição. */
+  getHistoricoPerguntasIA(estudanteId: string, area: AreaConhecimento, limit: number): Promise<string[]>;
+  /** Registra o enunciado recém-gerado para entrar no anti-repetição das próximas gerações. */
+  registrarPerguntaIA(
+    estudanteId: string,
+    area: AreaConhecimento,
+    tema: string,
+    enunciado: string,
+  ): Promise<void>;
 }
 
 // ── Fase 2 (E5) — Detector de Padrão de Erro ──

@@ -113,6 +113,29 @@ export const thetaEvento = pgTable(
   ],
 );
 
+// Histórico de enunciados gerados por IA (Missão 1) — evita que o Gemini repita
+// a mesma questão (ou uma variação óbvia) para o mesmo estudante+área.
+export const quizIaGerado = pgTable(
+  'quiz_ia_gerado',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    estudanteId: uuid('estudante_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'restrict' }),
+    areaConhecimento: areaConhecimentoEnum('area_conhecimento').notNull(),
+    tema: text('tema').notNull(),
+    enunciado: text('enunciado').notNull(),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_quiz_ia_gerado_estudante_area_criado').on(
+      t.estudanteId,
+      t.areaConhecimento,
+      t.criadoEm,
+    ),
+  ],
+);
+
 export const sessaoAvaliativa = pgTable(
   'sessao_avaliativa',
   {

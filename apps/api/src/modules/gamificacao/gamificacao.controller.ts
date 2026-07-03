@@ -1,4 +1,4 @@
-import { Controller, Get, Post, InternalServerErrorException, Logger, Query, Req } from '@nestjs/common';
+import { Controller, Get, HttpException, InternalServerErrorException, Logger, Post, Query, Req } from '@nestjs/common';
 import { PaginationQuerySchema } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -20,6 +20,9 @@ export class GamificacaoController {
     try {
       return await this.gamificacao.getXpLedger(req.user.sub, query);
     } catch (error) {
+      // Erros de negócio (400/404/...) já vêm com o código certo do service —
+      // não mascarar como 500 genérico.
+      if (error instanceof HttpException) throw error;
       this.logger.error(
         `Falha ao buscar XP ledger para estudante ${req.user.sub}`,
         error instanceof Error ? error.stack : String(error),
@@ -35,6 +38,9 @@ export class GamificacaoController {
     try {
       return await this.gamificacao.getStreak(req.user.sub);
     } catch (error) {
+      // Erros de negócio (400/404/...) já vêm com o código certo do service —
+      // não mascarar como 500 genérico.
+      if (error instanceof HttpException) throw error;
       this.logger.error(
         `Falha ao buscar streak para estudante ${req.user.sub}`,
         error instanceof Error ? error.stack : String(error),
@@ -50,6 +56,9 @@ export class GamificacaoController {
     try {
       return await this.gamificacao.recoverStreak(req.user.sub);
     } catch (error) {
+      // Erros de negócio (400/404/...) já vêm com o código certo do service —
+      // não mascarar como 500 genérico.
+      if (error instanceof HttpException) throw error;
       this.logger.error(
         `Falha ao recuperar streak para estudante ${req.user.sub}`,
         error instanceof Error ? error.stack : String(error),
@@ -65,6 +74,9 @@ export class GamificacaoController {
     try {
       return await this.gamificacao.getAchievements(req.user.sub);
     } catch (error) {
+      // Erros de negócio (400/404/...) já vêm com o código certo do service —
+      // não mascarar como 500 genérico.
+      if (error instanceof HttpException) throw error;
       this.logger.error(
         `Falha ao buscar conquistas para estudante ${req.user.sub}`,
         error instanceof Error ? error.stack : String(error),

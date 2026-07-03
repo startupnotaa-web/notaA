@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
-import { StartQuizSessionRequestSchema, SubmitAnswerRequestSchema } from '@notaa/contracts';
+import {
+  GenerateQuizRequestSchema,
+  StartQuizSessionRequestSchema,
+  SubmitAnswerRequestSchema,
+} from '@notaa/contracts';
+import type { GenerateQuizRequest, AreaConhecimento } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { QuizService } from './quiz.service';
@@ -15,7 +20,7 @@ export class QuizController {
   startSession(
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(StartQuizSessionRequestSchema))
-    body: { area: 'linguagens' | 'humanas' | 'natureza' | 'matematica' },
+    body: { area: AreaConhecimento },
   ) {
     return this.quiz.startSession(req.user.sub, body.area);
   }
@@ -23,9 +28,9 @@ export class QuizController {
   @Post('generate')
   generateQuiz(
     @Req() req: AuthenticatedRequest,
-    @Body() body: { tema: string; area: 'linguagens' | 'humanas' | 'natureza' | 'matematica' | 'redacao' | 'fin' | 'soc' | 'art'; dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil' },
+    @Body(new ZodValidationPipe(GenerateQuizRequestSchema)) body: GenerateQuizRequest,
   ) {
-    return this.quiz.generateQuiz(req.user.sub, body.tema, body.area as any, body.dificuldadeDesejada);
+    return this.quiz.generateQuiz(req.user.sub, body.tema, body.area, body.dificuldadeDesejada);
   }
 
   @Get('sessions/:id/next-item')

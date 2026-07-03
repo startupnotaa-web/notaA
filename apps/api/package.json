@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "seed:enem": "ts-node scripts/seed-enem.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

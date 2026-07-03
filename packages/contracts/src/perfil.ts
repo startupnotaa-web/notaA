@@ -57,6 +57,7 @@ export const DashboardResponseSchema = z.object({
   streak: z.object({
     diasConsecutivos: z.number().int().min(0),
     freezesDisponiveis: z.number().int().min(0),
+    ultimaAtividade: z.string().nullable(),
   }),
   // Perfil Cognitivo 4D (E3) — array de eixos para o gráfico de radar.
   perfilCognitivo4d: z.object({

@@ -24,12 +24,19 @@ interface LancamentoMemoria extends XpLedgerEntry {
 export class GamificacaoRepositoryMemory implements GamificacaoRepositoryPort {
   private readonly ledger: LancamentoMemoria[] = [];
   private readonly streaks = new Map<string, StreakState>();
+  // Espelha o catálogo real semeado em supabase/migrations/0007_seed_conquista_catalogo.sql
+  // — mesmos códigos que GamificacaoService.MARCOS_XP/MARCOS_STREAK concedem em produção.
   private readonly catalogo: ConquistaCatalogo[] = [
     { codigo: 'primeiro_xp', xpAssociado: 5 },
-    { codigo: 'xp_100', xpAssociado: 20 },
-    { codigo: 'xp_500', xpAssociado: 50 },
-    { codigo: 'streak_3_dias', xpAssociado: 15 },
-    { codigo: 'streak_7_dias', xpAssociado: 30 },
+    { codigo: 'xp_100', xpAssociado: 10 },
+    { codigo: 'xp_500', xpAssociado: 25 },
+    { codigo: 'streak_3_dias', xpAssociado: 10 },
+    { codigo: 'streak_7_dias', xpAssociado: 25 },
+    { codigo: 'streak_15_dias', xpAssociado: 50 },
+    { codigo: 'streak_30_dias', xpAssociado: 100 },
+    { codigo: 'streak_60_dias', xpAssociado: 150 },
+    { codigo: 'streak_120_dias', xpAssociado: 250 },
+    { codigo: 'streak_240_dias', xpAssociado: 400 },
   ];
   private readonly concedidas = new Map<string, Set<string>>();
 

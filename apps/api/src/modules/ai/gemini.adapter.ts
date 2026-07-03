@@ -29,6 +29,7 @@ export class GeminiAdapter implements LLMProviderPort {
     prompt?: string;
     contexto: object;
     schema: z.ZodSchema<T>;
+    temperature?: number;
   }): Promise<{ data: T; uso: UsoTokens }> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -42,7 +43,10 @@ export class GeminiAdapter implements LLMProviderPort {
       model: this.modelo,
       systemInstruction: input.sistema,
       // Força JSON: combina com a validação Zod a seguir para garantir I5.
-      generationConfig: { responseMimeType: 'application/json' },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        ...(input.temperature != null ? { temperature: input.temperature } : {}),
+      },
     });
 
     const jsonSchema = zodToJsonSchema(input.schema as any, 'ResponseSchema');

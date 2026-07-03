@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { readFileSync } from 'fs';
 
 import { resolve } from 'path';
@@ -83,6 +84,22 @@ function getAreaForQuestion(number: number, day: string): 'linguagens' | 'humana
   }
 }
 
+/**
+ * Heurística de dificuldade (Missão 2) — o ENEM não publica parâmetro TRI
+ * oficial por questão; aproximamos dividindo cada bloco de 45 questões da área
+ * em terços pela posição no caderno (blocos costumam progredir em dificuldade).
+ * Proxy de produto, não dado oficial calibrado (mesmo espírito de
+ * `banco_de_itens.nao_calibrado`, doc 04 §4) — sem isso, o Simulado só
+ * conseguiria servir o nível "média" e os filtros fácil/difícil ficariam vazios.
+ */
+function getDificuldadeParaQuestao(number: number, day: string): 'facil' | 'media' | 'dificil' {
+  const inicioBloco = day === '1' ? (number <= 45 ? 1 : 46) : number <= 135 ? 91 : 136;
+  const posicaoNoBloco = number - inicioBloco; // 0-44
+  if (posicaoNoBloco < 15) return 'facil';
+  if (posicaoNoBloco < 30) return 'media';
+  return 'dificil';
+}
+
 async function processFile(filePath: string, year: number, day: string) {
   console.log(`\nProcessando ${year} Dia ${day}... (${filePath})`);
   const rawData = readFileSync(filePath, 'utf-8');
@@ -129,7 +146,7 @@ async function processFile(filePath: string, year: number, day: string) {
       enunciado: enunciadoText,
       alternativas: alternativasArr,
       correta: corretaIdx,
-      dificuldadeTri: 'media', // Default como média, pode ser enriquecido depois
+      dificuldadeTri: getDificuldadeParaQuestao(q.number, day),
       imagemUrl: imagemUrl
     });
   }

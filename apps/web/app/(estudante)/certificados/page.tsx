@@ -15,6 +15,16 @@ const BADGE_DICTIONARY: Record<string, { titulo: string, descricao: string, emoj
   'ofensiva_7': { titulo: 'Em Chamas', descricao: 'Você estudou 7 dias consecutivos.', emoji: '☄️' },
   'redacao_900': { titulo: 'Mestre das Palavras', descricao: 'Você alcançou 900+ em uma redação.', emoji: '🏅' },
   'batalha_vencedor': { titulo: 'Gladiador', descricao: 'Você venceu o seu primeiro duelo no Modo Batalha.', emoji: '⚔️' },
+  'primeiro_xp': { titulo: 'Primeiros Passos', descricao: 'Você ganhou o seu primeiro XP na plataforma.', emoji: '✨' },
+  'xp_100': { titulo: 'Ganhando Ritmo', descricao: 'Você acumulou 100 XP.', emoji: '⚡' },
+  'xp_500': { titulo: 'Dedicação', descricao: 'Você acumulou 500 XP.', emoji: '💎' },
+  'streak_3_dias': { titulo: 'Fogo Brando', descricao: 'Você estudou 3 dias consecutivos.', emoji: '🔥' },
+  'streak_7_dias': { titulo: 'Em Chamas', descricao: 'Você estudou 7 dias consecutivos.', emoji: '☄️' },
+  'streak_15_dias': { titulo: 'Ofensiva de Ferro', descricao: 'Você estudou 15 dias consecutivos.', emoji: '🛡️' },
+  'streak_30_dias': { titulo: 'Imparável', descricao: 'Você estudou 30 dias consecutivos.', emoji: '🏆' },
+  'streak_60_dias': { titulo: 'Lenda em Formação', descricao: 'Você estudou 60 dias consecutivos.', emoji: '🌟' },
+  'streak_120_dias': { titulo: 'Mestre da Constância', descricao: 'Você estudou 120 dias consecutivos.', emoji: '👑' },
+  'streak_240_dias': { titulo: 'Lenda do NotaA', descricao: 'Você estudou 240 dias consecutivos.', emoji: '🏔️' },
 };
 
 function getBadgeInfo(codigo: string) {

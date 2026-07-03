@@ -1,8 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PoolEsgotadoError, motorTRI } from '@notaa/engine-tri';
 import type {
   AreaConhecimento,
   BancoDeItemRegistro,
+  GenerateQuizResponse,
   ItemPublico,
   QuizRepositoryPort,
   StartQuizSessionResponse,
@@ -14,6 +15,8 @@ import { ProfilerService } from '../profiler/profiler.service';
 import { QUIZ_REPOSITORY } from './quiz.tokens';
 
 const HISTORICO_RECENTE_LIMIT = 10; // baseline comportamental p/ ErrorDetector (E5) — ajustável.
+const HISTORICO_PERGUNTAS_IA_LIMIT = 8; // anti-repetição do Quiz com IA (Missão 1).
+const QUIZ_IA_TEMPERATURE = 1.1; // acima do default do Gemini — reduz colisão com o histórico recente.
 
 // XP por resposta — heurística de produto (não é dado oficial a calibrar,
 // diferente dos parâmetros TRI). Ajustável sem impacto em Q-02/03/06.
@@ -37,6 +40,8 @@ import type { LLMProviderPort } from '@notaa/contracts';
 
 @Injectable()
 export class QuizService {
+  private readonly logger = new Logger('QuizService');
+
   constructor(
     @Inject(QUIZ_REPOSITORY) private readonly repo: QuizRepositoryPort,
     private readonly gamificacao: GamificacaoService,
@@ -50,37 +55,58 @@ export class QuizService {
     estudanteId: string,
     tema: string,
     area: AreaConhecimento,
-    dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil'
-  ): Promise<any> {
-    const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, { temaAtivo: tema });
-    
-    let nivel_atual_na_area = 50; // default (Média)
-    try {
-      const areaSafe = area || 'matematica';
-      const habilidade = await this.repo.getHabilidade(estudanteId, areaSafe);
-      if (habilidade) {
-        // Theta padronizado: -3 a +3. Convertendo grosseiramente para escala de 0 a 100
-        const prof = Math.round(((habilidade.theta + 3) / 6) * 100);
-        nivel_atual_na_area = Math.max(0, Math.min(100, prof));
-      }
-    } catch (e) {
-      // Ignora erro de habilidade não encontrada (primeiro acesso)
-    }
+    dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil',
+  ): Promise<GenerateQuizResponse> {
+    const [habilidade, nivelGamificacao, perguntasRecentes] = await Promise.all([
+      this.repo.getHabilidade(estudanteId, area),
+      this.gamificacao.nivelAtual(estudanteId),
+      this.repo.getHistoricoPerguntasIA(estudanteId, area, HISTORICO_PERGUNTAS_IA_LIMIT),
+    ]);
 
-    const sistema = `Você é um gerador de Quiz. O aluno tem um nível de proficiência de ${nivel_atual_na_area} (de 0 a 100) nesta área. Gere uma questão TOTALMENTE INÉDITA e criativa sobre ${tema}. O nível de complexidade da questão deve ser proporcional à proficiência do aluno. Retorne estritamente este JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica focada no aluno", "dificuldade": "Fácil|Média|Difícil" }.`;
+    // Theta padronizado: -3 a +3. Convertendo para escala de proficiência 0-100.
+    const nivelProficiencia = Math.max(0, Math.min(100, Math.round(((habilidade.theta + 3) / 6) * 100)));
+
+    const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, {
+      temaAtivo: tema,
+      historico: perguntasRecentes,
+    });
+
+    const instrucaoDificuldade = dificuldadeDesejada
+      ? `A dificuldade solicitada pelo aluno é "${dificuldadeDesejada}".`
+      : 'A dificuldade deve ser proporcional à proficiência do aluno.';
+    const instrucaoAntiRepeticao =
+      perguntasRecentes.length > 0
+        ? 'O campo "historicoRecente" do contexto traz as últimas questões já geradas para este aluno nesta área — NUNCA repita, parafraseie ou gere uma variação óbvia de nenhuma delas; explore um subtema, ângulo ou formato diferente.'
+        : '';
+
+    const sistema = `Você é um gerador de Quiz. O aluno está no nível ${nivelGamificacao.nivel} de ${area}. Crie uma questão 100% INÉDITA, adaptada a esse nível. Não repita temas de sessões anteriores. O aluno tem um nível de proficiência de ${nivelProficiencia} (de 0 a 100) nesta área. Gere a questão sobre o tema: ${tema}. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne estritamente este JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica focada no aluno", "dificuldade": "Fácil|Média|Difícil" }.`;
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 
+    let data: GenerateQuizResponse;
     try {
-      const { data } = await this.llm.complete({
+      const resultado = await this.llm.complete({
         sistema,
         contexto,
         schema: GenerateQuizResponseSchema,
+        temperature: QUIZ_IA_TEMPERATURE,
       });
-      return data;
+      data = resultado.data;
     } catch (error) {
-      throw new BadRequestException({ error: { code: 'AI_ERROR', message: 'Erro interno na inteligência artificial ao gerar questão inédita. Tente novamente em instantes.' }});
+      this.logger.error(
+        `Falha ao gerar quiz via IA (estudante=${estudanteId}, area=${area}, tema="${tema}")`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new BadRequestException({
+        error: {
+          code: 'AI_ERROR',
+          message: 'Erro interno na inteligência artificial ao gerar questão inédita. Tente novamente em instantes.',
+        },
+      });
     }
+
+    await this.repo.registrarPerguntaIA(estudanteId, area, tema, data.enunciado);
+    return data;
   }
 
   async startSession(

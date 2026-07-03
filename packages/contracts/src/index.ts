@@ -15,3 +15,4 @@ export * from './engines';
 export * from './ports';
 export * from './study-trails';
 export * from './battle';
+export * from './simulado';

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useRouter } from 'next/navigation';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseBrowser } from './supabase-browser';
+import { USER_STATE_STORAGE_KEY } from './storage-keys';
 
 interface AuthState {
   session: Session | null;
@@ -64,6 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   async function signOut() {
+    // Remove o snapshot persistido do usuário (XP/nível/perfil) — evita que a
+    // próxima conta logada neste navegador herde dados em cache da anterior.
+    try {
+      localStorage.removeItem(USER_STATE_STORAGE_KEY);
+    } catch {
+      // Storage indisponível — nada a limpar.
+    }
     await supabaseBrowser.auth.signOut();
   }
 
