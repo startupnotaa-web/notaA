@@ -15,12 +15,38 @@ const NAV_ITEMS = [
 ] as const;
 
 export function NotaA_Beta_App() {
-  // Estado Global Simulado
+  // Estado Global Simulado com persistência
   const [xpAtual, setXpAtual] = useState(450);
   const [xpMax, setXpMax] = useState(1000);
   const [notaEnemEstimada, setNotaEnemEstimada] = useState(650);
   const [creditosIA, setCreditosIA] = useState(10);
   const [abaAtiva, setAbaAtiva] = useState<Tab>('home');
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('notaA_beta_state');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.xpAtual !== undefined) setXpAtual(parsed.xpAtual);
+        if (parsed.xpMax !== undefined) setXpMax(parsed.xpMax);
+        if (parsed.notaEnemEstimada !== undefined) setNotaEnemEstimada(parsed.notaEnemEstimada);
+        if (parsed.creditosIA !== undefined) setCreditosIA(parsed.creditosIA);
+        if (parsed.abaAtiva !== undefined) setAbaAtiva(parsed.abaAtiva);
+      } catch (e) {
+        console.error('Erro ao recuperar o estado:', e);
+      }
+    }
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('notaA_beta_state', JSON.stringify({
+        xpAtual, xpMax, notaEnemEstimada, creditosIA, abaAtiva
+      }));
+    }
+  }, [xpAtual, xpMax, notaEnemEstimada, creditosIA, abaAtiva, mounted]);
 
   const xpPercent = Math.min(100, Math.max(0, (xpAtual / xpMax) * 100));
 
