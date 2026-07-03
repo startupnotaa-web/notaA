@@ -69,7 +69,7 @@ export class QuizService {
     const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, {
       temaAtivo: tema,
       historico: perguntasRecentes,
-    });
+    }) as any;
 
     const instrucaoDificuldade = dificuldadeDesejada
       ? `A dificuldade solicitada pelo aluno é "${dificuldadeDesejada}".`
@@ -79,7 +79,12 @@ export class QuizService {
         ? 'O campo "historicoRecente" do contexto traz as últimas questões já geradas para este aluno nesta área — NUNCA repita, parafraseie ou gere uma variação óbvia de nenhuma delas; explore um subtema, ângulo ou formato diferente.'
         : '';
 
-    const sistema = `Você é um gerador de Quiz. O aluno está no nível ${nivelGamificacao.nivel} de ${area}. Crie uma questão 100% INÉDITA, adaptada a esse nível. Não repita temas de sessões anteriores. O aluno tem um nível de proficiência de ${nivelProficiencia} (de 0 a 100) nesta área. Gere a questão sobre o tema: ${tema}. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne estritamente este JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica focada no aluno", "dificuldade": "Fácil|Média|Difícil" }.`;
+    const instrucoes = contexto.instrucoesPedagogicas?.length > 0 
+      ? contexto.instrucoesPedagogicas.join(', ') 
+      : 'Visual e Prático';
+    const objetivo = contexto.objetivoAluno || 'mandar bem nos estudos';
+
+    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dificuldade": "Fácil|Média|Difícil" }.`;
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 

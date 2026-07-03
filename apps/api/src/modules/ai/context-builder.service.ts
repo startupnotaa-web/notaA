@@ -17,9 +17,12 @@ export class ContextBuilderService {
     @Inject(DB_CLIENT) private readonly db: Database,
   ) {}
 
-  private async getDicasEstilo(estudanteId: string): Promise<string[]> {
+  private async getDicasEstilo(estudanteId: string): Promise<{ dicas: string[], objetivo: string | null }> {
     const [onb] = await this.db
-      .select({ estilo: perfilOnboarding.estiloAprendizagemAutodeclarado })
+      .select({ 
+        estilo: perfilOnboarding.estiloAprendizagemAutodeclarado,
+        objetivo: perfilOnboarding.objetivoEnem
+      })
       .from(perfilOnboarding)
       .where(eq(perfilOnboarding.estudanteId, estudanteId))
       .limit(1);
@@ -33,7 +36,7 @@ export class ContextBuilderService {
         }
       }
     }
-    return dicas;
+    return { dicas, objetivo: onb?.objetivo ?? null };
   }
 
   async montarContextoSocratico(
@@ -41,7 +44,7 @@ export class ContextBuilderService {
     extras: { temaAtivo?: string; historico?: string[] },
   ): Promise<object> {
     const perfilResponse = await this.profiler.getPerfil(estudanteId);
-    const dicasEstilo = await this.getDicasEstilo(estudanteId);
+    const { dicas: dicasEstilo, objetivo } = await this.getDicasEstilo(estudanteId);
 
     return {
       perfilCognitivo: {
@@ -52,6 +55,7 @@ export class ContextBuilderService {
         confianca: perfilResponse.confianca,
       },
       instrucoesPedagogicas: dicasEstilo,
+      objetivoAluno: objetivo,
       recomendacoesAtivas: perfilResponse.recomendacoesAtivas,
       temaAtivo: extras.temaAtivo ?? null,
       historicoRecente: extras.historico ?? [],
@@ -60,7 +64,7 @@ export class ContextBuilderService {
 
   async montarContextoRedacao(estudanteId: string): Promise<object> {
     const perfilResponse = await this.profiler.getPerfil(estudanteId);
-    const dicasEstilo = await this.getDicasEstilo(estudanteId);
+    const { dicas: dicasEstilo } = await this.getDicasEstilo(estudanteId);
 
     return {
       perfilCognitivo: {

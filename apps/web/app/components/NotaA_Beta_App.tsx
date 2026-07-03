@@ -21,7 +21,7 @@ export function NotaA_Beta_App() {
   const [notaEnemEstimada, setNotaEnemEstimada] = useState(650);
   const [creditosIA, setCreditosIA] = useState(10);
   const [abaAtiva, setAbaAtiva] = useState<Tab>('home');
-  const [mounted, setMounted] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   React.useEffect(() => {
     const saved = localStorage.getItem('notaA_beta_state');
@@ -37,7 +37,7 @@ export function NotaA_Beta_App() {
         console.error('Erro ao recuperar o estado:', e);
       }
     }
-    setMounted(true);
+    setIsHydrated(true);
   }, []);
 
   React.useEffect(() => {
@@ -46,9 +46,12 @@ export function NotaA_Beta_App() {
         xpAtual, xpMax, notaEnemEstimada, creditosIA, abaAtiva
       }));
     }
-  }, [xpAtual, xpMax, notaEnemEstimada, creditosIA, abaAtiva, mounted]);
+  }, [xpAtual, xpMax, notaEnemEstimada, creditosIA, abaAtiva, isHydrated]);
 
   const xpPercent = Math.min(100, Math.max(0, (xpAtual / xpMax) * 100));
+
+  if (!isHydrated) return null; // Hydration Safe: Renderiza apenas após hidratar no cliente
+
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-bg text-text overflow-hidden">
