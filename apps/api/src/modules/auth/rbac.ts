@@ -40,6 +40,11 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   'GET /escola/turmas/:id/desempenho': ['gestor', 'professor'],
   'GET /admin/users': ['admin'],
   'GET /admin/ai-usage': ['admin'],
+  // Diagnóstico de IA: consome quota do Gemini e expõe detalhes da conta —
+  // restrito a admin (auditoria E3, doc 10 §7 default-deny).
+  'GET /ai/test': ['admin'],
+  'GET /ai/ping': ['admin'],
+  'GET /ai/models': ['admin'],
 };
 
 export function isRouteAllowed(routeKey: string, papel: Papel): boolean {
