@@ -60,7 +60,13 @@ export default function DashboardPage() {
     }
     
     loadDashboard();
-    return () => { cancelled = true; };
+
+    window.addEventListener('focus', loadDashboard);
+
+    return () => { 
+      cancelled = true; 
+      window.removeEventListener('focus', loadDashboard);
+    };
   }, []);
 
   // Custom Event Listener para simulação de Toast de Gamificação

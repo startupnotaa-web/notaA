@@ -21,6 +21,8 @@ export default function PerfilPage() {
 
   // Estado do formulário de Informações Pessoais.
   const [nome, setNome] = useState('');
+  const [objetivo, setObjetivo] = useState('');
+  const [estilo, setEstilo] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [feedback, setFeedback] = useState<{ tipo: 'ok' | 'erro'; msg: string } | null>(null);
 
@@ -35,6 +37,8 @@ export default function PerfilPage() {
       .then(([perfilData, achData]) => {
         setPerfil(perfilData);
         setNome(perfilData.nome ?? '');
+        setObjetivo(perfilData.objetivo ?? '');
+        setEstilo(perfilData.estiloAprendizagem?.join(', ') ?? '');
         setAchievements(achData);
       })
       .catch((e) => {
@@ -54,10 +58,16 @@ export default function PerfilPage() {
     try {
       const atualizado = await apiFetch<MeResponse>('/me', {
         method: 'PATCH',
-        body: JSON.stringify({ nome: nomeLimpo }),
+        body: JSON.stringify({ 
+          nome: nomeLimpo,
+          objetivoEnem: objetivo.trim() || null,
+          estiloAprendizagem: estilo.trim() ? estilo.split(',').map(s => s.trim()) : null,
+        }),
       });
       setPerfil(atualizado);
       setNome(atualizado.nome ?? '');
+      setObjetivo(atualizado.objetivo ?? '');
+      setEstilo(atualizado.estiloAprendizagem?.join(', ') ?? '');
       setFeedback({ tipo: 'ok', msg: 'Informações salvas com sucesso.' });
     } catch (err) {
       setFeedback({
@@ -87,6 +97,9 @@ export default function PerfilPage() {
   const planoRotulo = PLANO_ROTULO[planoTipo];
   const isPremium = planoTipo === 'plus';
   const nomeInalterado = nome.trim() === (perfil.nome ?? '').trim();
+  const objetivoInalterado = objetivo.trim() === (perfil.objetivo ?? '').trim();
+  const estiloInalterado = estilo.trim() === (perfil.estiloAprendizagem?.join(', ') ?? '').trim();
+  const inalterado = nomeInalterado && objetivoInalterado && estiloInalterado;
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
@@ -214,8 +227,24 @@ export default function PerfilPage() {
               </div>
               <div className="space-y-1.5">
                   <Label htmlFor="perfil-objetivo">Objetivo / Curso</Label>
-                  <Input id="perfil-objetivo" value={perfil.objetivo || 'Não definido'} disabled readOnly />
-                  <p className="text-[10px] text-text-muted mt-1">O objetivo e o e-mail não podem ser alterados diretamente. Entre em contato com o suporte.</p>
+                  <Input 
+                    id="perfil-objetivo" 
+                    value={objetivo} 
+                    onChange={(e) => setObjetivo(e.target.value)}
+                    placeholder="Ex: Medicina, Direito" 
+                    disabled={salvando} 
+                  />
+              </div>
+              <div className="space-y-1.5">
+                  <Label htmlFor="perfil-estilo">Estilo de Aprendizado (separado por vírgula)</Label>
+                  <Input 
+                    id="perfil-estilo" 
+                    value={estilo} 
+                    onChange={(e) => setEstilo(e.target.value)}
+                    placeholder="Ex: Visual, Auditivo, Leitura, Prático" 
+                    disabled={salvando} 
+                  />
+                  <p className="text-[10px] text-text-muted mt-1">O e-mail não pode ser alterado diretamente. Entre em contato com o suporte.</p>
               </div>
 
               {feedback && (
@@ -228,7 +257,7 @@ export default function PerfilPage() {
               )}
 
               <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={salvando || nomeInalterado}>
+                <Button type="submit" disabled={salvando || inalterado}>
                   {salvando ? 'Salvando…' : 'Salvar alterações'}
                 </Button>
               </div>

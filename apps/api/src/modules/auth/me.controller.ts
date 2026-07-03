@@ -135,6 +135,20 @@ export class MeController {
         .set({ nome: body.nome, atualizadoEm: new Date() })
         .where(eq(usuario.id, sub));
 
+      // Se os campos de onboarding vierem no body, tentamos atualizá-los
+      if (body.objetivoEnem !== undefined || body.estiloAprendizagem !== undefined) {
+        const onbSet: Partial<typeof perfilOnboarding.$inferInsert> = {};
+        if (body.objetivoEnem !== undefined) onbSet.objetivoEnem = body.objetivoEnem;
+        if (body.estiloAprendizagem !== undefined) {
+          onbSet.estiloAprendizagemAutodeclarado = { comoAprendeMelhor: body.estiloAprendizagem };
+        }
+        
+        await this.db
+          .update(perfilOnboarding)
+          .set({ ...onbSet, atualizadoEm: new Date() })
+          .where(eq(perfilOnboarding.estudanteId, sub));
+      }
+
       return await this.getMe(request);
     } catch (error) {
       // Se getMe já lançou InternalServerErrorException, propaga sem re-wrap.

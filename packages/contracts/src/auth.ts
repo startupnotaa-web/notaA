@@ -47,6 +47,8 @@ export type MeResponse = z.infer<typeof MeResponseSchema>;
 // reconfirmação por e-mail (fora deste escopo).
 export const UpdateMeRequestSchema = z.object({
   nome: z.string().trim().min(1, 'Informe seu nome.').max(120, 'Nome muito longo.'),
+  objetivoEnem: z.string().nullable().optional(),
+  estiloAprendizagem: z.array(z.string()).nullable().optional(),
 });
 export type UpdateMeRequest = z.infer<typeof UpdateMeRequestSchema>;
 
