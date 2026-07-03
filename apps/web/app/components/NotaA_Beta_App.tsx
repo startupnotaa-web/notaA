@@ -41,7 +41,7 @@ export function NotaA_Beta_App() {
   }, []);
 
   React.useEffect(() => {
-    if (mounted) {
+    if (isHydrated) {
       localStorage.setItem('notaA_beta_state', JSON.stringify({
         xpAtual, xpMax, notaEnemEstimada, creditosIA, abaAtiva
       }));
