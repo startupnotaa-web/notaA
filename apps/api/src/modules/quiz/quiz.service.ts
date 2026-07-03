@@ -84,7 +84,7 @@ export class QuizService {
       : 'Visual e Prático';
     const objetivo = contexto.objetivoAluno || 'mandar bem nos estudos';
 
-    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dificuldade": "Fácil|Média|Difícil" }.`;
+    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.`;
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 
