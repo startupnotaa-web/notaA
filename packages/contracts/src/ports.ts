@@ -85,6 +85,7 @@ export interface QuizRepositoryPort {
   ): Promise<void>;
   getItemPool(area: AreaConhecimento): Promise<BancoDeItemRegistro[]>;
   getItem(itemId: string): Promise<BancoDeItemRegistro | null>;
+  addItem(item: BancoDeItemRegistro): Promise<void>;
   getExpostos(sessaoId: string): Promise<string[]>;
   /** Idempotente por idempotencyKey (doc 04 §4) — retorna `duplicate: true` em reenvio. */
   recordAnswer(input: {

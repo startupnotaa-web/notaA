@@ -29,6 +29,7 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
   private readonly idempotencyKeysVistas = new Set<string>();
   private readonly tentativas: TentativaMemoria[] = [];
   private readonly perguntasIA: { estudanteId: string; area: AreaConhecimento; enunciado: string }[] = [];
+  private readonly itensDinamicos: BancoDeItemRegistro[] = [];
 
   async createSession(estudanteId: string, area: AreaConhecimento): Promise<{ sessaoId: string }> {
     const id = randomUUID();
@@ -64,11 +65,15 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
   }
 
   async getItemPool(area: AreaConhecimento): Promise<BancoDeItemRegistro[]> {
-    return ITENS_SEED.filter((i) => i.area === area);
+    return [...ITENS_SEED, ...this.itensDinamicos].filter((item) => item.area === area);
   }
 
-  async getItem(itemId: string): Promise<BancoDeItemRegistro | null> {
-    return ITENS_SEED.find((i) => i.itemId === itemId) ?? null;
+  async getItem(itemId: string) {
+    return [...ITENS_SEED, ...this.itensDinamicos].find((item) => item.itemId === itemId) ?? null;
+  }
+
+  async addItem(item: BancoDeItemRegistro): Promise<void> {
+    this.itensDinamicos.push(item);
   }
 
   async getExpostos(sessaoId: string): Promise<string[]> {

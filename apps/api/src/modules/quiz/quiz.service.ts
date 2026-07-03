@@ -114,6 +114,41 @@ export class QuizService {
     return data;
   }
 
+  private async getOrGenerateNextItem(
+    estudanteId: string,
+    area: AreaConhecimento,
+    theta: number,
+    expostos: string[],
+    pool: BancoDeItemRegistro[]
+  ) {
+    try {
+      const { itemId } = this.selecionarProximo(theta, area, expostos, pool);
+      const item = await this.repo.getItem(itemId);
+      if (!item) throw new NotFoundException();
+      return item;
+    } catch (err) {
+      if (err instanceof PoolEsgotadoError) {
+        const aiResponse = await this.generateQuiz(estudanteId, 'Questão Adaptativa', area);
+        const letras = ['A', 'B', 'C', 'D', 'E'];
+        const novoItem: BancoDeItemRegistro = {
+          itemId: `ai-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          area: area,
+          enunciado: aiResponse.enunciado,
+          alternativas: aiResponse.alternativas.map((texto, i) => ({ id: letras[i] ?? 'A', texto })),
+          gabarito: letras[aiResponse.correta] ?? 'A',
+          competencia: 'IA_ADAPTATIVA',
+          naoCalibrado: true,
+          paramA: 1.2,
+          paramB: aiResponse.dificuldade === 'Fácil' ? -1 : aiResponse.dificuldade === 'Média' ? 0 : 1.5,
+          paramC: 0.2,
+        };
+        await this.repo.addItem(novoItem);
+        return novoItem;
+      }
+      throw err;
+    }
+  }
+
   async startSession(
     estudanteId: string,
     area: AreaConhecimento,
@@ -121,10 +156,7 @@ export class QuizService {
     const { theta } = await this.repo.getHabilidade(estudanteId, area);
     const pool = await this.repo.getItemPool(area);
 
-    const { itemId } = this.selecionarProximo(theta, area, [], pool);
-    const item = await this.repo.getItem(itemId);
-    if (!item) throw new NotFoundException(); // defensivo — pool veio do mesmo repo
-
+    const item = await this.getOrGenerateNextItem(estudanteId, area, theta, [], pool);
     const { sessaoId } = await this.repo.createSession(estudanteId, area);
     return { sessaoId, primeiraQuestao: toItemPublico(item, 1) };
   }
@@ -135,10 +167,7 @@ export class QuizService {
     const expostos = await this.repo.getExpostos(sessaoId);
     const pool = await this.repo.getItemPool(sessao.area);
 
-    const { itemId } = this.selecionarProximo(theta, sessao.area, expostos, pool);
-    const item = await this.repo.getItem(itemId);
-    if (!item) throw new NotFoundException();
-
+    const item = await this.getOrGenerateNextItem(estudanteId, sessao.area, theta, expostos, pool);
     return toItemPublico(item, expostos.length + 1);
   }
 

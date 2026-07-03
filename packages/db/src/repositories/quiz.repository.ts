@@ -116,6 +116,10 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
     return rows.map((r) => r.itemId);
   }
 
+  async addItem(item: BancoDeItemRegistro): Promise<void> {
+    // Stub: Tabela banco_de_itens real será implementada depois se necessário no DB
+  }
+
   async recordAnswer(input: {
     sessaoId: string;
     estudanteId: string;
