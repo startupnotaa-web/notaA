@@ -13,6 +13,7 @@ import { ErrorDetectorService } from '../error-detector/error-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import { ProfilerService } from '../profiler/profiler.service';
 import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QuizUnitOfWork } from './quiz.unit-of-work';
 
 const HISTORICO_RECENTE_LIMIT = 10; // baseline comportamental p/ ErrorDetector (E5) — ajustável.
 const HISTORICO_PERGUNTAS_IA_LIMIT = 8; // anti-repetição do Quiz com IA (Missão 1).
@@ -49,6 +50,7 @@ export class QuizService {
     private readonly errorDetector: ErrorDetectorService,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
+    private readonly uow: QuizUnitOfWork,
   ) {}
 
   async generateQuiz(
@@ -84,7 +86,7 @@ export class QuizService {
       : 'Visual e Prático';
     const objetivo = contexto.objetivoAluno || 'mandar bem nos estudos';
 
-    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.`;
+    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dicaPerfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.`;
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 
@@ -194,48 +196,69 @@ export class QuizService {
       sessao.area,
       HISTORICO_RECENTE_LIMIT,
     );
-    const { duplicate, tentativaId } = await this.repo.recordAnswer({
-      sessaoId,
-      estudanteId,
-      itemId: body.itemId,
-      resposta: body.respostaId,
-      acerto,
-      tempoRespostaMs: body.tempoRespostaMs,
-      idempotencyKey,
-      temasErro: !acerto ? [item.competencia] : undefined,
-    });
+    // Núcleo transacional (auditoria E7): tentativa + theta + XP + streak são
+    // atômicos — falha no meio reverte tudo (inclusive a tentativa, liberando a
+    // idempotencyKey para o reenvio refazer o fluxo completo).
+    const nucleo = await this.uow.run(async ({ quizRepo, gamificacao }) => {
+      const { duplicate, tentativaId } = await quizRepo.recordAnswer({
+        sessaoId,
+        estudanteId,
+        itemId: body.itemId,
+        resposta: body.respostaId,
+        acerto,
+        tempoRespostaMs: body.tempoRespostaMs,
+        idempotencyKey,
+        temasErro: !acerto ? [item.competencia] : undefined,
+      });
 
-    const habilidadeAtual = await this.repo.getHabilidade(estudanteId, sessao.area);
-    let theta = habilidadeAtual.theta;
-    let erroPadrao = habilidadeAtual.erroPadrao;
-    let xpGanho = 0;
-    let classificacaoErro: SubmitAnswerResponse['feedback']['classificacaoErro'] = null;
-    // Reenvio idempotente não lança XP de novo → reporta o nível atual sem level-up.
-    let gamificacao: SubmitAnswerResponse['gamificacao'] = {
-      ...(await this.gamificacao.nivelAtual(estudanteId)),
-      subiuDeNivel: false,
-    };
+      const habilidadeAtual = await quizRepo.getHabilidade(estudanteId, sessao.area);
+      if (duplicate) {
+        // Reenvio idempotente não lança XP de novo → reporta o nível atual sem level-up.
+        return {
+          duplicate,
+          theta: habilidadeAtual.theta,
+          erroPadrao: habilidadeAtual.erroPadrao,
+          xpGanho: 0,
+          gamificacao: { ...(await gamificacao.nivelAtual(estudanteId)), subiuDeNivel: false },
+        };
+      }
 
-    if (!duplicate) {
       const atualizado = motorTRI.updateAbility({
         theta: habilidadeAtual.theta,
         item,
         acerto,
         tempoMs: body.tempoRespostaMs,
       });
-      theta = atualizado.theta;
-      erroPadrao = atualizado.erroPadrao;
-      await this.repo.setHabilidade(estudanteId, sessao.area, theta, erroPadrao, tentativaId ?? undefined);
+      await quizRepo.setHabilidade(
+        estudanteId,
+        sessao.area,
+        atualizado.theta,
+        atualizado.erroPadrao,
+        tentativaId ?? undefined,
+      );
 
-      xpGanho = acerto ? XP_ACERTO : XP_ERRO;
-      const xpResult = await this.gamificacao.grantXp(estudanteId, 'quiz', xpGanho);
-      gamificacao = {
-        xpTotal: xpResult.xpTotal,
-        nivel: xpResult.nivel,
-        subiuDeNivel: xpResult.subiuDeNivel,
+      const xpGanho = acerto ? XP_ACERTO : XP_ERRO;
+      const xpResult = await gamificacao.grantXp(estudanteId, 'quiz', xpGanho);
+      await gamificacao.registrarAtividadeValida(estudanteId);
+
+      return {
+        duplicate,
+        theta: atualizado.theta,
+        erroPadrao: atualizado.erroPadrao,
+        xpGanho,
+        gamificacao: {
+          xpTotal: xpResult.xpTotal,
+          nivel: xpResult.nivel,
+          subiuDeNivel: xpResult.subiuDeNivel,
+        },
       };
-      await this.gamificacao.registrarAtividadeValida(estudanteId);
-      // Atualização silenciosa do perfil 4D (H3.1) — nunca bloqueia a resposta ao cliente.
+    });
+    const { theta, erroPadrao, xpGanho, gamificacao } = nucleo;
+
+    let classificacaoErro: SubmitAnswerResponse['feedback']['classificacaoErro'] = null;
+    if (!nucleo.duplicate) {
+      // Fora da transação: análises derivadas não podem reverter a resposta já
+      // efetivada (H3.1 — "nunca bloqueia a resposta ao cliente").
       await this.profiler.atualizarComRespostaQuiz(estudanteId, {
         tempoMs: body.tempoRespostaMs,
         acerto,

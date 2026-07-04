@@ -58,6 +58,20 @@ export class SocraticService {
 
     const systemPrompt = await this.studentContext.buildSocraticSystemPrompt(estudanteId);
     const resposta = await this.gemini.generateSocraticResponse(mensagem, systemPrompt);
+
+    // Guardrail I3 pós-LLM (mesma regra inegociável de enviarMensagem, doc 06
+    // §2.3): se o texto entrega a resposta final, rebaixa para o fallback guiado.
+    if (this.risk.contemRespostaDireta(resposta)) {
+      this.logger.warn(
+        'Guardrail I3 (chatDireto): resposta direta detectada — rebaixando para fallback guiado.',
+      );
+      const fallback = fallbackGuiado();
+      return {
+        resposta: [fallback.mensagem, ...fallback.dicasEstaticas.map((d) => `• ${d}`)].join('\n'),
+        origem: 'gemini',
+      };
+    }
+
     return { resposta, origem: 'gemini' };
   }
 

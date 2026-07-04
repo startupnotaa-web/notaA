@@ -17,3 +17,12 @@ export function createDbClient(databaseUrl: string | undefined) {
 }
 
 export type Database = ReturnType<typeof createDbClient>;
+
+/**
+ * O que os repositórios de fato precisam: um executor de queries — o client
+ * completo OU o handle de uma transação aberta (`db.transaction((tx) => ...)`).
+ * Permite reusar o MESMO repositório dentro de uma unidade de trabalho
+ * transacional (ex.: responder questão = tentativa + theta + XP + streak
+ * atômicos, doc 04 §4 / auditoria E7).
+ */
+export type DbExecutor = Database | Parameters<Parameters<Database['transaction']>[0]>[0];

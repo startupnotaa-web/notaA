@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { AreaConhecimento, BancoDeItemRegistro, QuizRepositoryPort, Tentativa } from '@notaa/contracts';
-import type { Database } from '../client';
+import type { DbExecutor } from '../client';
 import {
   bancoDeItens,
   habilidadeEstudante,
@@ -27,7 +27,9 @@ function toRegistro(row: typeof bancoDeItens.$inferSelect): BancoDeItemRegistro 
 
 /** Adaptador Drizzle real de QuizRepositoryPort (doc 04 §4) — Fase 1 (E2). */
 export class QuizRepositoryDb implements QuizRepositoryPort {
-  constructor(private readonly db: Database) {}
+  // DbExecutor: aceita o client OU uma transação aberta (unidade de trabalho do
+  // submitAnswer — auditoria E7).
+  constructor(private readonly db: DbExecutor) {}
 
   async createSession(estudanteId: string, area: AreaConhecimento): Promise<{ sessaoId: string }> {
     const [row] = await this.db

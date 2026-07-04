@@ -1,8 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { LLMProviderPort, UsoTokens } from '@notaa/contracts';
+
+// Resiliência (doc 06 §2.4/§3.3, auditoria R1): toda chamada ao provedor tem
+// teto de espera e re-tenta erros transitórios com backoff. Sem isso, uma
+// lentidão do Gemini segura a function serverless até o timeout da plataforma.
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS ?? 15_000);
+const MAX_RETRIES = 2;
+const BACKOFF_BASE_MS = 500;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Transitório = vale re-tentar: rate limit (429), indisponibilidade do provedor
+ * (5xx) e falhas de rede/timeout. Erros de contrato (schema, JSON inválido) e de
+ * configuração (chave ausente, modelo inexistente/404) NÃO são re-tentados.
+ */
+function isErroTransitorio(err: unknown): boolean {
+  if (err instanceof GoogleGenerativeAIFetchError) {
+    return err.status === 429 || (err.status != null && err.status >= 500);
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  return /timeout|timed out|fetch failed|network|econnreset|socket|aborted/i.test(msg);
+}
 
 /**
  * Adaptador real do `LLMProviderPort` (doc 06 §1) usando o Gemini do Google.
@@ -16,13 +38,34 @@ import type { LLMProviderPort, UsoTokens } from '@notaa/contracts';
  * LLM_PROVIDER (ai.module.ts) — nenhum outro arquivo muda (hexagonal).
  *
  * Config via ambiente:
- *   - GEMINI_API_KEY (obrigatória)
- *   - GEMINI_MODEL   (opcional; default 'gemini-2.0-flash')
+ *   - GEMINI_API_KEY    (obrigatória)
+ *   - GEMINI_MODEL      (opcional; default 'gemini-2.5-flash')
+ *   - GEMINI_TIMEOUT_MS (opcional; default 15000)
  */
 @Injectable()
 export class GeminiAdapter implements LLMProviderPort {
   private readonly logger = new Logger('LLMProvider');
   private readonly modelo = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+
+  /**
+   * Executa uma chamada ao provedor com retry + backoff exponencial para erros
+   * transitórios (429/5xx/rede). Erros definitivos sobem na primeira tentativa.
+   */
+  private async comRetry<T>(rotulo: string, op: () => Promise<T>): Promise<T> {
+    for (let tentativa = 0; ; tentativa++) {
+      try {
+        return await op();
+      } catch (err) {
+        if (!isErroTransitorio(err) || tentativa >= MAX_RETRIES) throw err;
+        const esperaMs = BACKOFF_BASE_MS * 2 ** tentativa;
+        this.logger.warn(
+          `↻ erro transitório em ${rotulo} (tentativa ${tentativa + 1}/${MAX_RETRIES + 1}): ` +
+            `${err instanceof Error ? err.message : String(err)} — nova tentativa em ${esperaMs}ms`,
+        );
+        await sleep(esperaMs);
+      }
+    }
+  }
 
   async complete<T>(input: {
     sistema: string;
@@ -39,15 +82,18 @@ export class GeminiAdapter implements LLMProviderPort {
 
     const inicio = Date.now();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: this.modelo,
-      systemInstruction: input.sistema,
-      // Força JSON: combina com a validação Zod a seguir para garantir I5.
-      generationConfig: {
-        responseMimeType: 'application/json',
-        ...(input.temperature != null ? { temperature: input.temperature } : {}),
+    const model = genAI.getGenerativeModel(
+      {
+        model: this.modelo,
+        systemInstruction: input.sistema,
+        // Força JSON: combina com a validação Zod a seguir para garantir I5.
+        generationConfig: {
+          responseMimeType: 'application/json',
+          ...(input.temperature != null ? { temperature: input.temperature } : {}),
+        },
       },
-    });
+      { timeout: GEMINI_TIMEOUT_MS },
+    );
 
     const jsonSchema = zodToJsonSchema(input.schema as any, 'ResponseSchema');
     const prompt =
@@ -56,7 +102,7 @@ export class GeminiAdapter implements LLMProviderPort {
       `Contrato Esperado (JSON Schema):\n${JSON.stringify(jsonSchema)}\n\n` +
       'Responda SOMENTE com um objeto JSON válido estritamente aderente ao JSON Schema acima, sem texto fora do JSON.';
 
-    const result = await model.generateContent(prompt);
+    const result = await this.comRetry('complete', () => model.generateContent(prompt));
     const texto = result.response.text();
 
     let json: unknown;
@@ -105,9 +151,12 @@ export class GeminiAdapter implements LLMProviderPort {
 
     const inicio = Date.now();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: this.modelo, systemInstruction });
+    const model = genAI.getGenerativeModel(
+      { model: this.modelo, systemInstruction },
+      { timeout: GEMINI_TIMEOUT_MS },
+    );
 
-    const result = await model.generateContent(prompt);
+    const result = await this.comRetry('socratico', () => model.generateContent(prompt));
     const texto = result.response.text();
 
     const usage = result.response.usageMetadata;
@@ -131,7 +180,7 @@ export class GeminiAdapter implements LLMProviderPort {
     }
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: modelo });
+      const model = genAI.getGenerativeModel({ model: modelo }, { timeout: GEMINI_TIMEOUT_MS });
       const result = await model.generateContent('Responda apenas com a palavra: OK');
       return { ok: true, modelo, texto: result.response.text().slice(0, 80) };
     } catch (err) {

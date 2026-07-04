@@ -8,12 +8,14 @@ import { AiModule } from '../ai/ai.module';
 import { QuizController } from './quiz.controller';
 import { QuizService } from './quiz.service';
 import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QuizUnitOfWork } from './quiz.unit-of-work';
 
 @Module({
   imports: [GamificacaoModule, ProfilerModule, ErrorDetectorModule, AiModule],
   controllers: [QuizController],
   providers: [
     QuizService,
+    QuizUnitOfWork,
     {
       provide: QUIZ_REPOSITORY,
       inject: [DB_CLIENT],

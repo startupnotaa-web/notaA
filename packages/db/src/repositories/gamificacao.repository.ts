@@ -7,14 +7,16 @@ import type {
   XpLedgerEntry,
   XpOrigem,
 } from '@notaa/contracts';
-import type { Database } from '../client';
+import type { DbExecutor } from '../client';
 import { conquista, conquistaConcedida, streak, xpLedger, perfilCognitivo4d } from '../schema';
 
 const FREEZES_INICIAIS = 1; // tolerância padrão (gamificação inclusiva, doc 08 §6) — Q-05 ainda não calibrado.
 
 /** Adaptador Drizzle real de GamificacaoRepositoryPort (doc 04 §7) — Fase 1 (E9). */
 export class GamificacaoRepositoryDb implements GamificacaoRepositoryPort {
-  constructor(private readonly db: Database) {}
+  // DbExecutor: aceita o client OU uma transação aberta (unidade de trabalho do
+  // submitAnswer — auditoria E7).
+  constructor(private readonly db: DbExecutor) {}
 
   async grantXp(input: {
     estudanteId: string;
