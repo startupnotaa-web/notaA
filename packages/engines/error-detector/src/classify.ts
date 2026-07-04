@@ -7,11 +7,11 @@ import { confiancaPorVolume } from './model';
 // Q-02/03/06. Só faz sentido a Orquestração chamar isto quando `acerto = false`
 // (a interface sempre devolve uma classificação, sem `null` — doc 05 §9).
 //
-// `item` (ItemParams) chega pela interface mas NÃO é usado na heurística: a
-// dificuldade/discriminação do banco de itens está marcada `nao_calibrado`
-// (Q-02) — usar a escala absoluta de param_b como "fácil"/"difícil" seria
-// inventar dado oficial. O único sinal usado é comportamental: tempo e acerto
-// desta tentativa comparados ao padrão recente do próprio estudante.
+// A heurística NÃO recebe `item` (parâmetros TRI): a dificuldade/discriminação
+// do banco de itens está marcada `nao_calibrado` (Q-02) — usar a escala
+// absoluta de param_b como "fácil"/"difícil" seria inventar dado oficial. O
+// único sinal usado é comportamental: tempo e acerto desta tentativa
+// comparados ao padrão recente do próprio estudante.
 
 const RAZAO_RAPIDA = 0.6; // tempo desta tentativa < 60% do tempo médio recente do estudante
 const TAXA_BOM_DESEMPENHO = 0.7; // ≥70% de acerto recente → domínio aparente do conteúdo

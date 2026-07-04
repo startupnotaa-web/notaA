@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { z } from 'zod';
-import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { GeminiAdapter } from './gemini.adapter';
 
 // Schema mínimo só para a rota de fumaça — exercita o caminho completo do
@@ -12,17 +12,18 @@ const PingSchema = z.object({
 });
 
 /**
- * Rota de fumaça da IA. Caminho real: GET /ai/test (o rewrite da Vercel manda
- * tudo para a function e o Fastify roteia pela URL original — não há prefixo
- * /api nas rotas, apesar do arquivo viver em apps/api/api/index.ts).
+ * Rotas de diagnóstico da IA. Caminho real: GET /ai/test (o rewrite da Vercel
+ * manda tudo para a function e o Fastify roteia pela URL original — não há
+ * prefixo /api nas rotas, apesar do arquivo viver em apps/api/api/index.ts).
  *
- * @Public(): permite checar a IA sem token (ex.: `curl …/ai/test`).
+ * @Roles('admin'): cada chamada consome quota real do Gemini e /ai/models
+ * expõe detalhes da conta Google — nunca deixar público (auditoria E3).
  */
+@Roles('admin')
 @Controller('ai')
 export class AiController {
   constructor(private readonly gemini: GeminiAdapter) {}
 
-  @Public()
   @Get('test')
   async test() {
     try {
@@ -53,20 +54,18 @@ export class AiController {
    * Diagnóstico: lista os modelos que a GEMINI_API_KEY atual realmente enxerga
    * (ListModels da API do Google), filtrando os que suportam `generateContent`.
    * Serve para escolher um nome de modelo válido sem chutar (evita 404) e ver o
-   * que a conta tem acesso. @Public para inspeção rápida via curl.
+   * que a conta tem acesso.
    */
   /**
    * Sonda de modelo: testa um `generateContent` mínimo no modelo indicado
    * (?model=gemini-2.5-flash) ou no default. Serve para achar um modelo com
    * cota disponível sem precisar redeployar a cada tentativa.
    */
-  @Public()
   @Get('ping')
   async ping(@Query('model') model?: string) {
     return this.gemini.ping(model);
   }
 
-  @Public()
   @Get('models')
   async models() {
     const apiKey = process.env.GEMINI_API_KEY;

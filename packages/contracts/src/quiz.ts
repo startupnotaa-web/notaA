@@ -64,7 +64,9 @@ export const GenerateQuizResponseSchema = z.object({
   alternativas: z.array(z.string()).length(5),
   correta: z.number().min(0).max(4),
   explicacao: z.string(),
-  dica_perfil: z.string(),
+  // camelCase como todo o resto dos contratos (redacao.ts, simulado.ts) — a
+  // divergência snake_case já quebrou a validação Zod uma vez (auditoria E4).
+  dicaPerfil: z.string(),
   dificuldade: z.enum(['Fácil', 'Média', 'Difícil']),
 });
 export type GenerateQuizResponse = z.infer<typeof GenerateQuizResponseSchema>;

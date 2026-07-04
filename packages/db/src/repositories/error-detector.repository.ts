@@ -9,6 +9,7 @@ export class ErrorDetectorRepositoryDb implements ErrorDetectorRepositoryPort {
   async recordOcorrencia(input: {
     estudanteId: string;
     itemId: string | null;
+    competencia: string | null;
     classificacao: 'lacuna_conhecimento' | 'deslize_atencao';
     evidencias: object;
     confianca: number;
@@ -16,6 +17,7 @@ export class ErrorDetectorRepositoryDb implements ErrorDetectorRepositoryPort {
     await this.db.insert(ocorrenciaErro).values({
       estudanteId: input.estudanteId,
       itemId: input.itemId,
+      competencia: input.competencia,
       classificacao: input.classificacao,
       evidencias: input.evidencias,
       confianca: input.confianca.toString(),

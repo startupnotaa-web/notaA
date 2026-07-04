@@ -38,6 +38,13 @@ Thumbs.db
 # Testing
 coverage/
 
+# Scratch / scripts ad-hoc de conexão (nunca commitar — risco de segredo em connection string)
+tmp/
+test-db.js
+test-sni.*
+
 # Supabase local
 supabase/.branches/
 supabase/.temp/
+
+.vercel

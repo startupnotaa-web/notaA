@@ -85,6 +85,7 @@ export interface QuizRepositoryPort {
   ): Promise<void>;
   getItemPool(area: AreaConhecimento): Promise<BancoDeItemRegistro[]>;
   getItem(itemId: string): Promise<BancoDeItemRegistro | null>;
+  addItem(item: BancoDeItemRegistro): Promise<void>;
   getExpostos(sessaoId: string): Promise<string[]>;
   /** Idempotente por idempotencyKey (doc 04 §4) — retorna `duplicate: true` em reenvio. */
   recordAnswer(input: {
@@ -122,6 +123,8 @@ export interface ErrorDetectorRepositoryPort {
   recordOcorrencia(input: {
     estudanteId: string;
     itemId: string | null;
+    /** Competência do item errado (doc 04 §5) — permite análise de lacunas por tema (auditoria E9). */
+    competencia: string | null;
     classificacao: ErroClassificacao;
     evidencias: object;
     confianca: number;

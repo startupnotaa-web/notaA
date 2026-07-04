@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
 import type { Database } from '@notaa/db';
-import { perfilOnboarding, perfilCognitivo4d, usuario, eq } from '@notaa/db';
+import { dadoSensivelEstudante, perfilOnboarding, perfilCognitivo4d, usuario, eq } from '@notaa/db';
 import type { OnboardingRepositoryPort, OnboardingState } from '@notaa/contracts';
 import {
   MOCK_DEV_USER_ID,
@@ -111,6 +111,32 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
     if (passo === 4) updates.dificuldades = (dados as any).dificuldades;
     if (passo === 5) updates.rotinaEstudo = (dados as any).rotinaEstudo;
     if (passo === 6) updates.autopercepcao = (dados as any).autopercepcao;
+
+    // Passo 7 — dado SENSÍVEL: vai para a tabela isolada dado_sensivel_estudante
+    // (doc 10 §3, minimização), NUNCA para perfil_onboarding. O OnboardingService
+    // já barrou <18 sem consentimento de responsável (auditoria R3) — aqui, quem
+    // consente é o próprio titular (≥18). Antes, este passo era validado e
+    // silenciosamente DESCARTADO (nenhum `if (passo === 7)` existia).
+    if (passo === 7) {
+      const neurodivergencia = (dados as any).neurodivergencia as Record<string, boolean> | undefined;
+      const marcouAlgo = neurodivergencia && Object.values(neurodivergencia).some(Boolean);
+      if (marcouAlgo) {
+        const registroSensivel = {
+          neurodivergencia,
+          consentimentoBaseLegal: (dados as any).consentimentoBaseLegal ?? null,
+          consentidoPor: estudanteId,
+          consentidoEm: new Date(),
+          atualizadoEm: new Date(),
+        };
+        await this.db
+          .insert(dadoSensivelEstudante)
+          .values({ estudanteId, ...registroSensivel })
+          .onConflictDoUpdate({
+            target: dadoSensivelEstudante.estudanteId,
+            set: registroSensivel,
+          });
+      }
+    }
 
     await this.db
       .insert(perfilOnboarding)

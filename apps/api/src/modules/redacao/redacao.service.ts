@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   EssayEvaluationSchema,
   type CreateRedacaoRequest,
@@ -32,6 +32,8 @@ const XP_REDACAO = 30;
 
 @Injectable()
 export class RedacaoService {
+  private readonly logger = new Logger('RedacaoService');
+
   constructor(
     @Inject(REDACAO_REPOSITORY) private readonly repo: RedacaoRepositoryPort,
     @Inject(DB_CLIENT) private readonly db: Database,
@@ -107,8 +109,14 @@ export class RedacaoService {
       // 5. Concede XP pela redação.
       await this.gamificacao.grantXp(estudanteId, 'redacao', XP_REDACAO);
       await this.gamificacao.registrarAtividadeValida(estudanteId);
-    } catch {
-      // Em caso de falha na IA, marca como falha sem perder a redação.
+    } catch (error) {
+      // Em caso de falha na IA (já re-tentada pelo adapter), marca como falha
+      // sem perder a redação — o aluno pode reenviar. O log é o que permite
+      // diagnosticar a causa em produção (timeout? 429? schema?) — auditoria E6.
+      this.logger.error(
+        `Falha ao corrigir redação ${redacaoId} (estudante=${estudanteId})`,
+        error instanceof Error ? error.stack : String(error),
+      );
       await this.repo.atualizarStatus(redacaoId, 'falha');
       return { id: redacaoId, status: 'falha' };
     }

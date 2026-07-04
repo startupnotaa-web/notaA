@@ -126,6 +126,9 @@ export default function OnboardingPage() {
       case 6:
         return { autopercepcao: { nivelAutopercebido: autopercepcao } };
       case 7:
+        // <18 nunca envia dado sensível (LGPD/ECA — o backend também rejeita):
+        // o passo vira um "pular" implícito até existir consentimento do responsável.
+        if (Number(idade) < 18) return {};
         return {
           ...((dislexia || tdah || tea) && { neurodivergencia: { dislexia, tdah, tea } }),
           ...(consentimento && { consentimentoBaseLegal: 'aceito' }),
@@ -191,7 +194,9 @@ export default function OnboardingPage() {
     step === 4 ||
     step === 5 ||
     (step === 6 && autopercepcao != null) ||
-    step === 7 ||
+    // Passo 7: marcou neurodivergência (≥18) → consentimento explícito obrigatório
+    // (o backend rejeita sem ele); <18 não envia dado sensível, sempre pode seguir.
+    (step === 7 && (Number(idade) < 18 || !(dislexia || tdah || tea) || consentimento)) ||
     step === 8;
 
   return (
@@ -334,18 +339,34 @@ export default function OnboardingPage() {
             <p className="text-text-muted">
               Etapa opcional. Compartilhar isso nos ajuda a adaptar a experiência para você.
             </p>
-            <ul className="flex flex-col gap-2 pt-2">
-              <PrefRow id="pref-dislexia" title="Dislexia" checked={dislexia} onChange={setDislexia} />
-              <PrefRow id="pref-tdah" title="TDAH" checked={tdah} onChange={setTdah} />
-              <PrefRow id="pref-tea" title="TEA" checked={tea} onChange={setTea} />
-            </ul>
-            {(dislexia || tdah || tea) && (
-              <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4">
-                <p id="pref-consent" className="text-sm text-text-muted">
-                  Autorizo usar essas informações só para personalizar minha experiência no Nota A.
+            {Number(idade) < 18 ? (
+              // LGPD/ECA (doc 10 §3): dado sensível de menor exige consentimento
+              // do responsável — o backend rejeita a gravação para <18, então o
+              // formulário nem é oferecido. O passo continua opcional (pular).
+              <div className="rounded-lg border border-border bg-surface p-4">
+                <p className="text-sm text-text-muted">
+                  Como você tem menos de 18 anos, o registro dessas informações
+                  precisa do consentimento de um responsável — estamos preparando
+                  esse recurso. Por enquanto, é só pular esta etapa: você poderá
+                  adicionar depois, junto com seu responsável.
                 </p>
-                <Switch checked={consentimento} onCheckedChange={setConsentimento} aria-labelledby="pref-consent" />
               </div>
+            ) : (
+              <>
+                <ul className="flex flex-col gap-2 pt-2">
+                  <PrefRow id="pref-dislexia" title="Dislexia" checked={dislexia} onChange={setDislexia} />
+                  <PrefRow id="pref-tdah" title="TDAH" checked={tdah} onChange={setTdah} />
+                  <PrefRow id="pref-tea" title="TEA" checked={tea} onChange={setTea} />
+                </ul>
+                {(dislexia || tdah || tea) && (
+                  <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4">
+                    <p id="pref-consent" className="text-sm text-text-muted">
+                      Autorizo usar essas informações só para personalizar minha experiência no Nota A.
+                    </p>
+                    <Switch checked={consentimento} onCheckedChange={setConsentimento} aria-labelledby="pref-consent" />
+                  </div>
+                )}
+              </>
             )}
             <Button variant="ghost" size="sm" onClick={pularPasso7} disabled={salvando} className="self-start">
               Pular esta etapa

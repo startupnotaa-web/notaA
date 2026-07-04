@@ -13,6 +13,7 @@ import { ErrorDetectorService } from '../error-detector/error-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import { ProfilerService } from '../profiler/profiler.service';
 import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QuizUnitOfWork } from './quiz.unit-of-work';
 
 const HISTORICO_RECENTE_LIMIT = 10; // baseline comportamental p/ ErrorDetector (E5) — ajustável.
 const HISTORICO_PERGUNTAS_IA_LIMIT = 8; // anti-repetição do Quiz com IA (Missão 1).
@@ -49,6 +50,7 @@ export class QuizService {
     private readonly errorDetector: ErrorDetectorService,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
+    private readonly uow: QuizUnitOfWork,
   ) {}
 
   async generateQuiz(
@@ -84,7 +86,7 @@ export class QuizService {
       : 'Visual e Prático';
     const objetivo = contexto.objetivoAluno || 'mandar bem nos estudos';
 
-    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dica_perfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.`;
+    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dicaPerfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.`;
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 
@@ -114,6 +116,41 @@ export class QuizService {
     return data;
   }
 
+  private async getOrGenerateNextItem(
+    estudanteId: string,
+    area: AreaConhecimento,
+    theta: number,
+    expostos: string[],
+    pool: BancoDeItemRegistro[]
+  ) {
+    try {
+      const { itemId } = this.selecionarProximo(theta, area, expostos, pool);
+      const item = await this.repo.getItem(itemId);
+      if (!item) throw new NotFoundException();
+      return item;
+    } catch (err) {
+      if (err instanceof PoolEsgotadoError) {
+        const aiResponse = await this.generateQuiz(estudanteId, 'Questão Adaptativa', area);
+        const letras = ['A', 'B', 'C', 'D', 'E'];
+        const novoItem: BancoDeItemRegistro = {
+          itemId: `ai-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          area: area,
+          enunciado: aiResponse.enunciado,
+          alternativas: aiResponse.alternativas.map((texto, i) => ({ id: letras[i] ?? 'A', texto })),
+          gabarito: letras[aiResponse.correta] ?? 'A',
+          competencia: 'IA_ADAPTATIVA',
+          naoCalibrado: true,
+          paramA: 1.2,
+          paramB: aiResponse.dificuldade === 'Fácil' ? -1 : aiResponse.dificuldade === 'Média' ? 0 : 1.5,
+          paramC: 0.2,
+        };
+        await this.repo.addItem(novoItem);
+        return novoItem;
+      }
+      throw err;
+    }
+  }
+
   async startSession(
     estudanteId: string,
     area: AreaConhecimento,
@@ -121,10 +158,7 @@ export class QuizService {
     const { theta } = await this.repo.getHabilidade(estudanteId, area);
     const pool = await this.repo.getItemPool(area);
 
-    const { itemId } = this.selecionarProximo(theta, area, [], pool);
-    const item = await this.repo.getItem(itemId);
-    if (!item) throw new NotFoundException(); // defensivo — pool veio do mesmo repo
-
+    const item = await this.getOrGenerateNextItem(estudanteId, area, theta, [], pool);
     const { sessaoId } = await this.repo.createSession(estudanteId, area);
     return { sessaoId, primeiraQuestao: toItemPublico(item, 1) };
   }
@@ -135,10 +169,7 @@ export class QuizService {
     const expostos = await this.repo.getExpostos(sessaoId);
     const pool = await this.repo.getItemPool(sessao.area);
 
-    const { itemId } = this.selecionarProximo(theta, sessao.area, expostos, pool);
-    const item = await this.repo.getItem(itemId);
-    if (!item) throw new NotFoundException();
-
+    const item = await this.getOrGenerateNextItem(estudanteId, sessao.area, theta, expostos, pool);
     return toItemPublico(item, expostos.length + 1);
   }
 
@@ -165,48 +196,80 @@ export class QuizService {
       sessao.area,
       HISTORICO_RECENTE_LIMIT,
     );
-    const { duplicate, tentativaId } = await this.repo.recordAnswer({
-      sessaoId,
-      estudanteId,
-      itemId: body.itemId,
-      resposta: body.respostaId,
-      acerto,
-      tempoRespostaMs: body.tempoRespostaMs,
-      idempotencyKey,
-      temasErro: !acerto ? [item.competencia] : undefined,
-    });
-
-    const habilidadeAtual = await this.repo.getHabilidade(estudanteId, sessao.area);
-    let theta = habilidadeAtual.theta;
-    let erroPadrao = habilidadeAtual.erroPadrao;
-    let xpGanho = 0;
-    let classificacaoErro: SubmitAnswerResponse['feedback']['classificacaoErro'] = null;
-    // Reenvio idempotente não lança XP de novo → reporta o nível atual sem level-up.
-    let gamificacao: SubmitAnswerResponse['gamificacao'] = {
-      ...(await this.gamificacao.nivelAtual(estudanteId)),
-      subiuDeNivel: false,
-    };
-
-    if (!duplicate) {
-      const atualizado = motorTRI.updateAbility({
-        theta: habilidadeAtual.theta,
-        item,
+    // Núcleo transacional (auditoria E7): tentativa + theta + XP + streak são
+    // atômicos — falha no meio reverte tudo (inclusive a tentativa, liberando a
+    // idempotencyKey para o reenvio refazer o fluxo completo).
+    const nucleo = await this.uow.run(async ({ quizRepo, gamificacao }) => {
+      const { duplicate, tentativaId } = await quizRepo.recordAnswer({
+        sessaoId,
+        estudanteId,
+        itemId: body.itemId,
+        resposta: body.respostaId,
         acerto,
-        tempoMs: body.tempoRespostaMs,
+        tempoRespostaMs: body.tempoRespostaMs,
+        idempotencyKey,
+        temasErro: !acerto ? [item.competencia] : undefined,
       });
-      theta = atualizado.theta;
-      erroPadrao = atualizado.erroPadrao;
-      await this.repo.setHabilidade(estudanteId, sessao.area, theta, erroPadrao, tentativaId ?? undefined);
 
-      xpGanho = acerto ? XP_ACERTO : XP_ERRO;
-      const xpResult = await this.gamificacao.grantXp(estudanteId, 'quiz', xpGanho);
-      gamificacao = {
-        xpTotal: xpResult.xpTotal,
-        nivel: xpResult.nivel,
-        subiuDeNivel: xpResult.subiuDeNivel,
+      const habilidadeAtual = await quizRepo.getHabilidade(estudanteId, sessao.area);
+      if (duplicate) {
+        // Reenvio idempotente não lança XP de novo → reporta o nível atual sem level-up.
+        return {
+          duplicate,
+          theta: habilidadeAtual.theta,
+          erroPadrao: habilidadeAtual.erroPadrao,
+          xpGanho: 0,
+          gamificacao: { ...(await gamificacao.nivelAtual(estudanteId)), subiuDeNivel: false },
+        };
+      }
+
+      // Item NÃO calibrado (ex.: gerado por IA com parâmetros TRI chutados) não
+      // pode mover a estimativa de habilidade — theta só é alimentado por itens
+      // calibrados (regra do planejamento §1.2 / auditoria E8). A tentativa e o
+      // XP seguem normais; apenas a atualização de theta é pulada.
+      let atualizado = { theta: habilidadeAtual.theta, erroPadrao: habilidadeAtual.erroPadrao };
+      if (item.naoCalibrado) {
+        this.logger.warn(
+          `Item ${item.itemId} não calibrado — tentativa registrada sem atualizar theta (estudante=${estudanteId}).`,
+        );
+      } else {
+        atualizado = motorTRI.updateAbility({
+          theta: habilidadeAtual.theta,
+          item,
+          acerto,
+          tempoMs: body.tempoRespostaMs,
+        });
+        await quizRepo.setHabilidade(
+          estudanteId,
+          sessao.area,
+          atualizado.theta,
+          atualizado.erroPadrao,
+          tentativaId ?? undefined,
+        );
+      }
+
+      const xpGanho = acerto ? XP_ACERTO : XP_ERRO;
+      const xpResult = await gamificacao.grantXp(estudanteId, 'quiz', xpGanho);
+      await gamificacao.registrarAtividadeValida(estudanteId);
+
+      return {
+        duplicate,
+        theta: atualizado.theta,
+        erroPadrao: atualizado.erroPadrao,
+        xpGanho,
+        gamificacao: {
+          xpTotal: xpResult.xpTotal,
+          nivel: xpResult.nivel,
+          subiuDeNivel: xpResult.subiuDeNivel,
+        },
       };
-      await this.gamificacao.registrarAtividadeValida(estudanteId);
-      // Atualização silenciosa do perfil 4D (H3.1) — nunca bloqueia a resposta ao cliente.
+    });
+    const { theta, erroPadrao, xpGanho, gamificacao } = nucleo;
+
+    let classificacaoErro: SubmitAnswerResponse['feedback']['classificacaoErro'] = null;
+    if (!nucleo.duplicate) {
+      // Fora da transação: análises derivadas não podem reverter a resposta já
+      // efetivada (H3.1 — "nunca bloqueia a resposta ao cliente").
       await this.profiler.atualizarComRespostaQuiz(estudanteId, {
         tempoMs: body.tempoRespostaMs,
         acerto,
