@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SocraticResponseSchema, type LLMProviderPort, type SocraticResponse } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { ContextBuilderService } from '../ai/context-builder.service';
-import { GeminiAdapter } from '../ai/gemini.adapter';
 import { StudentContextService } from '../ai/student-context.service';
 import { fallbackGuiado } from '../ai/guardrails';
 import { RiskDetectorService } from '../ai/risk-detector.service';
@@ -10,12 +9,7 @@ import type { SocraticRepositoryPort } from './socratic.repository.memory';
 import { SOCRATIC_REPOSITORY } from './socratic.tokens';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, assinatura, plano, eq, desc } from '@notaa/db';
-
-// Prompt de sistema versionado — em produção, viria de packages/prompts (doc 06 §2.2).
-const SISTEMA_SOCRATICO = `Você é um tutor socrático. NUNCA dê a resposta direta. Faça perguntas provocativas baseadas no estilo de aprendizagem do aluno (fornecido no contexto).
-Regras adicionais:
-- Guie o raciocínio com perguntas progressivas.
-- Se detectar sofrimento emocional, redirecione para suporte humano (care_protocol).`;
+import { PROMPT_SOCRATICO } from '@notaa/prompts';
 
 @Injectable()
 export class SocraticService {
@@ -27,14 +21,13 @@ export class SocraticService {
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
     private readonly risk: RiskDetectorService,
-    private readonly gemini: GeminiAdapter,
     private readonly studentContext: StudentContextService,
   ) {}
 
   /**
-   * Agente 3 — tutor socrático DIRETO (POST /socratic/chat): stateless, usa o
-   * Gemini REAL (não o LLM_PROVIDER mock) com um system prompt em linguagem
-   * natural montado pelo StudentContextService (onboarding + Perfil 4D).
+   * Agente 3 — tutor socrático DIRETO (POST /socratic/chat): stateless, via
+   * LLM_PROVIDER (portão único, doc 06 §1) em modo texto livre, com um system
+   * prompt montado pelo StudentContextService (onboarding + Perfil 4D).
    *
    * Mantém a triagem de risco da ENTRADA (I6, doc 01 §1.5): segurança não é
    * opcional num canal aluno↔IA. Sem conversa persistida aqui, a ocorrência
@@ -57,7 +50,12 @@ export class SocraticService {
     }
 
     const systemPrompt = await this.studentContext.buildSocraticSystemPrompt(estudanteId);
-    const resposta = await this.gemini.generateSocraticResponse(mensagem, systemPrompt);
+    const { texto: resposta } = await this.llm.completeTexto({
+      sistema: systemPrompt,
+      prompt: mensagem,
+      origem: 'socratica',
+      usuarioId: estudanteId,
+    });
 
     // Guardrail I3 pós-LLM (mesma regra inegociável de enviarMensagem, doc 06
     // §2.3): se o texto entrega a resposta final, rebaixa para o fallback guiado.
@@ -154,10 +152,13 @@ export class SocraticService {
     });
 
     const { data: respostaLLM } = await this.llm.complete({
-      sistema: SISTEMA_SOCRATICO,
+      sistema: PROMPT_SOCRATICO.conteudo,
       prompt: mensagem,
       contexto,
       schema: SocraticResponseSchema,
+      origem: 'socratica',
+      usuarioId: estudanteId,
+      promptVersao: PROMPT_SOCRATICO.versao,
     });
 
     // 4. Guardrails pós-LLM (defesa em profundidade).

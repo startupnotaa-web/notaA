@@ -150,3 +150,29 @@ export const ocorrenciaRisco = pgTable(
   },
   (t) => [index('idx_ocorrencia_risco_status_criado').on(t.statusAcompanhamento, t.criadoEm)],
 );
+
+// Auditoria R8 / decisão Q-01 (doc 10 §6): registro de cada notificação do
+// protocolo de cuidado a responsável/escola vinculados. `status='pendente'`
+// até um canal de entrega real (e-mail/push) confirmar o envio — o Portal
+// Responsável/Escola lê daqui as notificações in-app.
+export const notificacaoCuidado = pgTable(
+  'notificacao_cuidado',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ocorrenciaId: uuid('ocorrencia_id')
+      .notNull()
+      .references(() => ocorrenciaRisco.id, { onDelete: 'restrict' }),
+    destinatarioId: uuid('destinatario_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'restrict' }),
+    papelDestinatario: text('papel_destinatario').notNull(), // 'responsavel' | 'gestor'
+    canal: text('canal').notNull().default('in_app'),
+    status: text('status').notNull().default('pendente'), // pendente | enviada | falha
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+    enviadoEm: timestamp('enviado_em', { withTimezone: true }),
+  },
+  (t) => [
+    index('idx_notificacao_cuidado_destinatario_criado').on(t.destinatarioId, t.criadoEm),
+    index('idx_notificacao_cuidado_ocorrencia').on(t.ocorrenciaId),
+  ],
+);

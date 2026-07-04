@@ -138,12 +138,15 @@ export class GeminiAdapter implements LLMProviderPort {
   }
 
   /**
-   * Agente 1 — geração de TEXTO LIVRE para o tutor socrático direto
-   * (POST /socratic/chat). Diferente de `complete()`, NÃO força JSON nem valida
-   * schema: devolve a resposta do Gemini como string, guiada pelo
-   * `systemInstruction` (montado pelo StudentContextService com o perfil do aluno).
+   * Geração de TEXTO LIVRE (LLMProviderPort.completeTexto) — tutor socrático
+   * direto (POST /socratic/chat). Diferente de `complete()`, NÃO força JSON nem
+   * valida schema: devolve a resposta do Gemini como string, guiada pelo
+   * `sistema` (montado pelo StudentContextService com o perfil do aluno).
    */
-  async generateSocraticResponse(prompt: string, systemInstruction: string): Promise<string> {
+  async completeTexto(input: {
+    sistema: string;
+    prompt: string;
+  }): Promise<{ texto: string; uso: UsoTokens }> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY não configurado no ambiente da API.');
@@ -152,19 +155,25 @@ export class GeminiAdapter implements LLMProviderPort {
     const inicio = Date.now();
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
-      { model: this.modelo, systemInstruction },
+      { model: this.modelo, systemInstruction: input.sistema },
       { timeout: GEMINI_TIMEOUT_MS },
     );
 
-    const result = await this.comRetry('socratico', () => model.generateContent(prompt));
+    const result = await this.comRetry('socratico', () => model.generateContent(input.prompt));
     const texto = result.response.text();
 
     const usage = result.response.usageMetadata;
+    const uso: UsoTokens = {
+      tokensIn: usage?.promptTokenCount ?? 0,
+      tokensOut: usage?.candidatesTokenCount ?? 0,
+      custoEstimado: 0,
+      latenciaMs: Date.now() - inicio,
+    };
     this.logger.log(
-      `← socrático [gemini:${this.modelo}] tokensIn=${usage?.promptTokenCount ?? 0} tokensOut=${usage?.candidatesTokenCount ?? 0} latenciaMs=${Date.now() - inicio}`,
+      `← socrático [gemini:${this.modelo}] tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
     );
 
-    return texto;
+    return { texto, uso };
   }
 
   /**

@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, perfilOnboarding, tentativaResposta, trilhaEstudo, desc, eq, and } from '@notaa/db';
-import { GeminiAdapter } from '../ai/gemini.adapter';
-import { GeminiStudyTrailSchema, StudyTrailResponse } from '@notaa/contracts';
+import { LLM_PROVIDER } from '../ai/ai.tokens';
+import { GeminiStudyTrailSchema, StudyTrailResponse, type LLMProviderPort } from '@notaa/contracts';
+import { PROMPT_TRILHA_TEMPLATE, montarPromptTrilha } from '@notaa/prompts';
 import { z } from 'zod';
 
 @Injectable()
@@ -11,7 +12,7 @@ export class StudyTrailsService {
 
   constructor(
     @Inject(DB_CLIENT) private readonly db: Database,
-    private readonly gemini: GeminiAdapter,
+    @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
   ) {}
 
   async generateTrail(estudanteId: string): Promise<StudyTrailResponse> {
@@ -56,17 +57,17 @@ export class StudyTrailsService {
     const temasText = uniqueThemes.length > 0 ? uniqueThemes.join(', ') : 'Temas variados';
 
     // 4. Generate via Gemini
-    const sistema = `Você é um tutor educacional do Nota A.
-O aluno de ${idade} anos do ${serie} acabou de errar questões sobre os seguintes temas: ${temasText}.
-Crie uma trilha de estudo em 3 passos curtos e práticos para ele recuperar esse conhecimento.
-Retorne o resultado estritamente em formato JSON contendo titulo, descricao e os passos.`;
+    const sistema = montarPromptTrilha({ idade: String(idade), serie: String(serie), temas: temasText });
 
     let data: z.infer<typeof GeminiStudyTrailSchema>;
     try {
-      const result = await this.gemini.complete({
+      const result = await this.llm.complete({
         sistema,
         contexto: { temasErrados: uniqueThemes },
         schema: GeminiStudyTrailSchema,
+        origem: 'trilha',
+        usuarioId: estudanteId,
+        promptVersao: PROMPT_TRILHA_TEMPLATE.versao,
       });
       data = result.data;
     } catch (e: any) {

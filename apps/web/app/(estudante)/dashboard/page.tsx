@@ -8,7 +8,6 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import type { AchievementsResponse, DashboardResponse, Eixo4D } from '@notaa/contracts';
 import { Badge, Card, CardHeader, SectionHeader, Skeleton, cn } from '@notaa/ui';
-import { NotaA_Dashboard_Batalha } from '../../components/NotaA_Dashboard_Batalha';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 
 // Mapeia o id de curso coletado no onboarding (objetivoEnem) para um rótulo legível.
@@ -25,7 +24,6 @@ export default function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [useMock, setUseMock] = useState(false);
 
   const [toastMsg, setToastMsg] = useState<{ type: string; msg: string } | null>(null);
 
@@ -46,7 +44,7 @@ export default function DashboardPage() {
         if (cancelled) return;
         if (e instanceof ApiError) {
           if (e.status === 401) {
-            setUseMock(true); // ponte enquanto o api-client trata a sessão
+            // Redirecionamento para o login já está em andamento pelo api-client.
           } else if (e.code === 'NETWORK_ERROR') {
             setErro('Sem conexão com o servidor. Verifique sua internet e tente novamente.');
           } else {
@@ -81,8 +79,6 @@ export default function DashboardPage() {
     window.addEventListener('toast-gamificacao', handleToast);
     return () => window.removeEventListener('toast-gamificacao', handleToast);
   }, []);
-
-  if (useMock) return <NotaA_Dashboard_Batalha />;
 
   if (erro) {
     return (

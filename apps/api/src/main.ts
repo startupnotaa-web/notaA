@@ -1,12 +1,15 @@
 import 'reflect-metadata';
 import 'dotenv/config';
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
 import { CORS_OPTIONS } from './common/cors';
+import { initSentry, SentryExceptionFilter } from './common/sentry';
 
 async function bootstrap() {
+  initSentry();
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  app.useGlobalFilters(new SentryExceptionFilter(app.get(HttpAdapterHost).httpAdapter));
   
   // Middleware global de log de CORS e Requisições
   const fastify = app.getHttpAdapter().getInstance();

@@ -22,6 +22,8 @@
     "@notaa/engine-error-detector": "workspace:*",
     "@notaa/engine-profiler": "workspace:*",
     "@notaa/engine-tri": "workspace:*",
+    "@notaa/prompts": "workspace:*",
+    "@sentry/node": "^10.63.0",
     "@supabase/supabase-js": "^2.47.10",
     "dotenv": "^16.4.7",
     "fastify": "^4.28.1",

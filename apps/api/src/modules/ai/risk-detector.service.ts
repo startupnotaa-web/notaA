@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import type { SocraticResponse } from '@notaa/contracts';
 import {
   construirCareProtocol,
@@ -8,6 +8,7 @@ import {
 } from './guardrails';
 import { RISK_REPOSITORY } from './ai.tokens';
 import type { RiskRepositoryPort } from './risk.repository';
+import { CareNotifierService } from './care-notifier.service';
 
 type CareProtocol = Extract<SocraticResponse, { tipo: 'care_protocol' }>;
 type Severidade = 'baixa' | 'media' | 'alta';
@@ -15,15 +16,18 @@ type Severidade = 'baixa' | 'media' | 'alta';
 /**
  * Detector de risco + guardrails de conteúdo (I3/I6, doc 06 §2.3/§4). A DECISÃO
  * é determinística e desta camada — nunca delegada ao provedor de IA. Acionar o
- * protocolo grava `ocorrencia_risco` (append-only, auditável) e registra a
- * escalação. A notificação real ao responsável/escola é um passo futuro (marcado
- * em `acaoTomada.notificacao`), mas a ocorrência e a escalação já são gravadas.
+ * protocolo grava `ocorrencia_risco` (append-only, auditável), registra a
+ * escalação e — quando escala a responsável/escola — dispara o notificador
+ * (CareNotifierService, decisão Q-01 do doc 10 §6).
  */
 @Injectable()
 export class RiskDetectorService {
   private readonly logger = new Logger('RiskDetector');
 
-  constructor(@Inject(RISK_REPOSITORY) private readonly repo: RiskRepositoryPort) {}
+  constructor(
+    @Inject(RISK_REPOSITORY) private readonly repo: RiskRepositoryPort,
+    @Optional() private readonly notifier?: CareNotifierService,
+  ) {}
 
   /** I6 — triagem determinística do texto do estudante. */
   triagem(texto: string): ResultadoTriagem {
@@ -77,7 +81,7 @@ export class RiskDetectorService {
       escalonamento: input.escalonamento,
       fonte: input.fonte,
       recursosOferecidos: ['CVV 188'],
-      notificacao: 'pendente', // TODO: integrar notificador real (responsável/escola)
+      notificacao: input.escalonamento === 'responsavel_escola' ? 'in_app' : 'nao_aplicavel',
     };
     const { ocorrenciaId } = await this.repo.registrarOcorrencia({
       estudanteId: input.estudanteId,
@@ -90,6 +94,23 @@ export class RiskDetectorService {
     this.logger.warn(
       `PROTOCOLO DE CUIDADO acionado [${input.origem}] ocorrencia=${ocorrenciaId} severidade=${input.severidade} escalonamento=${input.escalonamento} fonte=${input.fonte}`,
     );
+
+    // Notificação best-effort (Q-01): falha ao notificar não pode derrubar a
+    // resposta acolhedora ao aluno — a ocorrência já está gravada e auditável.
+    if (this.notifier) {
+      try {
+        await this.notifier.notificar({
+          ocorrenciaId,
+          estudanteId: input.estudanteId,
+          escalonamento: input.escalonamento,
+        });
+      } catch (err) {
+        this.logger.error(
+          `falha ao notificar protocolo de cuidado (ocorrencia=${ocorrenciaId}): ` +
+            (err instanceof Error ? err.message : String(err)),
+        );
+      }
+    }
     return { ocorrenciaId };
   }
 }
