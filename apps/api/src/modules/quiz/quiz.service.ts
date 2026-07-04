@@ -9,6 +9,7 @@ import type {
   StartQuizSessionResponse,
   SubmitAnswerResponse,
 } from '@notaa/contracts';
+import { PROMPT_QUIZ_TEMPLATE, montarPromptQuiz } from '@notaa/prompts';
 import { ErrorDetectorService } from '../error-detector/error-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import { ProfilerService } from '../profiler/profiler.service';
@@ -86,7 +87,15 @@ export class QuizService {
       : 'Visual e Prático';
     const objetivo = contexto.objetivoAluno || 'mandar bem nos estudos';
 
-    const sistema = `Você é um tutor adaptativo. O aluno aprende melhor de forma ${instrucoes}, tem o objetivo de ${objetivo} e possui proficiência nível ${nivelGamificacao.nivel} em ${area}. Crie uma questão 100% INÉDITA sobre ${tema} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. ${instrucaoDificuldade} ${instrucaoAntiRepeticao} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dicaPerfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.`;
+    const sistema = montarPromptQuiz({
+      instrucoes,
+      objetivo,
+      nivel: nivelGamificacao.nivel,
+      area,
+      tema,
+      instrucaoDificuldade,
+      instrucaoAntiRepeticao,
+    });
 
     const { GenerateQuizResponseSchema } = await import('@notaa/contracts');
 
@@ -99,6 +108,7 @@ export class QuizService {
         temperature: QUIZ_IA_TEMPERATURE,
         origem: 'quiz',
         usuarioId: estudanteId,
+        promptVersao: PROMPT_QUIZ_TEMPLATE.versao,
       });
       data = resultado.data;
     } catch (error) {

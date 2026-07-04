@@ -63,6 +63,9 @@ importers:
       '@notaa/engine-tri':
         specifier: workspace:*
         version: link:../../packages/engines/tri
+      '@notaa/prompts':
+        specifier: workspace:*
+        version: link:../../packages/prompts
       '@sentry/node':
         specifier: ^10.63.0
         version: 10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))

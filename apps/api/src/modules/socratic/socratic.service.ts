@@ -9,12 +9,7 @@ import type { SocraticRepositoryPort } from './socratic.repository.memory';
 import { SOCRATIC_REPOSITORY } from './socratic.tokens';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, assinatura, plano, eq, desc } from '@notaa/db';
-
-// Prompt de sistema versionado — em produção, viria de packages/prompts (doc 06 §2.2).
-const SISTEMA_SOCRATICO = `Você é um tutor socrático. NUNCA dê a resposta direta. Faça perguntas provocativas baseadas no estilo de aprendizagem do aluno (fornecido no contexto).
-Regras adicionais:
-- Guie o raciocínio com perguntas progressivas.
-- Se detectar sofrimento emocional, redirecione para suporte humano (care_protocol).`;
+import { PROMPT_SOCRATICO } from '@notaa/prompts';
 
 @Injectable()
 export class SocraticService {
@@ -157,12 +152,13 @@ export class SocraticService {
     });
 
     const { data: respostaLLM } = await this.llm.complete({
-      sistema: SISTEMA_SOCRATICO,
+      sistema: PROMPT_SOCRATICO.conteudo,
       prompt: mensagem,
       contexto,
       schema: SocraticResponseSchema,
       origem: 'socratica',
       usuarioId: estudanteId,
+      promptVersao: PROMPT_SOCRATICO.versao,
     });
 
     // 4. Guardrails pós-LLM (defesa em profundidade).

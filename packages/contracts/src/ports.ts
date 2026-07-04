@@ -29,8 +29,12 @@ export type IaIntegracao = 'socratica' | 'redacao' | 'quiz' | 'batalha' | 'trilh
 export interface LLMChamadaMeta {
   origem?: IaIntegracao;
   usuarioId?: string;
-  /** Versão do prompt de sistema (packages/prompts) — gravada em log_uso_ia.prompt_versao_id. */
-  promptVersaoId?: string;
+  /**
+   * Versão semver do prompt de sistema (packages/prompts). O portão único
+   * resolve/registra a linha em `prompt_versionado` e grava o uuid em
+   * log_uso_ia.prompt_versao_id.
+   */
+  promptVersao?: string;
 }
 
 export interface LLMProviderPort {

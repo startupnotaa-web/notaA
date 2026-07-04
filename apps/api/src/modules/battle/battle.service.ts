@@ -4,6 +4,7 @@ import { Database, batalhaPvp, usuario, eq, and, sql, ne } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import type { LLMProviderPort, MatchmakeResponse } from '@notaa/contracts';
+import { PROMPT_BATALHA } from '@notaa/prompts';
 
 @Injectable()
 export class BattleService {
@@ -63,12 +64,13 @@ export class BattleService {
     let questoesGeradas = [];
     try {
       const { data } = await this.llm.complete({
-        sistema: 'Você é um gerador de questões estilo ENEM para uma Batalha PvP.',
+        sistema: PROMPT_BATALHA.conteudo,
         prompt: `Gere exatamente 5 questões rápidas sobre a área de conhecimento: ${area}.`,
         contexto: {},
         schema,
         origem: 'batalha',
         usuarioId: estudanteId,
+        promptVersao: PROMPT_BATALHA.versao,
       });
       questoesGeradas = data.questoes;
     } catch (e) {

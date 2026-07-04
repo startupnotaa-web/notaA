@@ -15,17 +15,7 @@ import type { RedacaoRepositoryPort } from './redacao.repository.memory';
 import { REDACAO_REPOSITORY } from './redacao.tokens';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, assinatura, plano, eq, desc } from '@notaa/db';
-
-// Prompt de sistema para o Corretor de Redação (doc 06 §3).
-// Em produção, viria de packages/prompts com versionamento.
-const SISTEMA_CORRETOR = `Você é um corretor de redação do ENEM. Regras:
-- Avalie EXATAMENTE as 5 competências da rubrica oficial.
-- Cada competência recebe nota em múltiplos de 40 (0, 40, 80, 120, 160, 200).
-- A nota total é a soma das 5 competências (0 a 1000).
-- Cite trechos específicos do texto ao justificar cada nota (guardrail G-R2).
-- NUNCA invente competências extras ou omita alguma (guardrail I4).
-- Adapte a linguagem do feedback ao perfil cognitivo do estudante.
-- Em 'feedbackGeral', crie uma 'dicaPerfil' personalizada baseada nas instruções pedagógicas.`;
+import { PROMPT_CORRETOR_REDACAO } from '@notaa/prompts';
 
 // XP concedido por submissão de redação (doc 04 §7).
 const XP_REDACAO = 30;
@@ -92,11 +82,12 @@ export class RedacaoService {
 
       // 3. Chama LLM — schema garante exatamente 5 competências e nota consistente (I4/I5).
       const { data: avaliacaoRaw } = await this.llm.complete({
-        sistema: SISTEMA_CORRETOR,
+        sistema: PROMPT_CORRETOR_REDACAO.conteudo,
         contexto: { ...contexto, textoRedacao: body.texto },
         schema: EssayEvaluationSchema,
         origem: 'redacao',
         usuarioId: estudanteId,
+        promptVersao: PROMPT_CORRETOR_REDACAO.versao,
       });
 
       // 4. Injeta o ID real da redação (o mock retorna um placeholder).
