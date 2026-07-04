@@ -64,6 +64,13 @@
       "when": 1783192544529,
       "tag": "0008_long_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783194041532,
+      "tag": "0009_typical_outlaw_kid",
+      "breakpoints": true
     }
   ]
 }

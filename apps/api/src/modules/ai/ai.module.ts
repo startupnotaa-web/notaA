@@ -8,6 +8,7 @@ import { GeminiAdapter } from './gemini.adapter';
 import { StudentContextService } from './student-context.service';
 import { LLMProviderMock } from './llm-provider.mock';
 import { LlmUsageLoggerProvider } from './llm-usage-logger.provider';
+import { CareNotifierService } from './care-notifier.service';
 import { RiskDetectorService } from './risk-detector.service';
 import { RiskRepositoryDrizzle } from './risk.repository';
 
@@ -35,6 +36,7 @@ import { RiskRepositoryDrizzle } from './risk.repository';
     GeminiAdapter,
     StudentContextService,
     ContextBuilderService,
+    CareNotifierService,
     RiskDetectorService,
   ],
   // Portão único de IA: fora deste módulo, TODA chamada de IA passa pelo token
