@@ -1,18 +1,21 @@
 import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from '../src/app.module';
 import { CORS_OPTIONS } from '../src/common/cors';
+import { initSentry, SentryExceptionFilter } from '../src/common/sentry';
 
 let app: NestFastifyApplication;
 
 async function bootstrap() {
   if (!app) {
+    initSentry();
     app = await NestFactory.create<NestFastifyApplication>(
       AppModule,
       new FastifyAdapter()
     );
-    
+    app.useGlobalFilters(new SentryExceptionFilter(app.get(HttpAdapterHost).httpAdapter));
+
     // Política única em src/common/cors.ts (auditoria E12) — não duplicar aqui.
     app.enableCors(CORS_OPTIONS);
 

@@ -18,25 +18,44 @@ export interface UsoTokens {
 // Único ponto de acesso a qualquer provedor de IA generativa — nenhuma outra
 // parte do sistema importa um SDK de IA diretamente (doc 06 §1). `schema` valida
 // a resposta estruturada (I5) antes que `complete` resolva.
+/** Integração de origem de uma chamada de IA — espelha o enum `ia_integracao` (doc 04 §8). */
+export type IaIntegracao = 'socratica' | 'redacao' | 'quiz' | 'batalha' | 'trilha';
+
+/**
+ * Metadados de observabilidade da chamada (doc 10 §5 — `log_uso_ia`). Opcionais
+ * na porta para não acoplar o provedor ao domínio; quando presentes, o portão
+ * único registra tokens/custo/latência por usuário e integração.
+ */
+export interface LLMChamadaMeta {
+  origem?: IaIntegracao;
+  usuarioId?: string;
+  /** Versão do prompt de sistema (packages/prompts) — gravada em log_uso_ia.prompt_versao_id. */
+  promptVersaoId?: string;
+}
+
 export interface LLMProviderPort {
-  complete<T>(input: {
-    sistema: string; // prompt de sistema versionado (packages/prompts)
-    prompt?: string; // a pergunta dinâmica do usuário
-    contexto: object; // pacote montado pelo Context Builder — nunca pelo cliente
-    schema: z.ZodSchema<T>;
-    /** Opcional — eleva a variabilidade da amostragem (ex.: geração de quiz, evita repetição). */
-    temperature?: number;
-  }): Promise<{ data: T; uso: UsoTokens }>;
+  complete<T>(
+    input: {
+      sistema: string; // prompt de sistema versionado (packages/prompts)
+      prompt?: string; // a pergunta dinâmica do usuário
+      contexto: object; // pacote montado pelo Context Builder — nunca pelo cliente
+      schema: z.ZodSchema<T>;
+      /** Opcional — eleva a variabilidade da amostragem (ex.: geração de quiz, evita repetição). */
+      temperature?: number;
+    } & LLMChamadaMeta,
+  ): Promise<{ data: T; uso: UsoTokens }>;
 
   /**
    * Geração de TEXTO LIVRE (sem schema/JSON) — usada pelo tutor socrático
    * direto (POST /socratic/chat), onde a resposta é conversacional. Os
    * guardrails pós-LLM (I3) continuam sendo responsabilidade de quem consome.
    */
-  completeTexto(input: {
-    sistema: string;
-    prompt: string;
-  }): Promise<{ texto: string; uso: UsoTokens }>;
+  completeTexto(
+    input: {
+      sistema: string;
+      prompt: string;
+    } & LLMChamadaMeta,
+  ): Promise<{ texto: string; uso: UsoTokens }>;
 }
 
 // RepositoryPort: cada módulo da API (quiz, redacao, socratic, gamificacao...)

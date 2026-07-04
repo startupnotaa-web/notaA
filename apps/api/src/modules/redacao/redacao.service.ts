@@ -95,6 +95,8 @@ export class RedacaoService {
         sistema: SISTEMA_CORRETOR,
         contexto: { ...contexto, textoRedacao: body.texto },
         schema: EssayEvaluationSchema,
+        origem: 'redacao',
+        usuarioId: estudanteId,
       });
 
       // 4. Injeta o ID real da redação (o mock retorna um placeholder).

@@ -83,4 +83,4 @@ export const assinaturaStatusEnum = pgEnum('assinatura_status', [
   'cancelada',
 ]);
 
-export const iaIntegracaoEnum = pgEnum('ia_integracao', ['socratica', 'redacao']);
+export const iaIntegracaoEnum = pgEnum('ia_integracao', ['socratica', 'redacao', 'quiz', 'batalha', 'trilha']);

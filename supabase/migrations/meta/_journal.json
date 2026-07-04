@@ -57,6 +57,13 @@
       "when": 1783034758013,
       "tag": "0007_seed_conquista_catalogo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783192544529,
+      "tag": "0008_long_vapor",
+      "breakpoints": true
     }
   ]
 }

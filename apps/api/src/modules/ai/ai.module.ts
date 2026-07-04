@@ -7,6 +7,7 @@ import { ContextBuilderService } from './context-builder.service';
 import { GeminiAdapter } from './gemini.adapter';
 import { StudentContextService } from './student-context.service';
 import { LLMProviderMock } from './llm-provider.mock';
+import { LlmUsageLoggerProvider } from './llm-usage-logger.provider';
 import { RiskDetectorService } from './risk-detector.service';
 import { RiskRepositoryDrizzle } from './risk.repository';
 
@@ -27,8 +28,9 @@ import { RiskRepositoryDrizzle } from './risk.repository';
   imports: [ProfilerModule],
   controllers: [AiController],
   providers: [
-    // Provedor padrão de produção: agora usa o Gemini real.
-    { provide: LLM_PROVIDER, useClass: GeminiAdapter },
+    // Provedor padrão de produção: Gemini real decorado com o log de uso de IA
+    // (log_uso_ia, doc 10 §5) — tokens/custo/latência por chamada.
+    { provide: LLM_PROVIDER, useClass: LlmUsageLoggerProvider },
     { provide: RISK_REPOSITORY, useClass: RiskRepositoryDrizzle },
     GeminiAdapter,
     StudentContextService,

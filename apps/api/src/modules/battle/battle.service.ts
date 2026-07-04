@@ -66,7 +66,9 @@ export class BattleService {
         sistema: 'Você é um gerador de questões estilo ENEM para uma Batalha PvP.',
         prompt: `Gere exatamente 5 questões rápidas sobre a área de conhecimento: ${area}.`,
         contexto: {},
-        schema
+        schema,
+        origem: 'batalha',
+        usuarioId: estudanteId,
       });
       questoesGeradas = data.questoes;
     } catch (e) {

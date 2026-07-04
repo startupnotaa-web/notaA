@@ -67,6 +67,8 @@ Retorne o resultado estritamente em formato JSON contendo titulo, descricao e os
         sistema,
         contexto: { temasErrados: uniqueThemes },
         schema: GeminiStudyTrailSchema,
+        origem: 'trilha',
+        usuarioId: estudanteId,
       });
       data = result.data;
     } catch (e: any) {

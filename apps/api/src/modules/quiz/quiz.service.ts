@@ -97,6 +97,8 @@ export class QuizService {
         contexto,
         schema: GenerateQuizResponseSchema,
         temperature: QUIZ_IA_TEMPERATURE,
+        origem: 'quiz',
+        usuarioId: estudanteId,
       });
       data = resultado.data;
     } catch (error) {

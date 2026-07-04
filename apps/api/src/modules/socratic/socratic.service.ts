@@ -58,6 +58,8 @@ export class SocraticService {
     const { texto: resposta } = await this.llm.completeTexto({
       sistema: systemPrompt,
       prompt: mensagem,
+      origem: 'socratica',
+      usuarioId: estudanteId,
     });
 
     // Guardrail I3 pós-LLM (mesma regra inegociável de enviarMensagem, doc 06
@@ -159,6 +161,8 @@ export class SocraticService {
       prompt: mensagem,
       contexto,
       schema: SocraticResponseSchema,
+      origem: 'socratica',
+      usuarioId: estudanteId,
     });
 
     // 4. Guardrails pós-LLM (defesa em profundidade).
