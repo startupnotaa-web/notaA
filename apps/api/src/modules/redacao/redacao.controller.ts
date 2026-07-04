@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseInterceptors } from '@nestjs/common';
 import { CreateRedacaoRequestSchema } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { RateLimitIA, RateLimiterInterceptor } from '../ai/rate-limiter/rate-limiter.interceptor';
 import { RedacaoService } from './redacao.service';
 
 // doc 05 §6 — Redação (E7). estudanteId SEMPRE vem do JWT (req.user.sub).
@@ -24,6 +25,8 @@ export class RedacaoController {
    * nunca ambos (validado pelo schema, doc 05 §6).
    */
   @Post()
+  @UseInterceptors(RateLimiterInterceptor)
+  @RateLimitIA('redacao')
   submeter(
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(CreateRedacaoRequestSchema))

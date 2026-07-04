@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from '../src/app.module';
+import { CORS_OPTIONS } from '../src/common/cors';
 
 let app: NestFastifyApplication;
 
@@ -12,33 +13,8 @@ async function bootstrap() {
       new FastifyAdapter()
     );
     
-    // Origens oficiais explícitas (inclui https://notaa.com.br). Mantemos os
-    // previews da Vercel via regex ANCORADA (`^…$`) — a versão antiga
-    // (`/\.vercel\.app$/`, `/notaa\.com\.br$/`) era frouxa e casava domínios
-    // como `xnotaa.com.br`. localhost:3000 só vale em dev.
-    const ALLOWED_ORIGINS = [
-      'https://notaa.com.br',
-      'https://www.notaa.com.br',
-      'http://localhost:3000',
-    ];
-
-    app.enableCors({
-      origin: (origin, callback) => {
-        // Sem origem (SSR/curl), domínio oficial explícito, ou preview da Vercel.
-        if (
-          !origin ||
-          ALLOWED_ORIGINS.includes(origin) ||
-          /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)
-        ) {
-          callback(null, true);
-        } else {
-          callback(null, false); // Não bloqueamos com erro para evitar crash, apenas enviamos headers CORS restritos
-        }
-      },
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept', 'idempotency-key', 'Idempotency-Key'],
-      credentials: true,
-    });
+    // Política única em src/common/cors.ts (auditoria E12) — não duplicar aqui.
+    app.enableCors(CORS_OPTIONS);
 
     await app.init();
     

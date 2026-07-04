@@ -123,6 +123,8 @@ export interface ErrorDetectorRepositoryPort {
   recordOcorrencia(input: {
     estudanteId: string;
     itemId: string | null;
+    /** Competência do item errado (doc 04 §5) — permite análise de lacunas por tema (auditoria E9). */
+    competencia: string | null;
     classificacao: ErroClassificacao;
     evidencias: object;
     confianca: number;

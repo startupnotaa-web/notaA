@@ -7,6 +7,7 @@ export class ErrorDetectorRepositoryMemory implements ErrorDetectorRepositoryPor
   readonly ocorrencias: {
     estudanteId: string;
     itemId: string | null;
+    competencia: string | null;
     classificacao: ErroClassificacao;
     evidencias: object;
     confianca: number;
@@ -15,6 +16,7 @@ export class ErrorDetectorRepositoryMemory implements ErrorDetectorRepositoryPor
   async recordOcorrencia(input: {
     estudanteId: string;
     itemId: string | null;
+    competencia: string | null;
     classificacao: ErroClassificacao;
     evidencias: object;
     confianca: number;

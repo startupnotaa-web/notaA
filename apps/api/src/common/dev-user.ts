@@ -13,15 +13,22 @@ export const MOCK_DEV_USER_NOME = 'Estudante Dev';
 
 /**
  * Habilita o bypass de Dev Mode. FAIL-CLOSED: exige opt-in EXPLÍCITO
- * (`ENABLE_DEV_AUTH_BYPASS=true`) **e** um ambiente que não seja produção.
+ * (`ENABLE_DEV_AUTH_BYPASS=true`), um ambiente que não seja produção **e**
+ * estar FORA da Vercel (auditoria R4): previews da Vercel rodam com NODE_ENV
+ * indefinido/development — uma flag herdada do ambiente de dev abriria a API
+ * inteira num deployment público. `VERCEL=1` está presente em todo deployment
+ * (production E preview), então o bypass só funciona em máquina local.
  *
  * Antes isto retornava só `NODE_ENV !== 'production'`, o que abria login SEM
- * TOKEN em qualquer ambiente não-prod (inclusive staging/preview e NODE_ENV
- * indefinido) para quem mandasse o header `x-development-mode: true` — um
- * bypass de autenticação fail-open. Agora, sem o flag explícito, nenhum
- * ambiente autentica sem token. A MESMA porta controla o bypass do AuthGuard e
- * o provisionamento do usuário mock (redacao/socratic/onboarding) — em lockstep.
+ * TOKEN em qualquer ambiente não-prod para quem mandasse o header
+ * `x-development-mode: true` — um bypass de autenticação fail-open. A MESMA
+ * porta controla o bypass do AuthGuard e o provisionamento do usuário mock
+ * (redacao/socratic/onboarding) — em lockstep.
  */
 export function isDevBypassEnabled(): boolean {
-  return process.env.ENABLE_DEV_AUTH_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
+  return (
+    process.env.ENABLE_DEV_AUTH_BYPASS === 'true' &&
+    process.env.NODE_ENV !== 'production' &&
+    !process.env.VERCEL
+  );
 }

@@ -14,6 +14,7 @@ interface SessaoMemoria {
 interface TentativaMemoria extends Tentativa {
   estudanteId: string;
   area: AreaConhecimento;
+  temasErro: string[] | null;
 }
 
 /**
@@ -106,6 +107,7 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
       criadoEm: new Date().toISOString(),
       estudanteId: input.estudanteId,
       area: sessao?.area ?? 'matematica',
+      temasErro: input.temasErro ?? null, // espelha o repo Drizzle (auditoria R6)
     });
     return { duplicate: false, tentativaId: randomUUID() };
   }

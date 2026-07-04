@@ -154,19 +154,29 @@ export class GamificacaoRepositoryDb implements GamificacaoRepositoryPort {
     estudanteId: string,
     cache: { xpTotal: number; nivelAtual: number; ofensivaDias: number },
   ): Promise<void> {
-    // UPDATE sem WHERE-match (novo usuário sem perfil_cognitivo_4d) é silencioso
-    // — 0 rows afetadas, sem erro. O cache será escrito quando o profiler criar
-    // a primeira linha de perfil_cognitivo_4d (doc 04 §9).
+    // UPSERT (auditoria E11): usuário novo ainda sem perfil_cognitivo_4d ganha a
+    // linha na hora (eixos ficam nos defaults neutros do schema) — antes, o
+    // UPDATE afetava 0 linhas em silêncio e o dashboard mostrava XP/ofensiva
+    // desatualizados justamente para quem acabou de entrar.
     try {
       await this.db
-        .update(perfilCognitivo4d)
-        .set({
+        .insert(perfilCognitivo4d)
+        .values({
+          estudanteId,
           xpTotal: cache.xpTotal,
           nivelAtual: cache.nivelAtual,
           ofensivaDias: cache.ofensivaDias,
           atualizadoEm: new Date(),
         })
-        .where(eq(perfilCognitivo4d.estudanteId, estudanteId));
+        .onConflictDoUpdate({
+          target: perfilCognitivo4d.estudanteId,
+          set: {
+            xpTotal: cache.xpTotal,
+            nivelAtual: cache.nivelAtual,
+            ofensivaDias: cache.ofensivaDias,
+            atualizadoEm: new Date(),
+          },
+        });
     } catch (error) {
       // Não propaga — falha no cache não deve impedir a operação principal
       // (grantXp, registrarAtividadeValida). Loga para diagnóstico.

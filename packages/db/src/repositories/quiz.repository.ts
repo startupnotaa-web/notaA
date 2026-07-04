@@ -130,6 +130,7 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
     acerto: boolean;
     tempoRespostaMs: number;
     idempotencyKey: string;
+    temasErro?: string[];
   }): Promise<{ duplicate: boolean; tentativaId: string | null }> {
     try {
       const [tentativa] = await this.db
@@ -142,6 +143,7 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
           acerto: input.acerto,
           tempoRespostaMs: input.tempoRespostaMs,
           idempotencyKey: input.idempotencyKey,
+          temasErro: input.temasErro ?? null,
         })
         .returning({ id: tentativaResposta.id });
       return { duplicate: false, tentativaId: tentativa!.id };

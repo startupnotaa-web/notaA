@@ -63,10 +63,16 @@ export interface Tentativa {
 }
 
 export interface ErrorDetector {
+  /**
+   * Heurística puramente comportamental: tempo desta tentativa vs padrão
+   * recente do próprio estudante. `item`/`acerto` foram REMOVIDOS do contrato
+   * (auditoria E10): os parâmetros TRI do banco estão `nao_calibrado` (Q-02) e
+   * usá-los aqui seria inventar dado oficial; `acerto` é sempre false (a
+   * Orquestração só chama isto em erro). A competência do item é persistida
+   * pela camada de repositório (recordOcorrencia), não usada na classificação.
+   */
   classify(input: {
     tempoMs: number;
     historicoRecente: Tentativa[];
-    item: ItemParams;
-    acerto: boolean;
   }): { classificacao: ErroClassificacao; evidencias: object; confianca: number };
 }

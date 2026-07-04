@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseInterceptors } from '@nestjs/common';
 import {
   OpenSocraticSessionRequestSchema,
   SendSocraticMessageRequestSchema,
 } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { RateLimitIA, RateLimiterInterceptor } from '../ai/rate-limiter/rate-limiter.interceptor';
 import { SocraticService } from './socratic.service';
 
 // doc 05 §7 — IA Socrática (E8). estudanteId SEMPRE vem do JWT (req.user.sub),
@@ -43,6 +44,8 @@ export class SocraticController {
    * O Perfil 4D é injetado automaticamente — o estudante não controla o contexto.
    */
   @Post('sessions/:id/messages')
+  @UseInterceptors(RateLimiterInterceptor)
+  @RateLimitIA('socratica')
   sendMessage(
     @Req() req: AuthenticatedRequest,
     @Param('id') conversaId: string,
@@ -66,6 +69,8 @@ export class SocraticController {
    * estudanteId vem SEMPRE do JWT (req.user.sub), nunca do corpo.
    */
   @Post('chat')
+  @UseInterceptors(RateLimiterInterceptor)
+  @RateLimitIA('socratica')
   chat(
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(SendSocraticMessageRequestSchema))

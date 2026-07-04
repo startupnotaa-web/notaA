@@ -223,19 +223,30 @@ export class QuizService {
         };
       }
 
-      const atualizado = motorTRI.updateAbility({
-        theta: habilidadeAtual.theta,
-        item,
-        acerto,
-        tempoMs: body.tempoRespostaMs,
-      });
-      await quizRepo.setHabilidade(
-        estudanteId,
-        sessao.area,
-        atualizado.theta,
-        atualizado.erroPadrao,
-        tentativaId ?? undefined,
-      );
+      // Item NÃO calibrado (ex.: gerado por IA com parâmetros TRI chutados) não
+      // pode mover a estimativa de habilidade — theta só é alimentado por itens
+      // calibrados (regra do planejamento §1.2 / auditoria E8). A tentativa e o
+      // XP seguem normais; apenas a atualização de theta é pulada.
+      let atualizado = { theta: habilidadeAtual.theta, erroPadrao: habilidadeAtual.erroPadrao };
+      if (item.naoCalibrado) {
+        this.logger.warn(
+          `Item ${item.itemId} não calibrado — tentativa registrada sem atualizar theta (estudante=${estudanteId}).`,
+        );
+      } else {
+        atualizado = motorTRI.updateAbility({
+          theta: habilidadeAtual.theta,
+          item,
+          acerto,
+          tempoMs: body.tempoRespostaMs,
+        });
+        await quizRepo.setHabilidade(
+          estudanteId,
+          sessao.area,
+          atualizado.theta,
+          atualizado.erroPadrao,
+          tentativaId ?? undefined,
+        );
+      }
 
       const xpGanho = acerto ? XP_ACERTO : XP_ERRO;
       const xpResult = await gamificacao.grantXp(estudanteId, 'quiz', xpGanho);

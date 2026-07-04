@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
+import { CORS_OPTIONS } from './common/cors';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
@@ -17,16 +18,7 @@ async function bootstrap() {
     done();
   });
 
-  app.enableCors({
-    origin: [
-      'https://notaa.com.br',
-      'https://www.notaa.com.br',
-      'http://localhost:3000',
-    ],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-development-mode', 'Accept', 'idempotency-key', 'Idempotency-Key'],
-    credentials: true,
-  });
+  app.enableCors(CORS_OPTIONS);
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port, '0.0.0.0');
   console.log(`API (Orquestração) ouvindo em http://localhost:${port}`);
