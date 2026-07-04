@@ -17,15 +17,17 @@ function makeService(respostaGemini: string) {
   const service = new SocraticService(
     null as never, // repo — não usado pelo chatDireto
     null as never, // db — não usado pelo chatDireto
-    null as never, // llm — não usado pelo chatDireto
+    {
+      completeTexto: async () => {
+        chamadas.gemini += 1;
+        return {
+          texto: respostaGemini,
+          uso: { tokensIn: 0, tokensOut: 0, custoEstimado: 0, latenciaMs: 0 },
+        };
+      },
+    } as never, // llm (LLM_PROVIDER)
     null as never, // contextBuilder — não usado pelo chatDireto
     risk,
-    {
-      generateSocraticResponse: async () => {
-        chamadas.gemini += 1;
-        return respostaGemini;
-      },
-    } as never, // gemini
     { buildSocraticSystemPrompt: async () => 'system prompt de teste' } as never, // studentContext
   );
   return { service, chamadas };

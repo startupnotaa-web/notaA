@@ -27,6 +27,16 @@ export interface LLMProviderPort {
     /** Opcional — eleva a variabilidade da amostragem (ex.: geração de quiz, evita repetição). */
     temperature?: number;
   }): Promise<{ data: T; uso: UsoTokens }>;
+
+  /**
+   * Geração de TEXTO LIVRE (sem schema/JSON) — usada pelo tutor socrático
+   * direto (POST /socratic/chat), onde a resposta é conversacional. Os
+   * guardrails pós-LLM (I3) continuam sendo responsabilidade de quem consome.
+   */
+  completeTexto(input: {
+    sistema: string;
+    prompt: string;
+  }): Promise<{ texto: string; uso: UsoTokens }>;
 }
 
 // RepositoryPort: cada módulo da API (quiz, redacao, socratic, gamificacao...)

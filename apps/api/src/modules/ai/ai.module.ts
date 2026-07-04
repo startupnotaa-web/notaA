@@ -35,14 +35,9 @@ import { RiskRepositoryDrizzle } from './risk.repository';
     ContextBuilderService,
     RiskDetectorService,
   ],
-  // GeminiAdapter + StudentContextService exportados para o SocraticModule
-  // (POST /socratic/chat). LLM_PROVIDER segue sendo o mock por padrão.
-  exports: [
-    LLM_PROVIDER,
-    ContextBuilderService,
-    RiskDetectorService,
-    GeminiAdapter,
-    StudentContextService,
-  ],
+  // Portão único de IA: fora deste módulo, TODA chamada de IA passa pelo token
+  // LLM_PROVIDER (hoje: GeminiAdapter real). GeminiAdapter NÃO é exportado —
+  // nenhum outro módulo injeta o adapter diretamente (auditoria E5).
+  exports: [LLM_PROVIDER, ContextBuilderService, RiskDetectorService, StudentContextService],
 })
 export class AiModule {}

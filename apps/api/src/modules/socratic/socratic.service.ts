@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SocraticResponseSchema, type LLMProviderPort, type SocraticResponse } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { ContextBuilderService } from '../ai/context-builder.service';
-import { GeminiAdapter } from '../ai/gemini.adapter';
 import { StudentContextService } from '../ai/student-context.service';
 import { fallbackGuiado } from '../ai/guardrails';
 import { RiskDetectorService } from '../ai/risk-detector.service';
@@ -27,14 +26,13 @@ export class SocraticService {
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
     private readonly contextBuilder: ContextBuilderService,
     private readonly risk: RiskDetectorService,
-    private readonly gemini: GeminiAdapter,
     private readonly studentContext: StudentContextService,
   ) {}
 
   /**
-   * Agente 3 — tutor socrático DIRETO (POST /socratic/chat): stateless, usa o
-   * Gemini REAL (não o LLM_PROVIDER mock) com um system prompt em linguagem
-   * natural montado pelo StudentContextService (onboarding + Perfil 4D).
+   * Agente 3 — tutor socrático DIRETO (POST /socratic/chat): stateless, via
+   * LLM_PROVIDER (portão único, doc 06 §1) em modo texto livre, com um system
+   * prompt montado pelo StudentContextService (onboarding + Perfil 4D).
    *
    * Mantém a triagem de risco da ENTRADA (I6, doc 01 §1.5): segurança não é
    * opcional num canal aluno↔IA. Sem conversa persistida aqui, a ocorrência
@@ -57,7 +55,10 @@ export class SocraticService {
     }
 
     const systemPrompt = await this.studentContext.buildSocraticSystemPrompt(estudanteId);
-    const resposta = await this.gemini.generateSocraticResponse(mensagem, systemPrompt);
+    const { texto: resposta } = await this.llm.completeTexto({
+      sistema: systemPrompt,
+      prompt: mensagem,
+    });
 
     // Guardrail I3 pós-LLM (mesma regra inegociável de enviarMensagem, doc 06
     // §2.3): se o texto entrega a resposta final, rebaixa para o fallback guiado.

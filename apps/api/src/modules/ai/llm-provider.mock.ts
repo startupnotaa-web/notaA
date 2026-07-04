@@ -50,6 +50,18 @@ export class LLMProviderMock implements LLMProviderPort {
     return { data: parsed.data, uso };
   }
 
+  async completeTexto(input: {
+    sistema: string;
+    prompt: string;
+  }): Promise<{ texto: string; uso: UsoTokens }> {
+    this.logger.log(`→ requisição IA [socratica-direta] (mock) | prompt=${input.prompt.slice(0, 60)}`);
+    return {
+      texto:
+        'Boa pergunta! Vamos pensar juntos: se você dividir o problema em partes menores, qual seria o primeiro passo lógico?',
+      uso: { tokensIn: 100, tokensOut: 60, custoEstimado: 0, latenciaMs: 30 },
+    };
+  }
+
   private detectarIntegracao(sistema: string): 'socratica' | 'redacao' | 'desconhecida' {
     if (sistema.includes('socrátic') || sistema.includes('socratic') || sistema.includes('tutor')) {
       return 'socratica';

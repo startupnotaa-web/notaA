@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, perfilOnboarding, tentativaResposta, trilhaEstudo, desc, eq, and } from '@notaa/db';
-import { GeminiAdapter } from '../ai/gemini.adapter';
-import { GeminiStudyTrailSchema, StudyTrailResponse } from '@notaa/contracts';
+import { LLM_PROVIDER } from '../ai/ai.tokens';
+import { GeminiStudyTrailSchema, StudyTrailResponse, type LLMProviderPort } from '@notaa/contracts';
 import { z } from 'zod';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class StudyTrailsService {
 
   constructor(
     @Inject(DB_CLIENT) private readonly db: Database,
-    private readonly gemini: GeminiAdapter,
+    @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
   ) {}
 
   async generateTrail(estudanteId: string): Promise<StudyTrailResponse> {
@@ -63,7 +63,7 @@ Retorne o resultado estritamente em formato JSON contendo titulo, descricao e os
 
     let data: z.infer<typeof GeminiStudyTrailSchema>;
     try {
-      const result = await this.gemini.complete({
+      const result = await this.llm.complete({
         sistema,
         contexto: { temasErrados: uniqueThemes },
         schema: GeminiStudyTrailSchema,
