@@ -147,6 +147,11 @@
 - Profiler 4D com sinal em apenas 1 dos 4 eixos (Reflexivo/Impulsivo) e confiança com teto 0.7 — intencional na Fase 1, mas o dashboard exibe 4 eixos.
 - Seeds TRI ilustrativos (marcados `naoCalibrado` ✅).
 
+### R9. [MÉDIO] Sentry configurado apenas na API
+- **Arquivo:** `apps/api/src/common/sentry.ts`
+- **Risco:** `apps/web` (Next.js) não tem captura de erros de frontend configurada — erros de UI/React ficam invisíveis na observabilidade.
+- **Pendente:** adicionar `@sentry/nextjs` com `NEXT_PUBLIC_SENTRY_DSN`.
+
 ### O que está OK (verificado e vale registrar)
 - **Nenhum repositório em memória ativo em produção** — todos os módulos usam Drizzle (simulado usa `DB_CLIENT` direto); a hipótese de perda de dados por cold start foi verificada e descartada.
 - **Motor TRI sólido:** 3PL com Newton sobre log-verossimilhança, theta clamped [-4,4], seleção por informação de Fisher, testes coerentes.
