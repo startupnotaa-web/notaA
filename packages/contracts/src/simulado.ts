@@ -46,3 +46,16 @@ export const ImportQuestoesEnemRequestSchema = z.union([
   z.object({ questoes: z.array(ImportQuestaoEnemSchema).min(1) }),
 ]);
 export type ImportQuestoesEnemRequest = z.infer<typeof ImportQuestoesEnemRequestSchema>;
+
+export const StartSimuladoSessionRequestSchema = z.object({
+  area: AreaConhecimentoSchema,
+  quantidade: z.number().int().min(1).max(90),
+  nivel: z.number().int().min(1).max(3).optional(),
+});
+export type StartSimuladoSessionRequest = z.infer<typeof StartSimuladoSessionRequestSchema>;
+
+export const StartSimuladoSessionResponseSchema = z.object({
+  sessaoId: z.string().uuid(),
+  primeiraQuestao: QuestaoSimuladoResponseSchema.nullable(),
+});
+export type StartSimuladoSessionResponse = z.infer<typeof StartSimuladoSessionResponseSchema>;

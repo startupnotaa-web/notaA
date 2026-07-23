@@ -231,3 +231,9 @@
 - **Fase 1:** testes de guardrail I3/G-S1 verdes nas duas rotas; teste de concorrência (2 requests, mesma idempotency key) concede XP uma única vez; kill do provedor no meio da correção de redação deixa status recuperável; `pnpm build` + suíte verdes.
 - **Fase 2:** rate limit sobrevive a cold start (2 instâncias); nova tentativa grava `temas_erro`; usuário novo vê XP no dashboard imediatamente; onboarding de <18 exige consentimento do responsável.
 - **Fase 3:** nenhuma injeção direta de `GeminiAdapter` fora do módulo `ai`; CI falha para rota fora de `ROUTE_ROLES`; bundle do web sem componentes `NotaA_Beta_*`.
+
+---
+
+## Adendo — 2026-07-22
+
+### [MÉDIO] 25 testes falhando por claim JWT `iss` incorreto — pré-existente, confirmado via git stash, não bloqueia mas mascara regressões reais nessa área se algo quebrar de verdade no futuro.

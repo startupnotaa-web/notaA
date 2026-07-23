@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { z } from 'zod';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { GeminiAdapter } from './gemini.adapter';
+import { DEFAULT_MODEL, GeminiAdapter } from './gemini.adapter';
 
 // Schema mínimo só para a rota de fumaça — exercita o caminho completo do
 // adaptador (chamada ao Gemini + validação Zod) sem depender de nenhum módulo
@@ -36,7 +36,7 @@ export class AiController {
       });
       return {
         ok: true,
-        modelo: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+        modelo: DEFAULT_MODEL,
         resposta: data,
         uso,
       };
@@ -51,7 +51,7 @@ export class AiController {
   }
 
   /**
-   * Diagnóstico: lista os modelos que a GEMINI_API_KEY atual realmente enxerga
+   * Diagnóstico: lista os modelos que a LLM_API_KEY atual realmente enxerga
    * (ListModels da API do Google), filtrando os que suportam `generateContent`.
    * Serve para escolher um nome de modelo válido sem chutar (evita 404) e ver o
    * que a conta tem acesso.
@@ -68,9 +68,9 @@ export class AiController {
 
   @Get('models')
   async models() {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.LLM_API_KEY;
     if (!apiKey) {
-      return { ok: false, erro: 'GEMINI_API_KEY não configurado no ambiente da API.' };
+      return { ok: false, erro: 'LLM_API_KEY não configurado no ambiente da API.' };
     }
     try {
       const res: any = await fetch(

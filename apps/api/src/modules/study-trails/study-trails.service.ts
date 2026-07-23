@@ -5,7 +5,7 @@ import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { GeminiStudyTrailSchema, StudyTrailResponse, type LLMProviderPort } from '@notaa/contracts';
 import { PROMPT_TRILHA_TEMPLATE, montarPromptTrilha } from '@notaa/prompts';
 import { z } from 'zod';
-
+import * as Sentry from '@sentry/node';
 @Injectable()
 export class StudyTrailsService {
   private readonly logger = new Logger(StudyTrailsService.name);
@@ -71,8 +71,9 @@ export class StudyTrailsService {
       });
       data = result.data;
     } catch (e: any) {
-      if (e.message?.includes('GEMINI_API_KEY não configurado')) {
-        this.logger.warn('GEMINI_API_KEY ausente. Retornando trilha mockada.');
+      if (e.message?.includes('LLM_API_KEY não configurado')) {
+        this.logger.warn('LLM_API_KEY ausente. Retornando trilha mockada.');
+        Sentry.captureMessage('LLM_API_KEY ausente. Trilha mockada gerada.', 'warning');
         data = {
           titulo: 'Revisão Rápida (Mock)',
           descricao: 'Esta é uma trilha gerada offline pois a chave de API da IA não está configurada localmente.',
