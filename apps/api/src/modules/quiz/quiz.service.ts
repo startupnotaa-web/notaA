@@ -1,4 +1,11 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PoolEsgotadoError, motorTRI } from '@notaa/engine-tri';
 import type {
   AreaConhecimento,
@@ -38,6 +45,7 @@ function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
 
 import { ContextBuilderService } from '../ai/context-builder.service';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
+import { isErroTransitorio } from '../ai/gemini.adapter';
 import type { LLMProviderPort } from '@notaa/contracts';
 
 @Injectable()
@@ -109,6 +117,7 @@ export class QuizService {
         origem: 'quiz',
         usuarioId: estudanteId,
         promptVersao: PROMPT_QUIZ_TEMPLATE.versao,
+        modelo: process.env.LLM_MODEL_QUIZ ?? process.env.LLM_MODEL_SOCRATICA,
       });
       data = resultado.data;
     } catch (error) {
@@ -116,10 +125,21 @@ export class QuizService {
         `Falha ao gerar quiz via IA (estudante=${estudanteId}, area=${area}, tema="${tema}")`,
         error instanceof Error ? error.stack : String(error),
       );
-      throw new BadRequestException({
+      // "Tente novamente" só faz sentido pra falha transitória do provedor
+      // (rede/429/5xx) — erro permanente (config/schema/modelo inexistente)
+      // não se resolve com retry, então não pode prometer isso ao aluno.
+      if (isErroTransitorio(error)) {
+        throw new BadRequestException({
+          error: {
+            code: 'AI_ERROR',
+            message: 'Erro temporário na inteligência artificial ao gerar questão inédita. Tente novamente em instantes.',
+          },
+        });
+      }
+      throw new InternalServerErrorException({
         error: {
           code: 'AI_ERROR',
-          message: 'Erro interno na inteligência artificial ao gerar questão inédita. Tente novamente em instantes.',
+          message: 'Erro interno ao gerar questão inédita. Nossa equipe já foi notificada.',
         },
       });
     }

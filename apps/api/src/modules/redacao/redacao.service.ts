@@ -9,6 +9,7 @@ import {
 } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { ContextBuilderService } from '../ai/context-builder.service';
+import { isErroTransitorio } from '../ai/gemini.adapter';
 import { RiskDetectorService } from '../ai/risk-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import type { RedacaoRepositoryPort } from './redacao.repository.memory';
@@ -88,6 +89,7 @@ export class RedacaoService {
         origem: 'redacao',
         usuarioId: estudanteId,
         promptVersao: PROMPT_CORRETOR_REDACAO.versao,
+        modelo: process.env.LLM_MODEL_REDACAO,
       });
 
       // 4. Injeta o ID real da redação (o mock retorna um placeholder).
@@ -106,8 +108,12 @@ export class RedacaoService {
       // Em caso de falha na IA (já re-tentada pelo adapter), marca como falha
       // sem perder a redação — o aluno pode reenviar. O log é o que permite
       // diagnosticar a causa em produção (timeout? 429? schema?) — auditoria E6.
+      // Diferencia no log falha transitória do provedor (rede/429/5xx — o
+      // reenvio do aluno tem chance real de funcionar) de falha não-transitória
+      // (config/schema/modelo inexistente — reenviar não resolve, é bug nosso).
+      const causa = isErroTransitorio(error) ? 'transitória (provedor)' : 'não-transitória (config/schema)';
       this.logger.error(
-        `Falha ao corrigir redação ${redacaoId} (estudante=${estudanteId})`,
+        `Falha ao corrigir redação ${redacaoId} (estudante=${estudanteId}) — causa ${causa}`,
         error instanceof Error ? error.stack : String(error),
       );
       await this.repo.atualizarStatus(redacaoId, 'falha');
