@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { AreaConhecimento, ItemPublico, SubmitAnswerResponse } from '@notaa/contracts';
+import { QUIZ_TOTAL_QUESTOES } from '@notaa/contracts';
 import { Badge, Button, Card, OptionCard, Progress, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { toast } from '../../components/toast';
@@ -48,11 +49,12 @@ export default function QuizPage() {
       setQuestao(res.primeiraQuestao);
       setIniciadaEm(Date.now());
     } catch (e) {
+      console.error('[QUIZ_IA_DIAGNOSTICO] etapa=iniciar', e);
       if (e instanceof ApiError && e.status === 401) {
         // Redirecionamento já está em andamento pelo interceptor
       } else {
         toast('A IA encontrou uma instabilidade ao gerar sua questão inédita. Tente novamente.', { variant: 'error' });
-        setErro(null);
+        setErro(e instanceof ApiError ? e.message : 'Não foi possível gerar uma questão pela IA.');
       }
     } finally {
       setCarregando(false);
@@ -80,6 +82,7 @@ export default function QuizPage() {
         setTimeout(() => setConfete(false), 2200);
       }
     } catch (e) {
+      console.error('[QUIZ_IA_DIAGNOSTICO] etapa=responder', e);
       if (e instanceof ApiError && e.status === 401) {
         // Redirecionamento já está em andamento pelo interceptor
       } else {
@@ -134,7 +137,7 @@ export default function QuizPage() {
           <h1 className="text-2xl font-bold">Quiz concluído</h1>
           <p className="text-text-muted">
             Você acertou <strong className="text-text">{acertos}</strong> de {respondidas}. Usamos isso para
-            ajustar a dificuldade — não é uma nota oficial (banco de itens ainda não calibrado).
+            ajustar a experiência de estudo. As questões desta sessão foram geradas pela IA e ainda não compõem uma nota oficial calibrada.
           </p>
           <div className="pt-2">
             <Button asChild variant="cta" size="lg">
@@ -156,17 +159,33 @@ export default function QuizPage() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Badge variant="info">{questao.area}</Badge>
-          <span className="text-sm text-text-muted">Questão {questao.numero}</span>
+          <span className="text-sm text-text-muted">
+            Questão {questao.numero} de {QUIZ_TOTAL_QUESTOES}
+          </span>
         </div>
-        <Progress value={respondidas} max={respondidas + 1} gradient aria-label="Progresso do quiz" />
-        <p className="text-xs text-text-muted">Itens de desenvolvimento — banco ainda não calibrado (Q-02).</p>
+        <Progress
+          value={respondidas}
+          max={QUIZ_TOTAL_QUESTOES}
+          gradient
+          aria-label="Progresso do quiz"
+        />
+        <p className="text-xs text-text-muted">Questão inédita gerada por IA para esta sessão.</p>
       </div>
 
       <h1 className="max-w-[70ch] text-lg font-semibold leading-relaxed">{questao.enunciado}</h1>
 
       <div role="radiogroup" aria-label="Alternativas" className="space-y-2">
         {questao.alternativas.map((a) => {
-          const state = !resultado ? 'neutral' : a.id === picked ? (acertou ? 'correct' : 'incorrect') : 'neutral';
+          // Depois de responder, a correta fica verde SEMPRE — inclusive quando o
+          // aluno errou, que é quando ele mais precisa ver qual era. A escolha
+          // errada fica vermelha em paralelo.
+          const state = !resultado
+            ? 'neutral'
+            : a.id === resultado.gabarito
+              ? 'correct'
+              : a.id === picked
+                ? 'incorrect'
+                : 'neutral';
           return (
             <OptionCard
               key={a.id}

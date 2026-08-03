@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import type { AreaConhecimento, BancoDeItemRegistro, QuizRepositoryPort, Tentativa } from '@notaa/contracts';
 import type { DbExecutor } from '../client';
 import {
@@ -9,6 +9,15 @@ import {
   tentativaResposta,
   thetaEvento,
 } from '../schema';
+
+function tabelaAusente(error: unknown, tabela: string): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    (error as { code?: string }).code === '42P01' &&
+    error.message.includes(tabela)
+  );
+}
 
 function toRegistro(row: typeof bancoDeItens.$inferSelect): BancoDeItemRegistro {
   return {
@@ -118,8 +127,30 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
     return rows.map((r) => r.itemId);
   }
 
+  async getAcertosDaSessao(sessaoId: string): Promise<boolean[]> {
+    const rows = await this.db
+      .select({ acerto: tentativaResposta.acerto })
+      .from(tentativaResposta)
+      .where(eq(tentativaResposta.sessaoId, sessaoId))
+      .orderBy(asc(tentativaResposta.criadoEm));
+    return rows.map((r) => r.acerto);
+  }
+
   async addItem(item: BancoDeItemRegistro): Promise<void> {
-    // Stub: Tabela banco_de_itens real será implementada depois se necessário no DB
+    await this.db.insert(bancoDeItens).values({
+      id: item.itemId,
+      areaConhecimento: item.area,
+      competencia: item.competencia,
+      paramA: item.paramA.toString(),
+      paramB: item.paramB.toString(),
+      paramC: item.paramC.toString(),
+      enunciado: item.enunciado,
+      alternativas: item.alternativas,
+      gabarito: item.gabarito,
+      naoCalibrado: item.naoCalibrado,
+      ativo: true,
+      metadadosUso: { origem: 'gemini' },
+    });
   }
 
   async recordAnswer(input: {
@@ -188,13 +219,25 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
     area: AreaConhecimento,
     limit: number,
   ): Promise<string[]> {
-    const rows = await this.db
-      .select({ enunciado: quizIaGerado.enunciado })
-      .from(quizIaGerado)
-      .where(and(eq(quizIaGerado.estudanteId, estudanteId), eq(quizIaGerado.areaConhecimento, area)))
-      .orderBy(desc(quizIaGerado.criadoEm))
-      .limit(limit);
-    return rows.map((r) => r.enunciado);
+    try {
+      const rows = await this.db
+        .select({ enunciado: quizIaGerado.enunciado })
+        .from(quizIaGerado)
+        .where(and(eq(quizIaGerado.estudanteId, estudanteId), eq(quizIaGerado.areaConhecimento, area)))
+        .orderBy(desc(quizIaGerado.criadoEm))
+        .limit(limit);
+      return rows.map((r) => r.enunciado);
+    } catch (error) {
+      // A migration 0006 cria esta tabela. Em bancos ainda não migrados, a
+      // ausência do histórico não pode derrubar a geração de questões reais.
+      if (tabelaAusente(error, 'quiz_ia_gerado')) {
+        console.warn(
+          '[QUIZ_IA_DIAGNOSTICO] tabela quiz_ia_gerado ausente; geração seguirá sem histórico anti-repetição. Aplique a migration 0006_spotty_khan.sql.',
+        );
+        return [];
+      }
+      throw error;
+    }
   }
 
   async registrarPerguntaIA(
@@ -203,6 +246,16 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
     tema: string,
     enunciado: string,
   ): Promise<void> {
-    await this.db.insert(quizIaGerado).values({ estudanteId, areaConhecimento: area, tema, enunciado });
+    try {
+      await this.db.insert(quizIaGerado).values({ estudanteId, areaConhecimento: area, tema, enunciado });
+    } catch (error) {
+      if (tabelaAusente(error, 'quiz_ia_gerado')) {
+        console.warn(
+          '[QUIZ_IA_DIAGNOSTICO] histórico da IA não foi salvo porque quiz_ia_gerado ainda não existe. A questão foi gerada normalmente.',
+        );
+        return;
+      }
+      throw error;
+    }
   }
 }

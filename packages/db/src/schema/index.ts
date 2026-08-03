@@ -10,3 +10,4 @@ export * from './gamificacao';
 export * from './comercial';
 export * from './study-trails';
 export * from './questoes';
+export * from './simulado';

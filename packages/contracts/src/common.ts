@@ -30,6 +30,7 @@ export type ErroClassificacao = z.infer<typeof ErroClassificacaoSchema>;
 // doc 04 §7 — origem do lançamento de XP (xp_ledger.origem).
 export const XpOrigemSchema = z.enum([
   'quiz',
+  'simulado',
   'redacao',
   'streak',
   'conquista',

@@ -57,11 +57,6 @@ function lerSnapshot(authUid: string): PersistedUserState | null {
   }
 }
 
-function calcularNivelClient(xp: number): number {
-  // Lógica client-side para recálculo otimista de nível (500 XP = 1 Nível)
-  return Math.floor(xp / 500) + 1;
-}
-
 export function UserProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const authUid = session?.user.id ?? null;
@@ -140,11 +135,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [hidratado, authUid, perfil, xp, level, streak, role, estiloAprendizagem, objetivo]);
 
   const addXP = (amount: number) => {
-    setXp((prev) => {
-      const novoXp = prev + amount;
-      setLevel(calcularNivelClient(novoXp));
-      return novoXp;
-    });
+    // Atualização otimista APENAS do XP acumulado. Nível e barra de progresso
+    // vêm sempre do servidor (curva única em gamificacao/nivel.ts, via GET /me)
+    // — evita divergir da fórmula do backend, como acontecia com o antigo
+    // recálculo linear (500 XP = 1 nível). O nível é reconciliado no próximo
+    // refreshPerfil/reload.
+    setXp((prev) => prev + amount);
   };
 
   return (

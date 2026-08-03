@@ -120,6 +120,12 @@ export interface QuizRepositoryPort {
   getItem(itemId: string): Promise<BancoDeItemRegistro | null>;
   addItem(item: BancoDeItemRegistro): Promise<void>;
   getExpostos(sessaoId: string): Promise<string[]>;
+  /**
+   * Acertos da sessão em ordem cronológica. Base da escada de dificuldade
+   * (acertou → sobe, errou → desce): mantém o quiz adaptativo sem tocar em θ,
+   * que só pode ser movido por item calibrado (item 8 da auditoria).
+   */
+  getAcertosDaSessao(sessaoId: string): Promise<boolean[]>;
   /** Idempotente por idempotencyKey (doc 04 §4) — retorna `duplicate: true` em reenvio. */
   recordAnswer(input: {
     sessaoId: string;

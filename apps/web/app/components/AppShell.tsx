@@ -21,8 +21,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 function TopBar() {
   const { xp, level, streak, perfil, loading } = useUser();
   const isPremium = perfil?.plano && (perfil.plano.tipo === 'plus' || perfil.plano.tipo === 'escola');
-  
-  const progressoPorcento = Math.min((xp % 100) / 100 * 100, 100);
+
+  // Fração já conquistada dentro do nível atual, calculada pelo servidor (curva
+  // única em gamificacao/nivel.ts). Substitui a régua antiga `xp % 100`, que não
+  // correspondia à curva real de níveis.
+  const progressoNivel = perfil?.gamificacao?.nivel.progresso ?? 0;
+  const progressoPorcento = Math.min(Math.max(progressoNivel, 0), 1) * 100;
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-surface">

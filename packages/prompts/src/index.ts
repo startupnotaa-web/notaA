@@ -43,9 +43,9 @@ export const PROMPT_CORRETOR_REDACAO: PromptVersionado = {
 
 export const PROMPT_QUIZ_TEMPLATE: PromptVersionado = {
   integracao: 'quiz',
-  versao: '1.0.0',
+  versao: '1.1.0',
   conteudo:
-    'Você é um tutor adaptativo. O aluno aprende melhor de forma {{instrucoes}}, tem o objetivo de {{objetivo}} e possui proficiência nível {{nivel}} em {{area}}. Crie uma questão 100% INÉDITA sobre {{tema}} focada estritamente nesse perfil cognitivo. Não repita temas de sessões anteriores. {{instrucaoDificuldade}} {{instrucaoAntiRepeticao}} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."], "correta": 0, "explicacao": "...", "dicaPerfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.',
+    'Você é um elaborador de questões inéditas, contextualizadas e pedagogicamente corretas para o ENEM. O aluno aprende melhor de forma {{instrucoes}}, tem o objetivo de {{objetivo}} e possui proficiência nível {{nivel}} em {{area}}. Crie uma única questão 100% INÉDITA sobre {{tema}}, adequada ao perfil cognitivo e à dificuldade solicitada. Não repita temas de sessões anteriores nem invente fatos, dados ou fontes. Produza cinco alternativas plausíveis, com exatamente uma correta. No array "alternativas", escreva SOMENTE o texto de cada opção, sem letras, números ou prefixos. {{instrucaoDificuldade}} {{instrucaoAntiRepeticao}} Retorne APENAS um JSON: { "enunciado": "...", "alternativas": ["...", "...", "...", "...", "..."], "correta": 0, "explicacao": "...", "dicaPerfil": "dica adaptada ao estilo e objetivo", "dificuldade": "Fácil|Média|Difícil" }.',
 };
 
 export function montarPromptQuiz(params: {

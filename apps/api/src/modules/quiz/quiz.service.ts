@@ -1,5 +1,13 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PoolEsgotadoError, motorTRI } from '@notaa/engine-tri';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { motorTRI } from '@notaa/engine-tri';
+import { randomUUID } from 'node:crypto';
 import type {
   AreaConhecimento,
   BancoDeItemRegistro,
@@ -9,6 +17,7 @@ import type {
   StartQuizSessionResponse,
   SubmitAnswerResponse,
 } from '@notaa/contracts';
+import { QUIZ_TOTAL_QUESTOES } from '@notaa/contracts';
 import { PROMPT_QUIZ_TEMPLATE, montarPromptQuiz } from '@notaa/prompts';
 import { ErrorDetectorService } from '../error-detector/error-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
@@ -24,6 +33,59 @@ const QUIZ_IA_TEMPERATURE = 1.1; // acima do default do Gemini — reduz colisã
 // diferente dos parâmetros TRI). Ajustável sem impacto em Q-02/03/06.
 const XP_ACERTO = 15;
 const XP_ERRO = 5;
+
+const TEMA_POR_AREA: Record<AreaConhecimento, string> = {
+  linguagens: 'competências e habilidades cobradas no ENEM em Linguagens',
+  humanas: 'competências e habilidades cobradas no ENEM em Ciências Humanas',
+  natureza: 'competências e habilidades cobradas no ENEM em Ciências da Natureza',
+  matematica: 'competências e habilidades cobradas no ENEM em Matemática',
+  redacao: 'argumentação, repertório e leitura crítica para a redação do ENEM',
+  fin: 'educação financeira aplicada ao cotidiano',
+  soc: 'competências socioemocionais aplicadas ao estudo',
+  art: 'artes e cultura no contexto do ENEM',
+};
+
+function dificuldadeParaTheta(theta: number): 'Fácil' | 'Média' | 'Difícil' {
+  if (theta <= -0.75) return 'Fácil';
+  if (theta >= 0.75) return 'Difícil';
+  return 'Média';
+}
+
+// ── Escada de dificuldade por sessão ──────────────────────────────────────
+// θ só pode ser movido por item calibrado (item 8 da auditoria), e nem as
+// questões do ENEM nem as da IA são calibradas. Para o quiz ainda assim se
+// adaptar, o degrau vive NA SESSÃO: acertou sobe, errou desce. θ entra só como
+// ponto de partida e permanece intacto.
+const DEGRAUS = ['facil', 'media', 'dificil'] as const;
+type Degrau = (typeof DEGRAUS)[number];
+
+const DEGRAU_PARA_IA: Record<Degrau, 'Fácil' | 'Média' | 'Difícil'> = {
+  facil: 'Fácil',
+  media: 'Média',
+  dificil: 'Difícil',
+};
+
+function degrauInicial(theta: number): number {
+  if (theta <= -0.75) return 0;
+  if (theta >= 0.75) return 2;
+  return 1;
+}
+
+/** Replay determinístico da sessão: cada acerto +1 degrau, cada erro −1. */
+function degrauDaSessao(theta: number, acertos: boolean[]): Degrau {
+  let indice = degrauInicial(theta);
+  for (const acerto of acertos) {
+    indice = Math.min(DEGRAUS.length - 1, Math.max(0, indice + (acerto ? 1 : -1)));
+  }
+  return DEGRAUS[indice]!;
+}
+
+
+function limparAlternativa(texto: string): string {
+  // O prompt pede o conteúdo da opção sem a letra, mas toleramos uma resposta
+  // como "A) ..." sem duplicar o marcador na interface.
+  return texto.replace(/^\s*[A-Ea-e][\)\.\-:]\s*/, '').trim();
+}
 
 function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
   // SEM gabarito — segurança (H2.1, doc 08).
@@ -60,9 +122,8 @@ export class QuizService {
     area: AreaConhecimento,
     dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil',
   ): Promise<GenerateQuizResponse> {
-    const [habilidade, nivelGamificacao, perguntasRecentes] = await Promise.all([
+    const [habilidade, perguntasRecentes] = await Promise.all([
       this.repo.getHabilidade(estudanteId, area),
-      this.gamificacao.nivelAtual(estudanteId),
       this.repo.getHistoricoPerguntasIA(estudanteId, area, HISTORICO_PERGUNTAS_IA_LIMIT),
     ]);
 
@@ -90,7 +151,7 @@ export class QuizService {
     const sistema = montarPromptQuiz({
       instrucoes,
       objetivo,
-      nivel: nivelGamificacao.nivel,
+      nivel: nivelProficiencia,
       area,
       tema,
       instrucaoDificuldade,
@@ -113,13 +174,17 @@ export class QuizService {
       data = resultado.data;
     } catch (error) {
       this.logger.error(
-        `Falha ao gerar quiz via IA (estudante=${estudanteId}, area=${area}, tema="${tema}")`,
+        `[QUIZ_IA_DIAGNOSTICO] etapa=geracao estudante=${estudanteId} area=${area} tema="${tema}" ` +
+          `erro=${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : String(error),
       );
-      throw new BadRequestException({
+      const naoConfigurada = error instanceof Error && error.message.includes('GEMINI_API_KEY não configurado');
+      throw new ServiceUnavailableException({
         error: {
-          code: 'AI_ERROR',
-          message: 'Erro interno na inteligência artificial ao gerar questão inédita. Tente novamente em instantes.',
+          code: naoConfigurada ? 'AI_NOT_CONFIGURED' : 'AI_PROVIDER_UNAVAILABLE',
+          message: naoConfigurada
+            ? 'A geração de questões por IA ainda não foi configurada no servidor.'
+            : 'A IA não conseguiu gerar uma questão agora. Tente novamente em instantes.',
         },
       });
     }
@@ -128,39 +193,67 @@ export class QuizService {
     return data;
   }
 
-  private async getOrGenerateNextItem(
+  /**
+   * Fluxo do quiz: 100% IA, por decisão de produto. Não há consulta a banco de
+   * questões pré-existente — `questoes_enem` serve o Simulado, não o Quiz.
+   *
+   * A dificuldade vem da escada da sessão (acertou sobe, errou desce), que é o
+   * que mantém o quiz adaptativo sem tocar em θ — nenhum item gerado é
+   * calibrado, então θ permanece intocado (item 8 da auditoria).
+   */
+  private async obterProximoItem(
     estudanteId: string,
+    sessaoId: string,
     area: AreaConhecimento,
     theta: number,
-    expostos: string[],
-    pool: BancoDeItemRegistro[]
-  ) {
+  ): Promise<BancoDeItemRegistro> {
+    const acertos = await this.repo.getAcertosDaSessao(sessaoId).catch(() => [] as boolean[]);
+    const degrau = degrauDaSessao(theta, acertos);
+    this.logger.log(`[QUIZ_DIAGNOSTICO] origem=ia area=${area} degrau=${degrau}`);
+    return this.gerarItemDaIa(estudanteId, area, degrau);
+  }
+
+  /**
+   * Persistimos o item antes de devolvê-lo porque a submissão precisa recuperar
+   * o gabarito no servidor sem expô-lo ao cliente — e porque
+   * `tentativa_resposta.item_id` tem FK para `banco_de_itens`.
+   */
+  private async gerarItemDaIa(estudanteId: string, area: AreaConhecimento, degrau: Degrau) {
+    const aiResponse = await this.generateQuiz(
+      estudanteId,
+      TEMA_POR_AREA[area],
+      area,
+      DEGRAU_PARA_IA[degrau],
+    );
+    const letras = ['A', 'B', 'C', 'D', 'E'];
+    const novoItem: BancoDeItemRegistro = {
+      itemId: randomUUID(),
+      area,
+      enunciado: aiResponse.enunciado,
+      alternativas: aiResponse.alternativas.map((texto, i) => ({
+        id: letras[i] ?? 'A',
+        texto: limparAlternativa(texto),
+      })),
+      gabarito: letras[aiResponse.correta] ?? 'A',
+      competencia: 'IA_ADAPTATIVA',
+      // Sem parâmetros psicométricos calibrados, a tentativa é registrada e
+      // recompensada, mas não altera theta (regra já aplicada em submitAnswer).
+      naoCalibrado: true,
+      paramA: 1,
+      paramB: 0,
+      paramC: 0.2,
+    };
     try {
-      const { itemId } = this.selecionarProximo(theta, area, expostos, pool);
-      const item = await this.repo.getItem(itemId);
-      if (!item) throw new NotFoundException();
-      return item;
-    } catch (err) {
-      if (err instanceof PoolEsgotadoError) {
-        const aiResponse = await this.generateQuiz(estudanteId, 'Questão Adaptativa', area);
-        const letras = ['A', 'B', 'C', 'D', 'E'];
-        const novoItem: BancoDeItemRegistro = {
-          itemId: `ai-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          area: area,
-          enunciado: aiResponse.enunciado,
-          alternativas: aiResponse.alternativas.map((texto, i) => ({ id: letras[i] ?? 'A', texto })),
-          gabarito: letras[aiResponse.correta] ?? 'A',
-          competencia: 'IA_ADAPTATIVA',
-          naoCalibrado: true,
-          paramA: 1.2,
-          paramB: aiResponse.dificuldade === 'Fácil' ? -1 : aiResponse.dificuldade === 'Média' ? 0 : 1.5,
-          paramC: 0.2,
-        };
-        await this.repo.addItem(novoItem);
-        return novoItem;
-      }
-      throw err;
+      await this.repo.addItem(novoItem);
+    } catch (error) {
+      this.logger.error(
+        `[QUIZ_IA_DIAGNOSTICO] etapa=persistencia item=${novoItem.itemId} area=${area} ` +
+          `erro=${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
     }
+    return novoItem;
   }
 
   async startSession(
@@ -168,10 +261,10 @@ export class QuizService {
     area: AreaConhecimento,
   ): Promise<StartQuizSessionResponse> {
     const { theta } = await this.repo.getHabilidade(estudanteId, area);
-    const pool = await this.repo.getItemPool(area);
-
-    const item = await this.getOrGenerateNextItem(estudanteId, area, theta, [], pool);
+    // Sessão criada ANTES da 1ª questão: o degrau é derivado a partir dela
+    // (ainda sem respostas aqui, então parte do θ).
     const { sessaoId } = await this.repo.createSession(estudanteId, area);
+    const item = await this.obterProximoItem(estudanteId, sessaoId, area, theta);
     return { sessaoId, primeiraQuestao: toItemPublico(item, 1) };
   }
 
@@ -179,9 +272,7 @@ export class QuizService {
     const sessao = await this.getSessaoDoEstudante(sessaoId, estudanteId);
     const { theta } = await this.repo.getHabilidade(estudanteId, sessao.area);
     const expostos = await this.repo.getExpostos(sessaoId);
-    const pool = await this.repo.getItemPool(sessao.area);
-
-    const item = await this.getOrGenerateNextItem(estudanteId, sessao.area, theta, expostos, pool);
+    const item = await this.obterProximoItem(estudanteId, sessaoId, sessao.area, theta);
     return toItemPublico(item, expostos.length + 1);
   }
 
@@ -299,20 +390,24 @@ export class QuizService {
       }
     }
 
+    // `expostos` é lido DEPOIS da transação, então já inclui a questão recém
+    // respondida — é a contagem de quantas o aluno completou nesta sessão.
     const expostos = await this.repo.getExpostos(sessaoId);
-    const pool = await this.repo.getItemPool(sessao.area);
+    const chegouAoFim = expostos.length >= QUIZ_TOTAL_QUESTOES;
+
     let proximaQuestao: ItemPublico | null = null;
-    try {
-      const { itemId } = this.selecionarProximo(theta, sessao.area, expostos, pool);
-      const proximoItem = await this.repo.getItem(itemId);
-      if (proximoItem) proximaQuestao = toItemPublico(proximoItem, expostos.length + 1);
-    } catch (e) {
-      if (!(e instanceof PoolEsgotadoError)) throw e;
-      proximaQuestao = null; // pool esgotado — fim natural do quiz nesta área
+    if (chegouAoFim) {
+      // Encerra no servidor em vez de depender do POST /finish do cliente, que é
+      // best-effort — sessão abandonada no meio não deve ficar 'em_andamento'.
+      await this.repo.finishSession(sessaoId);
+    } else {
+      const proximoItem = await this.obterProximoItem(estudanteId, sessaoId, sessao.area, theta);
+      proximaQuestao = toItemPublico(proximoItem, expostos.length + 1);
     }
 
     return {
       acerto,
+      gabarito: item.gabarito,
       theta,
       erroPadrao,
       xpGanho,
@@ -326,15 +421,6 @@ export class QuizService {
     await this.getSessaoDoEstudante(sessaoId, estudanteId);
     await this.repo.finishSession(sessaoId);
     return { status: 'concluida' };
-  }
-
-  private selecionarProximo(
-    theta: number,
-    area: AreaConhecimento,
-    expostos: string[],
-    pool: BancoDeItemRegistro[],
-  ) {
-    return motorTRI.selectNextItem({ theta, area, expostos, pool });
   }
 
   /** 404 (não 403) para não confirmar a existência de sessão de outro usuário (doc 10). */

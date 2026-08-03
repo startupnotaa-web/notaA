@@ -36,7 +36,7 @@ export class AiController {
       });
       return {
         ok: true,
-        modelo: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+        modelo: process.env.GEMINI_MODEL ?? process.env.LLM_MODEL ?? process.env.LLM_MODEL_QUIZ ?? 'gemini-3.1-flash-lite',
         resposta: data,
         uso,
       };
@@ -68,7 +68,7 @@ export class AiController {
 
   @Get('models')
   async models() {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY ?? process.env.LLM_API_KEY;
     if (!apiKey) {
       return { ok: false, erro: 'GEMINI_API_KEY não configurado no ambiente da API.' };
     }

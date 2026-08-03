@@ -26,7 +26,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" data-theme="dark">
-      <body>
+      {/* Extensões de navegador (ColorZilla, gerenciadores de senha) injetam
+          atributos em <body> antes da hidratação — ex.: cz-shortcut-listen.
+          suppressHydrationWarning age só neste elemento, não nos filhos, então
+          mismatches reais dentro da árvore continuam sendo reportados. */}
+      <body suppressHydrationWarning>
         <ErrorSuppressor />
         <AuthProvider>{children}</AuthProvider>
       </body>
