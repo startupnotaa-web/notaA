@@ -21,7 +21,7 @@
 
 ---
 
-# PARTE 1 — Erros atuais (bugs reais, já acontecendo)
+# PARTE 1 — Erros atuais (bugs reais, já acontecendo agora)
 
 ## 1.1 Integração Gemini / Tutor Socrático
 
