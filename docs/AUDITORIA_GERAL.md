@@ -1,4 +1,4 @@
-# AUDITORIA GERAL — Plataforma Nota A
+# AUDITORIA GERAL — Plataforma do Nota A
 
 > **Data:** 2026-07-03
 > **Escopo:** auditoria profunda pós-migração Claude Code → Antigravity. Somente investigação e documentação — **nenhum código foi alterado**.
