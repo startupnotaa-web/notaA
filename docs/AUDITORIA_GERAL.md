@@ -236,3 +236,7 @@
 - **Fase 1:** testes de guardrail I3/G-S1 verdes nas duas rotas; teste de concorrência (2 requests, mesma idempotency key) concede XP uma única vez; kill do provedor no meio da correção de redação deixa status recuperável; `pnpm build` + suíte verdes.
 - **Fase 2:** rate limit sobrevive a cold start (2 instâncias); nova tentativa grava `temas_erro`; usuário novo vê XP no dashboard imediatamente; onboarding de <18 exige consentimento do responsável.
 - **Fase 3:** nenhuma injeção direta de `GeminiAdapter` fora do módulo `ai`; CI falha para rota fora de `ROUTE_ROLES`; bundle do web sem componentes `NotaA_Beta_*`.
+
+## Monitorar (sem ação imediata)
+
+- **[BAIXO, monitorar] `simulado_questao.item_id` é FK para `banco_de_itens`.** Hoje é seguro porque `banco_de_itens` tem RLS ligada e **nenhuma** policy (leitura só por service role), então a policy `p_simulado_questao_own` deixa o `item_id` visível ao dono da sessão, mas o join do lado do cliente não resolve nada. Se essa política de `banco_de_itens` mudar no futuro — qualquer policy pública de leitura —, reavaliar se `simulado_questao` também precisa mascarar `item_id` ou passar a ser servida só via API. Ver `supabase/policies/0003_rls_tabelas_novas.sql`.
