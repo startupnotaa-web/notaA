@@ -80,6 +80,12 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     return 'ausente';
   }
 
+  onModuleInit(): void {
+    this.logger.log(
+      `[IA_DIAGNOSTICO] etapa=boot chave=${this.apiKeySource} modeloPadrao=${this.modeloPadrao}`,
+    );
+  }
+
   private modeloPara(origem?: LLMChamadaMeta['origem']): string {
     const porIntegracao = {
       socratica: process.env.GEMINI_MODEL_SOCRATICA ?? process.env.LLM_MODEL_SOCRATICA,
@@ -122,17 +128,14 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     if (!apiKey) {
       throw new GeminiConfigurationError();
     }
-    const modelo = input.modelo ?? DEFAULT_MODEL;
-
     const inicio = Date.now();
-    const modelo = this.modeloPara(input.origem);
+    const modelo = input.modelo ?? this.modeloPara(input.origem);
     this.logger.log(
       `[IA_DIAGNOSTICO] etapa=inicio origem=${input.origem ?? 'desconhecida'} modelo=${modelo} chave=${this.apiKeySource}`,
     );
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
       {
-        model: modelo,
         model: modelo,
         systemInstruction: input.sistema,
         // Força JSON: combina com a validação Zod a seguir para garantir I5.
@@ -195,7 +198,6 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     };
     this.logger.log(
       `← resposta IA [gemini:${modelo}] OK | tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
-      `← resposta IA [gemini:${modelo}] OK | tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
     );
 
     return { data: parsed.data, uso };
@@ -215,13 +217,10 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     if (!apiKey) {
       throw new GeminiConfigurationError();
     }
-    const modelo = input.modelo ?? DEFAULT_MODEL;
-
     const inicio = Date.now();
-    const modelo = this.modeloPara(input.origem);
+    const modelo = input.modelo ?? this.modeloPara(input.origem);
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
-      { model: modelo, systemInstruction: input.sistema },
       { model: modelo, systemInstruction: input.sistema },
       { timeout: GEMINI_TIMEOUT_MS },
     );
@@ -237,7 +236,6 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
       latenciaMs: Date.now() - inicio,
     };
     this.logger.log(
-      `← socrático [gemini:${modelo}] tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
       `← socrático [gemini:${modelo}] tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
     );
 

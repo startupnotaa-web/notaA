@@ -5,6 +5,7 @@ import {
   StartSimuladoRequestSchema,
 } from '@notaa/contracts';
 import type {
+  AreaConhecimento,
   ImportQuestoesEnemRequest,
   SaveSimuladoAnswerRequest,
   StartSimuladoRequest,
@@ -79,32 +80,6 @@ export class SimuladoController {
     const excluirIds = excluirStr ? excluirStr.split(',').filter(Boolean) : [];
 
     return this.simulado.getNextItem(req.user.sub, nivel, excluirIds, area as AreaConhecimento);
-  }
-
-  @Post('sessions')
-  async startSession(
-    @Req() req: AuthenticatedRequest,
-    @Body(new ZodValidationPipe(StartSimuladoSessionRequestSchema)) body: StartSimuladoSessionRequest,
-  ) {
-    return this.simulado.startSession(req.user.sub, body.area, body.quantidade, body.nivel);
-  }
-
-  @Get('sessions/:id/next-item')
-  async getSessionNextItem(
-    @Req() req: AuthenticatedRequest,
-    @Param('id') sessaoId: string,
-    @Query('nivel') nivelStr?: string,
-  ) {
-    let nivel: number | undefined;
-    if (nivelStr !== undefined) {
-      nivel = parseInt(nivelStr, 10);
-      if (!Number.isFinite(nivel) || nivel < 1 || nivel > 3) {
-        throw new BadRequestException({
-          error: { code: 'VALIDATION_ERROR', message: '"nivel" deve ser 1, 2 ou 3.' },
-        });
-      }
-    }
-    return this.simulado.getSessionNextItem(sessaoId, req.user.sub, nivel);
   }
 
   @Roles('admin')
