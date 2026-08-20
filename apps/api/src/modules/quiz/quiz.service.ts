@@ -100,6 +100,7 @@ function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
 
 import { ContextBuilderService } from '../ai/context-builder.service';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
+import { isErroTransitorio } from '../ai/gemini.adapter';
 import type { LLMProviderPort } from '@notaa/contracts';
 
 @Injectable()
@@ -170,6 +171,7 @@ export class QuizService {
         origem: 'quiz',
         usuarioId: estudanteId,
         promptVersao: PROMPT_QUIZ_TEMPLATE.versao,
+        modelo: process.env.LLM_MODEL_QUIZ ?? process.env.LLM_MODEL_SOCRATICA,
       });
       data = resultado.data;
     } catch (error) {

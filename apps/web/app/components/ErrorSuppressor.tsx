@@ -32,12 +32,14 @@ export function ErrorSuppressor() {
   useEffect(() => {
     function handleUnhandledRejection(event: PromiseRejectionEvent) {
       if (isExtensionError(event.reason)) {
+        console.warn('[ErrorSuppressor] Erro de extensão suprimido (unhandledrejection):', event.reason);
         event.preventDefault(); // Impede que apareça como "Uncaught (in promise)" no console.
       }
     }
 
     function handleError(event: ErrorEvent) {
       if (isExtensionError(event.error)) {
+        console.warn('[ErrorSuppressor] Erro de extensão suprimido (error):', event.error);
         event.preventDefault();
       }
     }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -10,6 +10,11 @@ import type { LLMChamadaMeta, LLMProviderPort, UsoTokens } from '@notaa/contract
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS ?? 15_000);
 const MAX_RETRIES = 2;
 const BACKOFF_BASE_MS = 500;
+
+// Fallback quando o chamador não passa `modelo` no input (LLMChamadaMeta) —
+// hoje só battle.service.ts e study-trails.service.ts caem aqui; socrática,
+// redação e quiz sempre passam seu próprio LLM_MODEL_* (ver serviços).
+export const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -26,7 +31,7 @@ export class GeminiConfigurationError extends Error {
  * (5xx) e falhas de rede/timeout. Erros de contrato (schema, JSON inválido) e de
  * configuração (chave ausente, modelo inexistente/404) NÃO são re-tentados.
  */
-function isErroTransitorio(err: unknown): boolean {
+export function isErroTransitorio(err: unknown): boolean {
   if (err instanceof GoogleGenerativeAIFetchError) {
     return err.status === 429 || (err.status != null && err.status >= 500);
   }
@@ -59,7 +64,7 @@ function diagnosticoErro(err: unknown): string {
  *   - GEMINI_TIMEOUT_MS (opcional; default 15000)
  */
 @Injectable()
-export class GeminiAdapter implements LLMProviderPort {
+export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
   private readonly logger = new Logger('LLMProvider');
   private readonly modeloPadrao = process.env.GEMINI_MODEL ?? process.env.LLM_MODEL ?? 'gemini-3.1-flash-lite';
 
@@ -117,6 +122,7 @@ export class GeminiAdapter implements LLMProviderPort {
     if (!apiKey) {
       throw new GeminiConfigurationError();
     }
+    const modelo = input.modelo ?? DEFAULT_MODEL;
 
     const inicio = Date.now();
     const modelo = this.modeloPara(input.origem);
@@ -126,6 +132,7 @@ export class GeminiAdapter implements LLMProviderPort {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
       {
+        model: modelo,
         model: modelo,
         systemInstruction: input.sistema,
         // Força JSON: combina com a validação Zod a seguir para garantir I5.
@@ -188,6 +195,7 @@ export class GeminiAdapter implements LLMProviderPort {
     };
     this.logger.log(
       `← resposta IA [gemini:${modelo}] OK | tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
+      `← resposta IA [gemini:${modelo}] OK | tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
     );
 
     return { data: parsed.data, uso };
@@ -207,11 +215,13 @@ export class GeminiAdapter implements LLMProviderPort {
     if (!apiKey) {
       throw new GeminiConfigurationError();
     }
+    const modelo = input.modelo ?? DEFAULT_MODEL;
 
     const inicio = Date.now();
     const modelo = this.modeloPara(input.origem);
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
+      { model: modelo, systemInstruction: input.sistema },
       { model: modelo, systemInstruction: input.sistema },
       { timeout: GEMINI_TIMEOUT_MS },
     );
@@ -228,6 +238,7 @@ export class GeminiAdapter implements LLMProviderPort {
     };
     this.logger.log(
       `← socrático [gemini:${modelo}] tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
+      `← socrático [gemini:${modelo}] tokensIn=${uso.tokensIn} tokensOut=${uso.tokensOut} latenciaMs=${uso.latenciaMs}`,
     );
 
     return { texto, uso };
@@ -242,7 +253,7 @@ export class GeminiAdapter implements LLMProviderPort {
     const apiKey = this.apiKey;
     const modelo = modelName?.trim() || this.modeloPara('quiz');
     if (!apiKey) {
-      return { ok: false, modelo, erro: 'GEMINI_API_KEY não configurado no ambiente da API.' };
+      return { ok: false, modelo, erro: 'LLM_API_KEY não configurado no ambiente da API.' };
     }
     try {
       const genAI = new GoogleGenerativeAI(apiKey);

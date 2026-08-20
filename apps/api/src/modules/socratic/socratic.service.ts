@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { SocraticResponseSchema, type LLMProviderPort, type SocraticResponse } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { ContextBuilderService } from '../ai/context-builder.service';
@@ -50,12 +50,28 @@ export class SocraticService {
     }
 
     const systemPrompt = await this.studentContext.buildSocraticSystemPrompt(estudanteId);
-    const { texto: resposta } = await this.llm.completeTexto({
-      sistema: systemPrompt,
-      prompt: mensagem,
-      origem: 'socratica',
-      usuarioId: estudanteId,
-    });
+    let resposta: string;
+    try {
+      const result = await this.llm.completeTexto({
+        sistema: systemPrompt,
+        prompt: mensagem,
+        origem: 'socratica',
+        usuarioId: estudanteId,
+        modelo: process.env.LLM_MODEL_SOCRATICA,
+      });
+      resposta = result.texto;
+    } catch (err) {
+      this.logger.error(
+        `Falha ao chamar IA na tutoria socrática direta (estudante=${estudanteId})`,
+        err instanceof Error ? err.stack : String(err),
+      );
+      throw new InternalServerErrorException({
+        error: {
+          code: 'AI_ERROR',
+          message: 'Erro interno na inteligência artificial ao gerar a resposta do tutor. Tente novamente em instantes.',
+        },
+      });
+    }
 
     // Guardrail I3 pós-LLM (mesma regra inegociável de enviarMensagem, doc 06
     // §2.3): se o texto entrega a resposta final, rebaixa para o fallback guiado.
@@ -151,15 +167,31 @@ export class SocraticService {
       historico,
     });
 
-    const { data: respostaLLM } = await this.llm.complete({
-      sistema: PROMPT_SOCRATICO.conteudo,
-      prompt: mensagem,
-      contexto,
-      schema: SocraticResponseSchema,
-      origem: 'socratica',
-      usuarioId: estudanteId,
-      promptVersao: PROMPT_SOCRATICO.versao,
-    });
+    let respostaLLM: SocraticResponse;
+    try {
+      const result = await this.llm.complete({
+        sistema: PROMPT_SOCRATICO.conteudo,
+        prompt: mensagem,
+        contexto,
+        schema: SocraticResponseSchema,
+        origem: 'socratica',
+        usuarioId: estudanteId,
+        promptVersao: PROMPT_SOCRATICO.versao,
+        modelo: process.env.LLM_MODEL_SOCRATICA,
+      });
+      respostaLLM = result.data;
+    } catch (err) {
+      this.logger.error(
+        `Falha ao chamar IA na tutoria socrática (conversa=${conversaId}, estudante=${estudanteId})`,
+        err instanceof Error ? err.stack : String(err),
+      );
+      throw new InternalServerErrorException({
+        error: {
+          code: 'AI_ERROR',
+          message: 'Erro interno na inteligência artificial ao gerar a resposta do tutor. Tente novamente em instantes.',
+        },
+      });
+    }
 
     // 4. Guardrails pós-LLM (defesa em profundidade).
     let resposta: SocraticResponse = respostaLLM;

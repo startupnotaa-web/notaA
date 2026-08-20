@@ -35,6 +35,12 @@ export interface LLMChamadaMeta {
    * log_uso_ia.prompt_versao_id.
    */
   promptVersao?: string;
+  /**
+   * Sobrepõe o modelo Gemini usado nesta chamada (ex.: LLM_MODEL_SOCRATICA,
+   * LLM_MODEL_REDACAO, LLM_MODEL_QUIZ — resolvidos pelo chamador). Ausente =
+   * o adaptador usa seu default.
+   */
+  modelo?: string;
 }
 
 export interface LLMProviderPort {
