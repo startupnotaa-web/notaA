@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ProfilerModule } from '../profiler/profiler.module';
-import { PROFILER_REPOSITORY } from '../profiler/profiler.tokens';
 import { LLM_PROVIDER, RISK_REPOSITORY } from './ai.tokens';
 import { AiController } from './ai.controller';
 import { ContextBuilderService } from './context-builder.service';
 import { GeminiAdapter } from './gemini.adapter';
 import { StudentContextService } from './student-context.service';
-import { LLMProviderMock } from './llm-provider.mock';
 import { LlmUsageLoggerProvider } from './llm-usage-logger.provider';
 import { CareNotifierService } from './care-notifier.service';
 import { RiskDetectorService } from './risk-detector.service';
@@ -20,10 +18,9 @@ import { RiskRepositoryDrizzle } from './risk.repository';
  *   - LLM_PROVIDER (via token) — consumido por SocraticService e RedacaoService.
  *   - ContextBuilderService — monta o pacote de contexto (Perfil 4D + adaptações).
  *
- * Para trocar o provedor mock por um real:
- *   1. Crie o adaptador (ex.: `gemini.adapter.ts`) implementando `LLMProviderPort`.
- *   2. Mude `useClass: LLMProviderMock` → `useClass: GeminiAdapter` abaixo.
- *   3. Nenhum outro arquivo muda.
+ * O provedor real (GeminiAdapter, decorado por LlmUsageLoggerProvider) é o ÚNICO
+ * ligado ao token LLM_PROVIDER. Não há mock no caminho de execução: falha de IA
+ * sobe como erro, nunca vira resposta estática silenciosa.
  */
 @Module({
   imports: [ProfilerModule],

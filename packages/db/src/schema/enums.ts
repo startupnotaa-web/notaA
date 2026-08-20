@@ -62,6 +62,7 @@ export const riscoStatusAcompanhamentoEnum = pgEnum('risco_status_acompanhamento
 
 export const xpOrigemEnum = pgEnum('xp_origem', [
   'quiz',
+  'simulado',
   'redacao',
   'streak',
   'conquista',

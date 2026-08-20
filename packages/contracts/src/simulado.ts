@@ -47,15 +47,122 @@ export const ImportQuestoesEnemRequestSchema = z.union([
 ]);
 export type ImportQuestoesEnemRequest = z.infer<typeof ImportQuestoesEnemRequestSchema>;
 
-export const StartSimuladoSessionRequestSchema = z.object({
-  area: AreaConhecimentoSchema,
-  quantidade: z.number().int().min(1).max(90),
-  nivel: z.number().int().min(1).max(3).optional(),
-});
-export type StartSimuladoSessionRequest = z.infer<typeof StartSimuladoSessionRequestSchema>;
+// ── Simulado com sessão (bloco fechado, correção só no fim) ──────────────────
 
-export const StartSimuladoSessionResponseSchema = z.object({
-  sessaoId: z.string().uuid(),
-  primeiraQuestao: QuestaoSimuladoResponseSchema.nullable(),
+/** Áreas que compõem a prova — as mesmas 4 do ENEM. */
+export const SIMULADO_AREAS = ['linguagens', 'humanas', 'natureza', 'matematica'] as const;
+export const SIMULADO_QUESTOES_POR_AREA = 10;
+export const SIMULADO_TOTAL_QUESTOES = SIMULADO_AREAS.length * SIMULADO_QUESTOES_POR_AREA;
+
+/** Só estes limites são aceitos — o XP é calibrado em cima deles. */
+export const SIMULADO_LIMITES_MINUTOS = [60, 90] as const;
+
+export const SimuladoModoSchema = z.enum(['cronometrado', 'livre']);
+export type SimuladoModo = z.infer<typeof SimuladoModoSchema>;
+
+export const StartSimuladoRequestSchema = z
+  .object({
+    modo: SimuladoModoSchema,
+    limiteMinutos: z.union([z.literal(60), z.literal(90)]).optional(),
+  })
+  .refine((v) => (v.modo === 'cronometrado' ? v.limiteMinutos !== undefined : true), {
+    message: 'modo "cronometrado" exige limiteMinutos (60 ou 90).',
+    path: ['limiteMinutos'],
+  });
+export type StartSimuladoRequest = z.infer<typeof StartSimuladoRequestSchema>;
+
+/** Questão como o aluno a recebe: SEM `correta` em qualquer alternativa. */
+export const QuestaoSimuladoPublicaSchema = z.object({
+  itemId: z.string().uuid(),
+  ordem: z.number().int().positive(),
+  area: AreaConhecimentoSchema,
+  enunciado: z.string(),
+  alternativas: z.array(z.object({ id: z.string(), texto: z.string() })),
+  imagemUrl: z.string().nullable(),
 });
-export type StartSimuladoSessionResponse = z.infer<typeof StartSimuladoSessionResponseSchema>;
+export type QuestaoSimuladoPublica = z.infer<typeof QuestaoSimuladoPublicaSchema>;
+
+export const StartSimuladoResponseSchema = z.object({
+  sessaoId: z.string().uuid(),
+  modo: SimuladoModoSchema,
+  limiteMinutos: z.number().int().nullable(),
+  /** ISO 8601; null no modo livre. Prazo é do servidor, não do cliente. */
+  expiraEm: z.string().nullable(),
+  questoes: z.array(QuestaoSimuladoPublicaSchema),
+});
+export type StartSimuladoResponse = z.infer<typeof StartSimuladoResponseSchema>;
+
+/**
+ * Retomada de uma prova em andamento (recarregou a página, caiu a internet,
+ * trocou de aba). Devolve a mesma prova — mesma ordem, mesmas questões, ainda
+ * sem gabarito — mais o que já foi respondido. O prazo continua sendo o
+ * `expiraEm` gravado no início: sair da tela não devolve tempo.
+ */
+export const ResumeSimuladoResponseSchema = StartSimuladoResponseSchema.extend({
+  /** itemId → id da alternativa marcada. Questão ausente = ainda em branco. */
+  respostas: z.record(z.string(), z.string()),
+  /** Já finalizada: o cliente deve ir direto ao relatório. */
+  finalizado: z.boolean(),
+  /** O prazo estourou enquanto o aluno estava fora — só resta finalizar. */
+  expirado: z.boolean(),
+});
+export type ResumeSimuladoResponse = z.infer<typeof ResumeSimuladoResponseSchema>;
+
+export const SaveSimuladoAnswerRequestSchema = z.object({
+  itemId: z.string().uuid(),
+  respostaId: z.string().min(1),
+  tempoRespostaMs: z.number().int().nonnegative(),
+});
+export type SaveSimuladoAnswerRequest = z.infer<typeof SaveSimuladoAnswerRequestSchema>;
+
+/** Resposta do save: confirma o registro e NÃO revela acerto (H2.1). */
+export const SaveSimuladoAnswerResponseSchema = z.object({
+  registrada: z.boolean(),
+  respondidas: z.number().int().nonnegative(),
+  total: z.number().int().positive(),
+});
+export type SaveSimuladoAnswerResponse = z.infer<typeof SaveSimuladoAnswerResponseSchema>;
+
+export const SimuladoRecorteSchema = z.object({
+  chave: z.string(),
+  acertos: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+  percentual: z.number(),
+});
+export type SimuladoRecorte = z.infer<typeof SimuladoRecorteSchema>;
+
+export const SimuladoQuestaoRevisaoSchema = z.object({
+  itemId: z.string().uuid(),
+  ordem: z.number().int().positive(),
+  area: AreaConhecimentoSchema,
+  dificuldade: DificuldadeTriSchema,
+  origem: z.enum(['enem', 'ia']),
+  enunciado: z.string(),
+  alternativas: z.array(z.object({ id: z.string(), texto: z.string() })),
+  gabarito: z.string(),
+  /** null = deixada em branco (conta como erro). */
+  respostaDada: z.string().nullable(),
+  acerto: z.boolean(),
+});
+export type SimuladoQuestaoRevisao = z.infer<typeof SimuladoQuestaoRevisaoSchema>;
+
+export const SimuladoRelatorioSchema = z.object({
+  sessaoId: z.string().uuid(),
+  modo: SimuladoModoSchema,
+  limiteMinutos: z.number().int().nullable(),
+  expirado: z.boolean(),
+  total: z.number().int().positive(),
+  acertos: z.number().int().nonnegative(),
+  emBranco: z.number().int().nonnegative(),
+  percentual: z.number(),
+  duracaoSegundos: z.number().int().nonnegative(),
+  xpGanho: z.number().int().nonnegative(),
+  /** Motivo de XP zerado no modo livre — o cliente explica ao aluno. */
+  xpBloqueadoPorDesempenho: z.boolean(),
+  porArea: z.array(SimuladoRecorteSchema),
+  porDificuldade: z.array(SimuladoRecorteSchema),
+  melhorArea: z.string().nullable(),
+  areaAMelhorar: z.string().nullable(),
+  questoes: z.array(SimuladoQuestaoRevisaoSchema),
+});
+export type SimuladoRelatorio = z.infer<typeof SimuladoRelatorioSchema>;

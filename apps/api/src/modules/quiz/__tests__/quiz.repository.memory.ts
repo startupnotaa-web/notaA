@@ -13,6 +13,7 @@ interface SessaoMemoria {
 
 interface TentativaMemoria extends Tentativa {
   estudanteId: string;
+  sessaoId: string;
   area: AreaConhecimento;
   temasErro: string[] | null;
 }
@@ -81,6 +82,12 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
     return this.sessoes.get(sessaoId)?.expostos ?? [];
   }
 
+  async getAcertosDaSessao(sessaoId: string): Promise<boolean[]> {
+    return this.tentativas
+      .filter((t) => t.sessaoId === sessaoId)
+      .map((t) => t.acerto);
+  }
+
   async recordAnswer(input: {
     sessaoId: string;
     estudanteId: string;
@@ -106,6 +113,7 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
       tempoMs: input.tempoRespostaMs,
       criadoEm: new Date().toISOString(),
       estudanteId: input.estudanteId,
+      sessaoId: input.sessaoId,
       area: sessao?.area ?? 'matematica',
       temasErro: input.temasErro ?? null, // espelha o repo Drizzle (auditoria R6)
     });

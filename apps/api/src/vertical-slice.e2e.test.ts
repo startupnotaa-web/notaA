@@ -11,10 +11,11 @@ import { GamificacaoRepositoryMemory } from './modules/gamificacao/gamificacao.r
 import { PROFILER_REPOSITORY } from './modules/profiler/profiler.tokens';
 import { ProfilerRepositoryMemory } from './modules/profiler/profiler.repository.memory';
 import { QUIZ_REPOSITORY } from './modules/quiz/quiz.tokens';
-import { QuizRepositoryMemory } from './modules/quiz/quiz.repository.memory';
+import { QuizRepositoryMemory } from './modules/quiz/__tests__/quiz.repository.memory';
 import { DASHBOARD_REPOSITORY } from './modules/dashboard/dashboard.tokens';
 import { DashboardRepositoryMemory } from './modules/dashboard/dashboard.repository.memory';
 import { ERROR_DETECTOR_REPOSITORY } from './modules/error-detector/error-detector.tokens';
+import { LLM_PROVIDER } from './modules/ai/ai.tokens';
 import { ErrorDetectorRepositoryMemory } from './modules/error-detector/error-detector.repository.memory';
 
 // e2e da fatia vertical E1→E2→E3→E4→E9 (passos 9 + Fase 1, doc 08 — valida
@@ -27,6 +28,32 @@ import { ErrorDetectorRepositoryMemory } from './modules/error-detector/error-de
 
 const SECRET = 'segredo-vertical-slice-com-pelo-menos-32-bytes';
 process.env.SUPABASE_JWT_SECRET = SECRET;
+
+/**
+ * Provedor de IA determinístico. O quiz é 100% gerado por IA, então sem este
+ * override o e2e sairia para a rede a cada questão — lento, instável e
+ * dependente de cota do Gemini. Devolve sempre a mesma questão, com a
+ * alternativa de índice 1 correta (vira 'B' no serviço).
+ */
+class LLMProviderFake {
+  async complete<T>(input: { schema: { parse: (v: unknown) => T } }): Promise<{ data: T; uso: unknown }> {
+    return {
+      data: input.schema.parse({
+        enunciado: 'Questão determinística de teste.',
+        alternativas: ['alternativa a', 'alternativa b', 'alternativa c', 'alternativa d', 'alternativa e'],
+        correta: 1,
+        explicacao: 'Explicação de teste.',
+        dicaPerfil: 'Dica de teste.',
+        dificuldade: 'Média',
+      }),
+      uso: { tokensIn: 0, tokensOut: 0, custoEstimado: 0, latenciaMs: 0 },
+    };
+  }
+
+  async completeTexto() {
+    return { texto: 'texto de teste', uso: { tokensIn: 0, tokensOut: 0, custoEstimado: 0, latenciaMs: 0 } };
+  }
+}
 
 async function signToken(sub: string, papel = 'estudante') {
   const secretKey = new TextEncoder().encode(SECRET);
@@ -55,6 +82,8 @@ describe('Fatia vertical E1→E2 — onboarding + quiz adaptativo (passo 9)', ()
       .useClass(DashboardRepositoryMemory)
       .overrideProvider(ERROR_DETECTOR_REPOSITORY)
       .useClass(ErrorDetectorRepositoryMemory)
+      .overrideProvider(LLM_PROVIDER)
+      .useClass(LLMProviderFake)
       .compile();
     errorDetectorRepo = moduleRef.get(ERROR_DETECTOR_REPOSITORY);
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());

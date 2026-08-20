@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { z } from 'zod';
 import { Database, batalhaPvp, usuario, eq, and, sql, ne } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
@@ -75,12 +75,15 @@ export class BattleService {
       questoesGeradas = data.questoes;
     } catch (e) {
       this.logger.error('Falha ao gerar questões com IA', e);
-      // Fallback estático caso a IA falhe (para não quebrar a exp do usuário)
-      questoesGeradas = Array(5).fill(null).map((_, i) => ({
-        enunciado: `Questão fallback de ${area} #${i+1}`,
-        alternativas: ['A', 'B', 'C', 'D'],
-        correta: 0,
-      }));
+      // Não mascarar indisponibilidade da IA com questões falsas. O cliente
+      // recebe um erro explícito e pode tentar de novo; qualquer questão
+      // exibida na batalha tem, portanto, origem Gemini ou de outro aluno.
+      throw new ServiceUnavailableException({
+        error: {
+          code: 'AI_PROVIDER_UNAVAILABLE',
+          message: 'Não foi possível gerar as questões da batalha agora. Tente novamente em instantes.',
+        },
+      });
     }
 
     const questoesFormatadas = questoesGeradas.map((q, i) => ({

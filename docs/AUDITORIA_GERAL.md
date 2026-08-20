@@ -1,4 +1,4 @@
-# AUDITORIA GERAL — Plataforma Nota A
+# AUDITORIA GERAL — Plataforma do Nota A
 
 > **Data:** 2026-07-03
 > **Escopo:** auditoria profunda pós-migração Claude Code → Antigravity. Somente investigação e documentação — **nenhum código foi alterado**.
@@ -21,7 +21,7 @@
 
 ---
 
-# PARTE 1 — Erros atuais (bugs reais, já acontecendo)
+# PARTE 1 — Erros atuais (bugs reais, já acontecendo agora)
 
 ## 1.1 Integração Gemini / Tutor Socrático
 
@@ -237,8 +237,6 @@
 - **Fase 2:** rate limit sobrevive a cold start (2 instâncias); nova tentativa grava `temas_erro`; usuário novo vê XP no dashboard imediatamente; onboarding de <18 exige consentimento do responsável.
 - **Fase 3:** nenhuma injeção direta de `GeminiAdapter` fora do módulo `ai`; CI falha para rota fora de `ROUTE_ROLES`; bundle do web sem componentes `NotaA_Beta_*`.
 
----
+## Monitorar (sem ação imediata)
 
-## Adendo — 2026-07-22
-
-### [MÉDIO] 25 testes falhando por claim JWT `iss` incorreto — pré-existente, confirmado via git stash, não bloqueia mas mascara regressões reais nessa área se algo quebrar de verdade no futuro.
+- **[BAIXO, monitorar] `simulado_questao.item_id` é FK para `banco_de_itens`.** Hoje é seguro porque `banco_de_itens` tem RLS ligada e **nenhuma** policy (leitura só por service role), então a policy `p_simulado_questao_own` deixa o `item_id` visível ao dono da sessão, mas o join do lado do cliente não resolve nada. Se essa política de `banco_de_itens` mudar no futuro — qualquer policy pública de leitura —, reavaliar se `simulado_questao` também precisa mascarar `item_id` ou passar a ser servida só via API. Ver `supabase/policies/0003_rls_tabelas_novas.sql`.

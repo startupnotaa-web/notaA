@@ -35,8 +35,21 @@ export const SubmitAnswerRequestSchema = z.object({
 });
 export type SubmitAnswerRequest = z.infer<typeof SubmitAnswerRequestSchema>;
 
+/**
+ * Quantidade de questões de uma sessão de quiz. Fonte única: a API decide o fim
+ * (devolve `proximaQuestao: null` ao atingir o total) e o cliente usa o mesmo
+ * número para a barra de progresso, sem duplicar a regra.
+ */
+export const QUIZ_TOTAL_QUESTOES = 10;
+
 export const SubmitAnswerResponseSchema = z.object({
   acerto: z.boolean(),
+  /**
+   * Id da alternativa correta (ex.: 'B'). Revelado SÓ na resposta — ItemPublico
+   * continua sem gabarito (H2.1). Sem isto o aluno que erra não descobre qual
+   * era a certa, que é justamente o momento em que ele aprende.
+   */
+  gabarito: z.string(),
   theta: z.number(),
   erroPadrao: z.number(),
   xpGanho: z.number().int(),

@@ -34,7 +34,10 @@ export default function CadastroPage() {
       const { data, error } = await supabaseBrowser.auth.signUp({
         email,
         password: senha,
-        options: { data: { nome, tipoPerfil } },
+        options: {
+          data: { nome, tipoPerfil },
+          emailRedirectTo: `${window.location.origin}/onboarding`,
+        },
       });
       if (error) throw error;
 

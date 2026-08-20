@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { LLMProviderPort, UsoTokens } from '@notaa/contracts';
+import type { LLMChamadaMeta, LLMProviderPort, UsoTokens } from '@notaa/contracts';
 
 // Resiliência (doc 06 §2.4/§3.3, auditoria R1): toda chamada ao provedor tem
 // teto de espera e re-tenta erros transitórios com backoff. Sem isso, uma
@@ -18,6 +18,14 @@ export const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Configuração ausente é diferente de indisponibilidade temporária do Gemini. */
+export class GeminiConfigurationError extends Error {
+  constructor() {
+    super('GEMINI_API_KEY não configurado no ambiente da API.');
+    this.name = 'GeminiConfigurationError';
+  }
+}
+
 /**
  * Transitório = vale re-tentar: rate limit (429), indisponibilidade do provedor
  * (5xx) e falhas de rede/timeout. Erros de contrato (schema, JSON inválido) e de
@@ -29,6 +37,14 @@ export function isErroTransitorio(err: unknown): boolean {
   }
   const msg = err instanceof Error ? err.message : String(err);
   return /timeout|timed out|fetch failed|network|econnreset|socket|aborted/i.test(msg);
+}
+
+function diagnosticoErro(err: unknown): string {
+  const error = err as { status?: unknown; code?: unknown; message?: unknown; response?: unknown };
+  const status = typeof error?.status === 'number' ? error.status : 'n/a';
+  const code = typeof error?.code === 'string' ? error.code : 'n/a';
+  const message = err instanceof Error ? err.message : String(error?.message ?? err);
+  return `status=${status} code=${code} message=${message}`;
 }
 
 /**
@@ -43,29 +59,42 @@ export function isErroTransitorio(err: unknown): boolean {
  * LLM_PROVIDER (ai.module.ts) — nenhum outro arquivo muda (hexagonal).
  *
  * Config via ambiente:
- *   - LLM_API_KEY       (obrigatória — validada no boot via onModuleInit, não
- *                        só na primeira chamada)
- *   - modelo por chamada (LLMChamadaMeta.modelo) — cada integração resolve seu
- *     próprio LLM_MODEL_SOCRATICA / LLM_MODEL_REDACAO / LLM_MODEL_QUIZ e passa
- *     no input; sem isso, cai em DEFAULT_MODEL.
+ *   - GEMINI_API_KEY    (obrigatória)
+ *   - GEMINI_MODEL      (opcional; default 'gemini-3.1-flash-lite')
  *   - GEMINI_TIMEOUT_MS (opcional; default 15000)
  */
 @Injectable()
 export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
   private readonly logger = new Logger('LLMProvider');
+  private readonly modeloPadrao = process.env.GEMINI_MODEL ?? process.env.LLM_MODEL ?? 'gemini-3.1-flash-lite';
 
-  /**
-   * Fail-fast (auditoria de erros de IA): sem LLM_API_KEY nenhuma chamada de
-   * IA funciona — melhor a API não subir do que subir quebrada e só
-   * descobrir isso na primeira requisição de um aluno.
-   */
+  // O .env atual do projeto usa LLM_*. GEMINI_* continua suportado para novos
+  // ambientes, mas a chave/modelo legados não podem ser ignorados em runtime.
+  private get apiKey(): string | undefined {
+    return process.env.GEMINI_API_KEY ?? process.env.LLM_API_KEY;
+  }
+
+  private get apiKeySource(): 'GEMINI_API_KEY' | 'LLM_API_KEY' | 'ausente' {
+    if (process.env.GEMINI_API_KEY) return 'GEMINI_API_KEY';
+    if (process.env.LLM_API_KEY) return 'LLM_API_KEY';
+    return 'ausente';
+  }
+
   onModuleInit(): void {
-    if (!process.env.LLM_API_KEY) {
-      throw new Error(
-        '[Boot] LLM_API_KEY ausente no ambiente. A API não pode iniciar sem uma ' +
-          'chave de IA configurada — configure LLM_API_KEY (ver .env.example) antes de subir a aplicação.',
-      );
-    }
+    this.logger.log(
+      `[IA_DIAGNOSTICO] etapa=boot chave=${this.apiKeySource} modeloPadrao=${this.modeloPadrao}`,
+    );
+  }
+
+  private modeloPara(origem?: LLMChamadaMeta['origem']): string {
+    const porIntegracao = {
+      socratica: process.env.GEMINI_MODEL_SOCRATICA ?? process.env.LLM_MODEL_SOCRATICA,
+      redacao: process.env.GEMINI_MODEL_REDACAO ?? process.env.LLM_MODEL_REDACAO,
+      quiz: process.env.GEMINI_MODEL_QUIZ ?? process.env.LLM_MODEL_QUIZ,
+      batalha: process.env.GEMINI_MODEL_BATALHA ?? process.env.LLM_MODEL_BATALHA,
+      trilha: process.env.GEMINI_MODEL_TRILHA ?? process.env.LLM_MODEL_TRILHA,
+    } as const;
+    return (origem ? porIntegracao[origem] : undefined) ?? this.modeloPadrao;
   }
 
   /**
@@ -94,16 +123,16 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     contexto: object;
     schema: z.ZodSchema<T>;
     temperature?: number;
-    modelo?: string;
-  }): Promise<{ data: T; uso: UsoTokens }> {
-    const apiKey = process.env.LLM_API_KEY;
+  } & LLMChamadaMeta): Promise<{ data: T; uso: UsoTokens }> {
+    const apiKey = this.apiKey;
     if (!apiKey) {
-      // Falha de configuração do ambiente, não do cliente.
-      throw new Error('LLM_API_KEY não configurado no ambiente da API.');
+      throw new GeminiConfigurationError();
     }
-    const modelo = input.modelo ?? DEFAULT_MODEL;
-
     const inicio = Date.now();
+    const modelo = input.modelo ?? this.modeloPara(input.origem);
+    this.logger.log(
+      `[IA_DIAGNOSTICO] etapa=inicio origem=${input.origem ?? 'desconhecida'} modelo=${modelo} chave=${this.apiKeySource}`,
+    );
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
       {
@@ -125,14 +154,25 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
       `Contrato Esperado (JSON Schema):\n${JSON.stringify(jsonSchema)}\n\n` +
       'Responda SOMENTE com um objeto JSON válido estritamente aderente ao JSON Schema acima, sem texto fora do JSON.';
 
-    const result = await this.comRetry('complete', () => model.generateContent(prompt));
+    let result;
+    try {
+      result = await this.comRetry('complete', () => model.generateContent(prompt));
+    } catch (error) {
+      this.logger.error(
+        `[IA_DIAGNOSTICO] etapa=generateContent origem=${input.origem ?? 'desconhecida'} modelo=${modelo} ${diagnosticoErro(error)}`,
+      );
+      throw error;
+    }
     const texto = result.response.text();
 
     let json: unknown;
     try {
       json = JSON.parse(texto);
     } catch {
-      this.logger.error('✗ resposta Gemini não é JSON válido.');
+      this.logger.error(
+        `[IA_DIAGNOSTICO] etapa=json_parse origem=${input.origem ?? 'desconhecida'} modelo=${modelo} ` +
+          `tamanho_resposta=${texto.length} inicio=${JSON.stringify(texto.slice(0, 300))}`,
+      );
       throw new Error('[GeminiAdapter] Resposta do provedor não é JSON válido.');
     }
 
@@ -140,7 +180,10 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     // contrato quebrado — falha explícita, não dado silenciosamente inválido.
     const parsed = input.schema.safeParse(json);
     if (!parsed.success) {
-      this.logger.error(`✗ resposta Gemini reprovada no schema: ${parsed.error.message}`);
+      this.logger.error(
+        `[IA_DIAGNOSTICO] etapa=zod_schema origem=${input.origem ?? 'desconhecida'} modelo=${modelo} ` +
+          `erros=${parsed.error.message} resposta=${JSON.stringify(json).slice(0, 1000)}`,
+      );
       throw new Error(
         `[GeminiAdapter] Resposta não passou na validação do schema: ${parsed.error.message}`,
       );
@@ -169,15 +212,13 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
   async completeTexto(input: {
     sistema: string;
     prompt: string;
-    modelo?: string;
-  }): Promise<{ texto: string; uso: UsoTokens }> {
-    const apiKey = process.env.LLM_API_KEY;
+  } & LLMChamadaMeta): Promise<{ texto: string; uso: UsoTokens }> {
+    const apiKey = this.apiKey;
     if (!apiKey) {
-      throw new Error('LLM_API_KEY não configurado no ambiente da API.');
+      throw new GeminiConfigurationError();
     }
-    const modelo = input.modelo ?? DEFAULT_MODEL;
-
     const inicio = Date.now();
+    const modelo = input.modelo ?? this.modeloPara(input.origem);
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
       { model: modelo, systemInstruction: input.sistema },
@@ -207,8 +248,8 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
    * sem redeployar (via GET /ai/ping?model=...).
    */
   async ping(modelName?: string): Promise<{ ok: boolean; modelo: string; texto?: string; erro?: string }> {
-    const apiKey = process.env.LLM_API_KEY;
-    const modelo = modelName?.trim() || DEFAULT_MODEL;
+    const apiKey = this.apiKey;
+    const modelo = modelName?.trim() || this.modeloPara('quiz');
     if (!apiKey) {
       return { ok: false, modelo, erro: 'LLM_API_KEY não configurado no ambiente da API.' };
     }

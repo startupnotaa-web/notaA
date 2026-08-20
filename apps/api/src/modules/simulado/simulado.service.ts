@@ -1,8 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { and, eq, habilidadeEstudante, notInArray, questoesEnem, sql, type Database } from '@notaa/db';
-import type { AreaConhecimento, DificuldadeTri, ImportQuestoesEnemRequest, QuestaoSimuladoResponse, StartSimuladoSessionResponse } from '@notaa/contracts';
-import { SimuladoRepositoryMemory } from './simulado.repository.memory';
+import type { AreaConhecimento, DificuldadeTri, ImportQuestoesEnemRequest, QuestaoSimuladoResponse } from '@notaa/contracts';
 
 function nivelParaDificuldade(nivel: number): DificuldadeTri {
   if (nivel <= 1) return 'facil';
@@ -30,10 +29,7 @@ function toQuestaoPublica(row: typeof questoesEnem.$inferSelect, nivel: number):
 
 @Injectable()
 export class SimuladoService {
-  constructor(
-    @Inject(DB_CLIENT) private readonly db: Database,
-    private readonly repo: SimuladoRepositoryMemory,
-  ) {}
+  constructor(@Inject(DB_CLIENT) private readonly db: Database) {}
 
   async getNextItem(
     estudanteId: string,
@@ -85,47 +81,6 @@ export class SimuladoService {
     if (media <= -1) return 1;
     if (media >= 1) return 3;
     return 2;
-  }
-
-  async startSession(
-    estudanteId: string,
-    area: AreaConhecimento,
-    quantidade: number,
-    nivelDesejado?: number,
-  ): Promise<StartSimuladoSessionResponse> {
-    const nivelInicial = nivelDesejado ?? (await this.inferirNivelInicial(estudanteId));
-    const { sessaoId } = await this.repo.createSession(estudanteId, area, quantidade, nivelInicial);
-    
-    // Buscar a primeira questão
-    let primeiraQuestao: QuestaoSimuladoResponse | null = null;
-    try {
-      primeiraQuestao = await this.getNextItem(estudanteId, nivelInicial, [], area);
-      await this.repo.addExposto(sessaoId, primeiraQuestao.id);
-    } catch (e) {
-      if (e instanceof NotFoundException) {
-        // Se não houver questões, retornará null
-      } else {
-        throw e;
-      }
-    }
-    
-    return { sessaoId, primeiraQuestao };
-  }
-
-  async getSessionNextItem(sessaoId: string, estudanteId: string, nivelDesejado?: number): Promise<QuestaoSimuladoResponse> {
-    const sessao = await this.repo.getSession(sessaoId);
-    if (!sessao || sessao.estudanteId !== estudanteId) {
-      throw new NotFoundException({ error: { code: 'SESSION_NOT_FOUND', message: 'Sessão de simulado não encontrada.' } });
-    }
-
-    const nivel = nivelDesejado ?? sessao.nivelAtual;
-    if (nivelDesejado !== undefined) {
-      await this.repo.setNivelAtual(sessaoId, nivelDesejado);
-    }
-
-    const questao = await this.getNextItem(estudanteId, nivel, sessao.expostos, sessao.area);
-    await this.repo.addExposto(sessaoId, questao.id);
-    return questao;
   }
 
   async importQuestions(payload: ImportQuestoesEnemRequest) {
