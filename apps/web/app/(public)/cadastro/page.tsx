@@ -36,7 +36,10 @@ export default function CadastroPage() {
         password: senha,
         options: {
           data: { nome, tipoPerfil },
-          emailRedirectTo: `${window.location.origin}/onboarding`,
+          // /auth/confirm trata sucesso E erro do link (token expirado, path
+          // inválido) — antes o erro chegava em /onboarding no fragment #... e
+          // era ignorado, deixando o usuário na sessão antiga do dispositivo.
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/onboarding`,
         },
       });
       if (error) throw error;
