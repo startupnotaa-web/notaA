@@ -43,6 +43,16 @@ export interface LLMChamadaMeta {
   modelo?: string;
 }
 
+/**
+ * Turno anterior de uma conversa, enviado ao provedor como histórico REAL de
+ * chat (não como string dentro do contexto JSON). `usuario` = o aluno,
+ * `modelo` = resposta anterior da própria IA.
+ */
+export interface MensagemHistorico {
+  papel: 'usuario' | 'modelo';
+  conteudo: string;
+}
+
 export interface LLMProviderPort {
   complete<T>(
     input: {
@@ -52,6 +62,8 @@ export interface LLMProviderPort {
       schema: z.ZodSchema<T>;
       /** Opcional — eleva a variabilidade da amostragem (ex.: geração de quiz, evita repetição). */
       temperature?: number;
+      /** Opcional — turnos anteriores da conversa, do mais antigo ao mais novo. */
+      historico?: MensagemHistorico[];
     } & LLMChamadaMeta,
   ): Promise<{ data: T; uso: UsoTokens }>;
 
@@ -64,6 +76,7 @@ export interface LLMProviderPort {
     input: {
       sistema: string;
       prompt: string;
+      historico?: MensagemHistorico[];
     } & LLMChamadaMeta,
   ): Promise<{ texto: string; uso: UsoTokens }>;
 }

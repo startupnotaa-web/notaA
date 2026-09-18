@@ -7,7 +7,7 @@ import { SocraticService } from '../socratic.service';
 // para o protocolo de cuidado ANTES do provedor.
 
 function makeService(respostaGemini: string) {
-  const chamadas = { gemini: 0, ocorrencias: [] as string[] };
+  const chamadas = { gemini: 0, ocorrencias: [] as string[], sistemas: [] as string[] };
   const risk = new RiskDetectorService({
     registrarOcorrencia: async (input: { sinal: string }) => {
       chamadas.ocorrencias.push(input.sinal);
@@ -18,22 +18,33 @@ function makeService(respostaGemini: string) {
     null as never, // repo — não usado pelo chatDireto
     null as never, // db — não usado pelo chatDireto
     {
-      completeTexto: async () => {
+      completeTexto: async (input: { sistema: string }) => {
         chamadas.gemini += 1;
+        chamadas.sistemas.push(input.sistema);
         return {
           texto: respostaGemini,
           uso: { tokensIn: 0, tokensOut: 0, custoEstimado: 0, latenciaMs: 0 },
         };
       },
     } as never, // llm (LLM_PROVIDER)
-    null as never, // contextBuilder — não usado pelo chatDireto
     risk,
-    { buildSocraticSystemPrompt: async () => 'system prompt de teste' } as never, // studentContext
+    { montarBloco: async () => '## Sobre este aluno\n- Nome/idade/série: Davi.' } as never, // studentProfile
   );
   return { service, chamadas };
 }
 
 describe('SocraticService.chatDireto — guardrails da rota stateless', () => {
+  it('usa o prompt versionado do canal com o bloco do aluno e formato texto', async () => {
+    const { service, chamadas } = makeService('O que você já sabe sobre isso?');
+    await service.chatDireto('est-1', 'como resolvo 2x = 10?');
+
+    const sistema = chamadas.sistemas[0]!;
+    expect(sistema).toContain('NUNCA entregue a resposta final');
+    expect(sistema).toContain('Nome/idade/série: Davi.');
+    expect(sistema).toContain('Responda em texto puro');
+    expect(sistema).not.toContain('{{');
+  });
+
   it('I3: rebaixa para fallback guiado quando o Gemini entrega a resposta final', async () => {
     const { service } = makeService('Fácil! A resposta correta é a alternativa C, porque 2x=10.');
     const out = await service.chatDireto('est-1', 'me dá a resposta da questão?');

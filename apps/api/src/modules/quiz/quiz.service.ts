@@ -18,7 +18,7 @@ import type {
   SubmitAnswerResponse,
 } from '@notaa/contracts';
 import { QUIZ_TOTAL_QUESTOES } from '@notaa/contracts';
-import { PROMPT_QUIZ_TEMPLATE, montarPromptQuiz } from '@notaa/prompts';
+import { PROMPT_QUIZ_TEMPLATE, montarPromptQuiz, nomeArea } from '@notaa/prompts';
 import { ErrorDetectorService } from '../error-detector/error-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import { ProfilerService } from '../profiler/profiler.service';
@@ -98,7 +98,7 @@ function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
   };
 }
 
-import { ContextBuilderService } from '../ai/context-builder.service';
+import { StudentProfileService } from '../ai/student-profile.service';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { isErroTransitorio } from '../ai/gemini.adapter';
 import type { LLMProviderPort } from '@notaa/contracts';
@@ -113,7 +113,7 @@ export class QuizService {
     private readonly profiler: ProfilerService,
     private readonly errorDetector: ErrorDetectorService,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
-    private readonly contextBuilder: ContextBuilderService,
+    private readonly studentProfile: StudentProfileService,
     private readonly uow: QuizUnitOfWork,
   ) {}
 
@@ -123,37 +123,24 @@ export class QuizService {
     area: AreaConhecimento,
     dificuldadeDesejada?: 'Fácil' | 'Média' | 'Difícil',
   ): Promise<GenerateQuizResponse> {
-    const [habilidade, perguntasRecentes] = await Promise.all([
-      this.repo.getHabilidade(estudanteId, area),
+    // Bloco do aluno (estilo, traços, nível medido na área, erros recentes) e
+    // as últimas questões geradas para ele nesta área (anti-repetição).
+    const [blocoAluno, perguntasRecentes] = await Promise.all([
+      this.studentProfile.montarBloco(estudanteId, 'quiz', { areaFoco: area }),
       this.repo.getHistoricoPerguntasIA(estudanteId, area, HISTORICO_PERGUNTAS_IA_LIMIT),
     ]);
 
-    // Theta padronizado: -3 a +3. Convertendo para escala de proficiência 0-100.
-    const nivelProficiencia = Math.max(0, Math.min(100, Math.round(((habilidade.theta + 3) / 6) * 100)));
-
-    const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, {
-      temaAtivo: tema,
-      historico: perguntasRecentes,
-    }) as any;
-
     const instrucaoDificuldade = dificuldadeDesejada
-      ? `A dificuldade solicitada pelo aluno é "${dificuldadeDesejada}".`
-      : 'A dificuldade deve ser proporcional à proficiência do aluno.';
+      ? `${dificuldadeDesejada} (definida pela escada da sessão; prevalece sobre o nível do perfil).`
+      : 'a que o nível medido do aluno indicar; sem nível medido, Média.';
     const instrucaoAntiRepeticao =
       perguntasRecentes.length > 0
-        ? 'O campo "historicoRecente" do contexto traz as últimas questões já geradas para este aluno nesta área — NUNCA repita, parafraseie ou gere uma variação óbvia de nenhuma delas; explore um subtema, ângulo ou formato diferente.'
+        ? '- Anti-repetição: o campo "questoesRecentes" do contexto traz as últimas questões já geradas para este aluno nesta área. NUNCA repita, parafraseie ou gere variação óbvia de nenhuma delas; explore um subtema, ângulo ou formato diferente.'
         : '';
 
-    const instrucoes = contexto.instrucoesPedagogicas?.length > 0 
-      ? contexto.instrucoesPedagogicas.join(', ') 
-      : 'Visual e Prático';
-    const objetivo = contexto.objetivoAluno || 'mandar bem nos estudos';
-
     const sistema = montarPromptQuiz({
-      instrucoes,
-      objetivo,
-      nivel: nivelProficiencia,
-      area,
+      blocoAluno,
+      area: nomeArea(area),
       tema,
       instrucaoDificuldade,
       instrucaoAntiRepeticao,
@@ -165,7 +152,7 @@ export class QuizService {
     try {
       const resultado = await this.llm.complete({
         sistema,
-        contexto,
+        contexto: { questoesRecentes: perguntasRecentes },
         schema: GenerateQuizResponseSchema,
         temperature: QUIZ_IA_TEMPERATURE,
         origem: 'quiz',

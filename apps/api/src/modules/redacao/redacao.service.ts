@@ -8,15 +8,15 @@ import {
   type RedacaoStatus,
 } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
-import { ContextBuilderService } from '../ai/context-builder.service';
+import { StudentProfileService } from '../ai/student-profile.service';
 import { isErroTransitorio } from '../ai/gemini.adapter';
 import { RiskDetectorService } from '../ai/risk-detector.service';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import type { RedacaoRepositoryPort } from './redacao.repository.memory';
 import { REDACAO_REPOSITORY } from './redacao.tokens';
 import { DB_CLIENT } from '../../db/db.tokens';
-import { Database, assinatura, plano, eq, desc } from '@notaa/db';
-import { PROMPT_CORRETOR_REDACAO } from '@notaa/prompts';
+import { Database, assinatura, plano, temaRedacao, eq, desc } from '@notaa/db';
+import { PROMPT_CORRETOR_REDACAO, montarPromptCorretorRedacao } from '@notaa/prompts';
 
 // XP concedido por submissão de redação (doc 04 §7).
 const XP_REDACAO = 30;
@@ -29,7 +29,7 @@ export class RedacaoService {
     @Inject(REDACAO_REPOSITORY) private readonly repo: RedacaoRepositoryPort,
     @Inject(DB_CLIENT) private readonly db: Database,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
-    private readonly contextBuilder: ContextBuilderService,
+    private readonly studentProfile: StudentProfileService,
     private readonly gamificacao: GamificacaoService,
     private readonly risk: RiskDetectorService,
   ) {}
@@ -78,13 +78,17 @@ export class RedacaoService {
     }
 
     try {
-      // 2. Monta contexto cognitivo.
-      const contexto = await this.contextBuilder.montarContextoRedacao(estudanteId);
+      // 2. Bloco do aluno (muda só o feedback, nunca a nota) + tema da proposta:
+      //    sem o tema, a Competência 2 seria avaliada às cegas.
+      const [blocoAluno, tema] = await Promise.all([
+        this.studentProfile.montarBloco(estudanteId, 'redacao'),
+        this.resolverTema(body),
+      ]);
 
       // 3. Chama LLM — schema garante exatamente 5 competências e nota consistente (I4/I5).
       const { data: avaliacaoRaw } = await this.llm.complete({
-        sistema: PROMPT_CORRETOR_REDACAO.conteudo,
-        contexto: { ...contexto, textoRedacao: body.texto },
+        sistema: montarPromptCorretorRedacao({ blocoAluno }),
+        contexto: { propostaDeRedacao: tema, textoDoAluno: body.texto },
         schema: EssayEvaluationSchema,
         origem: 'redacao',
         usuarioId: estudanteId,
@@ -149,6 +153,30 @@ export class RedacaoService {
    */
   async listarHistorico(estudanteId: string) {
     return this.repo.listarRedacoes(estudanteId);
+  }
+
+  /**
+   * Proposta de redação como o corretor precisa ver: título e texto motivador
+   * do tema cadastrado, ou o tema livre digitado pelo aluno. Sem nenhum dos
+   * dois, o corretor é avisado explicitamente (não finge que sabe o tema).
+   */
+  private async resolverTema(
+    body: CreateRedacaoRequest,
+  ): Promise<{ titulo: string; textoMotivador: string | null } | { temaLivre: string } | { aviso: string }> {
+    if (body.temaId) {
+      try {
+        const [tema] = await this.db
+          .select({ titulo: temaRedacao.titulo, textoMotivador: temaRedacao.textoMotivador })
+          .from(temaRedacao)
+          .where(eq(temaRedacao.id, body.temaId))
+          .limit(1);
+        if (tema) return { titulo: tema.titulo, textoMotivador: tema.textoMotivador ?? null };
+      } catch (err) {
+        this.logger.warn(`tema_redacao ${body.temaId} indisponível: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    if (body.temaLivre?.trim()) return { temaLivre: body.temaLivre.trim() };
+    return { aviso: 'Tema não informado: avalie a Competência 2 pela coerência interna do texto e diga isso na justificativa.' };
   }
 
   private async checkAndEnforceFreemiumLimits(estudanteId: string) {

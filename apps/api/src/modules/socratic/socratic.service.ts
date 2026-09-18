@@ -1,15 +1,25 @@
 import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { SocraticResponseSchema, type LLMProviderPort, type SocraticResponse } from '@notaa/contracts';
+import {
+  SocraticResponseSchema,
+  type LLMProviderPort,
+  type MensagemHistorico,
+  type SocraticResponse,
+} from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
-import { ContextBuilderService } from '../ai/context-builder.service';
-import { StudentContextService } from '../ai/student-context.service';
+import { StudentProfileService } from '../ai/student-profile.service';
 import { fallbackGuiado } from '../ai/guardrails';
 import { RiskDetectorService } from '../ai/risk-detector.service';
 import type { SocraticRepositoryPort } from './socratic.repository.memory';
 import { SOCRATIC_REPOSITORY } from './socratic.tokens';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { Database, assinatura, plano, eq, desc } from '@notaa/db';
-import { PROMPT_SOCRATICO } from '@notaa/prompts';
+import { PROMPT_SOCRATICO, montarPromptSocratico } from '@notaa/prompts';
+
+/**
+ * Turnos de conversa enviados ao modelo. Mais que isso dilui o perfil no meio
+ * do histórico e encarece a chamada; a conversa inteira continua persistida.
+ */
+const HISTORICO_TURNOS = 12;
 
 @Injectable()
 export class SocraticService {
@@ -19,15 +29,14 @@ export class SocraticService {
     @Inject(SOCRATIC_REPOSITORY) private readonly repo: SocraticRepositoryPort,
     @Inject(DB_CLIENT) private readonly db: Database,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
-    private readonly contextBuilder: ContextBuilderService,
     private readonly risk: RiskDetectorService,
-    private readonly studentContext: StudentContextService,
+    private readonly studentProfile: StudentProfileService,
   ) {}
 
   /**
-   * Agente 3 — tutor socrático DIRETO (POST /socratic/chat): stateless, via
-   * LLM_PROVIDER (portão único, doc 06 §1) em modo texto livre, com um system
-   * prompt montado pelo StudentContextService (onboarding + Perfil 4D).
+   * Tutor socrático DIRETO (POST /socratic/chat): stateless, texto livre.
+   * Usa o MESMO prompt versionado do fluxo persistido (PROMPT_SOCRATICO) com o
+   * bloco do aluno — só o formato de saída muda (texto em vez de JSON).
    *
    * Mantém a triagem de risco da ENTRADA (I6, doc 01 §1.5): segurança não é
    * opcional num canal aluno↔IA. Sem conversa persistida aqui, a ocorrência
@@ -49,14 +58,16 @@ export class SocraticService {
       return { resposta: cuidado.mensagem, origem: 'care_protocol' };
     }
 
-    const systemPrompt = await this.studentContext.buildSocraticSystemPrompt(estudanteId);
+    const blocoAluno = await this.studentProfile.montarBloco(estudanteId, 'socratica');
+    const sistema = montarPromptSocratico({ blocoAluno, modo: 'texto' });
     let resposta: string;
     try {
       const result = await this.llm.completeTexto({
-        sistema: systemPrompt,
+        sistema,
         prompt: mensagem,
         origem: 'socratica',
         usuarioId: estudanteId,
+        promptVersao: PROMPT_SOCRATICO.versao,
         modelo: process.env.LLM_MODEL_SOCRATICA,
       });
       resposta = result.texto;
@@ -118,8 +129,8 @@ export class SocraticService {
 
   /**
    * Envia mensagem do estudante e gera resposta do tutor via LLM.
-   * O Perfil 4D é injetado automaticamente pelo ContextBuilder — o estudante
-   * não precisa (e nem pode) fornecer seu próprio contexto cognitivo.
+   * O bloco do aluno é injetado automaticamente no prompt de sistema — o
+   * estudante não precisa (e nem pode) fornecer seu próprio contexto cognitivo.
    */
   async enviarMensagem(
     conversaId: string,
@@ -128,14 +139,18 @@ export class SocraticService {
   ): Promise<SocraticResponse> {
     const conversa = await this.getConversaDoEstudante(conversaId, estudanteId);
 
-    // 1. Persiste a mensagem do estudante (mantém o registro mesmo no desvio de risco).
+    // 1. Histórico ANTES de persistir a mensagem atual: ela vai como `prompt`,
+    //    não como turno repetido.
+    const historico = await this.historicoParaModelo(conversaId);
+
+    // 2. Persiste a mensagem do estudante (mantém o registro mesmo no desvio de risco).
     await this.repo.adicionarMensagem({
       conversaId,
       papel: 'estudante',
       conteudo: mensagem,
     });
 
-    // 2. Triagem de risco ANTES do LLM (I6, doc 01 §1.5) — decisão determinística
+    // 3. Triagem de risco ANTES do LLM (I6, doc 01 §1.5) — decisão determinística
     //    desta camada, não do provedor. Se acusar, desvia para o protocolo de
     //    cuidado humano e NÃO continua a tutoria normal.
     const triagem = this.risk.triagem(mensagem);
@@ -156,23 +171,17 @@ export class SocraticService {
       return resposta;
     }
 
-    // 3. Monta contexto completo (Perfil 4D + histórico + tema) e chama o LLM (I5).
-    const historicoMensagens = await this.repo.listarMensagens(conversaId);
-    const historico = historicoMensagens
-      .filter((m) => m.papel !== 'sistema')
-      .map((m) => `${m.papel}: ${m.conteudo}`);
-
-    const contexto = await this.contextBuilder.montarContextoSocratico(estudanteId, {
-      temaAtivo: conversa.temaAtivo ?? undefined,
-      historico,
-    });
+    // 4. Prompt do canal + bloco do aluno; histórico como turnos de chat (I5).
+    const blocoAluno = await this.studentProfile.montarBloco(estudanteId, 'socratica');
+    const sistema = montarPromptSocratico({ blocoAluno, modo: 'json' });
 
     let respostaLLM: SocraticResponse;
     try {
       const result = await this.llm.complete({
-        sistema: PROMPT_SOCRATICO.conteudo,
+        sistema,
         prompt: mensagem,
-        contexto,
+        contexto: { temaDaSessao: conversa.temaAtivo ?? 'livre', numeroDaTroca: historico.length / 2 + 1 },
+        historico,
         schema: SocraticResponseSchema,
         origem: 'socratica',
         usuarioId: estudanteId,
@@ -193,7 +202,7 @@ export class SocraticService {
       });
     }
 
-    // 4. Guardrails pós-LLM (defesa em profundidade).
+    // 5. Guardrails pós-LLM (defesa em profundidade).
     let resposta: SocraticResponse = respostaLLM;
     if (resposta.tipo === 'care_protocol') {
       // O LLM levantou cuidado por conta própria — registra/escala, não só devolve.
@@ -214,7 +223,7 @@ export class SocraticService {
       resposta = fallbackGuiado();
     }
 
-    // 5. Persiste a resposta do tutor.
+    // 6. Persiste a resposta do tutor.
     await this.repo.adicionarMensagem({
       conversaId,
       papel: 'tutor',
@@ -223,6 +232,18 @@ export class SocraticService {
     });
 
     return resposta;
+  }
+
+  /**
+   * Últimos turnos da conversa como histórico de chat para o modelo: sem as
+   * mensagens de sistema, mais antigo → mais novo, limitado a HISTORICO_TURNOS.
+   */
+  private async historicoParaModelo(conversaId: string): Promise<MensagemHistorico[]> {
+    const todas = await this.repo.listarMensagens(conversaId);
+    return todas
+      .filter((m) => m.papel === 'estudante' || m.papel === 'tutor')
+      .slice(-HISTORICO_TURNOS)
+      .map((m) => ({ papel: m.papel === 'estudante' ? 'usuario' : 'modelo', conteudo: m.conteudo }));
   }
 
   /**

@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { Database, batalhaPvp, usuario, eq, and, sql, ne } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
+import { StudentProfileService } from '../ai/student-profile.service';
 import type { LLMProviderPort, MatchmakeResponse } from '@notaa/contracts';
-import { PROMPT_BATALHA } from '@notaa/prompts';
+import { PROMPT_BATALHA, montarPromptBatalha, nomeArea } from '@notaa/prompts';
 
 @Injectable()
 export class BattleService {
@@ -13,6 +14,7 @@ export class BattleService {
   constructor(
     @Inject(DB_CLIENT) private readonly db: Database,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
+    private readonly studentProfile: StudentProfileService,
   ) {}
 
   async matchmake(estudanteId: string, area: string): Promise<MatchmakeResponse> {
@@ -63,9 +65,12 @@ export class BattleService {
 
     let questoesGeradas = [];
     try {
+      // Batalha é entre dois alunos: o bloco só calibra a dificuldade pelo
+      // nível medido na área (sem nome, sem estilo).
+      const blocoAluno = await this.studentProfile.montarBloco(estudanteId, 'batalha', { areaFoco: area });
       const { data } = await this.llm.complete({
-        sistema: PROMPT_BATALHA.conteudo,
-        prompt: `Gere exatamente 5 questões rápidas sobre a área de conhecimento: ${area}.`,
+        sistema: montarPromptBatalha({ blocoAluno, area: nomeArea(area) }),
+        prompt: `Gere as 5 questões de ${nomeArea(area)}.`,
         contexto: {},
         schema,
         origem: 'batalha',

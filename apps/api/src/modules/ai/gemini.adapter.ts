@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
+import { GoogleGenerativeAI, GoogleGenerativeAIFetchError, type GenerativeModel } from '@google/generative-ai';
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { LLMChamadaMeta, LLMProviderPort, UsoTokens } from '@notaa/contracts';
+import type { LLMChamadaMeta, LLMProviderPort, MensagemHistorico, UsoTokens } from '@notaa/contracts';
 
 // Resiliência (doc 06 §2.4/§3.3, auditoria R1): toda chamada ao provedor tem
 // teto de espera e re-tenta erros transitórios com backoff. Sem isso, uma
@@ -117,12 +117,34 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     }
   }
 
+  /**
+   * Histórico como turnos REAIS de chat (startChat), não como string dentro do
+   * contexto JSON: o modelo entende que é conversa e mantém coerência com o
+   * que já perguntou. Sem histórico, cai em generateContent simples.
+   */
+  private async gerar(
+    model: GenerativeModel,
+    prompt: string,
+    historico: MensagemHistorico[] | undefined,
+    rotulo: string,
+  ) {
+    if (!historico || historico.length === 0) {
+      return this.comRetry(rotulo, () => model.generateContent(prompt));
+    }
+    const history = historico.map((m) => ({
+      role: m.papel === 'usuario' ? ('user' as const) : ('model' as const),
+      parts: [{ text: m.conteudo }],
+    }));
+    return this.comRetry(rotulo, () => model.startChat({ history }).sendMessage(prompt));
+  }
+
   async complete<T>(input: {
     sistema: string;
     prompt?: string;
     contexto: object;
     schema: z.ZodSchema<T>;
     temperature?: number;
+    historico?: MensagemHistorico[];
   } & LLMChamadaMeta): Promise<{ data: T; uso: UsoTokens }> {
     const apiKey = this.apiKey;
     if (!apiKey) {
@@ -156,7 +178,7 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
 
     let result;
     try {
-      result = await this.comRetry('complete', () => model.generateContent(prompt));
+      result = await this.gerar(model, prompt, input.historico, 'complete');
     } catch (error) {
       this.logger.error(
         `[IA_DIAGNOSTICO] etapa=generateContent origem=${input.origem ?? 'desconhecida'} modelo=${modelo} ${diagnosticoErro(error)}`,
@@ -207,11 +229,12 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
    * Geração de TEXTO LIVRE (LLMProviderPort.completeTexto) — tutor socrático
    * direto (POST /socratic/chat). Diferente de `complete()`, NÃO força JSON nem
    * valida schema: devolve a resposta do Gemini como string, guiada pelo
-   * `sistema` (montado pelo StudentContextService com o perfil do aluno).
+   * `sistema` (prompt do canal com o bloco do aluno, ver StudentProfileService).
    */
   async completeTexto(input: {
     sistema: string;
     prompt: string;
+    historico?: MensagemHistorico[];
   } & LLMChamadaMeta): Promise<{ texto: string; uso: UsoTokens }> {
     const apiKey = this.apiKey;
     if (!apiKey) {
@@ -225,7 +248,7 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
       { timeout: GEMINI_TIMEOUT_MS },
     );
 
-    const result = await this.comRetry('socratico', () => model.generateContent(input.prompt));
+    const result = await this.gerar(model, input.prompt, input.historico, 'socratico');
     const texto = result.response.text();
 
     const usage = result.response.usageMetadata;

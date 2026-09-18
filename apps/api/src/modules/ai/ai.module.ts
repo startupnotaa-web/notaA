@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { ProfilerModule } from '../profiler/profiler.module';
 import { LLM_PROVIDER, RISK_REPOSITORY } from './ai.tokens';
 import { AiController } from './ai.controller';
-import { ContextBuilderService } from './context-builder.service';
 import { GeminiAdapter } from './gemini.adapter';
-import { StudentContextService } from './student-context.service';
+import { StudentProfileService } from './student-profile.service';
 import { LlmUsageLoggerProvider } from './llm-usage-logger.provider';
 import { CareNotifierService } from './care-notifier.service';
 import { RiskDetectorService } from './risk-detector.service';
@@ -15,8 +14,10 @@ import { RiskRepositoryDrizzle } from './risk.repository';
  * de IA generativa. Nenhum outro módulo importa SDK de provedor diretamente.
  *
  * Exporta:
- *   - LLM_PROVIDER (via token) — consumido por SocraticService e RedacaoService.
- *   - ContextBuilderService — monta o pacote de contexto (Perfil 4D + adaptações).
+ *   - LLM_PROVIDER (via token) — consumido por todos os canais de IA.
+ *   - StudentProfileService — monta o "bloco do aluno" (fatos + como adaptar)
+ *     que todo prompt de canal recebe em `{{blocoAluno}}` (packages/prompts).
+ *   - RiskDetectorService — triagem determinística de risco (I6).
  *
  * O provedor real (GeminiAdapter, decorado por LlmUsageLoggerProvider) é o ÚNICO
  * ligado ao token LLM_PROVIDER. Não há mock no caminho de execução: falha de IA
@@ -31,14 +32,13 @@ import { RiskRepositoryDrizzle } from './risk.repository';
     { provide: LLM_PROVIDER, useClass: LlmUsageLoggerProvider },
     { provide: RISK_REPOSITORY, useClass: RiskRepositoryDrizzle },
     GeminiAdapter,
-    StudentContextService,
-    ContextBuilderService,
+    StudentProfileService,
     CareNotifierService,
     RiskDetectorService,
   ],
   // Portão único de IA: fora deste módulo, TODA chamada de IA passa pelo token
   // LLM_PROVIDER (hoje: GeminiAdapter real). GeminiAdapter NÃO é exportado —
   // nenhum outro módulo injeta o adapter diretamente (auditoria E5).
-  exports: [LLM_PROVIDER, ContextBuilderService, RiskDetectorService, StudentContextService],
+  exports: [LLM_PROVIDER, StudentProfileService, RiskDetectorService],
 })
 export class AiModule {}
