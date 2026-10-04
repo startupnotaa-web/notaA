@@ -2,12 +2,12 @@ import { z } from 'zod';
 import { PapelSchema } from './common';
 
 // Forma do JWT emitido pelo Supabase Auth (doc 03 §9, doc 10 §2). `papel` e
-// `escola_id` vivem em app_metadata — imutável pelo cliente (só a API/Admin
+// `instituicao_id` vivem em app_metadata — imutável pelo cliente (só a API/Admin
 // escreve nesse claim via Supabase Admin API). A API NUNCA confia em um papel
 // vindo do corpo da requisição; sempre lê deste claim já verificado.
 export const JwtAppMetadataSchema = z.object({
   papel: PapelSchema,
-  escola_id: z.string().uuid().nullable().optional(),
+  instituicao_id: z.string().uuid().nullable().optional(),
 });
 export type JwtAppMetadata = z.infer<typeof JwtAppMetadataSchema>;
 

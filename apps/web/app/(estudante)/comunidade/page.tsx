@@ -226,7 +226,7 @@ export default function ComunidadePage() {
         <div className="space-y-6">
            {/* Leaderboard */}
            <section>
-             <SectionHeader title="Ranking" accent="da Escola" as="h2" />
+             <SectionHeader title="Ranking" accent="da Instituição" as="h2" />
              <Card className="flex flex-col p-2 bg-surface-2/30 border-border">
                {ranking.map((user, idx) => (
                  <div key={user.id} className={cn("flex items-center justify-between p-3 rounded-lg transition-colors", 

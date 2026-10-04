@@ -188,7 +188,7 @@ export class RedacaoService {
       .orderBy(desc(assinatura.vigenciaInicio))
       .limit(1);
 
-    const isPremium = assinaturaRecord && (assinaturaRecord.tipo === 'plus' || assinaturaRecord.tipo === 'escola');
+    const isPremium = assinaturaRecord && (assinaturaRecord.tipo === 'plus' || assinaturaRecord.tipo === 'instituicao');
     if (!isPremium) {
       await this.repo.manterLimiteRedacao(estudanteId, 3);
     }

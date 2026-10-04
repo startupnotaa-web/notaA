@@ -7,12 +7,12 @@ import { Button, Card, Input, Label } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { supabaseBrowser } from '../../../lib/supabase-browser';
 
-type TipoPerfilPublico = 'estudante' | 'professor' | 'escola';
+type TipoPerfilPublico = 'estudante' | 'professor_independente' | 'instituicao';
 
 const TIPOS: { valor: TipoPerfilPublico; label: string }[] = [
   { valor: 'estudante', label: 'Sou estudante' },
-  { valor: 'professor', label: 'Sou professor(a)' },
-  { valor: 'escola', label: 'Represento uma escola' },
+  { valor: 'professor_independente', label: 'Sou professor(a) independente' },
+  { valor: 'instituicao', label: 'Represento uma instituição' },
 ];
 
 export default function CadastroPage() {
@@ -21,9 +21,19 @@ export default function CadastroPage() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [tipoPerfil, setTipoPerfil] = useState<TipoPerfilPublico>('estudante');
+  const [nomeInstituicao, setNomeInstituicao] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [aguardandoConfirmacao, setAguardandoConfirmacao] = useState(false);
   const [carregando, setCarregando] = useState(false);
+
+  // O onboarding de 8 passos é do estudante. Instituição vai direto para o painel
+  // dela; professor independente, para o painel do professor.
+  const destinoAposCadastro =
+    tipoPerfil === 'instituicao'
+      ? '/instituicao'
+      : tipoPerfil === 'professor_independente'
+        ? '/professor'
+        : '/onboarding';
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,11 +45,14 @@ export default function CadastroPage() {
         email,
         password: senha,
         options: {
-          data: { nome, tipoPerfil },
+          // `nomeInstituicao` vai junto no user_metadata porque, se o projeto exigir
+          // confirmação de e-mail, quem chama /auth/register é o login seguinte
+          // (lib/post-auth.ts) — e a essa altura o formulário já não existe mais.
+          data: tipoPerfil === 'instituicao' ? { nome, tipoPerfil, nomeInstituicao } : { nome, tipoPerfil },
           // /auth/confirm trata sucesso E erro do link (token expirado, path
           // inválido) — antes o erro chegava em /onboarding no fragment #... e
           // era ignorado, deixando o usuário na sessão antiga do dispositivo.
-          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/onboarding`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${destinoAposCadastro}`,
         },
       });
       if (error) throw error;
@@ -53,10 +66,12 @@ export default function CadastroPage() {
 
       await apiFetch('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ nome, email, tipoPerfil }),
+        body: JSON.stringify(
+          tipoPerfil === 'instituicao' ? { nome, email, tipoPerfil, nomeInstituicao } : { nome, email, tipoPerfil },
+        ),
       });
       await supabaseBrowser.auth.refreshSession();
-      router.push('/onboarding');
+      router.push(destinoAposCadastro);
     } catch (e) {
       setErro(e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao cadastrar.');
     } finally {
@@ -120,6 +135,25 @@ export default function CadastroPage() {
             </label>
           ))}
         </fieldset>
+
+        {tipoPerfil === 'instituicao' && (
+          <div className="space-y-1">
+            <Label htmlFor="nomeInstituicao">Nome da instituição</Label>
+            <Input
+              id="nomeInstituicao"
+              value={nomeInstituicao}
+              onChange={(e) => setNomeInstituicao(e.target.value)}
+              placeholder="Ex.: Colégio Dom Bosco"
+              minLength={2}
+              maxLength={160}
+              required
+            />
+            <p className="text-xs text-text-muted">
+              É com este nome que a instituição será criada e que seus alunos vão encontrá-la para se
+              vincular.
+            </p>
+          </div>
+        )}
 
         {erro && (
           <p role="alert" className="text-sm text-error">

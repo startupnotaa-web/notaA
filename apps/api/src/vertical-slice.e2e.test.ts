@@ -15,6 +15,8 @@ import { QuizRepositoryMemory } from './modules/quiz/__tests__/quiz.repository.m
 import { DASHBOARD_REPOSITORY } from './modules/dashboard/dashboard.tokens';
 import { DashboardRepositoryMemory } from './modules/dashboard/dashboard.repository.memory';
 import { ERROR_DETECTOR_REPOSITORY } from './modules/error-detector/error-detector.tokens';
+import { ONBOARDING_REPOSITORY } from './modules/onboarding/onboarding.tokens';
+import { OnboardingRepositoryMemory } from './modules/onboarding/onboarding.repository.memory';
 import { LLM_PROVIDER } from './modules/ai/ai.tokens';
 import { ErrorDetectorRepositoryMemory } from './modules/error-detector/error-detector.repository.memory';
 
@@ -26,8 +28,31 @@ import { ErrorDetectorRepositoryMemory } from './modules/error-detector/error-de
 // adaptadores Drizzle reais (@notaa/db); só a lógica de serviço/controller
 // é exercitada aqui, isolada da infra (rápido, repetível, sem fixtures de DB).
 
+// ⚠️ DÍVIDA CONHECIDA: este arquivo TOCA O BANCO DE PRODUÇÃO.
+//
+// O `dotenv/config` acima carrega o .env do repositório, cujo DATABASE_URL
+// aponta para o projeto Supabase de produção. Os doubles de memória cobrem
+// onboarding, quiz, gamificação, profiler, dashboard e detector de erro, mas
+// serviços que injetam DB_CLIENT direto (me.controller, student-profile,
+// rate-limiter) seguem consultando o banco real. Hoje são apenas LEITURAS.
+//
+// O app.e2e.test.ts já aponta para um banco inexistente e fica isolado. Aqui
+// isso não foi feito porque a fatia vertical depende de banco em partes do
+// caminho: cortá-lo troca 5 falhas de asserção por 8 falhas com timeout, que é
+// sinal pior. O conserto certo é um Postgres descartável para esta suíte, não
+// um host falso.
+
 const SECRET = 'segredo-vertical-slice-com-pelo-menos-32-bytes';
 process.env.SUPABASE_JWT_SECRET = SECRET;
+// `verifySupabaseJwt` exige os claims `iss` e `aud` (jwtVerify recebe
+// issuer/audience), como todo token real do Supabase Auth traz. Os helpers
+// abaixo assinavam sem esses claims, então TODA requisição autenticada destes
+// testes morria em 401 antes de chegar ao que o teste queria provar. SUPABASE_URL
+// é fixado aqui, depois do dotenv, para o issuer não depender do .env da máquina.
+const SUPABASE_URL = 'https://projeto-de-teste.supabase.co';
+process.env.SUPABASE_URL = SUPABASE_URL;
+const ISSUER = `${SUPABASE_URL}/auth/v1`;
+const AUDIENCE = 'authenticated';
 
 /**
  * Provedor de IA determinístico. O quiz é 100% gerado por IA, então sem este
@@ -60,6 +85,8 @@ async function signToken(sub: string, papel = 'estudante') {
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({ sub, email: `${sub}@example.com`, app_metadata: { papel }, iat: now })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
     .setExpirationTime(now + 3600)
     .sign(secretKey);
 }
@@ -72,6 +99,12 @@ describe('Fatia vertical E1→E2 — onboarding + quiz adaptativo (passo 9)', ()
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      // Sem este override o onboarding caía no adaptador Drizzle real e o
+      // primeiro PUT /onboarding/steps/:n devolvia 500 (não há banco no e2e),
+      // derrubando em cascata todos os testes que dependem do aluno já
+      // cadastrado.
+      .overrideProvider(ONBOARDING_REPOSITORY)
+      .useClass(OnboardingRepositoryMemory)
       .overrideProvider(QUIZ_REPOSITORY)
       .useClass(QuizRepositoryMemory)
       .overrideProvider(GAMIFICACAO_REPOSITORY)

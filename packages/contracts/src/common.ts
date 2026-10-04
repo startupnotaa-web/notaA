@@ -16,12 +16,30 @@ export const AreaConhecimentoSchema = z.enum([
 ]);
 export type AreaConhecimento = z.infer<typeof AreaConhecimentoSchema>;
 
-export const TipoPerfilPublicoSchema = z.enum(['estudante', 'professor', 'escola']);
+// Quem pode se auto-cadastrar pelo formulário público. Professor
+// INSTITUCIONAL não está aqui de propósito: ele entra por convite da
+// instituição, nunca por cadastro aberto (perfis.md).
+export const TipoPerfilPublicoSchema = z.enum([
+  'estudante',
+  'professor_independente',
+  'instituicao',
+]);
 export type TipoPerfilPublico = z.infer<typeof TipoPerfilPublicoSchema>;
 
-// Os 5 papéis do RBAC (doc 10 §1). Só os 3 acima se auto-cadastram (A2) — Responsável
-// entra por convite (VinculoResponsavel), Admin é provisionado internamente.
-export const PapelSchema = z.enum(['estudante', 'professor', 'gestor', 'responsavel', 'admin']);
+// Os papéis do RBAC (doc 10 §1). Só os 3 acima se auto-cadastram (A2) — Responsável
+// entra por convite (VinculoResponsavel), Admin da plataforma é provisionado internamente.
+export const PapelSchema = z.enum([
+  'estudante',
+  'professor_institucional',
+  'professor_independente',
+  'admin_instituicao',
+  'responsavel',
+  'admin',
+]);
+
+// Os dois papéis que lecionam. Serve para regra de rota e de escopo: ambos
+// acessam o painel do professor, mas só o independente cria turma.
+export const PAPEIS_PROFESSOR = ['professor_institucional', 'professor_independente'] as const;
 export type Papel = z.infer<typeof PapelSchema>;
 
 export const ErroClassificacaoSchema = z.enum(['lacuna_conhecimento', 'deslize_atencao']);

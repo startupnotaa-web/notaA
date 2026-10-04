@@ -73,7 +73,7 @@ export default function RedacaoPage() {
     return <Resultado avaliacao={avaliacao} onNova={novaRedacao} />;
   }
 
-  const isPremium = me?.plano && (me.plano.tipo === 'plus' || me.plano.tipo === 'escola');
+  const isPremium = me?.plano && (me.plano.tipo === 'plus' || me.plano.tipo === 'instituicao');
   const limiteMax = isPremium ? Infinity : 3;
 
   return (

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Input, Label } from '@notaa/ui';
 import { garantirRegistro } from '../../../lib/post-auth';
+import { rotaInicialPorPapel } from '../../../lib/rota-inicial';
 import { supabaseBrowser } from '../../../lib/supabase-browser';
 
 export default function LoginPage() {
@@ -24,7 +25,11 @@ export default function LoginPage() {
       if (error) throw error;
 
       await garantirRegistro();
-      router.push('/dashboard');
+      // Lê o papel DEPOIS do garantirRegistro, que é quem o escreve no token na
+      // primeira entrada. Sem isso, um professor recém-confirmado cairia no hub
+      // do aluno nesta sessão.
+      const { data } = await supabaseBrowser.auth.getSession();
+      router.push(rotaInicialPorPapel(data.session?.user.app_metadata?.papel));
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível entrar.');
     } finally {

@@ -3,10 +3,15 @@ import { pgEnum } from 'drizzle-orm/pg-core';
 // Todos os enums concretos do docs/04-modelo-de-dados.md, como tipos Postgres
 // (convenção §0). Nomes em snake_case, valores espelhando o doc exatamente.
 
+// Professor institucional e independente são papéis DISTINTOS (perfis.md): uma
+// conta é um papel só, e quem leciona numa instituição e também quer turmas
+// próprias precisa de duas contas. 'admin' é o administrador da PLATAFORMA, não
+// o da instituição.
 export const tipoPerfilEnum = pgEnum('tipo_perfil', [
   'estudante',
-  'professor',
-  'gestor',
+  'professor_institucional',
+  'professor_independente',
+  'admin_instituicao',
   'responsavel',
   'admin',
 ]);
@@ -14,6 +19,17 @@ export const tipoPerfilEnum = pgEnum('tipo_perfil', [
 export const statusUsuarioEnum = pgEnum('status_usuario', ['ativo', 'suspenso', 'pendente']);
 
 export const vinculoStatusEnum = pgEnum('vinculo_status', ['pendente', 'ativo', 'revogado']);
+
+// Estado da solicitação de entrada do aluno numa turma (perfis.md). Não reusa
+// `vinculo_status` porque aqui existe 'recusada', que o fluxo do responsável não
+// tem, e porque 'removida' (tirada pela turma) é diferente de recusada (nunca
+// entrou) — a distinção importa para o histórico.
+export const matriculaStatusEnum = pgEnum('matricula_status', [
+  'pendente',
+  'ativa',
+  'recusada',
+  'removida',
+]);
 
 export const adaptacaoOrigemEnum = pgEnum('adaptacao_origem', ['manual', 'inferida']);
 
@@ -74,9 +90,12 @@ export const duelTipoEnum = pgEnum('duelo_tipo', ['1v1', 'coletiva_turma']);
 
 export const duelStatusEnum = pgEnum('duelo_status', ['aguardando', 'em_andamento', 'encerrado']);
 
+// NÃO renomeado: o valor 'escola' deste enum pertence à Arena, que está
+// oculta (feature-flags). Trocá-lo custaria uma migração em produção para
+// um recurso fora do ar. Renomear quando a Arena voltar.
 export const rankingEscopoEnum = pgEnum('ranking_escopo', ['turma', 'escola']);
 
-export const planoTipoEnum = pgEnum('plano_tipo', ['free', 'plus', 'escola']);
+export const planoTipoEnum = pgEnum('plano_tipo', ['free', 'plus', 'instituicao']);
 
 export const assinaturaStatusEnum = pgEnum('assinatura_status', [
   'ativa',

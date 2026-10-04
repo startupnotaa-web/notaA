@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
 import postgres from 'postgres';
 
 async function main() {

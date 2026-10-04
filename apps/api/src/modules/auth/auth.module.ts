@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
-import { UsuarioRepositoryDb, type Database } from '@notaa/db';
+import { InstituicaoRepositoryDb, UsuarioRepositoryDb, type Database } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { MeController } from './me.controller';
 import { SupabaseAuthAdminAdapter } from './supabase-admin.adapter';
-import { AUTH_ADMIN, USUARIO_REPOSITORY } from './auth.tokens';
+import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY } from './auth.tokens';
 
 @Module({
   controllers: [AuthController, MeController],
@@ -16,6 +16,13 @@ import { AUTH_ADMIN, USUARIO_REPOSITORY } from './auth.tokens';
       provide: USUARIO_REPOSITORY,
       inject: [DB_CLIENT],
       useFactory: (db: Database) => new UsuarioRepositoryDb(db),
+    },
+    {
+      // Cria a instituição de quem se cadastra representando uma, no mesmo fluxo
+      // de registro (antes disso o admin nascia sem `instituicao_id`).
+      provide: INSTITUICAO_REPOSITORY,
+      inject: [DB_CLIENT],
+      useFactory: (db: Database) => new InstituicaoRepositoryDb(db),
     },
     {
       // Service role — só esta API escreve app_metadata.papel (doc 03 §9).
@@ -34,5 +41,6 @@ import { AUTH_ADMIN, USUARIO_REPOSITORY } from './auth.tokens';
       },
     },
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

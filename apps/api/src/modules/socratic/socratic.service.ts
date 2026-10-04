@@ -271,7 +271,7 @@ export class SocraticService {
       .orderBy(desc(assinatura.vigenciaInicio))
       .limit(1);
 
-    const isPremium = assinaturaRecord && (assinaturaRecord.tipo === 'plus' || assinaturaRecord.tipo === 'escola');
+    const isPremium = assinaturaRecord && (assinaturaRecord.tipo === 'plus' || assinaturaRecord.tipo === 'instituicao');
     if (!isPremium) {
       // Deleta as mais antigas para que o usuário possa inserir uma nova sem passar de 3
       await this.repo.manterLimiteSocratico(estudanteId, 3);

@@ -154,7 +154,7 @@ export default function SocraticoPage() {
     }
   }
 
-  const isPremium = me?.plano && (me.plano.tipo === 'plus' || me.plano.tipo === 'escola');
+  const isPremium = me?.plano && (me.plano.tipo === 'plus' || me.plano.tipo === 'instituicao');
   const limiteMax = isPremium ? Infinity : 3;
 
   return (

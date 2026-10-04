@@ -2,7 +2,6 @@
 import { SectionHeader, Skeleton, Card, Badge } from '@notaa/ui';
 import { ShortcutCard } from '../../components/ShortcutCard';
 import { useUser } from '../../../lib/user-context';
-import Link from 'next/link';
 
 export default function ArenaHubPage() {
   const { loading: userLoading, xp } = useUser();
@@ -28,6 +27,10 @@ export default function ArenaHubPage() {
       <section className="space-y-4">
         <SectionHeader title="Modos de" accent="Competição" as="h2" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          {/* ATENÇÃO ao religar a Arena (lib/feature-flags.ts): a rota /batalha
+              NUNCA existiu em app/(estudante)/ — este cartão leva a um 404. A
+              tela do duelo precisa ser criada antes de a Arena voltar ao ar; a
+              API correspondente já existe em POST /battle/matchmake. */}
           <ShortcutCard
             icon="⚔️"
             title="Modo Batalha PvP"
@@ -37,7 +40,7 @@ export default function ArenaHubPage() {
           <ShortcutCard
             icon="🏟️"
             title="Batalha Coletiva"
-            description="Lobby ao vivo para competições massivas (Escola vs Escola). Eventos marcados."
+            description="Lobby ao vivo para competições massivas (Instituição vs Instituição). Eventos marcados."
             href="/batalha-coletiva"
           />
         </div>
