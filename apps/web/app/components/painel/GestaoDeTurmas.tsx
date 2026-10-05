@@ -13,13 +13,24 @@ import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
- * Turmas da instituição: criar, gerar código, aprovar entradas e arquivar.
+ * Gestão de turmas de quem é DONO delas: criar, gerar código, aprovar entradas e
+ * arquivar. Serve aos dois donos possíveis, porque as rotas de `/turma` são de
+ * dono e não de instituição.
  *
  * A criação segue perfis.md: um único campo, o nome. O ano letivo é o atual, e a
- * turma já nasce com código de convite. O que a instituição faz em seguida é
- * vincular professores — e até vincular pelo menos um, a turma não aceita aluno.
+ * turma já nasce com código de convite.
+ *
+ * `podeGerenciarProfessores` separa os dois casos. A instituição cria a turma e
+ * só depois vincula professores, então até vincular o primeiro a turma não
+ * aceita aluno. O professor independente já entra como professor da própria
+ * turma na criação, e não administra quadro de professores — mostrar esse bloco
+ * para ele exibiria controles que a API recusa.
  */
-export function Turmas() {
+export function GestaoDeTurmas({
+  podeGerenciarProfessores,
+}: {
+  podeGerenciarProfessores: boolean;
+}) {
   const [turmas, setTurmas] = useState<Turma[] | null>(null);
   const [anos, setAnos] = useState<AnoLetivo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
@@ -126,6 +137,7 @@ export function Turmas() {
             <li key={t.id}>
               <CartaoTurma
                 turma={t}
+                podeGerenciarProfessores={podeGerenciarProfessores}
                 expandida={aberta === t.id}
                 onAlternar={() => setAberta(aberta === t.id ? null : t.id)}
                 onRegenerarCodigo={() =>
@@ -156,6 +168,7 @@ export function Turmas() {
 
 function CartaoTurma({
   turma,
+  podeGerenciarProfessores,
   expandida,
   onAlternar,
   onRegenerarCodigo,
@@ -163,6 +176,7 @@ function CartaoTurma({
   onDecidir,
 }: {
   turma: Turma;
+  podeGerenciarProfessores: boolean;
   expandida: boolean;
   onAlternar: () => void;
   onRegenerarCodigo: () => Promise<void>;
@@ -178,7 +192,7 @@ function CartaoTurma({
               <p className="font-bold text-text">{turma.nome}</p>
               <Badge variant="neutral">{turma.anoLetivo.rotulo}</Badge>
               {turma.arquivada && <Badge variant="neutral">Arquivada</Badge>}
-              {!turma.aceitaAluno && !turma.arquivada && (
+              {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
                 <Badge variant="neutral">Sem professor</Badge>
               )}
             </div>
@@ -186,7 +200,7 @@ function CartaoTurma({
               {turma.quantidadeDeAlunos} aluno(s) · {turma.quantidadeDeProfessores} professor(es)
               {turma.solicitacoesPendentes > 0 && ` · ${turma.solicitacoesPendentes} pendente(s)`}
             </p>
-            {!turma.aceitaAluno && !turma.arquivada && (
+            {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
               <p className="text-xs text-text-muted">
                 Vincule um professor para a turma aceitar alunos.
               </p>
@@ -220,7 +234,9 @@ function CartaoTurma({
               </Button>
             </div>
 
-            <ProfessoresDaTurma turmaId={turma.id} onMudou={onDecidir} />
+            {podeGerenciarProfessores && (
+              <ProfessoresDaTurma turmaId={turma.id} onMudou={onDecidir} />
+            )}
 
             <Solicitacoes turmaId={turma.id} onDecidir={onDecidir} />
 

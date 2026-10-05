@@ -6,7 +6,6 @@ import type {
   Eixo4D,
 } from '@notaa/contracts';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
-import { nivelDeXp } from '../gamificacao/nivel';
 import { DASHBOARD_REPOSITORY } from './dashboard.tokens';
 
 /**

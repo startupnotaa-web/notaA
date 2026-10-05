@@ -83,6 +83,20 @@ export default function ConviteProfessorPage() {
       });
       if (error) throw error;
 
+      // O Supabase não revela que um e-mail já existe: devolve "sucesso" com
+      // sessão nula, igual ao caso de confirmação pendente. O que distingue os
+      // dois é `identities` vazio, que só aparece quando a conta já existia.
+      //
+      // Isso precisa ser tratado aqui porque, por regra de produto, uma conta é
+      // um papel só: quem já tem conta na plataforma não pode virar professor
+      // institucional pela mesma conta, precisa de outra.
+      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+        setErro(
+          'Este e-mail já tem conta no Nota A. Uma conta é de um papel só, então o professor institucional precisa de um e-mail próprio. Use outro e-mail neste convite.',
+        );
+        return;
+      }
+
       if (!data.session) {
         setEstado({ fase: 'aguardandoConfirmacao' });
         return;
@@ -151,6 +165,10 @@ export default function ConviteProfessorPage() {
             <p className="text-sm text-text-muted">
               Crie sua conta de professor. Você vai lecionar nas turmas que a instituição atribuir a
               você.
+            </p>
+            <p className="text-xs text-text-muted">
+              Use um e-mail que ainda não tenha conta no Nota A. Cada conta tem um papel só, então a
+              conta de professor da instituição é separada de qualquer outra que você já use.
             </p>
           </div>
 

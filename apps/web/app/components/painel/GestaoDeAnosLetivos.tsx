@@ -6,14 +6,16 @@ import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
- * Ano letivo. O rótulo é global da plataforma; as datas são desta instituição.
+ * Ano letivo. O rótulo é global da plataforma; as datas são de quem é DONO das
+ * turmas — instituição ou professor independente. As rotas são as mesmas para os
+ * dois, por isso este componente serve aos dois painéis sem variação.
  *
  * Arquivar o ano torna as turmas dele somente leitura. Lembrete importante do
  * perfis.md: na virada do ano os alunos NÃO são migrados — cada um insere o
  * código da turma nova. A tela diz isso para ninguém arquivar esperando outra
  * coisa.
  */
-export function AnosLetivos() {
+export function GestaoDeAnosLetivos() {
   const [anos, setAnos] = useState<AnoLetivo[] | null>(null);
   const [rotulo, setRotulo] = useState('');
   const [dataInicio, setDataInicio] = useState('');

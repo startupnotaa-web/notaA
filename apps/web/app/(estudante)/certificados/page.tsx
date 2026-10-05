@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { AchievementsResponse } from '@notaa/contracts';
-import { Card, SectionHeader, Skeleton, Badge, cn, Button } from '@notaa/ui';
+import { Card, SectionHeader, Skeleton, Badge } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 
 const BADGE_DICTIONARY: Record<string, { titulo: string, descricao: string, emoji: string }> = {

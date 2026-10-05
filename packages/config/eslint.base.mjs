@@ -14,6 +14,12 @@ export const baseConfig = [
     },
   },
   {
+    // Arquivos de configuração (next.config.mjs etc.) e scripts de build rodam
+    // no Node, fora do bundle: `process` e `console` existem ali.
+    files: ['**/*.config.{js,mjs,cjs}', '**/scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+  },
+  {
     // "**/" no início é necessário: cada app/package roda `eslint .` com cwd
     // própria, então um padrão sem "**/" só casaria com a raiz daquele cwd —
     // não com dist/ aninhado caso o pacote tenha subpastas (ex.: packages/db).

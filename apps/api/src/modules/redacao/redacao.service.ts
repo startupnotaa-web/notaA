@@ -5,7 +5,6 @@ import {
   type CreateRedacaoResponse,
   type EssayEvaluation,
   type LLMProviderPort,
-  type RedacaoStatus,
 } from '@notaa/contracts';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { StudentProfileService } from '../ai/student-profile.service';

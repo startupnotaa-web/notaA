@@ -1,7 +1,6 @@
 import 'dotenv/config';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
-import { resolve } from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { createDbClient, questoesEnem } from '@notaa/db';
 
@@ -46,7 +45,7 @@ async function uploadImageToSupabase(imageUrl: string, questionNumber: number, y
     const filename = imageUrl.split('/').pop() || `img-${Date.now()}.png`;
     const storagePath = `enem-${year}/${questionNumber}-${filename}`;
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .storage
       .from('enem_images')
       .upload(storagePath, buffer, {
@@ -175,11 +174,9 @@ async function main() {
   for (const year of years) {
     for (const day of ['1', '2']) {
       const pathStr = `tmp/enem-extractor/provas/${year}/${day}/output.json`;
-      try {
-        if (require('fs').existsSync(pathStr)) {
-          files.push(pathStr);
-        }
-      } catch(e) {}
+      if (existsSync(pathStr)) {
+        files.push(pathStr);
+      }
     }
   }
   

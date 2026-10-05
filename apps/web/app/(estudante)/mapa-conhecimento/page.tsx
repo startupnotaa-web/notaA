@@ -143,7 +143,11 @@ export default function MapaConhecimentoPage() {
   );
 }
 
-function SkillNode({ node }: { node: any }) {
+function SkillNode({
+  node,
+}: {
+  node: { label: string; emoji: string; normalized: number; status: 'lacuna' | 'ok' | 'excelente' };
+}) {
   let colorClass = 'border-border bg-surface-2 text-text-muted'; // Default
   let glowClass = '';
 

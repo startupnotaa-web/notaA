@@ -192,8 +192,9 @@ Decisões de implementação que valem registro:
 - Remover aluno zera `aprovado_em`, o que fecha a janela: a turma deixa de ver o
   que ele produzir. A conta dele não é tocada.
 
-**Passo 5 — gestão de professores pela instituição: feita no código, PENDENTE no
-banco.** Migração: `supabase/migrations/0014_convite_professor.sql`.
+**Passo 5 — gestão de professores pela instituição: CONCLUÍDO.** Migração
+`supabase/migrations/0014_convite_professor.sql` aplicada no banco (confirmado
+em 2026-10-04: convites reais gerados e consumidos pelas contas de teste).
 
 - Tabela `convite_professor`: token, prazo, uso e revogação.
 - `POST /instituicao/professores/convites` gera o convite; a tela monta o link
@@ -323,3 +324,44 @@ Próximos passos, na ordem: modelo de dados novo (instituição, ano letivo, tur
 com dois donos, vínculo professor–turma, solicitação de entrada), depois regras
 de autorização no servidor, depois turma e código de convite, depois painel do
 professor, por último painel da instituição.
+
+---
+
+## Contas de teste em produção (criadas em 2026-10-04)
+
+Criadas a pedido do usuário, pelo fluxo real de cadastro (Admin API cria o
+usuário de autenticação já confirmado, login com senha, e `POST /auth/register`
+faz o resto). Senha das duas: `TesteNotaA2026!`
+
+| Conta | Papel | Observação |
+|---|---|---|
+| `teste-instituicao@notaa.app` | `admin_instituicao` | Instituição "Colégio Modelo (teste)" criada junto |
+| `teste-professor@notaa.app` | `professor_independente` | Sem instituição, como o papel exige |
+| `teste-prof-institucional@notaa.app` | `professor_institucional` | Criada CONSUMINDO um convite real da instituição |
+| `teste-instituicao-2@notaa.app` | `admin_instituicao` | Instituição "Colégio Modelo 2 (teste)", sem turmas, professores nem ano letivo |
+| `teste-professor-2@notaa.app` | `professor_independente` | Sem turmas nem ano letivo |
+| `teste-prof-inst-2a@notaa.app` | `professor_institucional` | Vinculado ao "Colégio Modelo 2 (teste)" por convite real, sem turmas |
+| `teste-prof-inst-2b@notaa.app` | `professor_institucional` | Vinculado ao "Colégio Modelo 2 (teste)" por convite real, sem turmas |
+| `teste-aluno-2a@notaa.app` | `estudante` | Turma "TESTE 2". Dados falsos gerados após a aprovação: 40 questões, 530 XP, ofensiva 7, redação 760 |
+| `teste-aluno-2b@notaa.app` | `estudante` | Turma "TESTE 3". Dados falsos gerados após a aprovação: 32 questões, 350 XP, ofensiva 1, redação 480 |
+
+**Uma conta é um papel só.** Não dá para convidar `teste-professor@notaa.app`
+como professor institucional: esse e-mail já é professor independente. O
+professor institucional precisa de e-mail próprio — por isso a terceira conta.
+
+**Atenção ao publicar:** renomear valores de papel é mudança INCOMPATÍVEL entre
+versões da API. O `app_metadata.papel` vive no Supabase, compartilhado entre
+ambientes, então qualquer deploy com o código antigo recusa um token com papel
+novo e responde 401 "Token inválido ou expirado". Verificado em 2026-10-04: a API
+de produção (branch `main`) rejeitava as contas de teste por isso, enquanto os
+alunos existentes (papel `estudante`, inalterado) seguiam funcionando.
+
+São contas de TESTE em produção. Apagar quando não forem mais necessárias:
+remover de `auth.users` pela Admin API e as linhas correspondentes em `usuario`
+e `instituicao`.
+
+Os dados falsos dos alunos 2A e 2B foram gravados direto no banco (sessões,
+tentativas, `xp_ledger`, `streak`, `redacao` com avaliação por competência),
+marcados com `motor_versao = 'seed-teste'` nas avaliações. Para apagar, remova
+essas linhas pelo `estudante_id` antes de remover os usuários: as FKs são
+`ON DELETE RESTRICT`.

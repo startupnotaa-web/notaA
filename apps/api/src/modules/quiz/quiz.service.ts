@@ -45,12 +45,6 @@ const TEMA_POR_AREA: Record<AreaConhecimento, string> = {
   art: 'artes e cultura no contexto do ENEM',
 };
 
-function dificuldadeParaTheta(theta: number): 'Fácil' | 'Média' | 'Difícil' {
-  if (theta <= -0.75) return 'Fácil';
-  if (theta >= 0.75) return 'Difícil';
-  return 'Média';
-}
-
 // ── Escada de dificuldade por sessão ──────────────────────────────────────
 // θ só pode ser movido por item calibrado (item 8 da auditoria), e nem as
 // questões do ENEM nem as da IA são calibradas. Para o quiz ainda assim se
@@ -84,7 +78,7 @@ function degrauDaSessao(theta: number, acertos: boolean[]): Degrau {
 function limparAlternativa(texto: string): string {
   // O prompt pede o conteúdo da opção sem a letra, mas toleramos uma resposta
   // como "A) ..." sem duplicar o marcador na interface.
-  return texto.replace(/^\s*[A-Ea-e][\)\.\-:]\s*/, '').trim();
+  return texto.replace(/^\s*[A-Ea-e][).\-:]\s*/, '').trim();
 }
 
 function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
@@ -100,7 +94,6 @@ function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
 
 import { StudentProfileService } from '../ai/student-profile.service';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
-import { isErroTransitorio } from '../ai/gemini.adapter';
 import type { LLMProviderPort } from '@notaa/contracts';
 
 @Injectable()

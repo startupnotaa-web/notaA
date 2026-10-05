@@ -4,10 +4,9 @@
 // 4D (E3) no radar e contadores de progresso (E7/E8). Nada de dado fixo: o que não
 // tem sinal aparece como "aguardando sinal"; a nota vem marcada não-calibrada (Q-06).
 import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
 import Link from 'next/link';
-import type { AchievementsResponse, DashboardResponse, Eixo4D } from '@notaa/contracts';
-import { Badge, Card, CardHeader, SectionHeader, Skeleton, cn } from '@notaa/ui';
+import type { DashboardResponse, Eixo4D } from '@notaa/contracts';
+import { Badge, Card, CardHeader, SectionHeader, Skeleton } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 
 // Mapeia o id de curso coletado no onboarding (objetivoEnem) para um rótulo legível.
@@ -22,7 +21,6 @@ const CURSO_LABEL: Record<string, string> = {
 
 export default function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
-  const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const [toastMsg, setToastMsg] = useState<{ type: string; msg: string } | null>(null);
@@ -32,14 +30,8 @@ export default function DashboardPage() {
     
     async function loadDashboard() {
       try {
-        const [d, a] = await Promise.all([
-          apiFetch<DashboardResponse>('/me/dashboard'),
-          apiFetch<AchievementsResponse>('/me/achievements'),
-        ]);
-        if (!cancelled) {
-          setDashboard(d);
-          setAchievements(a);
-        }
+        const d = await apiFetch<DashboardResponse>('/me/dashboard');
+        if (!cancelled) setDashboard(d);
       } catch (e) {
         if (cancelled) return;
         if (e instanceof ApiError) {
@@ -92,12 +84,10 @@ export default function DashboardPage() {
 
   if (!dashboard) return <DashboardSkeleton />;
 
-  const { perfil, estimativaNota, nivel, xpTotal, streak, perfilCognitivo4d, theta, progresso } =
-    dashboard;
+  const { perfil, nivel, xpTotal, streak, perfilCognitivo4d } = dashboard;
   const objetivo = perfil.objetivoEnem
     ? (CURSO_LABEL[perfil.objetivoEnem] ?? perfil.objetivoEnem)
     : null;
-  const areasTheta = Object.entries(theta);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
@@ -140,7 +130,7 @@ export default function DashboardPage() {
                 try {
                   await apiFetch('/me/recover-streak', { method: 'POST' });
                   window.location.reload();
-                } catch (e) {
+                } catch {
                   setErro('Falha ao recuperar ofensiva');
                 }
               }}
@@ -242,63 +232,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─────────────────────────── Medidor circular (Nota Estimada) ───────────────────────────
-
-function Gauge({ value, max, naoCalibrado }: { value: number; max: number; naoCalibrado: boolean }) {
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  const fraction = Math.max(0, Math.min(1, value / max));
-  return (
-    <div className="relative mx-auto flex h-36 w-36 shrink-0 items-center justify-center">
-      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-        <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" className="stroke-surface-2" />
-        <circle
-          cx="60"
-          cy="60"
-          r={r}
-          fill="none"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={circ * (1 - fraction)}
-          className="text-brand-primary [stroke:currentColor] drop-shadow-[0_0_6px_rgba(38,153,233,0.55)] transition-[stroke-dashoffset] duration-1000 ease-out"
-        />
-      </svg>
-      <div className="absolute flex flex-col items-center">
-        <span className="text-3xl font-extrabold text-text">{value}</span>
-        <span className="text-[10px] uppercase tracking-widest text-text-muted">de {max}</span>
-        {naoCalibrado && (
-          <span className="mt-1 rounded-full bg-warning/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warning">
-            não calibrado
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MiniStat({
-  label,
-  value,
-  accent = false,
-  children,
-}: {
-  label: string;
-  value: string | number;
-  accent?: boolean;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-surface-2/40 p-3">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{label}</p>
-      <p className={cn('mt-0.5 text-2xl font-extrabold', accent ? 'text-brand-accent' : 'text-text')}>
-        {value}
-      </p>
-      {children}
     </div>
   );
 }

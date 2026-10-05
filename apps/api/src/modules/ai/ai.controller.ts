@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { z } from 'zod';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { DEFAULT_MODEL, GeminiAdapter } from './gemini.adapter';
+import { GeminiAdapter } from './gemini.adapter';
 
 // Schema mínimo só para a rota de fumaça — exercita o caminho completo do
 // adaptador (chamada ao Gemini + validação Zod) sem depender de nenhum módulo

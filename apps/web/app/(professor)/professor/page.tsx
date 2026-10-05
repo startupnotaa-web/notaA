@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AlunoDaTurma, IndicadorDeTurma, SolicitacaoPendente } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Skeleton } from '@notaa/ui';
+import { Badge, Button, Card, CardHeader, Skeleton, cn } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
+import { useUser } from '../../../lib/user-context';
+import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
+import { GestaoDeTurmas } from '../../components/painel/GestaoDeTurmas';
 import { RiskBadge } from './components/RiskBadge';
 import { VisaoDoAluno } from './components/VisaoDoAluno';
 
@@ -17,8 +20,16 @@ import { VisaoDoAluno } from './components/VisaoDoAluno';
  * Nível 3 — visão do aluno: desempenho por área, temas em que erra, evolução no
  * tempo e redações com nota por competência e texto.
  *
- * Serve professor institucional e independente. O escopo é o mesmo nos dois
- * casos: só as turmas em que a pessoa está vinculada, decidido no servidor.
+ * Serve os dois papéis que lecionam, mas eles NÃO têm o mesmo painel.
+ *
+ * O institucional só acompanha: a instituição é que cria as turmas e o vincula a
+ * elas. O independente é DONO das turmas dele, então perfis.md lhe dá também
+ * criar turma, gerenciar código de convite, remover aluno e gerenciar ano letivo
+ * — e esses controles aparecem em abas próprias, reusando os mesmos componentes
+ * do painel da instituição.
+ *
+ * O escopo de leitura é igual para os dois: só as turmas em que a pessoa está
+ * vinculada, decidido no servidor.
  */
 
 const ROTULO_AREA: Record<string, string> = {
@@ -33,7 +44,70 @@ function porcentagem(fracao: number): string {
   return `${Math.round(fracao * 100)}%`;
 }
 
+/**
+ * Painel do professor. Para o independente, abas; para o institucional, só a
+ * visão de acompanhamento, porque ele não administra nada.
+ */
 export default function ProfessorPainelPage() {
+  const { role, loading } = useUser();
+  const [aba, setAba] = useState<'turmas' | 'gestao' | 'anos'>('turmas');
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-6">
+        <Skeleton className="h-40 w-full rounded-2xl" />
+      </div>
+    );
+  }
+
+  const ehIndependente = role === 'professor_independente';
+
+  if (!ehIndependente) {
+    return <TurmasQueLeciono ehIndependente={false} />;
+  }
+
+  const ABAS = [
+    { id: 'turmas' as const, rotulo: 'Acompanhamento' },
+    { id: 'gestao' as const, rotulo: 'Gerenciar turmas' },
+    { id: 'anos' as const, rotulo: 'Ano letivo' },
+  ];
+
+  return (
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
+      <div
+        role="tablist"
+        aria-label="Seções do painel"
+        className="flex gap-1 overflow-x-auto border-b border-border"
+      >
+        {ABAS.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            role="tab"
+            aria-selected={aba === a.id}
+            onClick={() => setAba(a.id)}
+            className={cn(
+              'whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors',
+              aba === a.id
+                ? 'border-brand-primary text-brand-primary'
+                : 'border-transparent text-text-muted hover:text-text',
+            )}
+          >
+            {a.rotulo}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'turmas' && <TurmasQueLeciono ehIndependente />}
+      {/* Professor independente não administra quadro de professores: ele já é o
+          professor das turmas dele, e a API recusaria esses controles. */}
+      {aba === 'gestao' && <GestaoDeTurmas podeGerenciarProfessores={false} />}
+      {aba === 'anos' && <GestaoDeAnosLetivos />}
+    </div>
+  );
+}
+
+function TurmasQueLeciono({ ehIndependente }: { ehIndependente: boolean }) {
   const [turmas, setTurmas] = useState<IndicadorDeTurma[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [turmaAberta, setTurmaAberta] = useState<IndicadorDeTurma | null>(null);
@@ -64,7 +138,7 @@ export default function ProfessorPainelPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
+    <div className={cn('space-y-6', !ehIndependente && 'mx-auto w-full max-w-5xl px-4 py-6')}>
       <header className="space-y-1">
         <h1 className="text-2xl font-bold text-text">Suas turmas</h1>
         <p className="text-sm text-text-muted">
@@ -85,8 +159,9 @@ export default function ProfessorPainelPage() {
         <Card>
           <CardHeader>
             <p className="text-sm text-text-muted">
-              Você ainda não está vinculado a nenhuma turma. A instituição vincula você às turmas que
-              vai lecionar.
+              {ehIndependente
+                ? 'Você ainda não tem turmas. Crie a primeira na aba "Gerenciar turmas" — antes disso, é preciso ter um ano letivo.'
+                : 'Você ainda não está vinculado a nenhuma turma. A instituição é que cria as turmas e vincula você a elas.'}
             </p>
           </CardHeader>
         </Card>
