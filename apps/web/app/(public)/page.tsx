@@ -2,6 +2,7 @@ import type { SVGProps } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input } from '@notaa/ui';
+import { FEATURES } from '../../lib/feature-flags';
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -67,7 +68,12 @@ export default function LandingPage() {
             { i: WritingIcon, t: 'Redação com IA', d: 'Correção instantânea pelas 5 competências do ENEM.' },
             { i: ExamIcon, t: 'Simulado Adaptativo', d: 'Questões que evoluem junto com seu nível.' },
             { i: SocraticIcon, t: 'IA Socrática', d: 'Um tutor que ensina a pensar, não apenas dá respostas.' },
-            { i: PvpIcon, t: 'Batalha PvP', d: 'Desafie amigos e aprenda de forma gamificada.' },
+            // A vitrine só anuncia o que está no ar. Com a Arena oculta
+            // (lib/feature-flags.ts), Batalha PvP cede o lugar à Previsão de
+            // Nota, que já existe em /previsao-nota.
+            FEATURES.arena
+              ? { i: PvpIcon, t: 'Batalha PvP', d: 'Desafie amigos e aprenda de forma gamificada.' }
+              : { i: ForecastIcon, t: 'Previsão de Nota', d: 'Veja a projeção da sua nota evoluir a cada simulado.' },
             { i: CertIcon, t: 'Certificados', d: 'Comprove suas horas de estudo e habilidades.' },
           ].map(({ i: Icon, t, d }) => (
             <Card key={t} className="border-border bg-surface-2">
@@ -91,7 +97,7 @@ export default function LandingPage() {
             {[
               { role: 'Estudante', desc: 'Plano de estudos dinâmico, simulados gamificados e redações corrigidas em segundos.' },
               { role: 'Professor', desc: 'Acompanhe métricas da turma, identifique lacunas e personalize tarefas facilmente.' },
-              { role: 'Escola', desc: 'Dashboard gerencial, gestão de assinaturas e relatórios de desempenho alinhados ao MEC.' },
+              { role: 'Instituição', desc: 'Painel administrativo com rendimento e histórico dos alunos vinculados.' },
             ].map((persona) => (
               <div key={persona.role} className="flex flex-col items-center text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-2">
@@ -153,7 +159,7 @@ export default function LandingPage() {
 
           <Card className="flex flex-col border-border bg-surface">
             <CardHeader>
-              <CardTitle>Escola</CardTitle>
+              <CardTitle>Instituição</CardTitle>
               <div className="mt-2 flex items-baseline text-3xl font-bold">R$ 2.400<span className="text-sm font-normal text-text-muted">/ano</span></div>
               <CardDescription>Licença completa para instituições.</CardDescription>
             </CardHeader>
@@ -186,7 +192,7 @@ export default function LandingPage() {
           <div className="flex flex-col gap-3">
             <h4 className="font-bold">Plataforma</h4>
             <Link href="#" className="text-sm text-text-muted hover:text-text">Sobre nós</Link>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Para Escolas</Link>
+            <Link href="#" className="text-sm text-text-muted hover:text-text">Para Instituições</Link>
             <Link href="#" className="text-sm text-text-muted hover:text-text">Planos</Link>
           </div>
           <div className="flex flex-col gap-3">
@@ -244,6 +250,14 @@ function PvpIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+function ForecastIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
     </svg>
   );
 }

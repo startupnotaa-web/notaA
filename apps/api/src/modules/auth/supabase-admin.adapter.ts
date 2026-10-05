@@ -6,9 +6,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export class SupabaseAuthAdminAdapter implements AuthAdminPort {
   constructor(private readonly client: SupabaseClient) {}
 
-  async setPapel(authUid: string, papel: Papel, escolaId: string | null): Promise<void> {
+  async setPapel(authUid: string, papel: Papel, instituicaoId: string | null): Promise<void> {
     const { error } = await (this.client.auth as any).admin.updateUserById(authUid, {
-      app_metadata: { papel, escola_id: escolaId },
+      app_metadata: { papel, instituicao_id: instituicaoId },
     });
     if (error) {
       throw new Error(`Falha ao setar app_metadata.papel no Supabase Auth: ${error.message}`);

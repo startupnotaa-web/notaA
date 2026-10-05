@@ -2,24 +2,25 @@ import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   EmailJaCadastradoError,
   type AuthAdminPort,
+  type InstituicaoRepositoryPort,
   type Papel,
   type RegisterRequest,
   type UsuarioRepositoryPort,
 } from '@notaa/contracts';
-import { AUTH_ADMIN, USUARIO_REPOSITORY } from './auth.tokens';
+import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY } from './auth.tokens';
 
 const MSG_EMAIL_CONFLITANTE =
   'Este e-mail já está cadastrado com outro método de login. Faça login com o método original (senha ou o provedor usado no primeiro cadastro).';
 
 /**
- * `TipoPerfilPublico` (formulário de cadastro: estudante/professor/escola) →
- * `Papel` (usuario.tipo_perfil, doc 04 §2 — sem valor "escola"; quem se
- * cadastra "como escola" é a pessoa GESTORA daquela escola). A entidade
- * `escola` em si (nome, rede) não é criada aqui — fora do escopo deste MVP
- * de registro; ficaria com `escolaId: null` até um fluxo próprio existir.
+ * `TipoPerfilPublico` (formulário de cadastro: estudante/professor/instituicao)
+ * → `Papel` (usuario.tipo_perfil, doc 04 §2 — sem valor "instituicao"; quem se
+ * cadastra representando uma instituição é a pessoa que a ADMINISTRA). A
+ * entidade `instituicao` em si é criada logo em seguida, por
+ * `criarInstituicaoDoAdmin()`.
  */
 function paraPapel(tipoPerfilPublico: RegisterRequest['tipoPerfil']): Papel {
-  return tipoPerfilPublico === 'escola' ? 'gestor' : tipoPerfilPublico;
+  return tipoPerfilPublico === 'instituicao' ? 'admin_instituicao' : tipoPerfilPublico;
 }
 
 @Injectable()
@@ -28,6 +29,7 @@ export class AuthService {
 
   constructor(
     @Inject(USUARIO_REPOSITORY) private readonly usuarios: UsuarioRepositoryPort,
+    @Inject(INSTITUICAO_REPOSITORY) private readonly instituicoes: InstituicaoRepositoryPort,
     @Inject(AUTH_ADMIN) private readonly authAdmin: AuthAdminPort,
   ) {}
 
@@ -57,8 +59,81 @@ export class AuthService {
       return criado.usuario;
     }
 
-    await this.authAdmin.setPapel(authUid, papel, null);
+    const instituicaoId = await this.criarInstituicaoDoAdmin(authUid, papel, body.nomeInstituicao);
+    await this.authAdmin.setPapel(authUid, papel, instituicaoId);
     return { id: authUid, tipoPerfil: papel };
+  }
+
+  /**
+   * Cria a conta de um professor institucional, JÁ vinculada à instituição.
+   *
+   * Este caminho existe separado do `register` por uma razão de segurança: aqui
+   * o papel e a instituição NÃO vêm do corpo da requisição, vêm de quem chama,
+   * que só invoca este método depois de validar um convite. Se
+   * `professor_institucional` estivesse no formulário público, qualquer pessoa
+   * se declararia professor de qualquer instituição.
+   *
+   * Idempotente igual ao `register`: se a conta já existe, devolve a existente
+   * sem reescrever papel nem instituição.
+   */
+  async registrarProfessorInstitucional(
+    authUid: string,
+    input: { nome: string; email: string; instituicaoId: string },
+  ): Promise<{ id: string; tipoPerfil: Papel; created: boolean }> {
+    const existente = await this.usuarios.findByAuthUid(authUid);
+    if (existente) {
+      return { id: existente.id, tipoPerfil: existente.tipoPerfil, created: false };
+    }
+
+    const papel: Papel = 'professor_institucional';
+    const criado = await this.criarUsuarioIdempotente(authUid, {
+      tipoPerfil: papel,
+      nome: input.nome,
+      email: input.email,
+      instituicaoId: input.instituicaoId,
+    });
+    if (!criado.created) {
+      return { id: criado.usuario.id, tipoPerfil: criado.usuario.tipoPerfil, created: false };
+    }
+
+    await this.authAdmin.setPapel(authUid, papel, input.instituicaoId);
+    this.logger.log(
+      `Professor institucional ${authUid} criado e vinculado à instituição ${input.instituicaoId}.`,
+    );
+    return { id: authUid, tipoPerfil: papel, created: true };
+  }
+
+  /**
+   * Cria a instituição de quem se cadastrou representando uma e devolve o id para o
+   * claim `app_metadata.instituicao_id` (lido por GET /me). Só roda no primeiro
+   * registro deste auth_uid — o caminho idempotente retorna antes, então um
+   * segundo POST /auth/register nunca cria uma instituição duplicada.
+   *
+   * Uma falha aqui NÃO derruba o cadastro: o usuário já existe e está
+   * autenticado, e perder a conta inteira por causa da instituição seria pior
+   * do que ficar sem ela. O admin cai no mesmo estado de antes desta correção
+   * (`instituicao_id = null`), com o erro registrado no log para reprocessamento.
+   */
+  private async criarInstituicaoDoAdmin(
+    authUid: string,
+    papel: Papel,
+    nomeInstituicao: string | undefined,
+  ): Promise<string | null> {
+    if (papel !== 'admin_instituicao' || !nomeInstituicao) {
+      return null;
+    }
+
+    try {
+      const criada = await this.instituicoes.criarParaAdmin({ nome: nomeInstituicao, adminId: authUid });
+      this.logger.log(`Instituição "${criada.nome}" (${criada.id}) criada para o admin ${authUid}.`);
+      return criada.id;
+    } catch (err) {
+      this.logger.error(
+        `Usuário ${authUid} registrado como admin de instituição, mas a instituição "${nomeInstituicao}" não pôde ser criada.`,
+        err instanceof Error ? err.stack : String(err),
+      );
+      return null;
+    }
   }
 
   /**
@@ -109,7 +184,7 @@ export class AuthService {
    */
   private async criarUsuarioIdempotente(
     authUid: string,
-    input: { tipoPerfil: Papel; nome: string; email: string },
+    input: { tipoPerfil: Papel; nome: string; email: string; instituicaoId?: string | null },
   ): Promise<
     | { created: true }
     | { created: false; usuario: { id: string; tipoPerfil: Papel } }

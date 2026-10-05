@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
-import { Database, perfilOnboarding, tentativaResposta, trilhaEstudo, desc, eq, and } from '@notaa/db';
+import { Database, trilhaEstudo, desc, eq } from '@notaa/db';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
+import { StudentProfileService } from '../ai/student-profile.service';
 import { GeminiStudyTrailSchema, StudyTrailResponse, type LLMProviderPort } from '@notaa/contracts';
-import { PROMPT_TRILHA_TEMPLATE, montarPromptTrilha } from '@notaa/prompts';
+import { PROMPT_TRILHA_TEMPLATE, montarBlocoAluno, montarPromptTrilha, nomeArea } from '@notaa/prompts';
 import { z } from 'zod';
 import * as Sentry from '@sentry/node';
 @Injectable()
@@ -13,6 +14,7 @@ export class StudyTrailsService {
   constructor(
     @Inject(DB_CLIENT) private readonly db: Database,
     @Inject(LLM_PROVIDER) private readonly llm: LLMProviderPort,
+    private readonly studentProfile: StudentProfileService,
   ) {}
 
   async generateTrail(estudanteId: string): Promise<StudyTrailResponse> {
@@ -35,35 +37,20 @@ export class StudyTrailsService {
       };
     }
 
-    // 2. Fetch student context
-    const profile = await this.db.select({ idade: perfilOnboarding.idade, serie: perfilOnboarding.serie })
-      .from(perfilOnboarding)
-      .where(eq(perfilOnboarding.estudanteId, estudanteId))
-      .limit(1)
-      .then(res => res[0]);
+    // 2. Fatos do aluno (uma coleta só): o bloco vai ao prompt; os erros
+    //    recentes e o nível por área definem os temas da trilha.
+    const fatos = await this.studentProfile.coletarFatos(estudanteId);
+    const blocoAluno = montarBlocoAluno(fatos, 'trilha');
+    const temas = temasDaTrilha(fatos);
 
-    const idade = profile?.idade || 'não informada';
-    const serie = profile?.serie || 'não informada';
-
-    // 3. Fetch recent mistakes
-    const mistakes = await this.db.select({ temas: tentativaResposta.temasErro })
-      .from(tentativaResposta)
-      .where(and(eq(tentativaResposta.estudanteId, estudanteId), eq(tentativaResposta.acerto, false)))
-      .orderBy(desc(tentativaResposta.criadoEm))
-      .limit(5);
-
-    const allThemes = mistakes.flatMap(m => Array.isArray(m.temas) ? m.temas : []);
-    const uniqueThemes = [...new Set(allThemes)];
-    const temasText = uniqueThemes.length > 0 ? uniqueThemes.join(', ') : 'Temas variados';
-
-    // 4. Generate via Gemini
-    const sistema = montarPromptTrilha({ idade: String(idade), serie: String(serie), temas: temasText });
+    // 3. Generate via Gemini
+    const sistema = montarPromptTrilha({ blocoAluno, temas: temas.texto });
 
     let data: z.infer<typeof GeminiStudyTrailSchema>;
     try {
       const result = await this.llm.complete({
         sistema,
-        contexto: { temasErrados: uniqueThemes },
+        contexto: { temas: temas.lista, origemDosTemas: temas.origem },
         schema: GeminiStudyTrailSchema,
         origem: 'trilha',
         usuarioId: estudanteId,
@@ -106,4 +93,51 @@ export class StudyTrailsService {
       criadoEm: inserted.criadoEm.toISOString(),
     };
   }
+}
+
+/**
+ * Temas da trilha, em ordem de evidência: erros recentes com tema real; senão
+ * as áreas onde o nível medido é mais baixo; senão as dificuldades declaradas.
+ * Nunca "Temas variados": se não há sinal, o prompt é avisado e monta uma
+ * trilha de diagnóstico inicial em vez de fingir personalização.
+ */
+export function temasDaTrilha(fatos: {
+  temasErradosRecentes: string[];
+  nivelPorArea: Partial<Record<string, 'iniciante' | 'intermediario' | 'avancado'>>;
+  dificuldadesDeclaradas: string[];
+}): { lista: string[]; origem: string; texto: string } {
+  if (fatos.temasErradosRecentes.length > 0) {
+    const lista = fatos.temasErradosRecentes.slice(0, 4);
+    return {
+      lista,
+      origem: 'erros recentes em questões',
+      texto: `Ele errou recentemente questões sobre: ${lista.join(', ')}. A trilha recupera esses temas.`,
+    };
+  }
+
+  const areasFracas = Object.entries(fatos.nivelPorArea)
+    .filter(([, nivel]) => nivel === 'iniciante')
+    .map(([area]) => nomeArea(area));
+  if (areasFracas.length > 0) {
+    return {
+      lista: areasFracas,
+      origem: 'áreas com nível medido iniciante',
+      texto: `Não há tema específico de erro, mas o nível medido dele é iniciante em: ${areasFracas.join(', ')}. Escolha o fundamento mais cobrado no ENEM nessa área.`,
+    };
+  }
+
+  if (fatos.dificuldadesDeclaradas.length > 0) {
+    return {
+      lista: fatos.dificuldadesDeclaradas,
+      origem: 'dificuldades declaradas no onboarding',
+      texto: `Ainda não há erros registrados. Ele declarou dificuldade em: ${fatos.dificuldadesDeclaradas.join(', ')}. Monte uma trilha de diagnóstico inicial nessa área, começando pelo fundamento mais cobrado no ENEM.`,
+    };
+  }
+
+  return {
+    lista: [],
+    origem: 'nenhuma (aluno sem histórico)',
+    texto:
+      'Ainda não há erros registrados nem dificuldade declarada. Monte uma trilha de diagnóstico inicial: passos curtos que fazem o aluno responder questões de áreas diferentes no Nota A para o sistema descobrir onde ele precisa de ajuda. Diga isso na descrição.',
+  };
 }

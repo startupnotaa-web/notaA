@@ -22,7 +22,7 @@ export const RATE_LIMIT_IA_KEY = 'rate_limit_ia_integracao';
 export const RateLimitIA = (integracao: Integracao) => SetMetadata(RATE_LIMIT_IA_KEY, integracao);
 
 // 🔧 Calibração (doc 06 §6): limites do plano Free por DIA quando o plano não
-// define `limites_ia` explícito. Plus/Escola sem chave explícita = sem limite.
+// define `limites_ia` explícito. Plus/Instituição sem chave explícita = sem limite.
 const LIMITES_FREE_DIA: Record<Integracao, number> = {
   socratica: 20,
   redacao: 3,

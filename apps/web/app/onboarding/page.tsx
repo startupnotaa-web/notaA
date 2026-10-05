@@ -76,22 +76,23 @@ export default function OnboardingPage() {
         // As formas de cada `passoN` espelham o schema Zod do passo (o backend
         // reconstrói exatamente o payload aceito por PUT /onboarding/steps/:n),
         // então o pré-preenchimento ao retomar lê o mesmo caminho que enviou.
-        const d = estado.dados as Record<string, Record<string, any> | undefined>;
+        const d = estado.dados as Record<string, Record<string, unknown> | undefined>;
         if (d.passo1) {
           setNome((d.passo1.nome as string) ?? '');
           if (d.passo1.idade) setIdade(String(d.passo1.idade));
           if (d.passo1.serie) setSerie(d.passo1.serie as string);
         }
         if (d.passo2) setCurso((d.passo2.objetivoEnem as string) ?? null);
-        if (d.passo3?.estiloAprendizagemAutodeclarado)
-          setComoAprende((d.passo3.estiloAprendizagemAutodeclarado.comoAprendeMelhor as string[]) ?? []);
+        const estilo = d.passo3?.estiloAprendizagemAutodeclarado as
+          | { comoAprendeMelhor?: string[] }
+          | undefined;
+        if (estilo) setComoAprende(estilo.comoAprendeMelhor ?? []);
         if (d.passo4) setDificuldades((d.passo4.dificuldades as string[]) ?? []);
-        if (d.passo5?.rotinaEstudo)
-          setMinutosPorDia(
-            d.passo5.rotinaEstudo.minutosPorDia != null ? String(d.passo5.rotinaEstudo.minutosPorDia) : '',
-          );
-        if (d.passo6?.autopercepcao)
-          setAutopercepcao((d.passo6.autopercepcao.nivelAutopercebido as string) ?? null);
+        const rotina = d.passo5?.rotinaEstudo as { minutosPorDia?: number | null } | undefined;
+        if (rotina)
+          setMinutosPorDia(rotina.minutosPorDia != null ? String(rotina.minutosPorDia) : '');
+        const autopercepcao = d.passo6?.autopercepcao as { nivelAutopercebido?: string } | undefined;
+        if (autopercepcao) setAutopercepcao(autopercepcao.nivelAutopercebido ?? null);
         if (d.passo7) {
           const n = (d.passo7.neurodivergencia as Record<string, boolean>) ?? {};
           setDislexia(!!n.dislexia);

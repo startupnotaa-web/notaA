@@ -13,7 +13,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { escola, usuario } from './identidade';
+import { instituicao, usuario } from './identidade';
 import { assinaturaStatusEnum, iaIntegracaoEnum, planoTipoEnum } from './enums';
 
 // doc 04 §8 — Comercial e governança de uso de IA
@@ -35,7 +35,7 @@ export const assinatura = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     usuarioId: uuid('usuario_id').references(() => usuario.id, { onDelete: 'restrict' }),
-    escolaId: uuid('escola_id').references(() => escola.id, { onDelete: 'restrict' }),
+    instituicaoId: uuid('instituicao_id').references(() => instituicao.id, { onDelete: 'restrict' }),
     planoId: uuid('plano_id')
       .notNull()
       .references(() => plano.id, { onDelete: 'restrict' }),
@@ -45,10 +45,10 @@ export const assinatura = pgTable(
   },
   (t) => [
     index('idx_assinatura_usuario').on(t.usuarioId),
-    index('idx_assinatura_escola').on(t.escolaId),
+    index('idx_assinatura_instituicao').on(t.instituicaoId),
     check(
       'ck_assinatura_titular_unico',
-      sql`(${t.usuarioId} is not null and ${t.escolaId} is null) or (${t.usuarioId} is null and ${t.escolaId} is not null)`,
+      sql`(${t.usuarioId} is not null and ${t.instituicaoId} is null) or (${t.usuarioId} is null and ${t.instituicaoId} is not null)`,
     ),
   ],
 );

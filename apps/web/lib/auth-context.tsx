@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseBrowser } from './supabase-browser';
 import { USER_STATE_STORAGE_KEY } from './storage-keys';
+import { rotaInicialPorPapel } from './rota-inicial';
 
 interface AuthState {
   session: Session | null;
@@ -44,7 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Redirecionamento dinâmico e Sincronização OAuth
         const papel = newSession.user.app_metadata?.papel;
         if (papel) {
-          router.push('/dashboard');
+          // Destino por papel: admin de instituição e professor têm painéis
+          // próprios, e mandá-los para o hub do aluno era o que escondia esses
+          // painéis de quem é dono deles.
+          router.push(rotaInicialPorPapel(papel));
         } else {
           // Precisamos garantir o registro (e gerar o papel via sync-oauth ou formulário)
           import('./post-auth').then(async ({ garantirRegistro }) => {
@@ -55,6 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Fallback se a API estiver fora
             } finally {
               // Executa independentemente de sucesso ou falha na API
+              // Sem papel no token, o registro acabou de acontecer: o
+              // onboarding do aluno é o destino certo para o caso comum, e quem
+              // não for aluno é redirecionado de lá pelo layout do painel dele.
               router.push('/onboarding');
             }
           });

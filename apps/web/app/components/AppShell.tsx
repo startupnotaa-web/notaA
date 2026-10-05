@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@notaa/ui';
+import { FEATURES } from '../../lib/feature-flags';
 import { useUser } from '../../lib/user-context';
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -20,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function TopBar() {
   const { xp, level, streak, perfil, loading } = useUser();
-  const isPremium = perfil?.plano && (perfil.plano.tipo === 'plus' || perfil.plano.tipo === 'escola');
+  const isPremium = perfil?.plano && (perfil.plano.tipo === 'plus' || perfil.plano.tipo === 'instituicao');
 
   // Fração já conquistada dentro do nível atual, calculada pelo servidor (curva
   // única em gamificacao/nivel.ts). Substitui a régua antiga `xp % 100`, que não
@@ -69,21 +70,27 @@ function TopBar() {
 
 function BottomNav() {
   const pathname = usePathname();
-  const { role, loading, perfil } = useUser();
+  const { role } = useUser();
   
-  // Condição para exibir aba da Escola
-  const isEscola = role === 'escola' || (perfil?.plano && perfil.plano.tipo === 'escola');
+  // Quem enxerga o Painel da Instituição é o PAPEL, não o plano contratado.
+  // `Papel` (contracts/common.ts) não tem o valor 'instituicao': quem se cadastra
+  // representando uma vira 'admin_instituicao' (auth.service.ts, paraPapel), então
+  // o teste antigo comparava com um valor inexistente e escondia a aba de quem é
+  // dono dela. O plano também não serve de critério — um estudante coberto por uma
+  // licença institucional tem plano 'instituicao' e não pode ver dado de colega.
+  const isAdminInstituicao = role === 'admin_instituicao' || role === 'admin';
 
   const navItems = [
     { href: '/dashboard', label: 'Início', Icon: HomeIcon },
     { href: '/trilhas', label: 'Trilha', Icon: CompassIcon },
     { href: '/estudo', label: 'Estudo', Icon: BookIcon },
-    { href: '/arena', label: 'Arena', Icon: TargetIcon },
+    // Arena oculta enquanto FEATURES.arena estiver desligada (lib/feature-flags.ts).
+    ...(FEATURES.arena ? [{ href: '/arena', label: 'Arena', Icon: TargetIcon }] : []),
     { href: '/perfil', label: 'Perfil', Icon: UserIcon },
   ];
 
-  if (isEscola) {
-    navItems.push({ href: '/escola', label: 'Escola', Icon: SchoolIcon });
+  if (isAdminInstituicao) {
+    navItems.push({ href: '/instituicao', label: 'Instituição', Icon: SchoolIcon });
   }
 
   return (

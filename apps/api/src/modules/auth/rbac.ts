@@ -15,8 +15,9 @@ import type { Papel } from '@notaa/contracts';
 export const PUBLICO: readonly Papel[] = [];
 export const TODOS_OS_PAPEIS: readonly Papel[] = [
   'estudante',
-  'professor',
-  'gestor',
+  'professor_institucional',
+  'professor_independente',
+  'admin_instituicao',
   'responsavel',
   'admin',
 ];
@@ -86,12 +87,89 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   'GET /simulado/sessions/:id/report': TODOS_OS_PAPEIS,
   'POST /simulado/import': ['admin'],
 
-  // Portais Escola/Professor (doc 05 §8)
-  'GET /escola/overview': ['gestor'],
-  'GET /escola/turmas/:id/desempenho': ['gestor', 'professor'],
-  // TODO(política): hoje sem @Roles no controller — qualquer papel autenticado
-  // acessa; avaliar restringir a professor/gestor (ver auditoria R5).
-  'GET /class/analytics': TODOS_OS_PAPEIS,
+  // Painel administrativo da instituição. Agregado e por turma; nenhum
+  // indicador por professor (perfis.md proíbe comparativo entre professores).
+  'GET /instituicao/overview': ['admin_instituicao'],
+  'GET /instituicao/alunos': ['admin_instituicao'],
+  // Detalhe de turma: o professor entra, mas só nas turmas em que leciona — a
+  // checagem de qual turma é do serviço, pelo EscopoService.
+  'GET /instituicao/turmas/:id/desempenho': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+  // Painel do professor. Restrito aos dois papéis que lecionam (+ admin da
+  // plataforma). Resolve o TODO da auditoria R5: antes a rota estava aberta a
+  // qualquer papel autenticado aqui, e a restrição real era uma checagem à mão
+  // no handler que lia um campo inexistente e barrava todo mundo.
+  'GET /class/analytics': ['professor_institucional', 'professor_independente', 'admin'],
+  'GET /class/turmas': ['professor_institucional', 'professor_independente', 'admin'],
+
+  // Ano letivo — só quem é dono de turma (perfis.md)
+  'GET /ano-letivo': ['admin_instituicao', 'professor_independente'],
+  'POST /ano-letivo': ['admin_instituicao', 'professor_independente'],
+  'PATCH /ano-letivo/:id': ['admin_instituicao', 'professor_independente'],
+
+  // Turma, lado de quem administra. Professor institucional NÃO cria nem
+  // renomeia: ele leciona no que a instituição atribuir a ele.
+  'GET /turma': ['admin_instituicao', 'professor_independente'],
+  'POST /turma': ['admin_instituicao', 'professor_independente'],
+  'PATCH /turma/:id': ['admin_instituicao', 'professor_independente'],
+  'POST /turma/:id/codigo': ['admin_instituicao', 'professor_independente'],
+  'GET /turma/:id/professores': ['admin_instituicao', 'professor_independente'],
+  // Vincular e desvincular professor é ato da instituição.
+  'POST /turma/:id/professores': ['admin_instituicao'],
+  'DELETE /turma/:id/professores/:professorId': ['admin_instituicao'],
+
+  // Solicitações de entrada: professor da turma OU admin da instituição. Qual
+  // turma cada um alcança é checado no serviço (EscopoService).
+  'GET /turma/:id/solicitacoes': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+  'POST /turma/:id/solicitacoes/aprovar': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+  'POST /turma/:id/solicitacoes/recusar': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+  'GET /turma/:id/alunos': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+  'GET /turma/:id/alunos/:estudanteId': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+  'DELETE /turma/:id/alunos/:estudanteId': [
+    'admin_instituicao',
+    'professor_institucional',
+    'professor_independente',
+  ],
+
+  // Quadro de professores — só o admin da instituição.
+  'GET /instituicao/professores': ['admin_instituicao'],
+  'DELETE /instituicao/professores/:professorId': ['admin_instituicao'],
+  'GET /instituicao/professores/convites': ['admin_instituicao'],
+  'POST /instituicao/professores/convites': ['admin_instituicao'],
+  'DELETE /instituicao/professores/convites/:conviteId': ['admin_instituicao'],
+
+  // Convite de professor: PÚBLICO porque roda antes de a conta existir. Quem
+  // autoriza é o token do convite, não o papel de quem chama.
+  'GET /convite-professor/:token': PUBLICO,
+  'POST /convite-professor/registrar': PUBLICO,
+
+  // Turma, lado do aluno. Entrar em turma é opcional.
+  'GET /me/turmas': ['estudante'],
+  'GET /me/turmas/convite/:codigo': ['estudante'],
+  'POST /me/turmas/convite': ['estudante'],
 
   // Admin
   'GET /admin/users': ['admin'],

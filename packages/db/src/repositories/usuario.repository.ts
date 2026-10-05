@@ -28,6 +28,7 @@ export class UsuarioRepositoryDb implements UsuarioRepositoryPort {
     tipoPerfil: UsuarioRegistro['tipoPerfil'];
     nome: string;
     email: string;
+    instituicaoId?: string | null;
   }): Promise<void> {
     try {
       await this.db.insert(usuario).values({
@@ -36,6 +37,7 @@ export class UsuarioRepositoryDb implements UsuarioRepositoryPort {
         tipoPerfil: input.tipoPerfil,
         nome: input.nome,
         email: input.email,
+        instituicaoId: input.instituicaoId ?? null,
         status: 'ativo',
       });
     } catch (err) {

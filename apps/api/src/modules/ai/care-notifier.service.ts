@@ -2,15 +2,21 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Database, and, eq, notificacaoCuidado, usuario, vinculoResponsavel } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 
+// 'responsavel_escola' NÃO foi renomeado junto com o resto da plataforma, de
+// propósito: este valor é emitido pelo próprio modelo de IA (está escrito no
+// prompt da socrática, que é versionado) e fica gravado em
+// `ocorrencia_risco.acao_tomada`. Trocá-lo exige bumpar o prompt e migrar dado,
+// e o destino institucional do protocolo de cuidado é decisão ainda pendente do
+// usuário. Renomear junto com essa decisão.
 type Escalonamento = 'responsavel_escola' | 'flag_interno';
 
 /**
  * Notificador do protocolo de cuidado (decisão Q-01, doc 10 §6): quando uma
  * `ocorrencia_risco` escala para `responsavel_escola`, registra UMA notificação
  * por destinatário vinculado — responsáveis com vínculo ATIVO e, quando o
- * estudante pertence a uma escola, os gestores dela.
+ * estudante pertence a uma instituição, os admins dela.
  *
- * A entrega hoje é in-app (o Portal Responsável/Escola lê `notificacao_cuidado`
+ * A entrega hoje é in-app (o painel do Responsável/Instituição lê `notificacao_cuidado`
  * com status 'pendente'); um canal ativo (e-mail/push) marca `enviada` quando
  * existir. `flag_interno` não notifica externos — a ocorrência já fica visível
  * para revisão humana via `status_acompanhamento` (LGPD × dever de cuidado).
@@ -28,7 +34,7 @@ export class CareNotifierService {
   }): Promise<{ destinatarios: number }> {
     if (input.escalonamento !== 'responsavel_escola') return { destinatarios: 0 };
 
-    const destinatarios: { id: string; papel: 'responsavel' | 'gestor' }[] = [];
+    const destinatarios: { id: string; papel: 'responsavel' | 'admin_instituicao' }[] = [];
 
     // 1. Responsáveis com vínculo ativo (nunca notificar vínculo pendente/revogado).
     const responsaveis = await this.db
@@ -42,18 +48,25 @@ export class CareNotifierService {
       );
     destinatarios.push(...responsaveis.map((r) => ({ id: r.id, papel: 'responsavel' as const })));
 
-    // 2. Gestores da escola do estudante (quando houver vínculo escolar).
+    // 2. Admins da instituição do estudante (quando houver vínculo institucional).
     const [estudante] = await this.db
-      .select({ escolaId: usuario.escolaId })
+      .select({ instituicaoId: usuario.instituicaoId })
       .from(usuario)
       .where(eq(usuario.id, input.estudanteId))
       .limit(1);
-    if (estudante?.escolaId) {
-      const gestores = await this.db
+    if (estudante?.instituicaoId) {
+      const admins = await this.db
         .select({ id: usuario.id })
         .from(usuario)
-        .where(and(eq(usuario.escolaId, estudante.escolaId), eq(usuario.tipoPerfil, 'gestor')));
-      destinatarios.push(...gestores.map((g) => ({ id: g.id, papel: 'gestor' as const })));
+        .where(
+          and(
+            eq(usuario.instituicaoId, estudante.instituicaoId),
+            eq(usuario.tipoPerfil, 'admin_instituicao'),
+          ),
+        );
+      destinatarios.push(
+        ...admins.map((a) => ({ id: a.id, papel: 'admin_instituicao' as const })),
+      );
     }
 
     if (destinatarios.length === 0) {

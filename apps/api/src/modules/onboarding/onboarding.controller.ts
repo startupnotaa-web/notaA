@@ -4,7 +4,7 @@ import { OnboardingService } from './onboarding.service';
 
 // doc 05 §3 — Onboarding (E1), salvamento incremental (A6). Papéis: estudante
 // (sem @Roles() — qualquer papel autenticado entra; a regra de "só estudante
-// tem onboarding" é decisão de produto a refinar quando o Painel da Escola/Admin
+// tem onboarding" é decisão de produto a refinar quando o Painel da Instituição/Admin
 // também precisar de fluxos próprios — por ora não bloqueamos aqui).
 @Controller('onboarding')
 export class OnboardingController {

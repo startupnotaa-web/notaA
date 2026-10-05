@@ -12,7 +12,7 @@ import { AuthService } from './auth.service';
 import { verifySupabaseJwtBootstrap } from './verify-jwt';
 
 // doc 05 §2 — Responsável/Admin NÃO se auto-cadastram (A2); RegisterRequestSchema
-// já restringe tipoPerfil a estudante/professor/escola (TipoPerfilPublicoSchema).
+// já restringe tipoPerfil a estudante/professor/instituicao (TipoPerfilPublicoSchema).
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

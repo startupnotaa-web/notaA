@@ -43,6 +43,16 @@ export interface LLMChamadaMeta {
   modelo?: string;
 }
 
+/**
+ * Turno anterior de uma conversa, enviado ao provedor como histórico REAL de
+ * chat (não como string dentro do contexto JSON). `usuario` = o aluno,
+ * `modelo` = resposta anterior da própria IA.
+ */
+export interface MensagemHistorico {
+  papel: 'usuario' | 'modelo';
+  conteudo: string;
+}
+
 export interface LLMProviderPort {
   complete<T>(
     input: {
@@ -52,6 +62,8 @@ export interface LLMProviderPort {
       schema: z.ZodSchema<T>;
       /** Opcional — eleva a variabilidade da amostragem (ex.: geração de quiz, evita repetição). */
       temperature?: number;
+      /** Opcional — turnos anteriores da conversa, do mais antigo ao mais novo. */
+      historico?: MensagemHistorico[];
     } & LLMChamadaMeta,
   ): Promise<{ data: T; uso: UsoTokens }>;
 
@@ -64,6 +76,7 @@ export interface LLMProviderPort {
     input: {
       sistema: string;
       prompt: string;
+      historico?: MensagemHistorico[];
     } & LLMChamadaMeta,
   ): Promise<{ texto: string; uso: UsoTokens }>;
 }
@@ -282,10 +295,11 @@ export interface UsuarioRegistro {
   id: string;
   /**
    * `Papel` (5 valores, doc 04 §2), não `TipoPerfilPublico` (3 valores do
-   * formulário de cadastro) — quem se cadastra como "escola" se torna
-   * `usuario.tipo_perfil = 'gestor'` (a pessoa que administra a Escola); a
-   * entidade `escola` em si é criada/associada separadamente (fora do MVP de
-   * registro). AuthService faz essa conversão ANTES de chamar esta porta.
+   * formulário de cadastro) — quem se cadastra como "instituicao" se torna
+   * `usuario.tipo_perfil = 'admin_instituicao'` (quem administra a instituição); a
+   * entidade `instituicao` em si é criada por InstituicaoRepositoryPort, logo depois,
+   * no mesmo fluxo de registro. AuthService faz essa conversão ANTES de chamar
+   * esta porta.
    */
   tipoPerfil: Papel;
 }
@@ -298,7 +312,31 @@ export interface UsuarioRepositoryPort {
     tipoPerfil: Papel;
     nome: string;
     email: string;
+    /**
+     * Só para professor institucional, que nasce JÁ vinculado à instituição que
+     * o convidou. Aluno e professor independente nascem sem instituição; o do
+     * admin de instituição é gravado depois, quando a instituição é criada.
+     */
+    instituicaoId?: string | null;
   }): Promise<void>;
+}
+
+/**
+ * Cria a instituição de quem se cadastra representando uma instituição (doc 04 §2).
+ *
+ * Até aqui o cadastro "Represento uma instituição" só produzia um usuário com
+ * `tipo_perfil = 'admin_instituicao'` e `instituicao_id = null`: nenhuma linha em
+ * `instituicao` era gravada, então o admin ficava sem instituição, o painel não tinha
+ * o que mostrar e não havia entidade à qual um aluno pudesse se vincular
+ * depois.
+ */
+export interface InstituicaoRepositoryPort {
+  /**
+   * Cria a `instituicao` e amarra o admin a ela em UMA transação — sem isso, uma
+   * falha no meio deixaria uma instituição órfã, sem ninguém que a administre.
+   * Devolve a instituição criada para o registro escrever `app_metadata.instituicao_id`.
+   */
+  criarParaAdmin(input: { nome: string; adminId: string }): Promise<{ id: string; nome: string }>;
 }
 
 /**
@@ -307,5 +345,5 @@ export interface UsuarioRepositoryPort {
  * do que o bootstrap de registro precisa atravessa esta interface.
  */
 export interface AuthAdminPort {
-  setPapel(authUid: string, papel: Papel, escolaId: string | null): Promise<void>;
+  setPapel(authUid: string, papel: Papel, instituicaoId: string | null): Promise<void>;
 }

@@ -8,4 +8,23 @@ export * from './repositories';
 // e o pnpm resolve duas instâncias físicas da "mesma" versão — TypeScript trata
 // os tipos (SQL<unknown>, Column, etc.) como incompatíveis entre elas. Importe
 // os operadores daqui para garantir a MESMA instância usada pelo schema/client.
-export { eq, ne, asc, desc, and, inArray, notInArray, count, sql, sum, avg } from 'drizzle-orm';
+export {
+  eq,
+  ne,
+  asc,
+  desc,
+  and,
+  or,
+  gt,
+  gte,
+  lt,
+  lte,
+  isNull,
+  isNotNull,
+  inArray,
+  notInArray,
+  count,
+  sql,
+  sum,
+  avg,
+} from 'drizzle-orm';

@@ -7,12 +7,12 @@ import { apiFetch, ApiError } from '../../../lib/api-client';
 
 // Mock list of players in the lobby
 const MOCK_PLAYERS = [
-  { id: 1, nome: 'Ana Costa', escola: 'Colegio Estadual - SP', nivel: 12 },
-  { id: 2, nome: 'Lucas M.', escola: 'ETEC - SP', nivel: 9 },
-  { id: 3, nome: 'Sofia R.', escola: 'Colegio Santa Cruz', nivel: 15 },
-  { id: 4, nome: 'Pedro Henrique', escola: 'Colegio Objetivo', nivel: 8 },
-  { id: 5, nome: 'Julia F.', escola: 'Poliedro', nivel: 22 },
-  { id: 6, nome: 'Matheus G.', escola: 'Anglo', nivel: 14 },
+  { id: 1, nome: 'Ana Costa', instituicao: 'Colegio Estadual - SP', nivel: 12 },
+  { id: 2, nome: 'Lucas M.', instituicao: 'ETEC - SP', nivel: 9 },
+  { id: 3, nome: 'Sofia R.', instituicao: 'Colegio Santa Cruz', nivel: 15 },
+  { id: 4, nome: 'Pedro Henrique', instituicao: 'Colegio Objetivo', nivel: 8 },
+  { id: 5, nome: 'Julia F.', instituicao: 'Poliedro', nivel: 22 },
+  { id: 6, nome: 'Matheus G.', instituicao: 'Anglo', nivel: 14 },
 ];
 
 export default function BatalhaColetivaPage() {
@@ -72,7 +72,7 @@ export default function BatalhaColetivaPage() {
             Batalha Coletiva
             <Badge variant="error" className="animate-pulse px-3 py-1 text-xs">AO VIVO</Badge>
           </h1>
-          <p className="text-text-muted">Represente sua escola no duelo nacional.</p>
+          <p className="text-text-muted">Represente sua instituição no duelo nacional.</p>
         </div>
         
         <div className="flex items-center gap-4 rounded-xl border border-border bg-surface-2 p-4">
@@ -144,7 +144,7 @@ export default function BatalhaColetivaPage() {
                 </Card>
                 <Card className="p-4 bg-surface/50 border-border">
                   <div className="text-2xl mb-2">🏆</div>
-                  <h3 className="font-bold text-text text-sm">Pódio da Escola</h3>
+                  <h3 className="font-bold text-text text-sm">Pódio da Instituição</h3>
                   <p className="text-xs text-text-muted mt-1">Os 3 melhores ganham insígnias exclusivas no perfil.</p>
                 </Card>
              </div>
@@ -167,7 +167,7 @@ export default function BatalhaColetivaPage() {
                    <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
                    <div>
                      <p className="text-sm font-bold text-brand-primary">{perfil.nome || 'Você'}</p>
-                     <p className="text-[10px] text-text-muted">Sua Escola</p>
+                     <p className="text-[10px] text-text-muted">Sua Instituição</p>
                    </div>
                  </div>
                  <div className="text-xs font-black text-brand-primary">Nv {nivel.atual}</div>
@@ -180,7 +180,7 @@ export default function BatalhaColetivaPage() {
                    <div className="h-2 w-2 rounded-full bg-text-muted/30" />
                    <div>
                      <p className="text-sm font-bold text-text">{p.nome}</p>
-                     <p className="text-[10px] text-text-muted">{p.escola}</p>
+                     <p className="text-[10px] text-text-muted">{p.instituicao}</p>
                    </div>
                  </div>
                  <div className="text-xs font-bold text-text-muted">Nv {p.nivel}</div>

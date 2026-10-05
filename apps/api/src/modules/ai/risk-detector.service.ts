@@ -17,7 +17,7 @@ type Severidade = 'baixa' | 'media' | 'alta';
  * Detector de risco + guardrails de conteúdo (I3/I6, doc 06 §2.3/§4). A DECISÃO
  * é determinística e desta camada — nunca delegada ao provedor de IA. Acionar o
  * protocolo grava `ocorrencia_risco` (append-only, auditável), registra a
- * escalação e — quando escala a responsável/escola — dispara o notificador
+ * escalação e — quando escala a responsável/instituição — dispara o notificador
  * (CareNotifierService, decisão Q-01 do doc 10 §6).
  */
 @Injectable()

@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../../common/guards/auth.guard';
 import { StudyTrailsService } from './study-trails.service';
 

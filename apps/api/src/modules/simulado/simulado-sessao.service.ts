@@ -33,7 +33,7 @@ import {
   type SimuladoRelatorio,
   type StartSimuladoResponse,
 } from '@notaa/contracts';
-import { PROMPT_QUIZ_TEMPLATE, montarPromptQuiz } from '@notaa/prompts';
+import { PROMPT_SIMULADO_TEMPLATE, montarPromptSimulado, nomeArea } from '@notaa/prompts';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
@@ -219,25 +219,19 @@ export class SimuladoSessaoService {
     area: AreaConhecimento,
     dificuldade: DificuldadeTri,
   ): Promise<QuestaoMontada> {
-    const rotulo = { facil: 'Fácil', media: 'Média', dificil: 'Difícil' }[dificuldade];
-    const sistema = montarPromptQuiz({
-      instrucoes: 'objetiva e contextualizada',
-      objetivo: 'ir bem no ENEM',
-      nivel: dificuldade === 'facil' ? 1 : dificuldade === 'media' ? 2 : 3,
-      area,
-      tema: `questão de ${area} no padrão ENEM`,
-      instrucaoDificuldade: `A dificuldade deve ser ${rotulo}.`,
-      instrucaoAntiRepeticao: '',
-    });
+    // Simulado é prova: prompt próprio, SEM bloco do aluno — a questão deve ser
+    // a mesma para qualquer estudante.
+    const rotulo = ({ facil: 'Fácil', media: 'Média', dificil: 'Difícil' } as const)[dificuldade];
+    const sistema = montarPromptSimulado({ area: nomeArea(area), dificuldade: rotulo });
 
     const { data } = await this.llm.complete({
       sistema,
-      contexto: { area, dificuldade: rotulo, formato: 'simulado ENEM' },
+      contexto: { area: nomeArea(area), dificuldade: rotulo },
       schema: GenerateQuizResponseSchema,
       temperature: 1.1,
       origem: 'quiz',
       usuarioId: estudanteId,
-      promptVersao: PROMPT_QUIZ_TEMPLATE.versao,
+      promptVersao: PROMPT_SIMULADO_TEMPLATE.versao,
     });
 
     return {

@@ -101,7 +101,7 @@ export class MeController {
         nome,
         email: email ?? '',
         tipoPerfil: app_metadata.papel,
-        escolaId: app_metadata.escola_id ?? null,
+        instituicaoId: app_metadata.instituicao_id ?? null,
         plano: planoResp,
         gamificacao,
         perfilCognitivo,

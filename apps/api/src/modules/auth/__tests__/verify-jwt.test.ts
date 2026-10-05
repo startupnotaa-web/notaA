@@ -4,6 +4,15 @@ import { InvalidJwtError, verifySupabaseJwt, verifySupabaseJwtBootstrap } from '
 
 const SECRET = 'segredo-de-teste-com-pelo-menos-32-bytes-de-tamanho';
 const SUB = '11111111-1111-1111-1111-111111111111';
+// `verifySupabaseJwt` exige os claims `iss` e `aud` (jwtVerify recebe
+// issuer/audience), como todo token real do Supabase Auth traz. Os helpers
+// abaixo assinavam sem esses claims, então TODA requisição autenticada destes
+// testes morria em 401 antes de chegar ao que o teste queria provar. SUPABASE_URL
+// é fixado aqui, depois do dotenv, para o issuer não depender do .env da máquina.
+const SUPABASE_URL = 'https://projeto-de-teste.supabase.co';
+process.env.SUPABASE_URL = SUPABASE_URL;
+const ISSUER = `${SUPABASE_URL}/auth/v1`;
+const AUDIENCE = 'authenticated';
 
 async function signToken(overrides: Record<string, unknown> = {}, secret = SECRET) {
   const secretKey = new TextEncoder().encode(secret);
@@ -11,11 +20,13 @@ async function signToken(overrides: Record<string, unknown> = {}, secret = SECRE
   return new SignJWT({
     sub: SUB,
     email: 'aluna@example.com',
-    app_metadata: { papel: 'estudante', escola_id: null },
+    app_metadata: { papel: 'estudante', instituicao_id: null },
     iat: now,
     ...overrides,
   })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
     .setExpirationTime(now + 3600)
     .sign(secretKey);
 }
@@ -42,6 +53,8 @@ describe('verifySupabaseJwt (I1/doc 03 §9 — único verificador de token)', ()
       iat: past,
     })
       .setProtectedHeader({ alg: 'HS256' })
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
       .setExpirationTime(past + 60)
       .sign(secretKey);
 
@@ -65,6 +78,8 @@ describe('verifySupabaseJwtBootstrap (POST /auth/register — sem app_metadata.p
     const now = Math.floor(Date.now() / 1000);
     const token = await new SignJWT({ sub: SUB, email: 'nova@example.com', iat: now })
       .setProtectedHeader({ alg: 'HS256' })
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
       .setExpirationTime(now + 3600)
       .sign(secretKey);
 

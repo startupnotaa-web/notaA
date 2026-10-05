@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { MeResponse, AchievementsResponse } from '@notaa/contracts';
 import { Button, Card, CardHeader, Input, Label, SectionHeader, Skeleton, Badge, cn } from '@notaa/ui';
+import { MinhasTurmas } from './MinhasTurmas';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { useAuth } from '../../../lib/auth-context';
 import { ShortcutCard } from '../../components/ShortcutCard';
@@ -10,7 +11,7 @@ import { ShortcutCard } from '../../components/ShortcutCard';
 const PLANO_ROTULO: Record<NonNullable<MeResponse['plano']>['tipo'], string> = {
   free: 'Gratuito',
   plus: 'Premium',
-  escola: 'Escola',
+  instituicao: 'Instituição',
 };
 
 export default function PerfilPage() {
@@ -265,6 +266,8 @@ export default function PerfilPage() {
           </CardHeader>
         </Card>
       </section>
+
+      <MinhasTurmas />
 
       {/* Seção: Assinatura */}
       <section className="space-y-4">

@@ -36,7 +36,7 @@ export default function SocraticoPage() {
   const [historico, setHistorico] = useState<SocraticHistoryItem[]>([]);
   const [me, setMe] = useState<MeResponse | null>(null);
   const { addXP } = useUser();
-  const [interacoesAtuais, setInteracoesAtuais] = useState(0);
+  const [, setInteracoesAtuais] = useState(0);
 
   // Abre a sessão ao montar e carrega histórico + me
   useEffect(() => {
@@ -79,7 +79,9 @@ export default function SocraticoPage() {
     if (pensando) return;
     setAbrindo(true);
     try {
-      const msgs = await apiFetch<any[]>(`/socratic/sessions/${id}/messages`);
+      const msgs = await apiFetch<Array<{ id?: string; papel: ChatMsg['papel']; conteudo: string }>>(
+        `/socratic/sessions/${id}/messages`,
+      );
       const msgsFormatadas = msgs.map(m => ({
         id: m.id || tmpId(),
         papel: m.papel,
@@ -154,7 +156,7 @@ export default function SocraticoPage() {
     }
   }
 
-  const isPremium = me?.plano && (me.plano.tipo === 'plus' || me.plano.tipo === 'escola');
+  const isPremium = me?.plano && (me.plano.tipo === 'plus' || me.plano.tipo === 'instituicao');
   const limiteMax = isPremium ? Infinity : 3;
 
   return (
