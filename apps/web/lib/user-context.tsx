@@ -113,6 +113,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
     carregarPerfil();
   }, []);
 
+  // Recarrega quando o `papel` aparece (ou muda) no token. Logo após o cadastro
+  // o primeiro /me sai com o token ainda sem papel e leva 401; sem este
+  // recarregamento o `role` ficava nulo até um reload manual.
+  const papelNoToken = (session?.user.app_metadata?.papel as string | undefined) ?? null;
+  const [papelCarregado, setPapelCarregado] = useState(papelNoToken);
+  useEffect(() => {
+    if (papelNoToken === papelCarregado) return;
+    setPapelCarregado(papelNoToken);
+    if (papelNoToken) void carregarPerfil();
+  }, [papelNoToken, papelCarregado]);
+
   // Persiste qualquer mudança de estado (fetch do /me, addXP otimista) — o
   // snapshot fica sempre pronto para o próximo reload/troca de aba.
   useEffect(() => {

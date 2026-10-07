@@ -18,7 +18,22 @@ import { supabaseBrowser } from './supabase-browser';
  *      independente ou instituição). `nomeInstituicao` acompanha o terceiro caso.
  *   3. nenhum dos dois — login por provedor externo, que cria como estudante.
  */
-export async function garantirRegistro(): Promise<void> {
+// Uma execução por vez. Depois da confirmação de e-mail, o AuthProvider (evento
+// SIGNED_IN) e a tela que disparou a sessão chamam isto quase juntos; sem
+// compartilhar a promessa, cada um registrava e navegava por conta própria, e o
+// painel carregava com o token ainda sem `papel` (401 em /me).
+let emAndamento: Promise<void> | null = null;
+
+export function garantirRegistro(): Promise<void> {
+  if (!emAndamento) {
+    emAndamento = registrar().finally(() => {
+      emAndamento = null;
+    });
+  }
+  return emAndamento;
+}
+
+async function registrar(): Promise<void> {
   const { data } = await supabaseBrowser.auth.getSession();
   const user = data.session?.user;
   const tipoPerfil = user?.user_metadata?.tipoPerfil;

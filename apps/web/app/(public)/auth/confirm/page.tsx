@@ -16,6 +16,8 @@ import type { EmailOtpType } from '@supabase/supabase-js';
 import { Button, Card, Input, Label } from '@notaa/ui';
 import { supabaseBrowser } from '../../../../lib/supabase-browser';
 import { USER_STATE_STORAGE_KEY } from '../../../../lib/storage-keys';
+import { garantirRegistro } from '../../../../lib/post-auth';
+import { rotaPosRegistro } from '../../../../lib/rota-inicial';
 
 const TIPOS_OTP: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 
@@ -40,6 +42,17 @@ function ConfirmarEmail() {
   useEffect(() => {
     if (jaProcessou.current) return;
     jaProcessou.current = true;
+
+    // Só navega DEPOIS do registro: na confirmação o token ainda não tem
+    // `papel`, e ir direto para `next` abria o painel com /me recusando (401) —
+    // o painel então mandava professor e instituição para o hub do aluno. O
+    // destino sai do papel do token renovado; `next` fica só de reserva.
+    async function seguirAposConfirmar() {
+      await garantirRegistro();
+      const { data } = await supabaseBrowser.auth.getSession();
+      const papel = data.session?.user.app_metadata?.papel;
+      router.replace(papel ? rotaPosRegistro(papel) : next);
+    }
 
     async function confirmar() {
       const tokenHash = params.get('token_hash');
@@ -70,7 +83,7 @@ function ConfirmarEmail() {
           return;
         }
         setEstado({ fase: 'sucesso' });
-        router.replace(next);
+        await seguirAposConfirmar();
         return;
       }
 
@@ -92,7 +105,7 @@ function ConfirmarEmail() {
         // O SDK (detectSessionInUrl) cria a sessão a partir do hash; o
         // AuthProvider reage ao SIGNED_IN e redireciona. Só confirmamos aqui.
         setEstado({ fase: 'sucesso' });
-        router.replace(next);
+        await seguirAposConfirmar();
         return;
       }
 
