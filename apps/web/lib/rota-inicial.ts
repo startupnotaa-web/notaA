@@ -22,3 +22,14 @@ export function rotaInicialPorPapel(papel: string | null | undefined): string {
       return '/dashboard';
   }
 }
+
+/**
+ * Destino logo depois do PRIMEIRO registro (confirmação de e-mail, cadastro,
+ * primeiro login OAuth). Igual ao de cima, exceto o aluno, que ainda precisa
+ * passar pelo onboarding. O papel tem que vir do token JÁ renovado pelo
+ * `garantirRegistro` — antes dele o token não tem `papel`.
+ */
+export function rotaPosRegistro(papel: string | null | undefined): string {
+  if (!papel || papel === 'estudante') return '/onboarding';
+  return rotaInicialPorPapel(papel);
+}
