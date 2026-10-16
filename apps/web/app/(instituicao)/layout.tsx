@@ -1,16 +1,26 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { PainelShell } from '../components/PainelShell';
+import { PainelShell, type ItemDeNavegacao } from '../components/PainelShell';
 import { UserProvider } from '../../lib/user-context';
 
 // O painel da instituição NÃO fica no grupo de rotas do aluno de propósito: a
 // moldura de lá traz a barra de gamificação e o menu de estudo, que não fazem
 // sentido para quem administra uma instituição.
+const NAVEGACAO: ItemDeNavegacao[] = [
+  { href: '/instituicao', rotulo: 'Painel' },
+  { href: '/instituicao/academico', rotulo: 'Configuração acadêmica' },
+  { href: '/instituicao/importacao', rotulo: 'Importação e exportação' },
+];
+
 export default function InstituicaoLayout({ children }: { children: ReactNode }) {
   return (
     <UserProvider>
-      <PainelShell titulo="Painel da instituição" papeisPermitidos={['admin_instituicao', 'admin']}>
+      <PainelShell
+        titulo="Painel da instituição"
+        papeisPermitidos={['admin_instituicao', 'admin']}
+        navegacao={NAVEGACAO}
+      >
         {children}
       </PainelShell>
     </UserProvider>

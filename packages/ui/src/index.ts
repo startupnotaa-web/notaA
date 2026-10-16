@@ -50,3 +50,15 @@ export { SectionHeader } from './components/SectionHeader';
 export type { SectionHeaderProps } from './components/SectionHeader';
 
 export { Skeleton } from './components/Skeleton';
+
+export { Select } from './components/Select';
+export type { SelectProps } from './components/Select';
+
+export { Stepper } from './components/Stepper';
+export type { StepperProps } from './components/Stepper';
+
+export { Table } from './components/Table';
+export type { TableProps } from './components/Table';
+
+export { FileDrop } from './components/FileDrop';
+export type { FileDropProps } from './components/FileDrop';

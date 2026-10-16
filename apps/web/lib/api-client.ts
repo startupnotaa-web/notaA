@@ -104,3 +104,49 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return body as T;
 }
 
+
+/**
+ * Baixa um arquivo da API (CSV de modelo ou de exportação) com o JWT da sessão
+ * e entrega ao navegador como download. `apiFetch` não serve aqui porque lê a
+ * resposta como JSON.
+ */
+export async function apiDownload(path: string, nomeArquivo: string): Promise<void> {
+  const { data } = await supabaseBrowser.auth.getSession();
+  const token = data.session?.access_token;
+  let res: Response;
+  try {
+    res = await fetch(buildUrl(API_URL, path), {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(process.env.NODE_ENV === 'development' ? { 'x-development-mode': 'true' } : {}),
+      },
+    });
+  } catch {
+    throw new ApiError(0, 'NETWORK_ERROR', 'Sem conexão com o servidor. Verifique sua internet e tente novamente.');
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(res.status, body?.error?.code ?? 'UNKNOWN_ERROR', body?.error?.message ?? 'Erro inesperado.');
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Envia a planilha direto ao Storage pelo token assinado que a API emitiu. O
+ * arquivo não passa pela API (limite de corpo da função serverless), e o bucket
+ * é privado: este token só grava neste caminho, uma vez.
+ */
+export async function enviarPlanilha(
+  upload: { bucket: string; path: string; token: string },
+  arquivo: File,
+): Promise<void> {
+  const { error } = await supabaseBrowser.storage
+    .from(upload.bucket)
+    .uploadToSignedUrl(upload.path, upload.token, arquivo, { contentType: arquivo.type || undefined });
+  if (error) throw new ApiError(0, 'UPLOAD_FALHOU', 'Não foi possível enviar o arquivo. Tente de novo.');
+}
