@@ -41,6 +41,12 @@ import { ErrorDetectorRepositoryMemory } from './modules/error-detector/error-de
 // caminho: cortá-lo troca 5 falhas de asserção por 8 falhas com timeout, que é
 // sinal pior. O conserto certo é um Postgres descartável para esta suíte, não
 // um host falso.
+//
+// Por isso a suíte só roda quando pedida explicitamente
+// (`NOTAA_E2E_PRODUCAO=1 pnpm test`). `pnpm test` não toca produção por
+// padrão; até a troca por um Postgres descartável (o PGlite de
+// `@notaa/db/src/testing` já serve), ela fica de fora do gate de CI.
+const RODAR_CONTRA_PRODUCAO = process.env.NOTAA_E2E_PRODUCAO === '1';
 
 const SECRET = 'segredo-vertical-slice-com-pelo-menos-32-bytes';
 process.env.SUPABASE_JWT_SECRET = SECRET;
@@ -91,7 +97,7 @@ async function signToken(sub: string, papel = 'estudante') {
     .sign(secretKey);
 }
 
-describe('Fatia vertical E1→E2 — onboarding + quiz adaptativo (passo 9)', () => {
+describe.skipIf(!RODAR_CONTRA_PRODUCAO)('Fatia vertical E1→E2 — onboarding + quiz adaptativo (passo 9)', () => {
   let app: NestFastifyApplication;
   let token: string;
   let errorDetectorRepo: ErrorDetectorRepositoryMemory;

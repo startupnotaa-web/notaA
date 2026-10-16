@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PGlite } from '@electric-sql/pglite';
-import { citext } from '@electric-sql/pglite/contrib/citext';
+import { PGlite, type Extension } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import type { Database } from '../client';
 import * as schema from '../schema';
@@ -48,7 +47,13 @@ export interface BancoDeTeste {
   comoUsuario<T>(authUid: string | null, fn: (pg: PGlite['query']) => Promise<T>): Promise<T>;
 }
 
+// Subcaminho só com tipos ESM: pacotes com `moduleResolution: Node` (api,
+// worker) não resolvem o literal. Por nome em variável, o import fica sem tipo
+// e funciona igual sob o vitest, que é o único lugar onde isto roda.
+const EXTENSAO_CITEXT = '@electric-sql/pglite/contrib/citext';
+
 export async function criarBancoDeTeste(): Promise<BancoDeTeste> {
+  const { citext } = (await import(EXTENSAO_CITEXT)) as { citext: Extension };
   const pg = new PGlite({ extensions: { citext } });
   await pg.exec(PRELUDIO_SUPABASE);
   const arquivos = readdirSync(MIGRACOES)

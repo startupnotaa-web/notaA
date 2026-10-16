@@ -57,12 +57,18 @@ importers:
       '@notaa/engine-error-detector':
         specifier: workspace:*
         version: link:../../packages/engines/error-detector
+      '@notaa/engine-grading':
+        specifier: workspace:*
+        version: link:../../packages/engines/grading
       '@notaa/engine-profiler':
         specifier: workspace:*
         version: link:../../packages/engines/profiler
       '@notaa/engine-tri':
         specifier: workspace:*
         version: link:../../packages/engines/tri
+      '@notaa/importacao':
+        specifier: workspace:*
+        version: link:../../packages/importacao
       '@notaa/prompts':
         specifier: workspace:*
         version: link:../../packages/prompts
@@ -172,10 +178,32 @@ importers:
         version: 5.9.3
 
   apps/worker:
+    dependencies:
+      '@notaa/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@notaa/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@notaa/importacao':
+        specifier: workspace:*
+        version: link:../../packages/importacao
+      '@supabase/supabase-js':
+        specifier: 2.108.2
+        version: 2.108.2
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
     devDependencies:
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@swc/core@1.15.43)(@types/node@22.20.0)(typescript@5.9.3)
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.0)
 
   packages/config: {}
 
@@ -197,6 +225,9 @@ importers:
       '@notaa/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@notaa/importacao':
+        specifier: workspace:*
+        version: link:../importacao
       drizzle-orm:
         specifier: 0.38.4
         version: 0.38.4(@electric-sql/pglite@0.5.10)(@opentelemetry/api@1.9.1)(@types/react@19.2.17)(postgres@3.4.9)(react@19.2.7)

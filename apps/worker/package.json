@@ -3,12 +3,23 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "echo \"worker: consumidor pg-boss entra junto ao E7 (Fase 2) — docs/03 §3.3\"",
-    "build": "echo \"worker: build pendente\"",
+    "dev": "ts-node src/main.ts",
+    "start": "ts-node --transpile-only src/main.ts",
+    "build": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@notaa/contracts": "workspace:*",
+    "@notaa/db": "workspace:*",
+    "@notaa/importacao": "workspace:*",
+    "@supabase/supabase-js": "^2.47.10",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
-    "typescript": "^5.7.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

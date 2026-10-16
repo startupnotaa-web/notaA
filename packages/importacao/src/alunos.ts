@@ -270,3 +270,18 @@ export function planejarAlunos(
 
   return { resumo, itens };
 }
+
+/**
+ * E-mails de responsável que aparecem na planilha, em minúsculas. Servem para
+ * buscar só as contas de responsável que interessam, em vez de todas.
+ */
+export function emailsDeResponsaveis(planilha: Planilha, mapeamento: MapeamentoColunas): string[] {
+  const emails = new Set<string>();
+  for (const l of planilha.linhas) {
+    for (const campo of ['responsavel1_email', 'responsavel2_email']) {
+      const email = celula(l.celulas, mapeamento, campo).toLowerCase();
+      if (email && emailValido(email)) emails.add(email);
+    }
+  }
+  return [...emails];
+}

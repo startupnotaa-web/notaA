@@ -59,10 +59,16 @@ export const CriarImportacaoRequestSchema = z.object({
 });
 export type CriarImportacaoRequest = z.infer<typeof CriarImportacaoRequestSchema>;
 
+export const BUCKET_IMPORTACOES = 'importacoes';
+
 export const CriarImportacaoResponseSchema = z.object({
   id: z.string().uuid(),
-  /** URL assinada de upload, de uso único e curta duração. */
-  uploadUrl: z.string().url(),
+  /**
+   * Upload assinado no Storage: o navegador envia direto para `path` com
+   * `uploadToSignedUrl(path, token, arquivo)`. O token vale para esse caminho
+   * só, e o bucket é privado.
+   */
+  upload: z.object({ bucket: z.string(), path: z.string(), token: z.string() }),
 });
 export type CriarImportacaoResponse = z.infer<typeof CriarImportacaoResponseSchema>;
 
