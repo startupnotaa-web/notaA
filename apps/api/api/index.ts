@@ -1,3 +1,4 @@
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import 'reflect-metadata';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -26,7 +27,7 @@ async function bootstrap() {
   }
 }
 
-export default async function (req: any, res: any) {
+export default async function (req: IncomingMessage, res: ServerResponse) {
   await bootstrap();
   const instance = app.getHttpAdapter().getInstance();
   // O Vercel Node Runtime fornece (req, res) nativos do Node HTTP.

@@ -93,7 +93,7 @@ export class MeController {
 
       let estiloArr = null;
       if (onb?.estiloAprendizagem && typeof onb.estiloAprendizagem === 'object' && 'comoAprendeMelhor' in onb.estiloAprendizagem) {
-        estiloArr = (onb.estiloAprendizagem as any).comoAprendeMelhor;
+        estiloArr = (onb.estiloAprendizagem as { comoAprendeMelhor: string[] | null }).comoAprendeMelhor;
       }
 
       return {

@@ -73,17 +73,20 @@ export class AiController {
       return { ok: false, erro: 'LLM_API_KEY não configurado no ambiente da API.' };
     }
     try {
-      const res: any = await fetch(
+      const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${apiKey}`,
       );
-      const data: any = await res.json();
+      const data = (await res.json()) as {
+        error?: { message?: string };
+        models?: { name?: string; supportedGenerationMethods?: string[] }[];
+      };
       if (!res.ok) {
         return { ok: false, status: res.status, erro: data?.error?.message ?? 'falha ao listar modelos' };
       }
       const models = Array.isArray(data.models)
         ? data.models
-            .filter((m: any) => (m.supportedGenerationMethods ?? []).includes('generateContent'))
-            .map((m: any) => m.name?.replace(/^models\//, ''))
+            .filter((m) => (m.supportedGenerationMethods ?? []).includes('generateContent'))
+            .map((m) => m.name?.replace(/^models\//, ''))
         : [];
       return { ok: true, total: models.length, models };
     } catch (err) {

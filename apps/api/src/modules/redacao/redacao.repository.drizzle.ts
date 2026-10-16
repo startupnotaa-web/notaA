@@ -84,7 +84,7 @@ export class RedacaoRepositoryDrizzle implements RedacaoRepositoryPort {
   }
 
   async salvarAvaliacao(redacaoId: string, avaliacao: EssayEvaluation): Promise<void> {
-    await this.db.transaction(async (tx: any) => {
+    await this.db.transaction(async (tx) => {
       // 1. Garante a rubrica versionada (FK NOT NULL de avaliacao_redacao). A
       //    versão é única (uq_rubrica_redacao_versao) — upsert idempotente.
       await tx

@@ -21,8 +21,8 @@ async function main() {
         xpAssociado: marco.xpAssociado,
       }).onConflictDoNothing({ target: conquista.codigo });
       console.log(`Conquista ${marco.codigo} garantida no DB.`);
-    } catch (e: any) {
-      console.log(`Falha em ${marco.codigo}:`, e.message);
+    } catch (e) {
+      console.log(`Falha em ${marco.codigo}:`, e instanceof Error ? e.message : e);
     }
   }
   
