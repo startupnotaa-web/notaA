@@ -19,3 +19,5 @@ export * from './simulado';
 export * from './turma';
 export * from './instituicao';
 export * from './regra-avaliativa';
+export * from './academico';
+export * from './importacao';
