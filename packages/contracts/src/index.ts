@@ -18,3 +18,4 @@ export * from './battle';
 export * from './simulado';
 export * from './turma';
 export * from './instituicao';
+export * from './regra-avaliativa';
