@@ -325,6 +325,38 @@ com dois donos, vínculo professor–turma, solicitação de entrada), depois re
 de autorização no servidor, depois turma e código de convite, depois painel do
 professor, por último painel da instituição.
 
+**Gestão Acadêmica, Fase 1 — fundação avaliativa e importação (2026-10-16).**
+Migração `0015_gestao_academica.sql`, **ainda não aplicada no banco**.
+
+Decisões do usuário, tomadas antes de implementar:
+- **Coordenação é função, não papel.** Coluna `usuario.funcao_instituicao`
+  (`gestor` | `coordenacao`), só para `admin_instituicao`. O enum de papel e o
+  JWT não mudam, para não repetir a quebra de 2026-10-04. Admin sem função
+  gravada é gestor. Coordenação configura a parte acadêmica e importa; não
+  exporta nem lê a auditoria. Ainda não há tela para definir a função: hoje é
+  por SQL.
+- **Aluno importado é cadastro da instituição, não conta.** Tabela
+  `aluno_instituicao`, chave (instituição, matrícula). Não dá acesso, não abre
+  janela de dados (isso continua em `matricula_turma`, com consentimento).
+  `responsavel_aluno` é contato da secretaria e não toca `vinculo_responsavel`:
+  o papel de responsável segue intocado. Responsável é casado por e-mail com a
+  conta de responsável que já existir.
+- **Fila na própria tabela `importacao`**, consumida por `apps/worker` com
+  `FOR UPDATE SKIP LOCKED`. Onde hospedar o worker está em aberto.
+- **Arredondamento "meio ponto" é configurável**: `proximo` ou `acima`.
+
+Decisões de engenharia:
+- Regra avaliativa versionada e só de inserção (trigger recusa UPDATE/DELETE
+  até para o service role). Ativação é outra tabela, também só de inserção: a
+  vigente é a ativação mais recente. Ativar exige os períodos cadastrados
+  baterem com o regime.
+- Upload direto no Storage (bucket privado `importacoes`) por token assinado:
+  a API na Vercel não aceita corpo de 10 MB. Tipo real conferido pelo conteúdo,
+  XLSX descompactado com teto (zip bomb), planilha apagada depois de gravada.
+- `audit_log` novo, por instituição; `log_auditoria_admin` segue da plataforma.
+- Testes de banco em PGlite (`packages/db/src/testing`), sem tocar produção. A
+  e2e `vertical-slice` passou a exigir `NOTAA_E2E_PRODUCAO=1`.
+
 ---
 
 ## Contas de teste em produção (criadas em 2026-10-04)
