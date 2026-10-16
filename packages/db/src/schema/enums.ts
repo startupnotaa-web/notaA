@@ -104,3 +104,21 @@ export const assinaturaStatusEnum = pgEnum('assinatura_status', [
 ]);
 
 export const iaIntegracaoEnum = pgEnum('ia_integracao', ['socratica', 'redacao', 'quiz', 'batalha', 'trilha']);
+
+// Gestão Acadêmica (Fase 1). Coordenação não é papel próprio: é uma FUNÇÃO
+// dentro de admin_instituicao (decisão de 2026-10-16), para não mudar o enum de
+// papel que vai no JWT — renomear/adicionar papel quebra deploys antigos da API.
+export const funcaoInstituicaoEnum = pgEnum('funcao_instituicao', ['gestor', 'coordenacao']);
+
+export const importacaoTipoEnum = pgEnum('importacao_tipo', ['alunos', 'disciplinas']);
+
+// Ciclo da importação. A própria tabela é a fila do worker: ele pega
+// 'pendente' com FOR UPDATE SKIP LOCKED.
+export const importacaoStatusEnum = pgEnum('importacao_status', [
+  'aguardando_arquivo',
+  'em_previa',
+  'pendente',
+  'processando',
+  'concluida',
+  'falhou',
+]);

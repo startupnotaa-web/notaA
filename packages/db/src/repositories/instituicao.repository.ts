@@ -31,7 +31,7 @@ export class InstituicaoRepositoryDb implements InstituicaoRepositoryPort {
 
       await tx
         .update(usuario)
-        .set({ instituicaoId: criada.id, atualizadoEm: new Date() })
+        .set({ instituicaoId: criada.id, funcaoInstituicao: 'gestor', atualizadoEm: new Date() })
         .where(eq(usuario.id, input.adminId));
 
       return criada;

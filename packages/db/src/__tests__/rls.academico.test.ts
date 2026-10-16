@@ -1,0 +1,305 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { criarBancoDeTeste, type BancoDeTeste } from '../testing/banco-de-teste';
+
+// RLS das tabelas da Gestão Acadêmica (migração 0015), por papel.
+// O banco é PGlite em memória com as migrações reais; os dados são semeados
+// como superusuário (que ignora RLS) e lidos como `authenticated`.
+
+const TABELAS = [
+  'regra_avaliativa',
+  'regra_avaliativa_ativacao',
+  'periodo_avaliativo',
+  'disciplina',
+  'turma_disciplina',
+  'aluno_instituicao',
+  'responsavel_aluno',
+  'importacao',
+  'audit_log',
+] as const;
+type Tabela = (typeof TABELAS)[number];
+
+// Ids fixos para as asserções ficarem legíveis.
+const INST_A = '0000000a-0000-4000-8000-000000000000';
+const INST_B = '0000000b-0000-4000-8000-000000000000';
+const ANO = '00000a00-0000-4000-8000-000000000000';
+const TURMA_A1 = '000000a1-0000-4000-8000-000000000000';
+const TURMA_A2 = '000000a2-0000-4000-8000-000000000000';
+const TURMA_B1 = '000000b1-0000-4000-8000-000000000000';
+const DISC_A = 'd000000a-0000-4000-8000-000000000000';
+const DISC_B = 'd000000b-0000-4000-8000-000000000000';
+const REGRA_A = 'e000000a-0000-4000-8000-000000000000';
+const REGRA_B = 'e000000b-0000-4000-8000-000000000000';
+const ALUNO_CAD_A1 = 'ca0000a1-0000-4000-8000-000000000000'; // cadastro ligado à conta do aluno
+const ALUNO_CAD_A2 = 'ca0000a2-0000-4000-8000-000000000000'; // filho do responsável, outra turma
+const ALUNO_CAD_B = 'ca00000b-0000-4000-8000-000000000000';
+
+// Usuários: em produção id = auth_uid (auth.service), aqui também.
+const U = {
+  gestorA: '11111111-0000-4000-8000-000000000001',
+  coordA: '11111111-0000-4000-8000-000000000002',
+  profA: '11111111-0000-4000-8000-000000000003',
+  alunoA: '11111111-0000-4000-8000-000000000004',
+  respA: '11111111-0000-4000-8000-000000000005',
+  gestorB: '11111111-0000-4000-8000-000000000006',
+  profIndependente: '11111111-0000-4000-8000-000000000007',
+} as const;
+
+const SEMENTE = `
+  INSERT INTO instituicao (id, nome) VALUES ('${INST_A}', 'Instituição A'), ('${INST_B}', 'Instituição B');
+  INSERT INTO usuario (id, auth_uid, tipo_perfil, email, status, instituicao_id, funcao_instituicao) VALUES
+    ('${U.gestorA}', '${U.gestorA}', 'admin_instituicao', 'gestor@a.test', 'ativo', '${INST_A}', 'gestor'),
+    ('${U.coordA}', '${U.coordA}', 'admin_instituicao', 'coord@a.test', 'ativo', '${INST_A}', 'coordenacao'),
+    ('${U.profA}', '${U.profA}', 'professor_institucional', 'prof@a.test', 'ativo', '${INST_A}', NULL),
+    ('${U.alunoA}', '${U.alunoA}', 'estudante', 'aluno@a.test', 'ativo', NULL, NULL),
+    ('${U.respA}', '${U.respA}', 'responsavel', 'resp@a.test', 'ativo', NULL, NULL),
+    ('${U.gestorB}', '${U.gestorB}', 'admin_instituicao', 'gestor@b.test', 'ativo', '${INST_B}', 'gestor'),
+    ('${U.profIndependente}', '${U.profIndependente}', 'professor_independente', 'indep@x.test', 'ativo', NULL, NULL);
+  INSERT INTO ano_letivo (id, rotulo) VALUES ('${ANO}', '2026');
+  INSERT INTO turma (id, instituicao_id, ano_letivo_id, nome) VALUES
+    ('${TURMA_A1}', '${INST_A}', '${ANO}', '1A'),
+    ('${TURMA_A2}', '${INST_A}', '${ANO}', '1B'),
+    ('${TURMA_B1}', '${INST_B}', '${ANO}', '1A');
+  INSERT INTO professor_turma (turma_id, professor_id) VALUES ('${TURMA_A1}', '${U.profA}');
+  INSERT INTO matricula_turma (turma_id, estudante_id, status, aprovado_em)
+    VALUES ('${TURMA_A1}', '${U.alunoA}', 'ativa', now());
+
+  INSERT INTO regra_avaliativa (id, instituicao_id, ano_letivo_id, versao, regra, criado_por) VALUES
+    ('${REGRA_A}', '${INST_A}', '${ANO}', 1, '{"v":1}', '${U.gestorA}'),
+    ('${REGRA_B}', '${INST_B}', '${ANO}', 1, '{"v":1}', '${U.gestorB}');
+  INSERT INTO regra_avaliativa_ativacao (regra_id, instituicao_id, ano_letivo_id, ativado_por) VALUES
+    ('${REGRA_A}', '${INST_A}', '${ANO}', '${U.gestorA}'),
+    ('${REGRA_B}', '${INST_B}', '${ANO}', '${U.gestorB}');
+  INSERT INTO periodo_avaliativo (instituicao_id, ano_letivo_id, ordem, nome, data_inicio, data_fim) VALUES
+    ('${INST_A}', '${ANO}', 1, '1º bimestre', '2026-02-01', '2026-04-15'),
+    ('${INST_B}', '${ANO}', 1, '1º trimestre', '2026-02-01', '2026-05-15');
+  INSERT INTO disciplina (id, instituicao_id, nome, area_enem) VALUES
+    ('${DISC_A}', '${INST_A}', 'Matemática', 'matematica'),
+    ('${DISC_B}', '${INST_B}', 'Matemática', 'matematica');
+  INSERT INTO turma_disciplina (turma_id, disciplina_id, instituicao_id, professor_id) VALUES
+    ('${TURMA_A1}', '${DISC_A}', '${INST_A}', '${U.profA}'),
+    ('${TURMA_A2}', '${DISC_A}', '${INST_A}', NULL),
+    ('${TURMA_B1}', '${DISC_B}', '${INST_B}', NULL);
+  INSERT INTO aluno_instituicao (id, instituicao_id, matricula, nome, turma_id, usuario_id) VALUES
+    ('${ALUNO_CAD_A1}', '${INST_A}', 'A-001', 'Aluno da 1A', '${TURMA_A1}', '${U.alunoA}'),
+    ('${ALUNO_CAD_A2}', '${INST_A}', 'A-002', 'Filho do responsável', '${TURMA_A2}', NULL),
+    ('${ALUNO_CAD_B}', '${INST_B}', 'B-001', 'Aluno da B', '${TURMA_B1}', NULL);
+  INSERT INTO responsavel_aluno (instituicao_id, aluno_instituicao_id, nome, email, usuario_id) VALUES
+    ('${INST_A}', '${ALUNO_CAD_A2}', 'Responsável', 'resp@a.test', '${U.respA}'),
+    ('${INST_A}', '${ALUNO_CAD_A1}', 'Outra pessoa', 'outra@a.test', NULL),
+    ('${INST_B}', '${ALUNO_CAD_B}', 'Responsável B', 'resp@b.test', NULL);
+  INSERT INTO importacao (instituicao_id, tipo, nome_arquivo, arquivo_path, criado_por) VALUES
+    ('${INST_A}', 'alunos', 'a.csv', '${INST_A}/x', '${U.gestorA}'),
+    ('${INST_B}', 'alunos', 'b.csv', '${INST_B}/y', '${U.gestorB}');
+  INSERT INTO audit_log (instituicao_id, ator_id, papel, acao, entidade) VALUES
+    ('${INST_A}', '${U.gestorA}', 'admin_instituicao', 'regra.criada', 'regra_avaliativa'),
+    ('${INST_B}', '${U.gestorB}', 'admin_instituicao', 'regra.criada', 'regra_avaliativa');
+`;
+
+let banco: BancoDeTeste;
+
+beforeAll(async () => {
+  banco = await criarBancoDeTeste();
+  await banco.pg.exec(SEMENTE);
+}, 60_000);
+
+afterAll(async () => {
+  await banco?.pg.close();
+});
+
+/** Quantas linhas de cada tabela o usuário enxerga, separadas por instituição. */
+async function visao(authUid: string | null): Promise<Record<Tabela, { a: number; b: number }>> {
+  return banco.comoUsuario(authUid, async (query) => {
+    const resultado = {} as Record<Tabela, { a: number; b: number }>;
+    for (const tabela of TABELAS) {
+      const { rows } = await query<{ a: number; b: number }>(
+        `SELECT count(*) FILTER (WHERE instituicao_id = $1)::int AS a,
+                count(*) FILTER (WHERE instituicao_id = $2)::int AS b
+           FROM ${tabela}`,
+        [INST_A, INST_B],
+      );
+      resultado[tabela] = rows[0]!;
+    }
+    return resultado;
+  });
+}
+
+describe('RLS da Gestão Acadêmica', () => {
+  it('gestor lê todas as linhas da própria instituição e nenhuma da outra', async () => {
+    expect(await visao(U.gestorA)).toEqual({
+      regra_avaliativa: { a: 1, b: 0 },
+      regra_avaliativa_ativacao: { a: 1, b: 0 },
+      periodo_avaliativo: { a: 1, b: 0 },
+      disciplina: { a: 1, b: 0 },
+      turma_disciplina: { a: 2, b: 0 },
+      aluno_instituicao: { a: 2, b: 0 },
+      responsavel_aluno: { a: 2, b: 0 },
+      importacao: { a: 1, b: 0 },
+      audit_log: { a: 1, b: 0 },
+    });
+  });
+
+  it('coordenação lê como o gestor, menos a auditoria', async () => {
+    const v = await visao(U.coordA);
+    expect(v.audit_log).toEqual({ a: 0, b: 0 });
+    expect(v.aluno_instituicao).toEqual({ a: 2, b: 0 });
+    expect(v.importacao).toEqual({ a: 1, b: 0 });
+    expect(v.regra_avaliativa).toEqual({ a: 1, b: 0 });
+  });
+
+  it('professor lê a configuração da instituição e só o cadastro das turmas dele', async () => {
+    expect(await visao(U.profA)).toEqual({
+      regra_avaliativa: { a: 1, b: 0 },
+      regra_avaliativa_ativacao: { a: 1, b: 0 },
+      periodo_avaliativo: { a: 1, b: 0 },
+      disciplina: { a: 1, b: 0 },
+      turma_disciplina: { a: 1, b: 0 },
+      aluno_instituicao: { a: 1, b: 0 },
+      responsavel_aluno: { a: 0, b: 0 },
+      importacao: { a: 0, b: 0 },
+      audit_log: { a: 0, b: 0 },
+    });
+  });
+
+  it('aluno lê a configuração da instituição em que está matriculado e o próprio cadastro', async () => {
+    expect(await visao(U.alunoA)).toEqual({
+      regra_avaliativa: { a: 1, b: 0 },
+      regra_avaliativa_ativacao: { a: 1, b: 0 },
+      periodo_avaliativo: { a: 1, b: 0 },
+      disciplina: { a: 1, b: 0 },
+      turma_disciplina: { a: 0, b: 0 },
+      aluno_instituicao: { a: 1, b: 0 },
+      responsavel_aluno: { a: 0, b: 0 },
+      importacao: { a: 0, b: 0 },
+      audit_log: { a: 0, b: 0 },
+    });
+  });
+
+  it('responsável lê só o próprio registro e o cadastro do aluno ligado a ele', async () => {
+    const v = await visao(U.respA);
+    expect(v).toEqual({
+      regra_avaliativa: { a: 0, b: 0 },
+      regra_avaliativa_ativacao: { a: 0, b: 0 },
+      periodo_avaliativo: { a: 0, b: 0 },
+      disciplina: { a: 0, b: 0 },
+      turma_disciplina: { a: 0, b: 0 },
+      aluno_instituicao: { a: 1, b: 0 },
+      responsavel_aluno: { a: 1, b: 0 },
+      importacao: { a: 0, b: 0 },
+      audit_log: { a: 0, b: 0 },
+    });
+    const ids = await banco.comoUsuario(U.respA, async (query) =>
+      (await query<{ id: string }>('SELECT id FROM aluno_instituicao')).rows.map((r) => r.id),
+    );
+    expect(ids).toEqual([ALUNO_CAD_A2]);
+  });
+
+  it('usuário de outra instituição não lê nenhuma linha das tabelas novas', async () => {
+    const v = await visao(U.gestorB);
+    for (const tabela of TABELAS) {
+      expect(v[tabela].a, tabela).toBe(0);
+    }
+    // E enxerga a própria, para provar que a consulta funciona.
+    expect(v.aluno_instituicao.b).toBe(1);
+  });
+
+  it('professor independente não lê nada', async () => {
+    const v = await visao(U.profIndependente);
+    for (const tabela of TABELAS) {
+      expect(v[tabela], tabela).toEqual({ a: 0, b: 0 });
+    }
+  });
+
+  it.each(TABELAS)('anônimo é barrado em %s antes de ver qualquer linha', async (tabela) => {
+    // Os helpers de RLS só têm EXECUTE para `authenticated`: para `anon` a
+    // política nem chega a avaliar, a consulta falha.
+    await expect(
+      banco.comoUsuario(null, (query) => query(`SELECT count(*) FROM ${tabela}`)),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  it('nenhum papel escreve direto nas tabelas novas', async () => {
+    for (const tabela of ['disciplina', 'aluno_instituicao', 'importacao'] as const) {
+      await expect(
+        banco.comoUsuario(U.gestorA, (query) =>
+          query(`UPDATE ${tabela} SET atualizado_em = now() WHERE instituicao_id = $1`, [INST_A]),
+        ),
+        tabela,
+      ).resolves.toMatchObject({ affectedRows: 0 });
+    }
+    await expect(
+      banco.comoUsuario(U.gestorA, (query) =>
+        query(`INSERT INTO disciplina (instituicao_id, nome) VALUES ($1, 'Física')`, [INST_A]),
+      ),
+    ).rejects.toThrow(/row-level security/);
+  });
+});
+
+describe('tabelas só de inserção', () => {
+  it.each(['regra_avaliativa', 'regra_avaliativa_ativacao', 'audit_log'])(
+    '%s recusa UPDATE, DELETE e TRUNCATE até para o superusuário',
+    async (tabela) => {
+      const coluna = tabela === 'regra_avaliativa_ativacao' ? 'ativado_em' : 'criado_em';
+      await expect(banco.pg.query(`UPDATE ${tabela} SET ${coluna} = now()`)).rejects.toThrow(
+        /só de inserção/,
+      );
+      await expect(banco.pg.query(`DELETE FROM ${tabela}`)).rejects.toThrow(/só de inserção/);
+      await expect(banco.pg.query(`TRUNCATE ${tabela} CASCADE`)).rejects.toThrow(/só de inserção/);
+    },
+  );
+
+  it('authenticated não tem nem o privilégio de escrever nelas', async () => {
+    await expect(
+      banco.comoUsuario(U.gestorA, (query) =>
+        query(
+          `INSERT INTO audit_log (instituicao_id, acao, entidade) VALUES ($1, 'x', 'y')`,
+          [INST_A],
+        ),
+      ),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  it('versão nova não altera a anterior', async () => {
+    const antes = await banco.pg.query(`SELECT * FROM regra_avaliativa WHERE id = $1`, [REGRA_A]);
+    await banco.pg.query(
+      `INSERT INTO regra_avaliativa (instituicao_id, ano_letivo_id, versao, regra, criado_por)
+       VALUES ($1, $2, 2, '{"v":2}', $3)`,
+      [INST_A, ANO, U.gestorA],
+    );
+    const depois = await banco.pg.query(`SELECT * FROM regra_avaliativa WHERE id = $1`, [REGRA_A]);
+    expect(depois.rows).toEqual(antes.rows);
+    await expect(
+      banco.pg.query(
+        `INSERT INTO regra_avaliativa (instituicao_id, ano_letivo_id, versao, regra, criado_por)
+         VALUES ($1, $2, 2, '{}', $3)`,
+        [INST_A, ANO, U.gestorA],
+      ),
+    ).rejects.toThrow(/uq_regra_avaliativa_versao/);
+  });
+});
+
+describe('integridade entre instituições', () => {
+  it('recusa ligar turma de uma instituição à disciplina de outra', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO turma_disciplina (turma_id, disciplina_id, instituicao_id) VALUES ($1, $2, $3)`,
+        [TURMA_A1, DISC_B, INST_A],
+      ),
+    ).rejects.toThrow(/turma_disciplina_disciplina_escopo_fk/);
+  });
+
+  it('recusa ativar regra de outra instituição', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO regra_avaliativa_ativacao (regra_id, instituicao_id, ano_letivo_id, ativado_por)
+         VALUES ($1, $2, $3, $4)`,
+        [REGRA_B, INST_A, ANO, U.gestorA],
+      ),
+    ).rejects.toThrow(/regra_avaliativa_ativacao_regra_escopo_fk/);
+  });
+
+  it('recusa função de instituição em quem não é admin de instituição', async () => {
+    await expect(
+      banco.pg.query(`UPDATE usuario SET funcao_instituicao = 'gestor' WHERE id = $1`, [U.profA]),
+    ).rejects.toThrow(/ck_usuario_funcao_so_admin_instituicao/);
+  });
+});
