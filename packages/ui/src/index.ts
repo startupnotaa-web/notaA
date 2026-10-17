@@ -38,6 +38,12 @@ export { EmptyState } from './components/EmptyState';
 export type { EmptyStateProps } from './components/EmptyState';
 export { Aurora } from './components/Aurora';
 export type { AuroraProps } from './components/Aurora';
+export { Dialog } from './components/Dialog';
+export type { DialogProps } from './components/Dialog';
+export { Toaster, toast, dismiss } from './components/Toast';
+export type { ToastVariant } from './components/Toast';
+export { Menu } from './components/Menu';
+export type { MenuProps, MenuItem } from './components/Menu';
 
 // Primitivos anteriores, ainda em uso nas telas de aluno e família.
 

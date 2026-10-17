@@ -65,3 +65,24 @@ body {
     transform: scale(1.2);
   }
 }
+
+/* Entradas do que flutua (Dialog, Menu, Toast). A duração e o easing vêm dos tokens, no componente. */
+@keyframes na-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes na-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
