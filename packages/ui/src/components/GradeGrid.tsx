@@ -84,7 +84,7 @@ export function GradeGrid({
       tabIndex={0}
       role="region"
       aria-label={typeof caption === 'string' ? caption : 'Grade de notas'}
-      className={cn('max-w-full overflow-auto rounded-lg border border-line bg-surface', FOCO)}
+      className={cn('relative max-w-full overflow-auto rounded-lg border border-line bg-surface', FOCO)}
     >
       <table className="min-w-full border-separate border-spacing-0 font-text text-sm leading-[22px]">
         {caption ? (

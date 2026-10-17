@@ -28,6 +28,11 @@ describe('Table', () => {
     expect(screen.getByRole('region', { name: 'Alunos da turma' })).toHaveFocus();
   });
 
+  it('o wrapper é posicionado: filhos absolutos (sr-only) não escapam da rolagem e alargam a página', () => {
+    montar();
+    expect(screen.getByRole('region').className).toContain('relative');
+  });
+
   it('a legenda pode ficar só para leitor de tela', () => {
     montar({ captionOculta: true });
     expect(screen.getByText('Alunos da turma', { selector: 'caption' })).toHaveClass('sr-only');

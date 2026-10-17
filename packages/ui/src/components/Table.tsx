@@ -20,7 +20,8 @@ export const Table = React.forwardRef<HTMLTableElement, TableProps>(function Tab
       tabIndex={0}
       role={typeof caption === 'string' ? 'region' : undefined}
       aria-label={typeof caption === 'string' ? caption : undefined}
-      className="w-full overflow-x-auto rounded-lg border border-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      // `relative` prende ao wrapper os filhos absolutos (sr-only), que senão escapam do overflow e alargam a página.
+      className="relative w-full overflow-x-auto rounded-lg border border-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <table
         ref={ref}

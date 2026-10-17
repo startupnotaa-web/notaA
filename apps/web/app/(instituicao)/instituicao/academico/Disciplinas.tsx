@@ -93,7 +93,7 @@ export function Disciplinas() {
   return (
     <div className="space-y-10">
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Disciplinas</h2>
           {disciplinas === null ? (
             <Skeleton className="h-40 w-full" />

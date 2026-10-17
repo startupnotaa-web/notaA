@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint . --max-warnings=0 && node ../../scripts/verificar-cores.mjs",
     "typecheck": "tsc --noEmit",
-    "icones": "node scripts/gerar-icones.mjs"
+    "icones": "node scripts/gerar-icones.mjs",
+    "e2e": "playwright test e2e/a11y.spec.ts",
+    "e2e:lighthouse": "playwright test e2e/lighthouse.spec.ts"
   },
   "dependencies": {
     "@notaa/contracts": "workspace:*",

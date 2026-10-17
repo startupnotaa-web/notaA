@@ -46,7 +46,7 @@ flowchart TD
     IA --> OB
     I --> LLM
     CB --> DB
-    classDef gate fill:#310A62,stroke:#D022E3,color:#fff;
+    classDef gate stroke-width:3px,stroke-dasharray:5 3;
     class I gate;
 ```
 
