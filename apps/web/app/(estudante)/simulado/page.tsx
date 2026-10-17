@@ -430,7 +430,7 @@ function GradeNavegacao({
                 'aspect-square rounded-md border text-xs font-semibold transition',
                 i === indice && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-2',
                 respondida
-                  ? 'border-brand-primary bg-brand-primary text-white'
+                  ? 'border-primary bg-primary text-primary-on'
                   : 'border-border bg-surface text-text-muted hover:border-brand-primary',
               )}
             >

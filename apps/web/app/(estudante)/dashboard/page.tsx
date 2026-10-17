@@ -6,7 +6,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardResponse, Eixo4D } from '@notaa/contracts';
-import { Badge, Card, CardHeader, SectionHeader, Skeleton } from '@notaa/ui';
+import { Flame, Trophy } from 'lucide-react';
+import { Aurora, Badge, Button, ButtonLink, Card, CardHeader, SectionHeader, Skeleton } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 
 // Mapeia o id de curso coletado no onboarding (objetivoEnem) para um rótulo legível.
@@ -125,7 +126,9 @@ export default function DashboardPage() {
                 Não perca seu ritmo! Estude mais 20 minutos hoje no Quiz ou Tutor Socrático e recupere sua ofensiva!
               </p>
             </div>
-            <button 
+            <Button
+              variant="secondary"
+              className="mt-4 shrink-0 sm:mt-0"
               onClick={async () => {
                 try {
                   await apiFetch('/me/recover-streak', { method: 'POST' });
@@ -134,19 +137,18 @@ export default function DashboardPage() {
                   setErro('Falha ao recuperar ofensiva');
                 }
               }}
-              className="mt-4 shrink-0 rounded-full bg-warning px-6 py-2 text-sm font-bold text-warning-foreground transition-transform hover:scale-105 sm:mt-0"
             >
-              Recuperar Ofensiva
-            </button>
+              Recuperar ofensiva
+            </Button>
           </CardHeader>
         </Card>
       )}
 
       {/* Card de Gamificação Premium (Passo C) */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary/30 via-surface to-brand-accent/30 p-[1px] shadow-lg">
-        <div className="flex flex-col gap-5 rounded-2xl bg-surface/70 p-6 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+      <Aurora className="rounded-lg border border-line">
+        <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-brand text-2xl font-bold text-white">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-violet-tint font-display text-2xl font-semibold text-primary">
               {nivel.atual}
             </div>
             <div>
@@ -163,13 +165,13 @@ export default function DashboardPage() {
              <ProgressBar fraction={nivel.progresso} />
           </div>
 
-          <div className="flex flex-col items-center justify-center rounded-xl bg-surface-2/60 px-5 py-3 border border-white/5">
-             <span className="text-2xl drop-shadow-md" aria-hidden="true">🔥</span>
-             <span className="text-xl font-extrabold text-warning">{streak.diasConsecutivos}</span>
-             <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Ofensiva</span>
+          <div className="flex flex-col items-center justify-center rounded-lg border border-line bg-surface px-5 py-3">
+             <Flame aria-hidden="true" className="h-6 w-6 text-warning" />
+             <span className="font-display text-xl font-semibold tabular-nums text-ink">{streak.diasConsecutivos}</span>
+             <span className="text-[12.5px] leading-[18px] text-ink-muted">Ofensiva</span>
           </div>
         </div>
-      </div>
+      </Aurora>
 
 
 
@@ -205,15 +207,13 @@ export default function DashboardPage() {
       <section className="space-y-6 pt-6">
         <div className="flex flex-col items-center justify-center text-center space-y-4 rounded-3xl bg-surface-2 p-8 border border-brand-primary/20 shadow-lg relative overflow-hidden">
            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-primary/10 blur-[80px] pointer-events-none" />
-           <h2 className="text-2xl font-black text-text">Pronto para o próximo passo?</h2>
+           <h2 className="font-display text-2xl font-semibold leading-8 text-ink">Pronto para o próximo passo?</h2>
            <p className="text-text-muted max-w-md">Continue sua jornada de estudos pelas trilhas sugeridas pela IA ou escolha uma ferramenta prática no Hub de Estudos.</p>
            
            <div className="flex flex-col sm:flex-row gap-4 w-full justify-center pt-2">
-              <Link href="/estudo" className="w-full sm:w-auto">
-                 <button className="w-full rounded-full bg-brand-primary px-8 py-4 text-sm font-bold text-brand-primary-foreground transition-all hover:bg-brand-primary-hover hover:scale-105 focus:outline-none focus:ring-4 focus:ring-brand-primary/50">
-                    Continuar Estudando →
-                 </button>
-              </Link>
+              <ButtonLink as={Link} href="/estudo" className="w-full sm:w-auto">
+                Continuar estudando
+              </ButtonLink>
            </div>
         </div>
       </section>
@@ -222,13 +222,14 @@ export default function DashboardPage() {
       
       {/* Toast Animado */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 flex animate-in slide-in-from-bottom-5 items-center gap-3 rounded-2xl bg-gradient-brand p-4 text-white shadow-xl">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-xl font-bold backdrop-blur-md">
-             🎉
-          </div>
+        <div
+          role="status"
+          className="fixed bottom-24 right-4 z-50 flex items-center gap-3 rounded-lg border border-line bg-surface p-4 text-ink shadow-raise"
+        >
+          <Trophy aria-hidden="true" className="h-6 w-6 shrink-0 text-primary" />
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-brand-primary-content opacity-90">Nova Conquista</p>
-            <p className="text-lg font-extrabold">{toastMsg.msg}</p>
+            <p className="text-sm font-bold text-ink-muted">Nova conquista</p>
+            <p className="font-display text-[19px] font-semibold leading-[26px]">{toastMsg.msg}</p>
           </div>
         </div>
       )}

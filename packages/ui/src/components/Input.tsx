@@ -17,11 +17,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
       ref={ref}
       aria-invalid={ariaInvalid ?? (error || undefined)}
       className={cn(
-        'min-h-[44px] w-full rounded-md border bg-surface px-3 py-2 text-base text-text',
-        'placeholder:text-text-muted',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
-        'disabled:opacity-50 disabled:pointer-events-none',
-        error ? 'border-error' : 'border-border',
+        'min-h-[44px] w-full rounded-sm border bg-surface px-3 py-2 font-text text-base text-ink',
+        'placeholder:text-ink-muted',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+        'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
+        'disabled:pointer-events-none disabled:bg-surface-sunken disabled:text-ink-muted',
+        error ? 'border-2 border-danger' : 'border-line-strong',
         className,
       )}
       {...props}

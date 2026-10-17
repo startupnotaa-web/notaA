@@ -8,7 +8,7 @@ import {
   type RegraAvaliativa,
   type SimularRegraResponse,
 } from '@notaa/contracts';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@notaa/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Chip, Notice, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { formatarNota, SITUACAO } from './regra';
 
@@ -85,13 +85,11 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
       </CardHeader>
       <CardContent className="space-y-5">
         {!valida ? (
-          <p className="rounded-md border border-warning p-3 text-sm text-text">
+          <p className="rounded-md border border-warning p-3 text-sm text-ink">
             Corrija os campos da regra para ver a simulação.
           </p>
         ) : erro ? (
-          <p role="alert" className="text-sm text-error">
-            {erro}
-          </p>
+          <Notice tone="danger">{erro}</Notice>
         ) : null}
 
         {/* Um anúncio só, com a situação de cada aluno, em vez de três regiões
@@ -107,88 +105,77 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
           const r = resultado?.resultados[i];
           const situacao = r && !r.erro ? SITUACAO[r.situacao] : null;
           return (
-            <fieldset key={i} className="space-y-3 rounded-lg border border-border p-3">
-              <legend className="px-1 text-sm font-semibold text-text">{a.rotulo}</legend>
+            <fieldset key={i} className="space-y-3 rounded-lg border border-line p-3">
+              <legend className="px-1 text-sm font-semibold text-ink">{a.rotulo}</legend>
               <div className="grid grid-cols-2 gap-2">
                 {Array.from({ length: periodos }, (_, p) => (
-                  <div key={p} className="space-y-1">
-                    <Label htmlFor={`sim-${i}-${p}`} className="text-xs text-text-muted">
-                      Notas do {p + 1}º período
-                    </Label>
-                    <Input
-                      id={`sim-${i}-${p}`}
-                      value={a.notas[p] ?? ''}
-                      onChange={(e) => {
-                        const notas = [...a.notas];
-                        notas[p] = e.target.value;
-                        mudar(i, { notas });
-                      }}
-                    />
-                  </div>
-                ))}
-                <div className="space-y-1">
-                  <Label htmlFor={`sim-${i}-freq`} className="text-xs text-text-muted">
-                    Frequência (%)
-                  </Label>
-                  <Input
-                    id={`sim-${i}-freq`}
-                    inputMode="decimal"
-                    value={a.frequencia}
-                    onChange={(e) => mudar(i, { frequencia: e.target.value })}
+                  <TextField
+                    key={p}
+                    label={`Notas do ${p + 1}º período`}
+                    id={`sim-${i}-${p}`}
+                    value={a.notas[p] ?? ''}
+                    onChange={(e) => {
+                      const notas = [...a.notas];
+                      notas[p] = e.target.value;
+                      mudar(i, { notas });
+                    }}
                   />
-                </div>
+                ))}
+                <TextField
+                  label="Frequência (%)"
+                  id={`sim-${i}-freq`}
+                  inputMode="decimal"
+                  value={a.frequencia}
+                  onChange={(e) => mudar(i, { frequencia: e.target.value })}
+                />
                 {regra.recuperacao.final ? (
-                  <div className="space-y-1">
-                    <Label htmlFor={`sim-${i}-rec`} className="text-xs text-text-muted">
-                      Nota da final
-                    </Label>
-                    <Input
-                      id={`sim-${i}-rec`}
-                      inputMode="decimal"
-                      value={a.recuperacaoFinal}
-                      onChange={(e) => mudar(i, { recuperacaoFinal: e.target.value })}
-                    />
-                  </div>
+                  <TextField
+                    label="Nota da final"
+                    id={`sim-${i}-rec`}
+                    inputMode="decimal"
+                    value={a.recuperacaoFinal}
+                    onChange={(e) => mudar(i, { recuperacaoFinal: e.target.value })}
+                  />
                 ) : null}
               </div>
               {regra.conselhoDeClasse.habilitado ? (
-                <label className="flex min-h-[44px] items-center gap-2 text-sm text-text">
+                <label className="flex min-h-[44px] items-center gap-2 text-sm text-ink">
                   <input
                     type="checkbox"
                     checked={a.conselhoAprova}
                     onChange={(e) => mudar(i, { conselhoAprova: e.target.checked })}
-                    className="h-5 w-5 accent-[var(--brand-secondary)]"
+                    className="h-5 w-5 accent-primary"
                   />
                   Conselho decide aprovar
                 </label>
               ) : null}
 
-              <div className="space-y-1 border-t border-border pt-2 text-sm">
+              <div className="space-y-1 border-t border-line pt-2 text-sm">
                 {r?.erro ? (
-                  <p className="text-error">{r.erro}</p>
+                  <p className="text-danger">{r.erro}</p>
                 ) : r ? (
                   <>
-                    <p className="text-text-muted">
-                      Períodos: <span className="text-text">{r.notasPeriodo.map(formatarNota).join(' · ')}</span>
+                    <p className="text-ink-muted">
+                      Períodos: <span className="text-ink">{r.notasPeriodo.map(formatarNota).join(' · ')}</span>
                     </p>
                     <p className="flex flex-wrap items-center gap-2">
-                      <span className="text-text-muted">Média final</span>
-                      <strong className="text-lg text-text">{formatarNota(r.mediaFinal)}</strong>
-                      {r.conceito ? <span className="text-text">({r.conceito})</span> : null}
+                      <span className="text-ink-muted">Média final</span>
+                      <strong className="text-lg text-ink">{formatarNota(r.mediaFinal)}</strong>
+                      {r.conceito ? <span className="text-ink">({r.conceito})</span> : null}
                       {r.mediaAposRecuperacao !== null ? (
-                        <span className="text-text-muted">→ {formatarNota(r.mediaAposRecuperacao)} após a final</span>
+                        <span className="text-ink-muted">→ {formatarNota(r.mediaAposRecuperacao)} após a final</span>
                       ) : null}
                     </p>
-                    {situacao ? <Badge variant={situacao.variante}>{situacao.rotulo}</Badge> : null}
+                    {situacao ? <Chip tone={situacao.variante}>{situacao.rotulo}</Chip> : null}
                   </>
                 ) : (
-                  <p className="text-text-muted">Calculando…</p>
+                  <p className="text-ink-muted">Calculando…</p>
                 )}
               </div>
             </fieldset>
           );
         })}
-        <Button variant="quiet" size="sm" onClick={() => setAlunos(EXEMPLOS)}>
+        <Button variant="quiet" onClick={() => setAlunos(EXEMPLOS)}>
           Restaurar exemplos
         </Button>
       </CardContent>

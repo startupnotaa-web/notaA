@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AlunoDaTurma, IndicadorDeTurma, SolicitacaoPendente } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Skeleton, cn } from '@notaa/ui';
+import { Button, Card, CardHeader, Chip, Skeleton, Tabs, propsDoPainel, Notice } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 import { useUser } from '../../../lib/user-context';
 import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
@@ -55,7 +55,7 @@ export default function ProfessorPainelPage() {
   if (loading) {
     return (
       <div>
-        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-lg" />
       </div>
     );
   }
@@ -74,35 +74,21 @@ export default function ProfessorPainelPage() {
 
   return (
     <div className="space-y-6">
-      <div
-        role="tablist"
-        aria-label="Seções do painel"
-        className="flex gap-1 overflow-x-auto border-b border-border"
-      >
-        {ABAS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            role="tab"
-            aria-selected={aba === a.id}
-            onClick={() => setAba(a.id)}
-            className={cn(
-              'whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors',
-              aba === a.id
-                ? 'border-brand-primary text-brand-primary'
-                : 'border-transparent text-text-muted hover:text-text',
-            )}
-          >
-            {a.rotulo}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções do painel"
+        idBase="professor"
+        tabs={ABAS.map((a) => ({ id: a.id, label: a.rotulo }))}
+        value={aba}
+        onChange={(id) => setAba(id as typeof aba)}
+      />
 
+      <div {...propsDoPainel('professor', aba)} className="space-y-6">
       {aba === 'turmas' && <TurmasQueLeciono ehIndependente />}
       {/* Professor independente não administra quadro de professores: ele já é o
           professor das turmas dele, e a API recusaria esses controles. */}
       {aba === 'gestao' && <GestaoDeTurmas podeGerenciarProfessores={false} />}
       {aba === 'anos' && <GestaoDeAnosLetivos />}
+      </div>
     </div>
   );
 }
@@ -140,25 +126,23 @@ function TurmasQueLeciono({ ehIndependente }: { ehIndependente: boolean }) {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-text">Suas turmas</h1>
-        <p className="text-sm text-text-muted">
+        <h1 className="font-display text-[32px] font-semibold leading-10 tracking-[-0.01em] text-ink">Suas turmas</h1>
+        <p className="text-sm text-ink-muted">
           Você vê apenas as turmas em que leciona, e apenas o que cada aluno gerou depois de entrar
           nelas.
         </p>
       </header>
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
 
       {turmas === null ? (
-        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-lg" />
       ) : turmas.length === 0 ? (
         <Card>
           <CardHeader>
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-muted">
               {ehIndependente
                 ? 'Você ainda não tem turmas. Crie a primeira na aba "Gerenciar turmas" — antes disso, é preciso ter um ano letivo.'
                 : 'Você ainda não está vinculado a nenhuma turma. A instituição é que cria as turmas e vincula você a elas.'}
@@ -175,37 +159,37 @@ function TurmasQueLeciono({ ehIndependente }: { ehIndependente: boolean }) {
                   <CardHeader>
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-bold text-text">{t.nome}</p>
-                        <Badge variant="neutral">{t.anoLetivoRotulo}</Badge>
+                        <p className="font-bold text-ink">{t.nome}</p>
+                        <Chip tone="neutral">{t.anoLetivoRotulo}</Chip>
                       </div>
                       <dl className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <dt className="text-text-muted">Alunos</dt>
-                          <dd className="font-semibold text-text">{t.alunosAtivos}</dd>
+                          <dt className="text-ink-muted">Alunos</dt>
+                          <dd className="font-semibold text-ink">{t.alunosAtivos}</dd>
                         </div>
                         <div>
-                          <dt className="text-text-muted">Média XP</dt>
-                          <dd className="font-semibold text-text">
+                          <dt className="text-ink-muted">Média XP</dt>
+                          <dd className="font-semibold text-ink">
                             {t.mediaXp.toLocaleString('pt-BR')}
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-text-muted">Sem acesso (7d)</dt>
-                          <dd className="font-semibold text-text">{t.alunosSemAcesso7d}</dd>
+                          <dt className="text-ink-muted">Sem acesso (7d)</dt>
+                          <dd className="font-semibold text-ink">{t.alunosSemAcesso7d}</dd>
                         </div>
                         <div>
-                          <dt className="text-text-muted">Pendentes</dt>
-                          <dd className="font-semibold text-text">{t.solicitacoesPendentes}</dd>
+                          <dt className="text-ink-muted">Pendentes</dt>
+                          <dd className="font-semibold text-ink">{t.solicitacoesPendentes}</dd>
                         </div>
                       </dl>
                       {t.areaMaisFragil && (
-                        <p className="text-xs text-text-muted">
+                        <p className="text-[12.5px] leading-[18px] text-ink-muted">
                           Área mais frágil:{' '}
                           {ROTULO_AREA[t.areaMaisFragil.area] ?? t.areaMaisFragil.area} ·{' '}
                           {porcentagem(t.areaMaisFragil.mediaAcertos)} de acerto
                         </p>
                       )}
-                      <Button variant="secondary" size="sm" onClick={() => setTurmaAberta(t)}>
+                      <Button variant="secondary" onClick={() => setTurmaAberta(t)}>
                         Abrir turma
                       </Button>
                     </div>
@@ -228,12 +212,12 @@ function Alertas({ turmas }: { turmas: readonly IndicadorDeTurma[] }) {
   if (pendentes.length === 0 && semAcesso.length === 0) return null;
 
   return (
-    <Card className="border-brand-primary/20 bg-brand-primary/5">
+    <Card className="border-primary/20 bg-primary/5">
       <CardHeader>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
+        <p className="text-[12.5px] font-bold text-primary">
           Precisa de você
         </p>
-        <ul className="mt-2 space-y-1 text-sm text-text">
+        <ul className="mt-2 space-y-1 text-sm text-ink">
           {pendentes.map((t) => (
             <li key={`p-${t.turmaId}`}>
               {t.solicitacoesPendentes} aluno(s) aguardando aprovação em {t.nome}.
@@ -321,10 +305,10 @@ function VisaoDaTurma({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-text">{turma.nome}</h1>
-          <p className="text-sm text-text-muted">Ano letivo {turma.anoLetivoRotulo}</p>
+          <h1 className="font-display text-[32px] font-semibold leading-10 tracking-[-0.01em] text-ink">{turma.nome}</h1>
+          <p className="text-sm text-ink-muted">Ano letivo {turma.anoLetivoRotulo}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={onVoltar}>
+        <Button variant="secondary" onClick={onVoltar}>
           Voltar
         </Button>
       </div>
@@ -338,36 +322,35 @@ function VisaoDaTurma({
         ].map((i) => (
           <Card key={i.rotulo}>
             <CardHeader>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+              <p className="text-[12.5px] font-bold text-ink-muted">
                 {i.rotulo}
               </p>
-              <p className="mt-1 text-2xl font-extrabold text-text">{i.valor}</p>
+              <p className="mt-1 text-2xl font-extrabold text-ink">{i.valor}</p>
             </CardHeader>
           </Card>
         ))}
       </div>
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Entradas pendentes</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Entradas pendentes</h2>
         {pendentes === null ? (
           <Skeleton className="h-16 w-full rounded-lg" />
         ) : pendentes.length === 0 ? (
-          <p className="text-sm text-text-muted">Nenhuma solicitação aguardando.</p>
+          <p className="text-sm text-ink-muted">Nenhuma solicitação aguardando.</p>
         ) : (
           <Card>
             <CardHeader>
               <ul className="space-y-1">
                 {pendentes.map((s) => (
                   <li key={s.estudanteId}>
-                    <label className="flex items-center gap-2 text-sm text-text">
+                    <label className="flex min-h-[44px] items-center gap-3 text-sm text-ink">
                       <input
                         type="checkbox"
+                        className="h-5 w-5 accent-primary"
                         checked={selecionados.includes(s.estudanteId)}
                         onChange={(ev) =>
                           setSelecionados((atual) =>
@@ -378,20 +361,20 @@ function VisaoDaTurma({
                         }
                       />
                       <span>{s.nome ?? 'Sem nome'}</span>
-                      <span className="text-xs text-text-muted">
+                      <span className="text-[12.5px] leading-[18px] text-ink-muted">
                         {new Date(s.solicitadoEm).toLocaleDateString('pt-BR')}
                       </span>
                     </label>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-text-muted">
+              <p className="mt-3 text-[12.5px] leading-[18px] text-ink-muted">
                 A partir da aprovação você passa a ver o rendimento do aluno. Nada anterior a ela fica
                 visível.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
-                  size="sm"
+                 
                   disabled={enviando || selecionados.length === 0}
                   onClick={() => void decidir('aprovar')}
                 >
@@ -399,7 +382,7 @@ function VisaoDaTurma({
                 </Button>
                 <Button
                   variant="secondary"
-                  size="sm"
+                 
                   disabled={enviando || selecionados.length === 0}
                   onClick={() => void decidir('recusar')}
                 >
@@ -412,11 +395,11 @@ function VisaoDaTurma({
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Seus alunos</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Seus alunos</h2>
         {alunos === null ? (
-          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-lg" />
         ) : alunos.length === 0 ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-ink-muted">
             Nenhum aluno aprovado ainda. Alunos aparecem depois de entrarem com o código e você
             aprovar.
           </p>
@@ -424,7 +407,7 @@ function VisaoDaTurma({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[38rem] border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-text-muted">
+                <tr className="border-b border-line text-left text-ink-muted">
                   <th className="px-3 py-2 font-semibold">Aluno</th>
                   <th className="px-3 py-2 font-semibold">Situação</th>
                   <th className="px-3 py-2 font-semibold">Último acesso</th>
@@ -435,22 +418,22 @@ function VisaoDaTurma({
               </thead>
               <tbody>
                 {alunos.map((a) => (
-                  <tr key={a.estudanteId} className="border-b border-border/50">
-                    <td className="px-3 py-2 font-semibold text-text">{a.nome ?? 'Sem nome'}</td>
+                  <tr key={a.estudanteId} className="border-b border-line">
+                    <td className="px-3 py-2 font-semibold text-ink">{a.nome ?? 'Sem nome'}</td>
                     <td className="px-3 py-2">
                       <RiskBadge risco={a.risco} />
                     </td>
-                    <td className="px-3 py-2 text-text-muted">
+                    <td className="px-3 py-2 text-ink-muted">
                       {a.ultimoAcessoEm
                         ? new Date(a.ultimoAcessoEm).toLocaleDateString('pt-BR')
                         : 'Nunca'}
                     </td>
-                    <td className="px-3 py-2 text-text">{a.streak}</td>
-                    <td className="px-3 py-2 text-text">{a.xpTotal.toLocaleString('pt-BR')}</td>
+                    <td className="px-3 py-2 text-ink">{a.streak}</td>
+                    <td className="px-3 py-2 text-ink">{a.xpTotal.toLocaleString('pt-BR')}</td>
                     <td className="px-3 py-2">
                       <Button
                         variant="quiet"
-                        size="sm"
+                       
                         onClick={() => setAlunoAberto(a.estudanteId)}
                       >
                         Abrir
@@ -462,7 +445,7 @@ function VisaoDaTurma({
             </table>
           </div>
         )}
-        <p className="text-xs text-text-muted">
+        <p className="text-[12.5px] leading-[18px] text-ink-muted">
           A situação considera engajamento, não nota. Cada aluno aparece a partir da data em que a
           entrada dele nesta turma foi aprovada.
         </p>

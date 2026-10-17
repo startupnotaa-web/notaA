@@ -177,7 +177,7 @@ export default function ComunidadePage() {
                  <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold", 
-                         post.tipo === 'conquista' ? 'bg-brand-primary text-brand-primary-foreground' : 'bg-surface-3 text-text-muted'
+                         post.tipo === 'conquista' ? 'bg-brand-primary text-primary-on' : 'bg-surface-3 text-text-muted'
                        )}>
                          {post.autor === 'Sistema' ? '🏆' : post.autor.charAt(0)}
                        </div>

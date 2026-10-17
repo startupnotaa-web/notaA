@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/ui';
+import { Chip, Button, Card, CardHeader, Skeleton, TextField, Notice } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
@@ -73,34 +73,9 @@ export function GestaoDeAnosLetivos() {
             className="space-y-3"
           >
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1">
-                <Label htmlFor="rotulo-ano">Ano letivo</Label>
-                <Input
-                  id="rotulo-ano"
-                  value={rotulo}
-                  onChange={(ev) => setRotulo(ev.target.value)}
-                  placeholder="2026"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="inicio-ano">Início</Label>
-                <Input
-                  id="inicio-ano"
-                  type="date"
-                  value={dataInicio}
-                  onChange={(ev) => setDataInicio(ev.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="fim-ano">Fim</Label>
-                <Input
-                  id="fim-ano"
-                  type="date"
-                  value={dataFim}
-                  onChange={(ev) => setDataFim(ev.target.value)}
-                />
-              </div>
+              <TextField label="Ano letivo" id="rotulo-ano" value={rotulo} onChange={(ev) => setRotulo(ev.target.value)} placeholder="2026" required />
+              <TextField label="Início" id="inicio-ano" type="date" value={dataInicio} onChange={(ev) => setDataInicio(ev.target.value)} />
+              <TextField label="Fim" id="fim-ano" type="date" value={dataFim} onChange={(ev) => setDataFim(ev.target.value)} />
             </div>
             <Button type="submit" disabled={enviando || rotulo.trim().length < 2}>
               Criar ano letivo
@@ -110,15 +85,13 @@ export function GestaoDeAnosLetivos() {
       </Card>
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
 
       {anos === null ? (
-        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-lg" />
       ) : anos.length === 0 ? (
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-ink-muted">
           Nenhum ano letivo. Crie um para poder criar turmas.
         </p>
       ) : (
@@ -130,10 +103,10 @@ export function GestaoDeAnosLetivos() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-text">{a.rotulo}</p>
-                        {a.arquivado && <Badge variant="neutral">Arquivado</Badge>}
+                        <p className="font-bold text-ink">{a.rotulo}</p>
+                        {a.arquivado && <Chip tone="neutral">Arquivado</Chip>}
                       </div>
-                      <p className="text-sm text-text-muted">
+                      <p className="text-sm text-ink-muted">
                         {a.dataInicio && a.dataFim
                           ? `${new Date(a.dataInicio).toLocaleDateString('pt-BR')} a ${new Date(a.dataFim).toLocaleDateString('pt-BR')}`
                           : 'Datas não definidas'}
@@ -141,7 +114,7 @@ export function GestaoDeAnosLetivos() {
                     </div>
                     <Button
                       variant="secondary"
-                      size="sm"
+                     
                       disabled={enviando}
                       onClick={() =>
                         void mutar(
@@ -164,7 +137,7 @@ export function GestaoDeAnosLetivos() {
         </ul>
       )}
 
-      <p className="text-xs text-text-muted">
+      <p className="text-[12.5px] leading-[18px] text-ink-muted">
         Ao arquivar um ano, as turmas dele ficam somente leitura com o histórico preservado. Os alunos
         não são migrados: no ano novo, cada um entra com o código da turma nova.
       </p>

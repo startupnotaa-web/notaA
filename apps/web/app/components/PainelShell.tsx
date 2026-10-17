@@ -63,17 +63,17 @@ export function PainelShell({
 
   if (carregando || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paper">
-        <p className="text-ink-muted">Carregando…</p>
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-paper">
+        <p role="status" className="text-ink-muted">Carregando…</p>
+      </main>
     );
   }
 
   if (!autorizado) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paper">
-        <p className="text-ink-muted">Verificando permissões…</p>
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-paper">
+        <p role="status" className="text-ink-muted">Verificando permissões…</p>
+      </main>
     );
   }
 

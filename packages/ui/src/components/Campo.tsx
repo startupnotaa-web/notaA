@@ -49,6 +49,8 @@ export const classesDoControle = (comErro: boolean) =>
     'min-h-[44px] w-full rounded-sm border bg-surface px-3 font-text text-base leading-6 text-ink',
     'transition-colors duration-fast ease-[var(--ease-out)] placeholder:text-ink-muted',
     'disabled:bg-surface-sunken disabled:text-ink-muted',
+    // focus-within cobre o <input type=date>, onde o foco mora num campo interno e o :focus-visible não chega ao elemento.
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+    'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
     comErro ? 'border-2 border-danger' : 'border-line-strong',
   );

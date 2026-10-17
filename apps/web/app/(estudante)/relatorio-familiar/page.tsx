@@ -100,7 +100,7 @@ export default function RelatorioFamiliarPage() {
       <Card id="relatorio-card" className="overflow-hidden border-brand-primary/20 bg-surface-2 p-0 shadow-lg print:shadow-none print:border-none print:bg-transparent">
         
         {/* Top Header do Card */}
-        <div className="bg-brand-primary p-6 text-brand-primary-foreground text-center space-y-2">
+        <div className="bg-brand-primary p-6 text-primary-on text-center space-y-2">
            <h2 className="text-sm font-bold uppercase tracking-widest opacity-80">Boletim de Progresso</h2>
            <p className="text-3xl font-black">{nomeAluno}</p>
            <p className="text-sm opacity-90">Plataforma Nota A • {new Date().toLocaleDateString('pt-BR')}</p>

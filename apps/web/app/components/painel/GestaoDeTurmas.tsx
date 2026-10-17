@@ -9,7 +9,7 @@ import type {
   SolicitacaoPendente,
   Turma,
 } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/ui';
+import { Button, Card, CardHeader, Chip, Notice, Select, Skeleton, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
@@ -94,26 +94,20 @@ export function GestaoDeTurmas({
       <Card>
         <CardHeader>
           <form onSubmit={criarTurma} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="nome-turma">Criar turma</Label>
-              <Input
-                id="nome-turma"
-                value={nomeNovo}
-                onChange={(ev) => setNomeNovo(ev.target.value)}
-                placeholder="Ex.: 3º ano B"
-                required
-                disabled={!anoAtual}
-              />
-              {anoAtual ? (
-                <p className="text-xs text-text-muted">
-                  Será criada no ano letivo {anoAtual.rotulo}, já com código de convite.
-                </p>
-              ) : (
-                <p className="text-xs text-text-muted">
-                  Crie um ano letivo na aba Ano letivo antes de criar turmas.
-                </p>
-              )}
-            </div>
+            <TextField
+              label="Criar turma"
+              id="nome-turma"
+              value={nomeNovo}
+              onChange={(ev) => setNomeNovo(ev.target.value)}
+              placeholder="Ex.: 3º ano B"
+              required
+              disabled={!anoAtual}
+              hint={
+                anoAtual
+                  ? `Será criada no ano letivo ${anoAtual.rotulo}, já com código de convite.`
+                  : 'Crie um ano letivo na aba Ano letivo antes de criar turmas.'
+              }
+            />
             <Button type="submit" disabled={criando || !anoAtual || nomeNovo.trim().length < 2}>
               {criando ? 'Criando…' : 'Criar turma'}
             </Button>
@@ -122,15 +116,13 @@ export function GestaoDeTurmas({
       </Card>
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
 
       {turmas === null ? (
-        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-lg" />
       ) : turmas.length === 0 ? (
-        <p className="text-sm text-text-muted">Nenhuma turma ainda.</p>
+        <p className="text-sm text-ink-muted">Nenhuma turma ainda.</p>
       ) : (
         <ul className="space-y-3">
           {turmas.map((t) => (
@@ -189,47 +181,47 @@ function CartaoTurma({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-bold text-text">{turma.nome}</p>
-              <Badge variant="neutral">{turma.anoLetivo.rotulo}</Badge>
-              {turma.arquivada && <Badge variant="neutral">Arquivada</Badge>}
+              <p className="font-bold text-ink">{turma.nome}</p>
+              <Chip tone="neutral">{turma.anoLetivo.rotulo}</Chip>
+              {turma.arquivada && <Chip tone="neutral">Arquivada</Chip>}
               {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
-                <Badge variant="neutral">Sem professor</Badge>
+                <Chip tone="neutral">Sem professor</Chip>
               )}
             </div>
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-muted">
               {turma.quantidadeDeAlunos} aluno(s) · {turma.quantidadeDeProfessores} professor(es)
               {turma.solicitacoesPendentes > 0 && ` · ${turma.solicitacoesPendentes} pendente(s)`}
             </p>
             {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
-              <p className="text-xs text-text-muted">
+              <p className="text-[12.5px] leading-[18px] text-ink-muted">
                 Vincule um professor para a turma aceitar alunos.
               </p>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={onAlternar}>
+            <Button variant="secondary" onClick={onAlternar}>
               {expandida ? 'Fechar' : 'Gerenciar'}
             </Button>
           </div>
         </div>
 
         {expandida && (
-          <div className="mt-4 space-y-5 border-t border-border pt-4">
+          <div className="mt-4 space-y-5 border-t border-line pt-4">
             <div className="space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+              <p className="text-[12.5px] font-bold text-ink-muted">
                 Código de convite
               </p>
               {turma.codigoConvite ? (
-                <p className="font-mono text-2xl font-bold tracking-widest text-text">
+                <p className="font-mono font-display text-2xl font-semibold leading-8 text-ink">
                   {turma.codigoConvite}
                 </p>
               ) : (
-                <p className="text-sm text-text-muted">Sem código ativo.</p>
+                <p className="text-sm text-ink-muted">Sem código ativo.</p>
               )}
-              <p className="text-xs text-text-muted">
+              <p className="text-[12.5px] leading-[18px] text-ink-muted">
                 Gerar um código novo invalida o anterior. Quem já está na turma não é afetado.
               </p>
-              <Button variant="secondary" size="sm" onClick={() => void onRegenerarCodigo()}>
+              <Button variant="secondary" onClick={() => void onRegenerarCodigo()}>
                 Gerar código novo
               </Button>
             </div>
@@ -240,11 +232,11 @@ function CartaoTurma({
 
             <Solicitacoes turmaId={turma.id} onDecidir={onDecidir} />
 
-            <div className="space-y-2 border-t border-border pt-4">
-              <Button variant="secondary" size="sm" onClick={() => void onArquivar()}>
+            <div className="space-y-2 border-t border-line pt-4">
+              <Button variant="secondary" onClick={() => void onArquivar()}>
                 {turma.arquivada ? 'Reativar turma' : 'Arquivar turma'}
               </Button>
-              <p className="text-xs text-text-muted">
+              <p className="text-[12.5px] leading-[18px] text-ink-muted">
                 Turma arquivada fica somente leitura e não aceita novos alunos.
               </p>
             </div>
@@ -296,23 +288,24 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
   }
 
   return (
-    <div className="space-y-3 border-t border-border pt-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+    <div className="space-y-3 border-t border-line pt-4">
+      <p className="text-[12.5px] font-bold text-ink-muted">
         Entradas pendentes
       </p>
 
       {pendentes === null ? (
         <Skeleton className="h-16 w-full rounded-lg" />
       ) : pendentes.length === 0 ? (
-        <p className="text-sm text-text-muted">Nenhuma solicitação aguardando.</p>
+        <p className="text-sm text-ink-muted">Nenhuma solicitação aguardando.</p>
       ) : (
         <>
           <ul className="space-y-1">
             {pendentes.map((s) => (
               <li key={s.estudanteId}>
-                <label className="flex items-center gap-2 text-sm text-text">
+                <label className="flex min-h-[44px] items-center gap-3 text-sm text-ink">
                   <input
                     type="checkbox"
+                    className="h-5 w-5 accent-primary"
                     checked={selecionados.includes(s.estudanteId)}
                     onChange={(ev) =>
                       setSelecionados((atual) =>
@@ -323,20 +316,20 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
                     }
                   />
                   <span>{s.nome ?? 'Sem nome'}</span>
-                  <span className="text-xs text-text-muted">
+                  <span className="text-[12.5px] leading-[18px] text-ink-muted">
                     {new Date(s.solicitadoEm).toLocaleDateString('pt-BR')}
                   </span>
                 </label>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-text-muted">
+          <p className="text-[12.5px] leading-[18px] text-ink-muted">
             A partir da aprovação, a instituição passa a ver o rendimento do aluno. Nada anterior a
             ela fica visível.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
-              size="sm"
+             
               onClick={() => void decidir('aprovar')}
               disabled={enviando || selecionados.length === 0}
             >
@@ -344,7 +337,7 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+             
               onClick={() => void decidir('recusar')}
               disabled={enviando || selecionados.length === 0}
             >
@@ -355,9 +348,7 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
       )}
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
     </div>
   );
@@ -420,23 +411,23 @@ function ProfessoresDaTurma({
   }
 
   return (
-    <div className="space-y-3 border-t border-border pt-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Professores</p>
+    <div className="space-y-3 border-t border-line pt-4">
+      <p className="text-[12.5px] font-bold text-ink-muted">Professores</p>
 
       {daTurma === null ? (
         <Skeleton className="h-12 w-full rounded-lg" />
       ) : daTurma.length === 0 ? (
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-ink-muted">
           Nenhum professor vinculado. Enquanto isso, a turma não aceita alunos.
         </p>
       ) : (
         <ul className="space-y-1">
           {daTurma.map((p) => (
             <li key={p.professorId} className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-text">{p.nome ?? p.email}</span>
+              <span className="text-ink">{p.nome ?? p.email}</span>
               <Button
                 variant="quiet"
-                size="sm"
+               
                 disabled={enviando}
                 onClick={() =>
                   void mutar(
@@ -457,24 +448,19 @@ function ProfessoresDaTurma({
 
       {disponiveis.length > 0 && (
         <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-[14rem] flex-1 space-y-1">
-            <Label htmlFor={`add-prof-${turmaId}`}>Vincular professor</Label>
-            <select
-              id={`add-prof-${turmaId}`}
-              value={escolhido}
-              onChange={(ev) => setEscolhido(ev.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-focus"
-            >
-              <option value="">Selecione…</option>
-              {disponiveis.map((p) => (
-                <option key={p.professorId} value={p.professorId}>
-                  {p.nome ?? p.email}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Vincular professor"
+            id={`add-prof-${turmaId}`}
+            className="min-w-[14rem] flex-1"
+            value={escolhido}
+            onChange={(ev) => setEscolhido(ev.target.value)}
+            options={[
+              { value: '', label: 'Selecione…' },
+              ...disponiveis.map((p) => ({ value: p.professorId, label: p.nome ?? p.email })),
+            ]}
+          />
           <Button
-            size="sm"
+           
             disabled={enviando || !escolhido}
             onClick={() =>
               void mutar(async () => {
@@ -492,15 +478,13 @@ function ProfessoresDaTurma({
       )}
 
       {daInstituicao.length === 0 && (
-        <p className="text-xs text-text-muted">
+        <p className="text-[12.5px] leading-[18px] text-ink-muted">
           Nenhum professor no quadro ainda. Convide professores na aba Professores.
         </p>
       )}
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
     </div>
   );

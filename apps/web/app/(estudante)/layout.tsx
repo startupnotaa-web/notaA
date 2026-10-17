@@ -18,9 +18,9 @@ export default function EstudanteLayout({ children }: { children: ReactNode }) {
 
   if (loading || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paper">
-        <div className="text-text-muted">Carregando...</div>
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-paper">
+        <p role="status" className="text-ink-muted">Carregando…</p>
+      </main>
     );
   }
 

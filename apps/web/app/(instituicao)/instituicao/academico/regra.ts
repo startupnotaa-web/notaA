@@ -53,13 +53,13 @@ export const ETAPAS = [
   'Conselho',
 ] as const;
 
-export const SITUACAO: Record<SituacaoFinal, { rotulo: string; variante: 'success' | 'info' | 'warning' | 'error' }> = {
+export const SITUACAO: Record<SituacaoFinal, { rotulo: string; variante: 'success' | 'info' | 'warning' | 'danger' }> = {
   aprovado: { rotulo: 'Aprovado', variante: 'success' },
   aprovado_recuperacao: { rotulo: 'Aprovado na recuperação', variante: 'success' },
   aprovado_conselho: { rotulo: 'Aprovado pelo conselho', variante: 'info' },
   recuperacao: { rotulo: 'Em recuperação final', variante: 'warning' },
-  reprovado_nota: { rotulo: 'Reprovado por nota', variante: 'error' },
-  reprovado_frequencia: { rotulo: 'Reprovado por frequência', variante: 'error' },
+  reprovado_nota: { rotulo: 'Reprovado por nota', variante: 'danger' },
+  reprovado_frequencia: { rotulo: 'Reprovado por frequência', variante: 'danger' },
 };
 
 /** Número com vírgula, do jeito que se digita no Brasil. */

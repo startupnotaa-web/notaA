@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AlunoDaInstituicao, Turma } from '@notaa/contracts';
-import { Badge, Card, CardHeader, Input, Label, Skeleton } from '@notaa/ui';
+import { Chip, EmptyState, Notice, Select, Skeleton, Table, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 const ROTULO_RISCO: Record<AlunoDaInstituicao['risco'], string> = {
@@ -10,6 +10,8 @@ const ROTULO_RISCO: Record<AlunoDaInstituicao['risco'], string> = {
   medio: 'Observar',
   baixo: 'Em dia',
 };
+
+const TOM_RISCO = { alto: 'danger', medio: 'warning', baixo: 'success' } as const;
 
 function diasDesde(iso: string | null): string {
   if (!iso) return 'Nunca acessou';
@@ -56,90 +58,66 @@ export function Alunos() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[14rem] flex-1 space-y-1">
-          <Label htmlFor="busca-aluno">Buscar por nome</Label>
-          <Input
-            id="busca-aluno"
-            value={busca}
-            onChange={(ev) => setBusca(ev.target.value)}
-            placeholder="Nome do aluno"
-          />
-        </div>
-        <div className="min-w-[12rem] space-y-1">
-          <Label htmlFor="filtro-turma">Turma</Label>
-          <select
-            id="filtro-turma"
-            value={turmaId}
-            onChange={(ev) => setTurmaId(ev.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-focus"
-          >
-            <option value="">Todas</option>
-            {turmas.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+        <TextField
+          label="Buscar por nome"
+          id="busca-aluno"
+          className="min-w-[14rem] flex-1"
+          value={busca}
+          onChange={(ev) => setBusca(ev.target.value)}
+          placeholder="Nome do aluno"
+        />
+        <Select
+          label="Turma"
+          id="filtro-turma"
+          className="min-w-[12rem]"
+          value={turmaId}
+          onChange={(ev) => setTurmaId(ev.target.value)}
+          options={[{ value: '', label: 'Todas' }, ...turmas.map((t) => ({ value: t.id, label: t.nome }))]}
+        />
       </div>
 
-      {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      )}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
       {alunos === null ? (
-        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-lg" />
       ) : alunos.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <p className="text-sm text-text-muted">
-              Nenhum aluno aqui. Alunos aparecem depois de entrarem numa turma com o código de
-              convite e terem a entrada aprovada.
-            </p>
-          </CardHeader>
-        </Card>
+        <EmptyState title="Nenhum aluno aqui">
+          Alunos aparecem depois de entrarem numa turma com o código de convite e terem a entrada aprovada.
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-text-muted">
-                <th className="px-3 py-2 font-semibold">Aluno</th>
-                <th className="px-3 py-2 font-semibold">Turmas</th>
-                <th className="px-3 py-2 font-semibold">Situação</th>
-                <th className="px-3 py-2 font-semibold">Último acesso</th>
-                <th className="px-3 py-2 font-semibold">Ofensiva</th>
-                <th className="px-3 py-2 font-semibold">XP</th>
-                <th className="px-3 py-2 font-semibold">Visível desde</th>
+        <Table caption="Alunos da instituição" captionOculta className="min-w-[44rem]">
+          <thead>
+            <tr>
+              <th scope="col">Aluno</th>
+              <th scope="col">Turmas</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Último acesso</th>
+              <th scope="col" className="text-right">Ofensiva</th>
+              <th scope="col" className="text-right">XP</th>
+              <th scope="col">Visível desde</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alunos.map((a) => (
+              <tr key={a.estudanteId}>
+                <th scope="row" className="text-left font-bold text-ink">
+                  {a.nome ?? 'Sem nome'}
+                </th>
+                <td className="text-ink-muted">{a.turmas.map((t) => t.nome).join(', ') || '—'}</td>
+                <td>
+                  <Chip tone={TOM_RISCO[a.risco]}>{ROTULO_RISCO[a.risco]}</Chip>
+                </td>
+                <td className="text-ink-muted">{diasDesde(a.ultimoAcessoEm)}</td>
+                <td className="tabular text-right">{a.streak}</td>
+                <td className="tabular text-right">{a.xpTotal.toLocaleString('pt-BR')}</td>
+                <td className="text-ink-muted">{new Date(a.visivelDesde).toLocaleDateString('pt-BR')}</td>
               </tr>
-            </thead>
-            <tbody>
-              {alunos.map((a) => (
-                <tr key={a.estudanteId} className="border-b border-border/50">
-                  <td className="px-3 py-2 font-semibold text-text">{a.nome ?? 'Sem nome'}</td>
-                  <td className="px-3 py-2 text-text-muted">
-                    {a.turmas.map((t) => t.nome).join(', ') || '—'}
-                  </td>
-                  <td className="px-3 py-2">
-                    <Badge variant={a.risco === 'baixo' ? 'neutral' : 'brand'}>
-                      {ROTULO_RISCO[a.risco]}
-                    </Badge>
-                  </td>
-                  <td className="px-3 py-2 text-text-muted">{diasDesde(a.ultimoAcessoEm)}</td>
-                  <td className="px-3 py-2 text-text">{a.streak}</td>
-                  <td className="px-3 py-2 text-text">{a.xpTotal.toLocaleString('pt-BR')}</td>
-                  <td className="px-3 py-2 text-text-muted">
-                    {new Date(a.visivelDesde).toLocaleDateString('pt-BR')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
       )}
 
-      <p className="text-xs text-text-muted">
+      <p className="text-[12.5px] leading-[18px] text-ink-muted">
         &quot;Visível desde&quot; é a data de aprovação do aluno na turma. Nada anterior a ela é
         exibido. A situação considera engajamento, não nota.
       </p>

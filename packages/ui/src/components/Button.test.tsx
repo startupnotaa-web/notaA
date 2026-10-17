@@ -53,6 +53,22 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Pequeno' }).className).toContain('min-h-[36px]');
   });
 
+  it('cada variante tem uma única cor de borda (secundário e perigo mostram a borda)', () => {
+    render(
+      <>
+        <Button variant="primary">P</Button>
+        <Button variant="secondary">S</Button>
+        <Button variant="quiet">Q</Button>
+        <Button variant="danger">D</Button>
+      </>,
+    );
+    const cor = (n: string) => screen.getByRole('button', { name: n }).className.split(' ').filter((c) => /^border-(?!2$)/.test(c));
+    expect(cor('P')).toEqual(['border-transparent']);
+    expect(cor('S')).toEqual(['border-line-strong']);
+    expect(cor('Q')).toEqual(['border-transparent']);
+    expect(cor('D')).toEqual(['border-danger']);
+  });
+
   it('não tem violações de acessibilidade nas quatro variantes', async () => {
     const { container } = render(
       <>

@@ -51,6 +51,11 @@ describe('TextField', () => {
     expect(screen.getByLabelText('Nome')).not.toHaveFocus();
   });
 
+  it('o anel de foco também aparece quando o foco está num campo interno (type=date)', () => {
+    render(<TextField label="Início" type="date" />);
+    expect(screen.getByLabelText('Início').className).toContain('focus-within:outline-2');
+  });
+
   it('tem alvo de 44px', () => {
     render(<TextField label="Nome" />);
     expect(screen.getByLabelText('Nome').className).toContain('min-h-[44px]');

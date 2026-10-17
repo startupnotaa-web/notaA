@@ -9,14 +9,14 @@ import type {
   PreviaResponse,
   TipoImportacao,
 } from '@notaa/contracts';
-import { Badge, Button, FileDrop, OptionCard, Progress, Select, Skeleton, Stat, Table, cn } from '@notaa/ui';
+import { Chip, Button, FileDrop, OptionCard, Progress, Select, Skeleton, Stat, Table, cn, Notice } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 
-const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'error' }> = {
+const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'danger' }> = {
   criar: { rotulo: 'Criar', variante: 'success' },
   atualizar: { rotulo: 'Atualizar', variante: 'info' },
   sem_alteracao: { rotulo: 'Sem alteração', variante: 'neutral' },
-  recusar: { rotulo: 'Recusar', variante: 'error' },
+  recusar: { rotulo: 'Recusar', variante: 'danger' },
 };
 
 // ─── Passo 1: tipo e arquivo ─────────────────────────────────────────────────
@@ -55,11 +55,11 @@ export function PassoArquivo({
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-2 p-4">
-        <p className="flex-1 text-sm text-text">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-sunken p-4">
+        <p className="flex-1 text-sm text-ink">
           Comece pelo modelo: ele já vem com as colunas certas e uma linha de exemplo.
         </p>
-        <Button variant="secondary" size="sm" onClick={onBaixarModelo}>
+        <Button variant="secondary" onClick={onBaixarModelo}>
           Baixar modelo (.csv)
         </Button>
       </div>
@@ -106,7 +106,7 @@ export function PassoMapeamento({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-text-muted">
+      <p className="text-sm text-ink-muted">
         Recebemos {recebido.totalLinhas.toLocaleString('pt-BR')} linhas ({recebido.formato.toUpperCase()}). Diga em que
         coluna da sua planilha está cada informação. Já sugerimos pelo nome das colunas.
       </p>
@@ -128,10 +128,10 @@ export function PassoMapeamento({
                 <td className="w-1/2">
                   <p className="flex items-center gap-2 font-bold">
                     {c.rotulo}
-                    {c.obrigatorio ? <Badge variant="warning">Obrigatório</Badge> : null}
+                    {c.obrigatorio ? <Chip tone="warning">Obrigatório</Chip> : null}
                   </p>
                   {c.descricao ? (
-                    <p id={idDica} className="mt-1 text-xs text-text-muted">
+                    <p id={idDica} className="mt-1 text-[12.5px] leading-[18px] text-ink-muted">
                       {c.descricao}
                     </p>
                   ) : null}
@@ -159,12 +159,14 @@ export function PassoMapeamento({
       </Table>
 
       {faltando.length || repetidas.size ? (
-        <ul role="alert" className="space-y-1 text-sm text-error">
-          {faltando.map((c) => (
-            <li key={c.campo}>Escolha a coluna de “{c.rotulo}”.</li>
-          ))}
-          {repetidas.size ? <li>Há dois campos apontando para a mesma coluna.</li> : null}
-        </ul>
+        <Notice tone="danger" title="Falta ajustar o mapeamento">
+          <ul className="m-0 list-disc space-y-1 pl-5">
+            {faltando.map((c) => (
+              <li key={c.campo}>Escolha a coluna de “{c.rotulo}”.</li>
+            ))}
+            {repetidas.size ? <li>Há dois campos apontando para a mesma coluna.</li> : null}
+          </ul>
+        </Notice>
       ) : null}
 
       <div className="flex flex-wrap justify-between gap-3">
@@ -219,9 +221,7 @@ export function PassoPrevia({
   if (erro) {
     return (
       <div className="space-y-4">
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
         <Button variant="secondary" onClick={onVoltar}>
           Voltar às colunas
         </Button>
@@ -249,13 +249,13 @@ export function PassoPrevia({
             className={cn(
               'min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-base',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-              filtro === acao ? 'border-brand-secondary bg-surface-2' : 'border-border bg-surface hover:bg-surface-2',
+              filtro === acao ? 'border-primary bg-surface-sunken' : 'border-line bg-surface hover:bg-surface-sunken',
             )}
           >
-            <span className="block text-2xl font-bold text-text">
+            <span className="block font-display text-2xl font-semibold leading-8 text-ink">
               {resumo ? resumo[acao].toLocaleString('pt-BR') : '…'}
             </span>
-            <span className="text-sm text-text-muted">{ACOES[acao].rotulo}</span>
+            <span className="text-sm text-ink-muted">{ACOES[acao].rotulo}</span>
           </button>
         ))}
       </div>
@@ -263,7 +263,7 @@ export function PassoPrevia({
       {previa === null ? (
         <Skeleton className="h-64 w-full" />
       ) : previa.linhas.length === 0 ? (
-        <p className="text-sm text-text-muted">Nenhuma linha neste filtro.</p>
+        <p className="text-sm text-ink-muted">Nenhuma linha neste filtro.</p>
       ) : (
         <Table caption={filtro ? `Linhas: ${ACOES[filtro].rotulo}` : 'Todas as linhas da planilha'}>
           <thead>
@@ -279,12 +279,12 @@ export function PassoPrevia({
             {previa.linhas.map((l) => (
               <tr key={l.linha}>
                 <td className="tabular-nums">{l.linha}</td>
-                <td className="font-mono text-xs">{l.chave ?? '—'}</td>
+                <td className="font-mono text-[12.5px] leading-[18px]">{l.chave ?? '—'}</td>
                 <td>{l.nome ?? '—'}</td>
                 <td>
-                  <Badge variant={ACOES[l.acao].variante}>{ACOES[l.acao].rotulo}</Badge>
+                  <Chip tone={ACOES[l.acao].variante}>{ACOES[l.acao].rotulo}</Chip>
                 </td>
-                <td className={l.acao === 'recusar' ? 'text-error' : 'text-text-muted'}>
+                <td className={l.acao === 'recusar' ? 'text-danger' : 'text-ink-muted'}>
                   {l.motivos.length ? l.motivos.join(' ') : '—'}
                 </td>
               </tr>
@@ -295,25 +295,25 @@ export function PassoPrevia({
 
       {paginas > 1 ? (
         <nav aria-label="Páginas da prévia" className="flex items-center justify-center gap-3 text-sm">
-          <Button variant="quiet" size="sm" onClick={() => setPagina(pagina - 1)} disabled={pagina === 1}>
+          <Button variant="quiet" onClick={() => setPagina(pagina - 1)} disabled={pagina === 1}>
             Anterior
           </Button>
           <span aria-live="polite">
             Página {pagina} de {paginas}
           </span>
-          <Button variant="quiet" size="sm" onClick={() => setPagina(pagina + 1)} disabled={pagina === paginas}>
+          <Button variant="quiet" onClick={() => setPagina(pagina + 1)} disabled={pagina === paginas}>
             Próxima
           </Button>
         </nav>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <Button variant="secondary" onClick={onVoltar}>
           Voltar às colunas
         </Button>
         <div className="flex flex-wrap items-center gap-3">
           {resumo ? (
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-muted">
               {mudancas === 0
                 ? 'Nada a gravar: a planilha não traz novidade.'
                 : `${resumo.criar} a criar e ${resumo.atualizar} a atualizar. ${resumo.recusar} recusada(s) fica(m) de fora.`}
@@ -362,7 +362,7 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
       <div aria-live="polite" className="space-y-3">
         {emAndamento ? (
           <>
-            <p className="text-sm text-text">
+            <p className="text-sm text-ink">
               {imp.status === 'pendente' ? 'Na fila, aguardando o processamento…' : 'Gravando…'}
             </p>
             <Progress
@@ -372,11 +372,11 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
             />
           </>
         ) : imp.status === 'falhou' ? (
-          <p role="alert" className="rounded-md border border-error p-3 text-sm text-error">
-            A importação falhou: {imp.erro ?? 'erro desconhecido'}
-          </p>
+          <Notice tone="danger" title="A importação falhou">
+            {imp.erro ?? 'Erro desconhecido.'}
+          </Notice>
         ) : (
-          <p className="text-sm font-semibold text-success">Importação concluída.</p>
+          <Notice tone="success">Importação concluída.</Notice>
         )}
       </div>
 
@@ -389,7 +389,7 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
             <Stat label="Recusados" value={r.recusados.toLocaleString('pt-BR')} />
           </div>
           {r.responsaveisVinculados > 0 ? (
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-muted">
               {r.responsaveisVinculados.toLocaleString('pt-BR')} responsável(is) vinculado(s) a alunos.
             </p>
           ) : null}
@@ -406,8 +406,8 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
                 {r.recusas.slice(0, 200).map((l) => (
                   <tr key={l.linha}>
                     <td className="tabular-nums">{l.linha}</td>
-                    <td className="font-mono text-xs">{l.chave ?? '—'}</td>
-                    <td className="text-error">{l.motivos.join(' ')}</td>
+                    <td className="font-mono text-[12.5px] leading-[18px]">{l.chave ?? '—'}</td>
+                    <td className="text-danger">{l.motivos.join(' ')}</td>
                   </tr>
                 ))}
               </tbody>

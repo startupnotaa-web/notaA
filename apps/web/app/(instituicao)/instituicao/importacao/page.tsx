@@ -9,7 +9,7 @@ import {
   type MapeamentoColunas,
   type TipoImportacao,
 } from '@notaa/contracts';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SectionHeader, Stepper } from '@notaa/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SectionHeader, ProgressTrail, Notice } from '@notaa/ui';
 import { ApiError, apiDownload, apiFetch, enviarPlanilha } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 import { PassoArquivo, PassoMapeamento, PassoPrevia, PassoResultado } from './passos';
@@ -118,16 +118,19 @@ export default function ImportacaoPage() {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="min-w-0 space-y-6">
-          <Stepper passos={PASSOS} atual={passo} aria-label="Etapas da importação" />
+          <ProgressTrail
+            total={PASSOS.length}
+            done={passo}
+            label="Etapas da importação"
+            caption={`Passo ${passo + 1} de ${PASSOS.length}`}
+          />
           <Card>
             <CardContent className="space-y-6 pt-6">
-              <h2 ref={titulo} tabIndex={-1} className="text-xl font-bold text-text focus:outline-none">
+              <h2 ref={titulo} tabIndex={-1} className="font-display text-[19px] font-semibold leading-[26px] text-ink focus:outline-none">
                 {passo + 1}. {PASSOS[passo]}
               </h2>
               {erro ? (
-                <p role="alert" className="rounded-md border border-error p-3 text-sm text-error">
-                  {erro}
-                </p>
+                <Notice tone="danger">{erro}</Notice>
               ) : null}
               {passo === 0 ? (
                 <PassoArquivo

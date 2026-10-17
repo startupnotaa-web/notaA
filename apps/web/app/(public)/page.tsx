@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 import Link from 'next/link';
-import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input, ButtonLink, NotaASimbolo } from '@notaa/ui';
+import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input, ButtonLink, Aurora, NotaASimbolo } from '@notaa/ui';
 import { FEATURES } from '../../lib/feature-flags';
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -14,13 +14,16 @@ export default function LandingPage() {
           <span className="flex items-center gap-2 font-display text-xl font-semibold"><NotaASimbolo className="h-8 w-auto" />Nota A</span>
           <Badge variant="brand" className="hidden sm:inline-flex">Beta 1.0 ao vivo</Badge>
         </div>
-        <ButtonLink as={Link} href="/login" variant="quiet" size="sm">Entrar</ButtonLink>
+        <ButtonLink as={Link} href="/login" variant="quiet">Entrar</ButtonLink>
       </header>
 
+      <main>
+
       {/* Hero Section */}
-      <section className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-6 pb-20 pt-16 text-center">
-        <h1 className="text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl">
-          <span className="bg-gradient-brand bg-clip-text text-transparent">Aprenda jogando.</span><br />
+      <Aurora as="section">
+       <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-6 pb-20 pt-16 text-center">
+        <h1 className="font-display text-5xl font-semibold leading-[52px] tracking-[-0.02em] text-ink">
+          Aprenda jogando.<br />
           Evolua estudando.
         </h1>
         <p className="max-w-2xl text-xl text-text-muted">
@@ -30,7 +33,8 @@ export default function LandingPage() {
           <ButtonLink as={Link} href="/cadastro" variant="primary">Começar Grátis</ButtonLink>
           <ButtonLink as={Link} href="#demonstracao" variant="secondary">Ver demonstração</ButtonLink>
         </div>
-      </section>
+       </div>
+      </Aurora>
 
       {/* O problema é real (Glassmorphism) */}
       <section className="mx-auto w-full max-w-6xl px-6 py-16">
@@ -129,7 +133,7 @@ export default function LandingPage() {
           </Card>
 
           <Card className="relative flex transform flex-col border-brand-primary bg-surface-2 shadow-brand lg:-translate-y-4">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-primary px-3 py-1 text-xs font-bold text-white">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-on">
               Mais Popular
             </div>
             <CardHeader>
@@ -170,6 +174,8 @@ export default function LandingPage() {
 
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-border bg-surface-2 pb-8 pt-12">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
-import { Card, CardDescription, CardHeader, CardTitle, SectionHeader, Select, Skeleton, cn } from '@notaa/ui';
+import { Card, CardDescription, CardHeader, CardTitle, SectionHeader, Select, Skeleton, Tabs, propsDoPainel, Notice } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { GestaoDeAnosLetivos } from '../../../components/painel/GestaoDeAnosLetivos';
 import { Disciplinas } from './Disciplinas';
@@ -71,48 +71,18 @@ export default function ConfiguracaoAcademicaPage() {
       />
 
       {erro ? (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       ) : null}
 
-      <div role="tablist" aria-label="Seções da configuração acadêmica" className="flex gap-1 overflow-x-auto border-b border-border">
-        {SECOES.map((s) => (
-          <button
-            key={s.id}
-            id={`aba-${s.id}`}
-            type="button"
-            role="tab"
-            aria-selected={secao === s.id}
-            aria-controls={secao === s.id ? `painel-${s.id}` : undefined}
-            tabIndex={secao === s.id ? 0 : -1}
-            onClick={() => setSecao(s.id)}
-            onKeyDown={(e) => {
-              // Padrão ARIA de abas: setas trocam de aba, Tab sai da lista.
-              const i = SECOES.findIndex((x) => x.id === secao);
-              const destino =
-                e.key === 'ArrowRight' ? (i + 1) % SECOES.length
-                : e.key === 'ArrowLeft' ? (i - 1 + SECOES.length) % SECOES.length
-                : e.key === 'Home' ? 0
-                : e.key === 'End' ? SECOES.length - 1
-                : null;
-              if (destino === null) return;
-              e.preventDefault();
-              setSecao(SECOES[destino]!.id);
-              document.getElementById(`aba-${SECOES[destino]!.id}`)?.focus();
-            }}
-            className={cn(
-              'min-h-[44px] whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-              secao === s.id ? 'border-brand-primary text-brand-primary' : 'border-transparent text-text-muted hover:text-text',
-            )}
-          >
-            {s.rotulo}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções da configuração acadêmica"
+        idBase="config"
+        tabs={SECOES.map((s) => ({ id: s.id, label: s.rotulo }))}
+        value={secao}
+        onChange={(id) => setSecao(id as Secao)}
+      />
 
-      <section id={`painel-${secao}`} role="tabpanel" aria-labelledby={`aba-${secao}`}>
+      <section {...propsDoPainel('config', secao)}>
         {anos === null ? (
           <Skeleton className="h-48 w-full" />
         ) : secao === 'ano' ? (

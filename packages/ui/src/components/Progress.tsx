@@ -24,7 +24,7 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(function
   return (
     <div ref={ref} className={cn('w-full', className)} {...props}>
       {label ? (
-        <div className="mb-1 flex justify-between text-sm text-text-muted">
+        <div className="mb-1 flex justify-between text-sm text-ink-muted">
           <span>{label}</span>
           <span>{Math.round(pct)}%</span>
         </div>
@@ -35,12 +35,14 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(function
         aria-valuemin={0}
         aria-valuemax={safeMax}
         aria-label={label}
-        className="h-2 w-full overflow-hidden rounded-full bg-surface-2"
+        className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken"
       >
         <div
           className={cn(
             'h-full rounded-full transition-[width] duration-base',
-            gradient ? 'bg-gradient-brand' : 'bg-brand-secondary',
+            gradient
+              ? 'bg-[linear-gradient(135deg,var(--brand-cyan),var(--brand-violet)_60%,var(--brand-magenta))]'
+              : 'bg-primary',
           )}
           style={{ width: `${pct}%` }}
         />

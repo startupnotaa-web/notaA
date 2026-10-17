@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '@notaa/ui';
+import { Tabs, propsDoPainel } from '@notaa/ui';
 import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
 import { GestaoDeTurmas } from '../../components/painel/GestaoDeTurmas';
 import { Alunos } from './Alunos';
@@ -39,31 +39,17 @@ export default function InstituicaoPainelPage() {
 
   return (
     <div className="space-y-6">
-      <div
-        role="tablist"
-        aria-label="Seções do painel"
-        className="flex gap-1 overflow-x-auto border-b border-border"
-      >
-        {ABAS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            role="tab"
-            aria-selected={aba === a.id}
-            onClick={() => setAba(a.id)}
-            className={cn(
-              'whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors',
-              aba === a.id
-                ? 'border-brand-primary text-brand-primary'
-                : 'border-transparent text-text-muted hover:text-text',
-            )}
-          >
-            {a.rotulo}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções do painel"
+        idBase="painel"
+        tabs={ABAS.map((a) => ({ id: a.id, label: a.rotulo }))}
+        value={aba}
+        onChange={(id) => setAba(id as (typeof ABAS)[number]['id'])}
+      />
 
-      <Conteudo />
+      <div {...propsDoPainel('painel', aba)}>
+        <Conteudo />
+      </div>
     </div>
   );
 }

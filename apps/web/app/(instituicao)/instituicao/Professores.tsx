@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { ConviteProfessor, ProfessorDaInstituicao } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/ui';
+import { Button, Card, CardHeader, Chip, EmptyState, Notice, Skeleton, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 function linkDoConvite(token: string): string {
@@ -78,20 +78,15 @@ export function Professores() {
             }}
             className="space-y-3"
           >
-            <div className="space-y-1">
-              <Label htmlFor="email-convite">Convidar professor</Label>
-              <Input
-                id="email-convite"
-                type="email"
-                value={email}
-                onChange={(ev) => setEmail(ev.target.value)}
-                placeholder="E-mail (opcional)"
-              />
-              <p className="text-xs text-text-muted">
-                Geramos um link. Você o entrega ao professor, que cria a conta por ali. O e-mail é só
-                registro de quem foi convidado.
-              </p>
-            </div>
+            <TextField
+              label="Convidar professor"
+              id="email-convite"
+              type="email"
+              value={email}
+              onChange={(ev) => setEmail(ev.target.value)}
+              placeholder="E-mail (opcional)"
+              hint="Geramos um link. Você o entrega ao professor, que cria a conta por ali. O e-mail é só registro de quem foi convidado."
+            />
             <Button type="submit" disabled={enviando}>
               Gerar link de convite
             </Button>
@@ -100,14 +95,12 @@ export function Professores() {
       </Card>
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
 
       {convites.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-bold text-text">Convites abertos</h2>
+          <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Convites abertos</h2>
           <ul className="space-y-2">
             {convites.map((c) => (
               <li key={c.id}>
@@ -115,21 +108,20 @@ export function Professores() {
                   <CardHeader>
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm text-text">{c.email ?? 'Sem e-mail informado'}</p>
-                        <Badge variant="neutral">
+                        <p className="text-sm text-ink">{c.email ?? 'Sem e-mail informado'}</p>
+                        <Chip tone="neutral">
                           Expira em {new Date(c.expiraEm).toLocaleDateString('pt-BR')}
-                        </Badge>
+                        </Chip>
                       </div>
-                      <p className="break-all rounded-lg border border-border bg-surface-2 p-2 font-mono text-xs text-text-muted">
+                      <p className="break-all rounded-lg border border-line bg-surface-sunken p-2 font-mono text-[12.5px] leading-[18px] text-ink-muted">
                         {linkDoConvite(c.token)}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => void copiar(c.token)}>
+                        <Button variant="secondary" onClick={() => void copiar(c.token)}>
                           {copiado === c.token ? 'Copiado' : 'Copiar link'}
                         </Button>
                         <Button
-                          variant="quiet"
-                          size="sm"
+                          variant="danger"
                           disabled={enviando}
                           onClick={() =>
                             void mutar(
@@ -154,13 +146,11 @@ export function Professores() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Quadro de professores</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Quadro de professores</h2>
         {quadro === null ? (
-          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-lg" />
         ) : quadro.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            Nenhum professor ainda. Gere um link de convite acima.
-          </p>
+          <EmptyState title="Nenhum professor ainda">Gere um link de convite acima e entregue ao professor.</EmptyState>
         ) : (
           <ul className="space-y-2">
             {quadro.map((p) => {
@@ -171,13 +161,13 @@ export function Professores() {
                     <CardHeader>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <p className="font-bold text-text">{p.nome ?? 'Sem nome'}</p>
-                          <p className="text-sm text-text-muted">{p.email}</p>
-                          <p className="text-xs text-text-muted">
+                          <p className="font-bold text-ink">{p.nome ?? 'Sem nome'}</p>
+                          <p className="text-sm text-ink-muted">{p.email}</p>
+                          <p className="text-[12.5px] leading-[18px] text-ink-muted">
                             {p.quantidadeDeTurmas} turma(s)
                           </p>
                           {bloqueado && (
-                            <p className="text-xs text-text-muted">
+                            <p className="text-[12.5px] leading-[18px] text-ink-muted">
                               Único professor de:{' '}
                               {p.turmasQueFicariamSemProfessor.map((t) => t.nome).join(', ')}.
                               Vincule outro professor a essas turmas, ou arquive-as, antes de remover.
@@ -185,8 +175,7 @@ export function Professores() {
                           )}
                         </div>
                         <Button
-                          variant="quiet"
-                          size="sm"
+                          variant="danger"
                           disabled={enviando || bloqueado}
                           onClick={() =>
                             void mutar(
@@ -208,7 +197,7 @@ export function Professores() {
             })}
           </ul>
         )}
-        <p className="text-xs text-text-muted">
+        <p className="text-[12.5px] leading-[18px] text-ink-muted">
           Remover tira o vínculo com a instituição. A conta do professor continua sendo dele.
         </p>
       </section>

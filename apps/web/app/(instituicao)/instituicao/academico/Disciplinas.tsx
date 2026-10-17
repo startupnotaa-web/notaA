@@ -3,18 +3,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AreaEnem, Disciplina, ProfessorDaTurma, Turma, TurmaDisciplina } from '@notaa/contracts';
 import {
-  Badge,
+  Chip,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
-  Label,
+  EmptyState,
   Select,
   Skeleton,
   Table,
+  TextField,
+  Notice,
 } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
@@ -91,15 +92,15 @@ export function Disciplinas() {
 
   return (
     <div className="space-y-10">
-      <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-3">
-          <h2 className="text-lg font-bold text-text">Disciplinas</h2>
+          <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Disciplinas</h2>
           {disciplinas === null ? (
             <Skeleton className="h-40 w-full" />
           ) : disciplinas.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-6 text-sm text-text-muted">
-              Nenhuma disciplina ainda. Crie ao lado ou importe uma planilha em “Importação e exportação”.
-            </p>
+            <EmptyState title="Nenhuma disciplina ainda">
+              Crie ao lado ou importe a planilha que a instituição já usa, em “Importação e exportação”.
+            </EmptyState>
           ) : (
             <Table caption="Disciplinas da instituição" captionOculta>
               <thead>
@@ -116,12 +117,12 @@ export function Disciplinas() {
               <tbody>
                 {disciplinas.map((d) => (
                   <tr key={d.id}>
-                    <td className="font-medium text-text">{d.nome}</td>
+                    <td className="font-medium text-ink">{d.nome}</td>
                     <td>{d.codigo ?? '—'}</td>
                     <td>{rotuloArea(d.areaEnem)}</td>
-                    <td>{d.arquivada ? <Badge variant="neutral">Arquivada</Badge> : <Badge variant="success">Ativa</Badge>}</td>
+                    <td>{d.arquivada ? <Chip tone="neutral">Arquivada</Chip> : <Chip tone="success">Ativa</Chip>}</td>
                     <td className="text-right">
-                      <Button variant="quiet" size="sm" onClick={() => void alternarArquivo(d)}>
+                      <Button variant="quiet" onClick={() => void alternarArquivo(d)}>
                         {d.arquivada ? 'Desarquivar' : 'Arquivar'}
                         <span className="sr-only"> {d.nome}</span>
                       </Button>
@@ -147,14 +148,8 @@ export function Disciplinas() {
               }}
             >
               <fieldset disabled={enviando} className="space-y-4">
-                <div className="space-y-1">
-                  <Label htmlFor="disciplina-nome">Nome</Label>
-                  <Input id="disciplina-nome" value={nome} onChange={(e) => setNome(e.target.value)} required minLength={2} maxLength={80} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="disciplina-codigo">Código (opcional)</Label>
-                  <Input id="disciplina-codigo" value={codigo} onChange={(e) => setCodigo(e.target.value)} maxLength={20} />
-                </div>
+                <TextField label="Nome" id="disciplina-nome" value={nome} onChange={(e) => setNome(e.target.value)} required minLength={2} maxLength={80} />
+                <TextField label="Código (opcional)" id="disciplina-codigo" value={codigo} onChange={(e) => setCodigo(e.target.value)} maxLength={20} />
                 <Select
                   label="Área do ENEM"
                   value={area}
@@ -165,9 +160,7 @@ export function Disciplinas() {
                   ]}
                 />
                 {erro ? (
-                  <p role="alert" className="text-sm text-error">
-                    {erro}
-                  </p>
+                  <Notice tone="danger">{erro}</Notice>
                 ) : null}
                 <Button type="submit" className="w-full">
                   {enviando ? 'Salvando…' : 'Criar disciplina'}
@@ -249,10 +242,10 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
     <section aria-labelledby="titulo-atribuicao" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 id="titulo-atribuicao" className="text-lg font-bold text-text">
+          <h2 id="titulo-atribuicao" className="font-display text-[19px] font-semibold leading-[26px] text-ink">
             Disciplinas por turma
           </h2>
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-ink-muted">
             Só aparecem professores já vinculados à turma. Vincule na aba Turmas do painel.
           </p>
         </div>
@@ -270,9 +263,7 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
       {turmas === null ? (
         <Skeleton className="h-32 w-full" />
       ) : turmas.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-sm text-text-muted">
-          Nenhuma turma ativa. Crie turmas na aba Turmas do painel.
-        </p>
+        <EmptyState title="Nenhuma turma ativa">Crie turmas na aba Turmas do painel.</EmptyState>
       ) : atribuicoes === null ? (
         <Skeleton className="h-32 w-full" />
       ) : (
@@ -291,7 +282,7 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
               <tbody>
                 {atribuicoes.map((a) => (
                   <tr key={a.disciplina.id}>
-                    <td className="font-medium text-text">{a.disciplina.nome}</td>
+                    <td className="font-medium text-ink">{a.disciplina.nome}</td>
                     <td>
                       <Select
                         label={`Professor de ${a.disciplina.nome}`}
@@ -306,7 +297,7 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
                       />
                     </td>
                     <td className="text-right">
-                      <Button variant="quiet" size="sm" onClick={() => void retirar(a.disciplina.id)}>
+                      <Button variant="quiet" onClick={() => void retirar(a.disciplina.id)}>
                         Retirar<span className="sr-only"> {a.disciplina.nome} da turma</span>
                       </Button>
                     </td>
@@ -315,7 +306,7 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
               </tbody>
             </Table>
           ) : (
-            <p className="text-sm text-text-muted">Esta turma ainda não tem disciplinas.</p>
+            <p className="text-sm text-ink-muted">Esta turma ainda não tem disciplinas.</p>
           )}
           <form
             className="flex flex-wrap items-end gap-3"

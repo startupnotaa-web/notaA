@@ -51,7 +51,7 @@ export function Tabs({ tabs, label, value, defaultValue, onChange, idBase }: Tab
   };
 
   return (
-    <div role="tablist" aria-label={label} onKeyDown={aoTeclar} className="flex gap-1 border-b border-line">
+    <div role="tablist" aria-label={label} onKeyDown={aoTeclar} className="flex gap-1 overflow-x-auto border-b border-line">
       {tabs.map((t) => {
         const ativa = t.id === atual;
         return (
@@ -68,11 +68,11 @@ export function Tabs({ tabs, label, value, defaultValue, onChange, idBase }: Tab
             tabIndex={ativa ? 0 : -1}
             onClick={() => escolher(t.id, false)}
             className={cn(
-              'relative min-h-[44px] rounded-t-sm px-4 py-3 font-text text-sm font-bold leading-5',
+              'relative min-h-[44px] shrink-0 whitespace-nowrap rounded-t-sm px-4 py-3 font-text text-sm font-bold leading-5',
               `transition-colors duration-fast ${EASE_OUT}`,
               FOCO,
               ativa
-                ? "text-primary after:absolute after:inset-x-4 after:-bottom-px after:h-[3px] after:rounded-t-[3px] after:bg-primary after:content-['']"
+                ? "text-primary after:absolute after:inset-x-4 after:bottom-0 after:h-[3px] after:rounded-t-[3px] after:bg-primary after:content-['']"
                 : 'text-ink-muted hover:text-ink',
             )}
           >

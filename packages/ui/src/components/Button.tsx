@@ -16,13 +16,13 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-md border border-transparent font-text text-sm font-bold leading-5 ' +
+  'inline-flex items-center justify-center gap-2 rounded-md border font-text text-sm font-bold leading-5 ' +
   `transition-colors duration-fast ${EASE_OUT} no-underline disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`;
 
 const variantes: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-primary-on hover:bg-primary-hover',
+  primary: 'border-transparent bg-primary text-primary-on hover:bg-primary-hover',
   secondary: 'border-line-strong bg-surface text-ink hover:bg-surface-sunken',
-  quiet: 'bg-transparent text-primary hover:bg-violet-tint',
+  quiet: 'border-transparent bg-transparent text-primary hover:bg-violet-tint',
   danger: 'border-danger bg-surface text-danger hover:bg-danger-tint',
 };
 

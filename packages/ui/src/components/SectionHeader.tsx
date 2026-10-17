@@ -21,23 +21,28 @@ export const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps
     ref,
   ) {
     const Heading = as;
+    const tamanho = {
+      h1: 'text-[32px] leading-10 tracking-[-0.01em]',
+      h2: 'text-2xl leading-8',
+      h3: 'text-[19px] leading-[26px]',
+    }[as];
     return (
       <div
         ref={ref}
-        className={cn('flex items-start justify-between gap-4', className)}
+        className={cn('flex flex-wrap items-start justify-between gap-4', className)}
         {...props}
       >
-        <div className="flex min-w-0 flex-col gap-1">
-          <Heading className="text-2xl font-bold leading-tight text-text">
+        <div className="flex min-w-[min(16rem,100%)] flex-1 flex-col gap-1">
+          <Heading className={cn('font-display font-semibold text-ink', tamanho)}>
             {title}
             {accent ? (
               <>
                 {' '}
-                <span className="bg-gradient-brand bg-clip-text text-transparent">{accent}</span>
+                <span className="text-primary">{accent}</span>
               </>
             ) : null}
           </Heading>
-          {description ? <p className="text-sm text-text-muted">{description}</p> : null}
+          {description ? <p className="text-base leading-[26px] text-ink-muted">{description}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>

@@ -1,29 +1,15 @@
-import { cn } from '@notaa/ui';
+import { Chip } from '@notaa/ui';
 
 type RiskLevel = 'alto' | 'medio' | 'baixo';
 
+const TOM = { alto: 'danger', medio: 'warning', baixo: 'success' } as const;
+const ROTULO = { alto: 'Risco alto', medio: 'Atenção', baixo: 'Em dia' } as const;
+
+/** Nível de risco do aluno: cor, ícone e palavra juntos, nunca só a cor. */
 export function RiskBadge({ risco, className }: { risco: RiskLevel; className?: string }) {
-  const styles = {
-    alto: 'bg-error/10 text-error border-error/20',
-    medio: 'bg-warning/10 text-warning border-warning/20',
-    baixo: 'bg-success/10 text-success border-success/20',
-  };
-
-  const labels = {
-    alto: 'Alto Risco',
-    medio: 'Atenção',
-    baixo: 'Bom',
-  };
-
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-        styles[risco],
-        className
-      )}
-    >
-      {labels[risco]}
-    </span>
+    <Chip tone={TOM[risco]} className={className}>
+      {ROTULO[risco]}
+    </Chip>
   );
 }

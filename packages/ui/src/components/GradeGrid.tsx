@@ -79,7 +79,13 @@ export function GradeGrid({
   const celula = 'px-2 py-1 text-right text-ink border-b border-line whitespace-nowrap';
 
   return (
-    <div className="max-w-full overflow-auto rounded-lg border border-line bg-surface">
+    // Região rolável: foco por teclado para rolar sem mouse (WCAG 2.1.1).
+    <div
+      tabIndex={0}
+      role="region"
+      aria-label={typeof caption === 'string' ? caption : 'Grade de notas'}
+      className={cn('max-w-full overflow-auto rounded-lg border border-line bg-surface', FOCO)}
+    >
       <table className="min-w-full border-separate border-spacing-0 font-text text-sm leading-[22px]">
         {caption ? (
           <caption className="caption-bottom border-t border-line px-4 py-3 text-left text-sm text-ink-muted">{caption}</caption>

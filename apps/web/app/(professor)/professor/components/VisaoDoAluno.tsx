@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { DetalheDoAluno, RedacaoDoAluno } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Skeleton } from '@notaa/ui';
+import { Chip, Button, Card, CardHeader, Skeleton, Notice } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { RiskBadge } from './RiskBadge';
 
@@ -73,17 +73,15 @@ export function VisaoDoAluno({
   if (erro) {
     return (
       <div className="space-y-4">
-        <Button variant="secondary" size="sm" onClick={onVoltar}>
+        <Button variant="secondary" onClick={onVoltar}>
           Voltar
         </Button>
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       </div>
     );
   }
 
-  if (!dados) return <Skeleton className="h-64 w-full rounded-2xl" />;
+  if (!dados) return <Skeleton className="h-64 w-full rounded-lg" />;
 
   const maiorUso = Math.max(1, ...dados.usoPorSemana.map((s) => s.tentativas));
 
@@ -91,12 +89,12 @@ export function VisaoDoAluno({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-text">{dados.nome ?? 'Sem nome'}</h1>
-          <p className="text-sm text-text-muted">
+          <h1 className="font-display text-[32px] font-semibold leading-10 tracking-[-0.01em] text-ink">{dados.nome ?? 'Sem nome'}</h1>
+          <p className="text-sm text-ink-muted">
             {dados.turmaNome} · visível desde {dataCurta(dados.visivelDesde)}
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={onVoltar}>
+        <Button variant="secondary" onClick={onVoltar}>
           Voltar
         </Button>
       </div>
@@ -113,10 +111,10 @@ export function VisaoDoAluno({
         ].map((i) => (
           <Card key={i.rotulo}>
             <CardHeader>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+              <p className="text-[12.5px] font-bold text-ink-muted">
                 {i.rotulo}
               </p>
-              <p className="mt-1 text-2xl font-extrabold text-text">{i.valor}</p>
+              <p className="mt-1 text-2xl font-extrabold text-ink">{i.valor}</p>
             </CardHeader>
           </Card>
         ))}
@@ -125,17 +123,17 @@ export function VisaoDoAluno({
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-text">Situação</p>
+            <p className="text-sm font-semibold text-ink">Situação</p>
             <RiskBadge risco={dados.risco} />
-            <span className="text-sm text-text-muted">{dados.motivo}</span>
+            <span className="text-sm text-ink-muted">{dados.motivo}</span>
           </div>
         </CardHeader>
       </Card>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Desempenho por área</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Desempenho por área</h2>
         {dados.porArea.length === 0 ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-ink-muted">
             Nenhuma questão respondida desde a entrada na turma.
           </p>
         ) : (
@@ -145,20 +143,20 @@ export function VisaoDoAluno({
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-text">
+                      <p className="text-sm font-semibold text-ink">
                         {ROTULO_AREA[a.area] ?? a.area}
                       </p>
-                      <p className="text-sm text-text-muted">
+                      <p className="text-sm text-ink-muted">
                         {a.acertos}/{a.tentativas} · {porcentagem(a.taxaAcerto)}
                       </p>
                     </div>
                     <div
-                      className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2"
+                      className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-sunken"
                       role="img"
                       aria-label={`${porcentagem(a.taxaAcerto)} de acerto em ${ROTULO_AREA[a.area] ?? a.area}`}
                     >
                       <div
-                        className="h-full rounded-full bg-brand-primary"
+                        className="h-full rounded-full bg-primary"
                         style={{ width: `${Math.round(a.taxaAcerto * 100)}%` }}
                       />
                     </div>
@@ -171,24 +169,24 @@ export function VisaoDoAluno({
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Onde mais erra</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Onde mais erra</h2>
         {dados.temasComErro.length === 0 ? (
-          <p className="text-sm text-text-muted">Nenhum padrão de erro registrado ainda.</p>
+          <p className="text-sm text-ink-muted">Nenhum padrão de erro registrado ainda.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {dados.temasComErro.map((t) => (
-              <Badge key={t.tema} variant="neutral">
+              <Chip key={t.tema} tone="neutral">
                 {t.tema} · {t.erros}
-              </Badge>
+              </Chip>
             ))}
           </div>
         )}
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Uso ao longo do tempo</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Uso ao longo do tempo</h2>
         {dados.usoPorSemana.length === 0 ? (
-          <p className="text-sm text-text-muted">Sem atividade registrada.</p>
+          <p className="text-sm text-ink-muted">Sem atividade registrada.</p>
         ) : (
           <Card>
             <CardHeader>
@@ -196,14 +194,14 @@ export function VisaoDoAluno({
                 <ul className="flex min-w-max items-end gap-2">
                   {dados.usoPorSemana.map((s) => (
                     <li key={s.semana} className="flex w-12 flex-col items-center gap-1">
-                      <span className="text-[10px] text-text-muted">{s.tentativas}</span>
+                      <span className="text-[12.5px] text-ink-muted">{s.tentativas}</span>
                       <div
-                        className="w-full rounded-t bg-brand-primary"
+                        className="w-full rounded-t bg-primary"
                         style={{ height: `${Math.max(4, (s.tentativas / maiorUso) * 96)}px` }}
                         role="img"
                         aria-label={`${s.tentativas} questões na semana de ${dataCurta(s.semana)}`}
                       />
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-[12.5px] text-ink-muted">
                         {new Date(s.semana).toLocaleDateString('pt-BR', {
                           day: '2-digit',
                           month: '2-digit',
@@ -213,7 +211,7 @@ export function VisaoDoAluno({
                   ))}
                 </ul>
               </div>
-              <p className="mt-3 text-xs text-text-muted">
+              <p className="mt-3 text-[12.5px] leading-[18px] text-ink-muted">
                 Questões respondidas por semana, da entrada na turma até hoje.
               </p>
             </CardHeader>
@@ -222,9 +220,9 @@ export function VisaoDoAluno({
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Redações</h2>
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Redações</h2>
         {dados.redacoes.length === 0 ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-ink-muted">
             Nenhuma redação enviada desde a entrada na turma.
           </p>
         ) : (
@@ -250,13 +248,13 @@ function CartaoRedacao({ redacao }: { redacao: RedacaoDoAluno }) {
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="font-semibold text-text">{redacao.tema}</p>
-            <p className="text-xs text-text-muted">Enviada em {dataCurta(redacao.enviadoEm)}</p>
+            <p className="font-semibold text-ink">{redacao.tema}</p>
+            <p className="text-[12.5px] leading-[18px] text-ink-muted">Enviada em {dataCurta(redacao.enviadoEm)}</p>
           </div>
           {redacao.notaTotal === null ? (
-            <Badge variant="neutral">Em correção</Badge>
+            <Chip tone="neutral">Em correção</Chip>
           ) : (
-            <p className="text-2xl font-extrabold text-text">{redacao.notaTotal}</p>
+            <p className="text-2xl font-extrabold text-ink">{redacao.notaTotal}</p>
           )}
         </div>
 
@@ -265,10 +263,10 @@ function CartaoRedacao({ redacao }: { redacao: RedacaoDoAluno }) {
             {redacao.competencias.map((c) => (
               <li key={c.competencia} className="text-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-text-muted">
+                  <span className="text-ink-muted">
                     C{c.competencia} · {COMPETENCIAS[c.competencia] ?? ''}
                   </span>
-                  <span className="font-semibold text-text">{c.nota}</span>
+                  <span className="font-semibold text-ink">{c.nota}</span>
                 </div>
               </li>
             ))}
@@ -276,13 +274,13 @@ function CartaoRedacao({ redacao }: { redacao: RedacaoDoAluno }) {
         )}
 
         <div className="mt-3">
-          <Button variant="secondary" size="sm" onClick={() => setAberto(!aberto)}>
+          <Button variant="secondary" onClick={() => setAberto(!aberto)}>
             {aberto ? 'Ocultar texto' : 'Ver texto da redação'}
           </Button>
         </div>
 
         {aberto && (
-          <p className="mt-3 whitespace-pre-wrap rounded-lg border border-border bg-surface-2 p-3 text-sm leading-relaxed text-text">
+          <p className="mt-3 whitespace-pre-wrap rounded-lg border border-line bg-surface-sunken p-3 text-sm leading-relaxed text-ink">
             {redacao.texto}
           </p>
         )}

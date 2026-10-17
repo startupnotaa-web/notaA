@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo, PeriodoAvaliativo } from '@notaa/contracts';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Skeleton, Table } from '@notaa/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, EmptyState, Notice, Skeleton, Table, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 
@@ -22,6 +22,9 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
   const [dataFim, setDataFim] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Período aguardando confirmação de remoção; null com o diálogo fechado.
+  const [removendo, setRemovendo] = useState<PeriodoAvaliativo | null>(null);
+  const [removendoAgora, setRemovendoAgora] = useState(false);
   const somenteLeitura = anoLetivo.arquivado;
 
   const carregar = useCallback(async () => {
@@ -61,26 +64,29 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
   }
 
   async function remover(p: PeriodoAvaliativo) {
-    if (!window.confirm(`Remover o período “${p.nome}”?`)) return;
+    setRemovendoAgora(true);
     try {
       await apiFetch<void>(`/academico/periodos/${p.id}`, { method: 'DELETE' });
       toast('Período removido.', { variant: 'success' });
       await carregar();
     } catch (e) {
       toast(e instanceof ApiError ? e.message : 'Não foi possível remover o período.', { variant: 'error' });
+    } finally {
+      setRemovendoAgora(false);
+      setRemovendo(null);
     }
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-      <div className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Períodos de {anoLetivo.rotulo}</h2>
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="min-w-0 space-y-3">
+        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Períodos de {anoLetivo.rotulo}</h2>
         {periodos === null ? (
           <Skeleton className="h-40 w-full" />
         ) : periodos.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-sm text-text-muted">
-            Nenhum período cadastrado. Adicione os bimestres, trimestres ou semestres do ano ao lado.
-          </p>
+          <EmptyState title="Nenhum período cadastrado">
+            Adicione os bimestres, trimestres ou semestres do ano ao lado.
+          </EmptyState>
         ) : (
           <Table caption={`Períodos avaliativos de ${anoLetivo.rotulo}`} captionOculta>
             <thead>
@@ -98,12 +104,12 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
               {periodos.map((p) => (
                 <tr key={p.id}>
                   <td>{p.ordem}º</td>
-                  <td className="font-medium text-text">{p.nome}</td>
+                  <td className="font-medium text-ink">{p.nome}</td>
                   <td>{dataBr(p.dataInicio)}</td>
                   <td>{dataBr(p.dataFim)}</td>
                   <td className="text-right">
                     {somenteLeitura ? null : (
-                      <Button variant="quiet" size="sm" onClick={() => void remover(p)} aria-label={`Remover ${p.nome}`}>
+                      <Button variant="danger" onClick={() => setRemovendo(p)} aria-label={`Remover ${p.nome}`}>
                         Remover
                       </Button>
                     )}
@@ -131,38 +137,13 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
             }}
           >
             <fieldset disabled={somenteLeitura || enviando} className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="periodo-nome">Nome</Label>
-                <Input
-                  id="periodo-nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder={`${proximaOrdem}º bimestre`}
-                  required
-                  minLength={2}
-                />
-              </div>
+              <TextField label="Nome" id="periodo-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder={`${proximaOrdem}º bimestre`} required minLength={2} />
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="periodo-inicio">Início</Label>
-                  <Input id="periodo-inicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="periodo-fim">Fim</Label>
-                  <Input
-                    id="periodo-fim"
-                    type="date"
-                    value={dataFim}
-                    min={dataInicio || undefined}
-                    onChange={(e) => setDataFim(e.target.value)}
-                    required
-                  />
-                </div>
+                <TextField label="Início" id="periodo-inicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required />
+                <TextField label="Fim" id="periodo-fim" type="date" value={dataFim} min={dataInicio || undefined} onChange={(e) => setDataFim(e.target.value)} required />
               </div>
               {erro ? (
-                <p role="alert" className="text-sm text-error">
-                  {erro}
-                </p>
+                <Notice tone="danger">{erro}</Notice>
               ) : null}
               <Button type="submit" className="w-full">
                 {enviando ? 'Salvando…' : 'Adicionar período'}
@@ -171,6 +152,23 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
           </form>
         </CardContent>
       </Card>
+      <Dialog
+        open={removendo !== null}
+        onClose={() => (removendoAgora ? undefined : setRemovendo(null))}
+        title="Remover período"
+        description={`Remover o período “${removendo?.nome ?? ''}”? Esta ação não pode ser desfeita.`}
+        closeOnScrim={!removendoAgora}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRemovendo(null)} disabled={removendoAgora}>
+              Cancelar
+            </Button>
+            <Button variant="danger" loading={removendoAgora} onClick={() => removendo && void remover(removendo)}>
+              Remover período
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 }

@@ -28,8 +28,8 @@ function StateIcon({ state }: { state: Exclude<OptionCardState, 'neutral'> }) {
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white',
-        state === 'correct' ? 'bg-success' : 'bg-error',
+        'inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-surface',
+        state === 'correct' ? 'bg-success' : 'bg-danger',
       )}
     >
       {state === 'correct' ? '✓' : '✕'}
@@ -52,31 +52,31 @@ export const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(f
       className={cn(
         'flex w-full items-start gap-3 rounded-lg border p-4 text-left',
         'min-h-[44px] transition-colors duration-base',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'disabled:opacity-50 disabled:pointer-events-none',
-        state === 'correct' && 'border-success bg-surface-2',
-        state === 'incorrect' && 'border-error bg-surface-2',
+        state === 'correct' && 'border-success bg-surface-sunken',
+        state === 'incorrect' && 'border-danger bg-surface-sunken',
         state === 'neutral' &&
           (selected
-            ? 'border-brand-secondary bg-surface-2 ring-2 ring-brand-secondary'
-            : 'border-border bg-surface hover:bg-surface-2'),
+            ? 'border-primary bg-surface-sunken ring-2 ring-primary'
+            : 'border-line bg-surface hover:bg-surface-sunken'),
         className,
       )}
       {...props}
     >
       {leading ? (
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 font-bold text-text">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken font-bold text-ink">
           {leading}
         </span>
       ) : null}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="font-medium text-text">{title}</span>
-        {description ? <span className="text-sm text-text-muted">{description}</span> : null}
+        <span className="font-medium text-ink">{title}</span>
+        {description ? <span className="text-sm text-ink-muted">{description}</span> : null}
       </span>
       {isResult ? (
         <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-sm font-semibold">
           <StateIcon state={state as Exclude<OptionCardState, 'neutral'>} />
-          <span className={state === 'correct' ? 'text-success' : 'text-error'}>
+          <span className={state === 'correct' ? 'text-success' : 'text-danger'}>
             {stateLabel[state as Exclude<OptionCardState, 'neutral'>]}
           </span>
         </span>

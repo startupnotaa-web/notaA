@@ -11,12 +11,12 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variants: Record<BadgeVariant, string> = {
-  neutral: 'bg-surface-2 text-text border-border',
-  success: 'bg-surface-2 text-success border-success/40',
-  warning: 'bg-surface-2 text-warning border-warning/40',
-  error: 'bg-surface-2 text-error border-error/40',
-  info: 'bg-surface-2 text-info border-info/40',
-  brand: 'bg-gradient-brand text-white border-transparent',
+  neutral: 'bg-surface-sunken text-ink border-transparent',
+  success: 'bg-success-tint text-success border-transparent',
+  warning: 'bg-warning-tint text-warning border-transparent',
+  error: 'bg-danger-tint text-danger border-transparent',
+  info: 'bg-cyan-tint text-info border-transparent',
+  brand: 'bg-violet-tint text-primary border-transparent',
 };
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badge(

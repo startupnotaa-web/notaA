@@ -15,19 +15,25 @@ export const Table = React.forwardRef<HTMLTableElement, TableProps>(function Tab
   ref,
 ) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border">
+    // Região rolável: precisa de foco por teclado para quem não usa mouse conseguir rolar (WCAG 2.1.1).
+    <div
+      tabIndex={0}
+      role={typeof caption === 'string' ? 'region' : undefined}
+      aria-label={typeof caption === 'string' ? caption : undefined}
+      className="w-full overflow-x-auto rounded-lg border border-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
       <table
         ref={ref}
         className={cn(
           'w-full border-collapse text-left text-sm',
-          '[&_th]:bg-surface-2 [&_th]:px-3 [&_th]:py-2 [&_th]:font-semibold [&_th]:text-text-muted',
-          '[&_td]:border-t [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:align-top',
+          '[&_th]:bg-surface-sunken [&_th]:px-3 [&_th]:py-2 [&_th]:font-bold [&_th]:text-ink-muted',
+          '[&_td]:border-t [&_td]:border-line [&_td]:px-3 [&_td]:py-2 [&_td]:align-top',
           className,
         )}
         {...props}
       >
         {caption ? (
-          <caption className={cn('p-3 text-left text-sm text-text-muted', captionOculta && 'sr-only')}>
+          <caption className={cn('p-3 text-left text-sm text-ink-muted', captionOculta && 'sr-only')}>
             {caption}
           </caption>
         ) : null}

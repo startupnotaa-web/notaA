@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   quantidadeDePeriodos,
   RegraAvaliativaSchema,
@@ -9,7 +9,7 @@ import {
   type RegraAvaliativa as Regra,
   type RegraAvaliativaVersao,
 } from '@notaa/contracts';
-import { Badge, Button, Card, CardContent, Input, Label, OptionCard, Skeleton, Stepper, Switch, Table } from '@notaa/ui';
+import { Button, Card, CardContent, Chip, Input, Notice, OptionCard, Skeleton, Stepper, Switch, Table, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 import { comRegime, ETAPA_DO_CAMPO, ETAPAS, FAIXAS_PADRAO, REGRA_PADRAO } from './regra';
@@ -101,13 +101,13 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
 
   return (
     <div className="space-y-10">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="space-y-6">
           <Stepper passos={ETAPAS} atual={etapa} onIrPara={irPara} aria-label="Etapas da regra avaliativa" />
 
           <Card>
             <CardContent className="space-y-6 pt-6">
-              <h2 ref={tituloEtapa} tabIndex={-1} className="text-xl font-bold text-text focus:outline-none">
+              <h2 ref={tituloEtapa} tabIndex={-1} className="font-display text-[19px] font-semibold leading-[26px] text-ink focus:outline-none">
                 {etapa + 1}. {ETAPAS[etapa]}
               </h2>
               <fieldset disabled={somenteLeitura} className="space-y-6">
@@ -123,14 +123,16 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
               </fieldset>
 
               {erros.length ? (
-                <ul role="alert" className="space-y-1 rounded-md border border-error p-3 text-sm text-error">
-                  {erros.map((m) => (
-                    <li key={m}>{m}</li>
-                  ))}
-                </ul>
+                <Notice tone="danger" title="Confira a regra">
+                  <ul className="m-0 list-disc space-y-1 pl-5">
+                    {erros.map((m) => (
+                      <li key={m}>{m}</li>
+                    ))}
+                  </ul>
+                </Notice>
               ) : null}
 
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
                 <Button variant="secondary" onClick={() => irPara(etapa - 1)} disabled={etapa === 0}>
                   Voltar
                 </Button>
@@ -152,13 +154,13 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
       </div>
 
       <section aria-labelledby="titulo-versoes" className="space-y-3">
-        <h2 id="titulo-versoes" className="text-lg font-bold text-text">
+        <h2 id="titulo-versoes" className="font-display text-[19px] font-semibold leading-[26px] text-ink">
           Versões da regra em {anoLetivo.rotulo}
         </h2>
         {versoes === null ? (
           <Skeleton className="h-24 w-full" />
         ) : versoes.length === 0 ? (
-          <p className="text-sm text-text-muted">Nenhuma versão salva ainda.</p>
+          <p className="text-sm text-ink-muted">Nenhuma versão salva ainda.</p>
         ) : (
           <Table caption="Versões da regra avaliativa" captionOculta>
             <thead>
@@ -175,16 +177,16 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
             <tbody>
               {versoes.map((v) => (
                 <tr key={v.id}>
-                  <td className="font-semibold text-text">v{v.versao}</td>
+                  <td className="font-semibold text-ink">v{v.versao}</td>
                   <td>{new Date(v.criadoEm).toLocaleString('pt-BR')}</td>
                   <td>{v.criadoPor.nome ?? '—'}</td>
-                  <td>{v.ativa ? <Badge variant="success">Vigente</Badge> : <Badge variant="neutral">Inativa</Badge>}</td>
+                  <td>{v.ativa ? <Chip tone="success">Vigente</Chip> : <Chip tone="neutral">Inativa</Chip>}</td>
                   <td className="space-x-2 whitespace-nowrap text-right">
-                    <Button variant="quiet" size="sm" onClick={() => setRegra(v.regra)}>
+                    <Button variant="quiet" onClick={() => setRegra(v.regra)}>
                       Abrir no formulário<span className="sr-only"> (versão {v.versao})</span>
                     </Button>
                     {!v.ativa && !somenteLeitura ? (
-                      <Button variant="secondary" size="sm" onClick={() => void ativar(v)}>
+                      <Button variant="secondary" onClick={() => void ativar(v)}>
                         Ativar<span className="sr-only"> versão {v.versao}</span>
                       </Button>
                     ) : null}
@@ -228,27 +230,18 @@ function CampoNumero({
   step?: number;
   dica?: string;
 }) {
-  const id = useId();
   return (
-    <div className="space-y-1">
-      <Label htmlFor={id}>{rotulo}</Label>
-      <Input
-        id={id}
-        type="number"
-        inputMode="decimal"
-        value={valor ?? ''}
-        min={min}
-        max={max}
-        step={step}
-        aria-describedby={dica ? `${id}-dica` : undefined}
-        onChange={(e) => onChange(e.target.value === '' ? NaN : Number(e.target.value))}
-      />
-      {dica ? (
-        <p id={`${id}-dica`} className="text-xs text-text-muted">
-          {dica}
-        </p>
-      ) : null}
-    </div>
+    <TextField
+      label={rotulo}
+      type="number"
+      inputMode="decimal"
+      value={valor ?? ''}
+      min={min}
+      max={max}
+      step={step}
+      hint={dica}
+      onChange={(e) => onChange(e.target.value === '' ? NaN : Number(e.target.value))}
+    />
   );
 }
 
@@ -381,7 +374,7 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
       </Opcoes>
       {n.tipo === 'media_ponderada' ? (
         <div className="space-y-3">
-          <p className="text-sm text-text-muted">Um peso por avaliação, na ordem em que são lançadas.</p>
+          <p className="text-sm text-ink-muted">Um peso por avaliação, na ordem em que são lançadas.</p>
           <div className="flex flex-wrap items-end gap-3">
             {pesos.map((p, i) => (
               <div key={i} className="w-28">
@@ -397,7 +390,7 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
             ))}
             <Button
               variant="secondary"
-              size="sm"
+             
               disabled={pesos.length >= 20}
               onClick={() => setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: [...pesos, 1] } })}
             >
@@ -405,7 +398,7 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
             </Button>
             <Button
               variant="quiet"
-              size="sm"
+             
               disabled={pesos.length <= 1}
               onClick={() => setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: pesos.slice(0, -1) } })}
             >
@@ -422,7 +415,7 @@ function EtapaMediaFinal({ regra, setRegra, periodos }: PropsEtapa & { periodos:
   const pesos = regra.mediaFinal.pesosPorPeriodo;
   return (
     <>
-      <p className="text-sm text-text-muted">
+      <p className="text-sm text-ink-muted">
         Peso de cada período na média final. Pesos iguais dão a média aritmética. Exemplo comum: 2, 2, 3 e 3.
       </p>
       <div className="flex flex-wrap gap-3">
@@ -484,7 +477,7 @@ function EtapaArredondamento({ regra, setRegra }: PropsEtapa) {
           ))}
         </Opcoes>
       ) : null}
-      <p className="text-sm text-text-muted">Vale para a nota de cada período, a média final e as recuperações.</p>
+      <p className="text-sm text-ink-muted">Vale para a nota de cada período, a média final e as recuperações.</p>
     </>
   );
 }
@@ -502,7 +495,7 @@ function EtapaRecuperacao({ regra, setRegra }: PropsEtapa) {
     <>
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="font-semibold text-text">Recuperação paralela (por período)</h3>
+          <h3 className="font-semibold text-ink">Recuperação paralela (por período)</h3>
           <Switch
             checked={paralela !== null}
             aria-label="Recuperação paralela"
@@ -523,9 +516,9 @@ function EtapaRecuperacao({ regra, setRegra }: PropsEtapa) {
           </Opcoes>
         ) : null}
       </div>
-      <div className="space-y-3 border-t border-border pt-6">
+      <div className="space-y-3 border-t border-line pt-6">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="font-semibold text-text">Recuperação final (depois da média)</h3>
+          <h3 className="font-semibold text-ink">Recuperação final (depois da média)</h3>
           <Switch
             checked={final !== null}
             aria-label="Recuperação final"
@@ -604,8 +597,8 @@ function EtapaConselho({ regra, setRegra }: PropsEtapa) {
     <>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h3 className="font-semibold text-text">Conselho de classe pode aprovar</h3>
-          <p className="text-sm text-text-muted">Decide sobre quem ficou abaixo da média. Nunca sobre falta.</p>
+          <h3 className="font-semibold text-ink">Conselho de classe pode aprovar</h3>
+          <p className="text-sm text-ink-muted">Decide sobre quem ficou abaixo da média. Nunca sobre falta.</p>
         </div>
         <Switch
           checked={c.habilitado}
