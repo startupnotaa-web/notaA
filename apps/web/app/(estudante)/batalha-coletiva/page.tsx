@@ -97,7 +97,7 @@ export default function BatalhaColetivaPage() {
                  {connected ? (
                    <>
                      <div className="flex flex-col items-center gap-4">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/20 text-success shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/20 text-success">
                            <span className="text-4xl" aria-hidden="true">✓</span>
                         </div>
                         <h2 className="text-2xl font-black text-text">Conectado ao Servidor</h2>
@@ -119,7 +119,7 @@ export default function BatalhaColetivaPage() {
                        size="lg" 
                        onClick={handleConnect} 
                        disabled={connecting}
-                       className={cn("w-full max-w-sm text-lg font-bold transition-all", connecting ? "animate-pulse" : "hover:scale-105 hover:shadow-[0_0_20px_rgba(38,153,233,0.4)]")}
+                       className={cn("w-full max-w-sm text-lg font-bold transition-all", connecting ? "animate-pulse" : "hover:scale-105")}
                      >
                        {connecting ? 'Conectando...' : 'ENTRAR NO COMBATE'}
                      </Button>

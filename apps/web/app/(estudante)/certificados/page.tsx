@@ -111,13 +111,13 @@ export default function CertificadosPage() {
                 : 'Hoje';
 
               return (
-                <Card key={ach.codigo} className="relative overflow-hidden border-brand-primary/30 bg-surface-2 p-5 transition-transform hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(38,153,233,0.15)] group">
+                <Card key={ach.codigo} className="relative overflow-hidden border-brand-primary/30 bg-surface-2 p-5 transition-transform hover:-translate-y-1 group">
                    <div className="absolute -right-4 -top-4 text-7xl opacity-5 transition-transform group-hover:scale-110 pointer-events-none select-none">
                      {info.emoji}
                    </div>
                    
                    <div className="relative z-10 flex items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-primary/20 text-3xl shadow-[0_0_10px_rgba(38,153,233,0.3)]">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-primary/20 text-3xl">
                         {info.emoji}
                       </div>
                       <div>

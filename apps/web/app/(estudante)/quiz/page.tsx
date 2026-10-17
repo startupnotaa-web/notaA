@@ -207,7 +207,7 @@ export default function QuizPage() {
           className={cn(
             'space-y-2 p-4 transition-shadow',
             resultado.gamificacao.subiuDeNivel &&
-              'border-brand-primary/60 shadow-[0_0_24px_rgba(38,153,233,0.45)]',
+              'border-brand-primary/60',
           )}
         >
           <div className="flex flex-wrap items-center gap-2">
@@ -243,7 +243,7 @@ export default function QuizPage() {
 }
 
 // Explosão de confete CSS-only (sem dependência) — disparada no level-up (E9).
-const CONFETE_CORES = ['#2699E9', '#7B4FE0', '#D500F9', '#22c55e', '#f59e0b'];
+const CONFETE_CORES = ['var(--brand-cyan)', 'var(--brand-violet)', 'var(--brand-magenta)', 'var(--success)', 'var(--warning)'];
 function Confetti() {
   const pedacos = Array.from({ length: 70 }, (_, i) => ({
     left: Math.random() * 100,

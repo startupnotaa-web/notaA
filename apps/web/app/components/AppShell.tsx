@@ -96,7 +96,7 @@ function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface shadow-[0_-10px_30px_rgba(0,0,0,0.05)]"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface"
     >
       <div className="mx-auto flex w-full max-w-4xl justify-around">
         {navItems.map(({ href, label, Icon }) => {

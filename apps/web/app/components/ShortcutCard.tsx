@@ -20,7 +20,7 @@ export function ShortcutCard({
     <div
       className={cn(
         'group flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface/60 p-5 backdrop-blur-md transition-all',
-        href && !emBreve && 'hover:border-brand-primary/50 hover:bg-surface-2 hover:shadow-[0_4px_15px_rgba(38,153,233,0.1)] hover:-translate-y-0.5',
+        href && !emBreve && 'hover:border-brand-primary/50 hover:bg-surface-2 hover:-translate-y-0.5',
         emBreve && 'opacity-60 grayscale-[50%]',
       )}
     >

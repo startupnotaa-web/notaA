@@ -153,10 +153,10 @@ function SkillNode({
 
   if (node.status === 'lacuna') {
     colorClass = 'border-error bg-error/10 text-error';
-    glowClass = 'shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+    glowClass = '';
   } else if (node.status === 'excelente') {
     colorClass = 'border-success bg-success/10 text-success';
-    glowClass = 'shadow-[0_0_15px_rgba(34,197,94,0.3)]';
+    glowClass = '';
   } else {
     colorClass = 'border-brand-primary bg-brand-primary/10 text-brand-primary';
   }

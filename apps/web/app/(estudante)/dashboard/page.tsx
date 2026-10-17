@@ -146,7 +146,7 @@ export default function DashboardPage() {
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary/30 via-surface to-brand-accent/30 p-[1px] shadow-lg">
         <div className="flex flex-col gap-5 rounded-2xl bg-surface/70 p-6 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-brand text-2xl font-bold text-white shadow-[0_0_20px_rgba(38,153,233,0.6)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-brand text-2xl font-bold text-white">
               {nivel.atual}
             </div>
             <div>
@@ -210,7 +210,7 @@ export default function DashboardPage() {
            
            <div className="flex flex-col sm:flex-row gap-4 w-full justify-center pt-2">
               <Link href="/estudo" className="w-full sm:w-auto">
-                 <button className="w-full rounded-full bg-brand-primary px-8 py-4 text-sm font-bold text-brand-primary-foreground transition-all hover:bg-brand-primary-hover hover:scale-105 shadow-[0_0_20px_rgba(38,153,233,0.3)] focus:outline-none focus:ring-4 focus:ring-brand-primary/50">
+                 <button className="w-full rounded-full bg-brand-primary px-8 py-4 text-sm font-bold text-brand-primary-foreground transition-all hover:bg-brand-primary-hover hover:scale-105 focus:outline-none focus:ring-4 focus:ring-brand-primary/50">
                     Continuar Estudando →
                  </button>
               </Link>

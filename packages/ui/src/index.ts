@@ -1,9 +1,11 @@
-// @notaa/ui — biblioteca de primitivos do design system (docs/07-design-system.md).
+// @notaa/ui — biblioteca de componentes do design system Nota A (docs/07-design-system.md).
 //
-// Tokens CSS (docs/07) vivem em ./tokens/index.css — importar uma única vez na
-// raiz do app (apps/web), nunca redefinir tokens em componentes. Os componentes
-// abaixo consomem SOMENTE classes Tailwind mapeadas para esses tokens.
-export const TOKENS_CSS_PATH = './tokens/index.css';
+// Os tokens vivem em tokens/tokens.json e são gerados em ./tokens/tokens.css
+// (pnpm --filter @notaa/ui tokens). O app importa tokens.css e base.css uma única
+// vez na raiz e usa tailwind.preset.js; nunca redefina tokens em componentes.
+// Os componentes consomem SOMENTE classes Tailwind mapeadas para esses tokens.
+export { corDoToken } from './tokens/cores';
+export type { Tema } from './tokens/cores';
 
 // Util de classes (estilo clsx, sem dependência externa).
 export { cn } from './lib/cn';

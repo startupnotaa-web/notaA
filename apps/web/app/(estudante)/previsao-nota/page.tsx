@@ -171,7 +171,7 @@ function Gauge({ value, max, naoCalibrado }: { value: number; max: number; naoCa
           strokeLinecap="round"
           strokeDasharray={circ}
           strokeDashoffset={circ * (1 - fraction)}
-          className="text-brand-primary [stroke:currentColor] drop-shadow-[0_0_8px_rgba(38,153,233,0.6)] transition-[stroke-dashoffset] duration-1000 ease-out"
+          className="text-brand-primary [stroke:currentColor] transition-[stroke-dashoffset] duration-1000 ease-out"
         />
       </svg>
       <div className="absolute flex flex-col items-center">

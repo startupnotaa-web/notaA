@@ -183,7 +183,7 @@ export default function PerfilPage() {
                       className={cn(
                         'flex flex-col items-center justify-center rounded-xl border p-4 w-[110px] text-center transition-all',
                         unlocked
-                          ? 'border-brand-primary/40 bg-brand-primary/10 shadow-[0_0_15px_rgba(38,153,233,0.15)]'
+                          ? 'border-brand-primary/40 bg-brand-primary/10'
                           : 'border-border bg-surface-2 grayscale opacity-60'
                       )}
                     >

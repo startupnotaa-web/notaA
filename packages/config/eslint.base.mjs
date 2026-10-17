@@ -20,6 +20,11 @@ export const baseConfig = [
     languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
   },
   {
+    // Preset do Tailwind é CommonJS (tailwind.config o carrega com require).
+    files: ['**/*.preset.js'],
+    languageOptions: { sourceType: 'commonjs', globals: { module: 'writable' } },
+  },
+  {
     // "**/" no início é necessário: cada app/package roda `eslint .` com cwd
     // própria, então um padrão sem "**/" só casaria com a raiz daquele cwd —
     // não com dist/ aninhado caso o pacote tenha subpastas (ex.: packages/db).

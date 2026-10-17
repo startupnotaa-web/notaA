@@ -6,21 +6,41 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./tokens/*.css": "./src/tokens/*.css"
+    "./tokens/*.css": "./src/tokens/*.css",
+    "./tailwind.preset.js": {
+      "types": "./tailwind.preset.d.ts",
+      "default": "./tailwind.preset.js"
+    },
+    "./assets/*": "./assets/*",
+    "./tokens/tokens.json": "./tokens/tokens.json"
   },
   "scripts": {
-    "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit"
+    "tokens": "node scripts/gerar-tokens.mjs",
+    "tokens:check": "node scripts/gerar-tokens.mjs --check",
+    "lint": "pnpm tokens:check && eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
   },
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
+    "axe-core": "^4.14.0",
+    "jsdom": "^30.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "vitest-axe": "^0.1.0"
+  },
+  "dependencies": {
+    "lucide-react": "^1.58.0"
   }
 }
