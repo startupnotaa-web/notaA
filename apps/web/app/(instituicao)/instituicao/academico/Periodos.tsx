@@ -103,7 +103,7 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                   <td>{dataBr(p.dataFim)}</td>
                   <td className="text-right">
                     {somenteLeitura ? null : (
-                      <Button variant="ghost" size="sm" onClick={() => void remover(p)} aria-label={`Remover ${p.nome}`}>
+                      <Button variant="quiet" size="sm" onClick={() => void remover(p)} aria-label={`Remover ${p.nome}`}>
                         Remover
                       </Button>
                     )}
@@ -164,7 +164,7 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                   {erro}
                 </p>
               ) : null}
-              <Button type="submit" fullWidth>
+              <Button type="submit" className="w-full">
                 {enviando ? 'Salvando…' : 'Adicionar período'}
               </Button>
             </fieldset>

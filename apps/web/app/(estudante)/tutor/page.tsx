@@ -165,7 +165,7 @@ export default function SocraticoPage() {
       <aside className="hidden w-64 flex-col rounded-2xl border border-border bg-surface p-4 md:flex">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-bold">Histórico</h2>
-          <Button variant="ghost" size="sm" onClick={novaSessao} title="Nova Sessão">
+          <Button variant="quiet" size="sm" onClick={novaSessao} title="Nova Sessão">
             +
           </Button>
         </div>
@@ -253,7 +253,7 @@ export default function SocraticoPage() {
             placeholder="Pergunte algo... (o tutor vai te guiar, não dar a resposta pronta)"
             className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-surface px-4 py-3 text-text placeholder:text-text-muted/60 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
           />
-          <Button variant="cta" onClick={enviar} disabled={!rascunho.trim() || pensando || !conversaId}>
+          <Button variant="primary" onClick={enviar} disabled={!rascunho.trim() || pensando || !conversaId}>
             Enviar
           </Button>
         </div>

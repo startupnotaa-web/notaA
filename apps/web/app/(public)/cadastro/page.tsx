@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Input, Label } from '@notaa/ui';
+import { Button, Card, Input, Label, ButtonLink } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { supabaseBrowser } from '../../../lib/supabase-browser';
 
@@ -88,9 +88,7 @@ export default function CadastroPage() {
             Enviamos um link de confirmação para <strong className="text-text">{email}</strong>. Depois de
             confirmar, faça login normalmente.
           </p>
-          <Button asChild variant="primary" fullWidth>
-            <Link href="/login">Ir para o login</Link>
-          </Button>
+          <ButtonLink as={Link} href="/login" variant="primary" className="w-full">Ir para o login</ButtonLink>
         </Card>
       </main>
     );
@@ -161,7 +159,7 @@ export default function CadastroPage() {
           </p>
         )}
 
-        <Button type="submit" variant="cta" size="lg" fullWidth disabled={carregando}>
+        <Button type="submit" variant="primary" className="w-full" disabled={carregando}>
           {carregando ? 'Criando conta...' : 'Criar conta'}
         </Button>
       </form>
@@ -175,8 +173,8 @@ export default function CadastroPage() {
       <Button
         type="button"
         variant="secondary"
-        size="lg"
-        fullWidth
+       
+        className="w-full"
         disabled={carregando}
         onClick={async () => {
           setErro(null);

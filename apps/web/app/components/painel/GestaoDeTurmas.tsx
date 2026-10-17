@@ -435,7 +435,7 @@ function ProfessoresDaTurma({
             <li key={p.professorId} className="flex items-center justify-between gap-2 text-sm">
               <span className="text-text">{p.nome ?? p.email}</span>
               <Button
-                variant="ghost"
+                variant="quiet"
                 size="sm"
                 disabled={enviando}
                 onClick={() =>

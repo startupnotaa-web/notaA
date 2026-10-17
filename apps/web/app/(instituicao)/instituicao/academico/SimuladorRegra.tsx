@@ -188,7 +188,7 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
             </fieldset>
           );
         })}
-        <Button variant="ghost" size="sm" onClick={() => setAlunos(EXEMPLOS)}>
+        <Button variant="quiet" size="sm" onClick={() => setAlunos(EXEMPLOS)}>
           Restaurar exemplos
         </Button>
       </CardContent>

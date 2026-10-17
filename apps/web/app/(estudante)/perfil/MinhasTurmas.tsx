@@ -191,7 +191,7 @@ export function MinhasTurmas() {
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="cta" onClick={confirmarEntrada} disabled={carregando}>
+                <Button variant="primary" onClick={confirmarEntrada} disabled={carregando}>
                   {carregando ? 'Enviando…' : 'Autorizo e quero entrar'}
                 </Button>
                 <Button variant="secondary" onClick={recomecar} disabled={carregando}>

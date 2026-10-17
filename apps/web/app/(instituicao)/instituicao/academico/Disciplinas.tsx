@@ -121,7 +121,7 @@ export function Disciplinas() {
                     <td>{rotuloArea(d.areaEnem)}</td>
                     <td>{d.arquivada ? <Badge variant="neutral">Arquivada</Badge> : <Badge variant="success">Ativa</Badge>}</td>
                     <td className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => void alternarArquivo(d)}>
+                      <Button variant="quiet" size="sm" onClick={() => void alternarArquivo(d)}>
                         {d.arquivada ? 'Desarquivar' : 'Arquivar'}
                         <span className="sr-only"> {d.nome}</span>
                       </Button>
@@ -155,23 +155,21 @@ export function Disciplinas() {
                   <Label htmlFor="disciplina-codigo">Código (opcional)</Label>
                   <Input id="disciplina-codigo" value={codigo} onChange={(e) => setCodigo(e.target.value)} maxLength={20} />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="disciplina-area">Área do ENEM</Label>
-                  <Select id="disciplina-area" value={area} onChange={(e) => setArea(e.target.value as AreaEnem | '')}>
-                    <option value="">Sem área do ENEM</option>
-                    {AREAS.map((a) => (
-                      <option key={a.valor} value={a.valor}>
-                        {a.rotulo}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+                <Select
+                  label="Área do ENEM"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value as AreaEnem | '')}
+                  options={[
+                    { value: '', label: 'Sem área do ENEM' },
+                    ...AREAS.map((a) => ({ value: a.valor, label: a.rotulo })),
+                  ]}
+                />
                 {erro ? (
                   <p role="alert" className="text-sm text-error">
                     {erro}
                   </p>
                 ) : null}
-                <Button type="submit" fullWidth>
+                <Button type="submit" className="w-full">
                   {enviando ? 'Salvando…' : 'Criar disciplina'}
                 </Button>
               </fieldset>
@@ -259,16 +257,13 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
           </p>
         </div>
         {turmas && turmas.length > 0 ? (
-          <div className="w-64 space-y-1">
-            <Label htmlFor="atribuicao-turma">Turma</Label>
-            <Select id="atribuicao-turma" value={turmaId} onChange={(e) => setTurmaId(e.target.value)}>
-              {turmas.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nome} ({t.anoLetivo.rotulo})
-                </option>
-              ))}
-            </Select>
-          </div>
+          <Select
+            label="Turma"
+            className="w-64"
+            value={turmaId}
+            onChange={(e) => setTurmaId(e.target.value)}
+            options={turmas.map((t) => ({ value: t.id, label: `${t.nome} (${t.anoLetivo.rotulo})` }))}
+          />
         ) : null}
       </div>
 
@@ -298,25 +293,20 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
                   <tr key={a.disciplina.id}>
                     <td className="font-medium text-text">{a.disciplina.nome}</td>
                     <td>
-                      <Label htmlFor={`prof-${a.disciplina.id}`} className="sr-only">
-                        Professor de {a.disciplina.nome}
-                      </Label>
                       <Select
-                        id={`prof-${a.disciplina.id}`}
+                        label={`Professor de ${a.disciplina.nome}`}
+                        labelOculto
                         value={a.professor?.id ?? ''}
                         onChange={(e) => void atribuir(a.disciplina.id, e.target.value || null)}
                         className="max-w-xs"
-                      >
-                        <option value="">Sem professor</option>
-                        {professores.map((p) => (
-                          <option key={p.professorId} value={p.professorId}>
-                            {p.nome ?? p.email}
-                          </option>
-                        ))}
-                      </Select>
+                        options={[
+                          { value: '', label: 'Sem professor' },
+                          ...professores.map((p) => ({ value: p.professorId, label: p.nome ?? p.email })),
+                        ]}
+                      />
                     </td>
                     <td className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => void retirar(a.disciplina.id)}>
+                      <Button variant="quiet" size="sm" onClick={() => void retirar(a.disciplina.id)}>
                         Retirar<span className="sr-only"> {a.disciplina.nome} da turma</span>
                       </Button>
                     </td>
@@ -334,22 +324,17 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
               if (novaDisciplina) void atribuir(novaDisciplina, null).then(() => setNovaDisciplina(''));
             }}
           >
-            <div className="w-72 space-y-1">
-              <Label htmlFor="atribuicao-disciplina">Adicionar disciplina à turma</Label>
-              <Select
-                id="atribuicao-disciplina"
-                value={novaDisciplina}
-                onChange={(e) => setNovaDisciplina(e.target.value)}
-                disabled={disponiveis.length === 0}
-              >
-                <option value="">{disponiveis.length ? 'Escolha a disciplina' : 'Todas já estão na turma'}</option>
-                {disponiveis.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.nome}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <Select
+              label="Adicionar disciplina à turma"
+              className="w-72"
+              value={novaDisciplina}
+              onChange={(e) => setNovaDisciplina(e.target.value)}
+              disabled={disponiveis.length === 0}
+              options={[
+                { value: '', label: disponiveis.length ? 'Escolha a disciplina' : 'Todas já estão na turma' },
+                ...disponiveis.map((d) => ({ value: d.id, label: d.nome })),
+              ]}
+            />
             <Button type="submit" variant="secondary" disabled={!novaDisciplina}>
               Adicionar
             </Button>

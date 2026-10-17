@@ -15,7 +15,7 @@ import {
   type SimuladoRelatorio,
   type StartSimuladoResponse,
 } from '@notaa/contracts';
-import { Badge, Button, Card, OptionCard, Progress, Skeleton, cn } from '@notaa/ui';
+import { Badge, Button, Card, OptionCard, Progress, Skeleton, cn, ButtonLink } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 import { useUser } from '../../../lib/user-context';
 import { toast } from '../../components/toast';
@@ -357,10 +357,10 @@ export default function SimuladoPage() {
               : 'Você respondeu todas. Depois de finalizar não dá para voltar.'}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button variant="cta" onClick={() => void finalizar()} disabled={carregando}>
+            <Button variant="primary" onClick={() => void finalizar()} disabled={carregando}>
               {carregando ? 'Corrigindo…' : 'Finalizar e ver relatório'}
             </Button>
-            <Button variant="ghost" onClick={() => setConfirmandoFim(false)} disabled={carregando}>
+            <Button variant="quiet" onClick={() => setConfirmandoFim(false)} disabled={carregando}>
               Continuar respondendo
             </Button>
           </div>
@@ -379,7 +379,7 @@ export default function SimuladoPage() {
               Próxima
             </Button>
           ) : (
-            <Button variant="cta" onClick={() => setConfirmandoFim(true)}>
+            <Button variant="primary" onClick={() => setConfirmandoFim(true)}>
               Finalizar
             </Button>
           )}
@@ -536,12 +536,10 @@ function TelaConfig({
       )}
 
       <div className="flex flex-wrap justify-center gap-3">
-        <Button asChild variant="secondary" size="lg">
-          <Link href="/dashboard">Voltar</Link>
-        </Button>
+        <ButtonLink as={Link} href="/dashboard" variant="secondary">Voltar</ButtonLink>
         <Button
-          variant="cta"
-          size="lg"
+          variant="primary"
+         
           onClick={() => onIniciar(opcao.escolha)}
           disabled={carregando}
         >

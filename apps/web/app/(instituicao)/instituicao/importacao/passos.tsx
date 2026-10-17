@@ -9,7 +9,7 @@ import type {
   PreviaResponse,
   TipoImportacao,
 } from '@notaa/contracts';
-import { Badge, Button, FileDrop, Label, OptionCard, Progress, Select, Skeleton, Stat, Table, cn } from '@notaa/ui';
+import { Badge, Button, FileDrop, OptionCard, Progress, Select, Skeleton, Stat, Table, cn } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 
 const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'error' }> = {
@@ -126,10 +126,10 @@ export function PassoMapeamento({
             return (
               <tr key={c.campo}>
                 <td className="w-1/2">
-                  <Label htmlFor={`map-${c.campo}`} className="flex items-center gap-2">
+                  <p className="flex items-center gap-2 font-bold">
                     {c.rotulo}
                     {c.obrigatorio ? <Badge variant="warning">Obrigatório</Badge> : null}
-                  </Label>
+                  </p>
                   {c.descricao ? (
                     <p id={idDica} className="mt-1 text-xs text-text-muted">
                       {c.descricao}
@@ -139,20 +139,18 @@ export function PassoMapeamento({
                 <td>
                   <Select
                     id={`map-${c.campo}`}
+                    label="Coluna da planilha"
                     value={valor === null ? '' : String(valor)}
-                    error={erro}
+                    error={erro ? (valor === null ? 'Escolha a coluna deste campo.' : 'Esta coluna já está em outro campo.') : undefined}
                     aria-describedby={c.descricao ? idDica : undefined}
                     onChange={(e) =>
                       setMapeamento({ ...mapeamento, [c.campo]: e.target.value === '' ? null : Number(e.target.value) })
                     }
-                  >
-                    <option value="">Não importar</option>
-                    {recebido.cabecalhos.map((h, i) => (
-                      <option key={i} value={i}>
-                        {h || `Coluna ${i + 1} (sem nome)`}
-                      </option>
-                    ))}
-                  </Select>
+                    options={[
+                      { value: '', label: 'Não importar' },
+                      ...recebido.cabecalhos.map((h, i) => ({ value: String(i), label: h || `Coluna ${i + 1} (sem nome)` })),
+                    ]}
+                  />
                 </td>
               </tr>
             );
@@ -297,13 +295,13 @@ export function PassoPrevia({
 
       {paginas > 1 ? (
         <nav aria-label="Páginas da prévia" className="flex items-center justify-center gap-3 text-sm">
-          <Button variant="ghost" size="sm" onClick={() => setPagina(pagina - 1)} disabled={pagina === 1}>
+          <Button variant="quiet" size="sm" onClick={() => setPagina(pagina - 1)} disabled={pagina === 1}>
             Anterior
           </Button>
           <span aria-live="polite">
             Página {pagina} de {paginas}
           </span>
-          <Button variant="ghost" size="sm" onClick={() => setPagina(pagina + 1)} disabled={pagina === paginas}>
+          <Button variant="quiet" size="sm" onClick={() => setPagina(pagina + 1)} disabled={pagina === paginas}>
             Próxima
           </Button>
         </nav>

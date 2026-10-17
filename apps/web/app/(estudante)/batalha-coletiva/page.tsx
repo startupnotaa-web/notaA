@@ -116,7 +116,7 @@ export default function BatalhaColetivaPage() {
                         <p className="text-text-muted">Sexta-feira, 15h00. O servidor está aceitando conexões.</p>
                      </div>
                      <Button 
-                       size="lg" 
+                       
                        onClick={handleConnect} 
                        disabled={connecting}
                        className={cn("w-full max-w-sm text-lg font-bold transition-all", connecting ? "animate-pulse" : "hover:scale-105")}

@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { OnboardingState } from '@notaa/contracts';
-import { Button, Chip, Input, Label, OptionCard, Progress, Switch, cn } from '@notaa/ui';
+import { Button, ChoiceChip, Input, Label, OptionCard, Progress, Switch, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../lib/api-client';
 import { useAuth } from '../../lib/auth-context';
 import { useUser } from '../../lib/user-context';
@@ -270,13 +270,13 @@ export default function OnboardingPage() {
             <p className="text-text-muted">Escolha quantas opções quiser.</p>
             <div className="flex flex-wrap gap-2 pt-2">
               {COMO_APRENDE.map((o) => (
-                <Chip
+                <ChoiceChip
                   key={o}
                   selected={comoAprende.includes(o)}
                   onClick={() => toggle(comoAprende, setComoAprende, o)}
                 >
                   {o}
-                </Chip>
+                </ChoiceChip>
               ))}
             </div>
           </Step>
@@ -288,13 +288,13 @@ export default function OnboardingPage() {
             <p className="text-text-muted">Isso ajuda a priorizar o que estudar primeiro.</p>
             <div className="flex flex-wrap gap-2 pt-2">
               {DIFICULDADES.map((o) => (
-                <Chip
+                <ChoiceChip
                   key={o}
                   selected={dificuldades.includes(o)}
                   onClick={() => toggle(dificuldades, setDificuldades, o)}
                 >
                   {o}
-                </Chip>
+                </ChoiceChip>
               ))}
             </div>
           </Step>
@@ -369,7 +369,7 @@ export default function OnboardingPage() {
                 )}
               </>
             )}
-            <Button variant="ghost" size="sm" onClick={pularPasso7} disabled={salvando} className="self-start">
+            <Button variant="quiet" size="sm" onClick={pularPasso7} disabled={salvando} className="self-start">
               Pular esta etapa
             </Button>
           </Step>
@@ -406,14 +406,14 @@ export default function OnboardingPage() {
 
       <div className="mt-8 flex items-center justify-between gap-3">
         <Button
-          variant="ghost"
+          variant="quiet"
           onClick={() => setStep((s) => Math.max(1, s - 1))}
           disabled={step === 1 || salvando}
         >
           Voltar
         </Button>
         <Button
-          variant={step === TOTAL ? 'cta' : 'primary'}
+          variant="primary"
           onClick={avancar}
           disabled={!podeAvancar || salvando}
         >

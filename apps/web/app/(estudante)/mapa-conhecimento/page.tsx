@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardResponse } from '@notaa/contracts';
-import { Card, SectionHeader, Skeleton, cn, Button } from '@notaa/ui';
+import { Card, SectionHeader, Skeleton, cn, ButtonLink } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 
 const AREA_LABELS: Record<string, string> = {
@@ -125,9 +125,7 @@ export default function MapaConhecimentoPage() {
                      <p className="text-xs text-text-muted">Proficiência atual: {Math.round(lacuna.normalized * 100)}%</p>
                    </div>
                  </div>
-                 <Button asChild className="mt-2 w-full" variant="secondary">
-                   <Link href="/quiz">Praticar {lacuna.label}</Link>
-                 </Button>
+                 <ButtonLink as={Link} href="/quiz" className="mt-2 w-full" variant="secondary">Praticar {lacuna.label}</ButtonLink>
               </Card>
             ))}
           </div>

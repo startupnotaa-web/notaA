@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
-import { Card, CardDescription, CardHeader, CardTitle, Label, SectionHeader, Select, Skeleton, cn } from '@notaa/ui';
+import { Card, CardDescription, CardHeader, CardTitle, SectionHeader, Select, Skeleton, cn } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { GestaoDeAnosLetivos } from '../../../components/painel/GestaoDeAnosLetivos';
 import { Disciplinas } from './Disciplinas';
@@ -59,17 +59,13 @@ export default function ConfiguracaoAcademicaPage() {
         description="Defina o calendário avaliativo, as disciplinas e como as notas viram média e situação final."
         action={
           anos && anos.length > 0 ? (
-            <div className="w-56 space-y-1">
-              <Label htmlFor="ano-letivo-config">Ano letivo</Label>
-              <Select id="ano-letivo-config" value={anoLetivoId} onChange={(e) => setAnoLetivoId(e.target.value)}>
-                {anos.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.rotulo}
-                    {a.arquivado ? ' (arquivado)' : ''}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <Select
+              label="Ano letivo"
+              className="w-56"
+              value={anoLetivoId}
+              onChange={(e) => setAnoLetivoId(e.target.value)}
+              options={anos.map((a) => ({ value: a.id, label: `${a.rotulo}${a.arquivado ? ' (arquivado)' : ''}` }))}
+            />
           ) : null
         }
       />

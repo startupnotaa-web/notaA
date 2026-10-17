@@ -86,7 +86,7 @@ export function PainelShell({
               {titulo}
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+          <Button variant="quiet" size="sm" onClick={() => void signOut()}>
             Sair
           </Button>
         </div>

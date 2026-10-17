@@ -11,9 +11,35 @@ export type { Tema } from './tokens/cores';
 export { cn } from './lib/cn';
 export type { ClassValue } from './lib/cn';
 
-// Primitivos.
-export { Button } from './components/Button';
+// Componentes do Nota A (espelham o bundle do handoff; props de index.d.ts).
+export { Button, classesDoBotao } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
+export { ButtonLink } from './components/ButtonLink';
+export type { ButtonLinkProps } from './components/ButtonLink';
+export { TextField } from './components/TextField';
+export type { TextFieldProps } from './components/TextField';
+export { Select } from './components/Select';
+export type { SelectProps } from './components/Select';
+export { Chip } from './components/Chip';
+export type { ChipProps, Tone } from './components/Chip';
+export { ChoiceChip } from './components/ChoiceChip';
+export type { ChoiceChipProps } from './components/ChoiceChip';
+export { Tabs, propsDoPainel } from './components/Tabs';
+export type { TabsProps } from './components/Tabs';
+export { SideNav } from './components/SideNav';
+export type { SideNavProps, SideNavItem } from './components/SideNav';
+export { GradeGrid } from './components/GradeGrid';
+export type { GradeGridProps } from './components/GradeGrid';
+export { ProgressTrail } from './components/ProgressTrail';
+export type { ProgressTrailProps } from './components/ProgressTrail';
+export { Notice } from './components/Notice';
+export type { NoticeProps, StatusTone } from './components/Notice';
+export { EmptyState } from './components/EmptyState';
+export type { EmptyStateProps } from './components/EmptyState';
+export { Aurora } from './components/Aurora';
+export type { AuroraProps } from './components/Aurora';
+
+// Primitivos anteriores, ainda em uso nas telas de aluno e família.
 
 export {
   Card,
@@ -39,9 +65,6 @@ export { Label } from './components/Label';
 export { Switch } from './components/Switch';
 export type { SwitchProps } from './components/Switch';
 
-export { Chip } from './components/Chip';
-export type { ChipProps } from './components/Chip';
-
 export { OptionCard } from './components/OptionCard';
 export type { OptionCardProps, OptionCardState } from './components/OptionCard';
 
@@ -52,9 +75,6 @@ export { SectionHeader } from './components/SectionHeader';
 export type { SectionHeaderProps } from './components/SectionHeader';
 
 export { Skeleton } from './components/Skeleton';
-
-export { Select } from './components/Select';
-export type { SelectProps } from './components/Select';
 
 export { Stepper } from './components/Stepper';
 export type { StepperProps } from './components/Stepper';

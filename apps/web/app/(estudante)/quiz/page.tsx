@@ -6,7 +6,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { AreaConhecimento, ItemPublico, SubmitAnswerResponse } from '@notaa/contracts';
 import { QUIZ_TOTAL_QUESTOES } from '@notaa/contracts';
-import { Badge, Button, Card, OptionCard, Progress, cn } from '@notaa/ui';
+import { Badge, Button, Card, OptionCard, Progress, cn, ButtonLink } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { toast } from '../../components/toast';
 
@@ -116,7 +116,7 @@ export default function QuizPage() {
             <Button 
               key={a.valor} 
               variant="secondary" 
-              size="lg" 
+              
               className={cn("flex flex-col items-center gap-2 h-auto py-6 border transition-all", a.colorClass)}
               disabled={carregando} 
               onClick={() => iniciar(a.valor)}
@@ -140,9 +140,7 @@ export default function QuizPage() {
             ajustar a experiência de estudo. As questões desta sessão foram geradas pela IA e ainda não compõem uma nota oficial calibrada.
           </p>
           <div className="pt-2">
-            <Button asChild variant="cta" size="lg">
-              <Link href="/dashboard">Ver no painel</Link>
-            </Button>
+            <ButtonLink as={Link} href="/dashboard" variant="primary">Ver no painel</ButtonLink>
           </div>
         </Card>
       </div>
@@ -233,7 +231,7 @@ export default function QuizPage() {
             {carregando ? 'Enviando...' : 'Responder'}
           </Button>
         ) : (
-          <Button variant="cta" onClick={proxima} disabled={carregando}>
+          <Button variant="primary" onClick={proxima} disabled={carregando}>
             {resultado.proximaQuestao ? 'Próxima questão' : 'Finalizar'}
           </Button>
         )}

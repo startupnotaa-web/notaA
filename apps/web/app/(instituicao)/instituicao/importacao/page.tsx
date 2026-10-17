@@ -176,10 +176,10 @@ export default function ImportacaoPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button variant="secondary" fullWidth onClick={() => void exportar('alunos')}>
+            <Button variant="secondary" className="w-full" onClick={() => void exportar('alunos')}>
               Alunos e responsáveis
             </Button>
-            <Button variant="secondary" fullWidth onClick={() => void exportar('disciplinas')}>
+            <Button variant="secondary" className="w-full" onClick={() => void exportar('disciplinas')}>
               Disciplinas
             </Button>
           </CardContent>

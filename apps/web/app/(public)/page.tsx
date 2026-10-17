@@ -1,7 +1,7 @@
 import type { SVGProps } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input } from '@notaa/ui';
+import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input, ButtonLink } from '@notaa/ui';
 import { FEATURES } from '../../lib/feature-flags';
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -15,9 +15,7 @@ export default function LandingPage() {
           <Image src="/brand/logo-full.png" alt="Nota A" width={80} height={50} priority />
           <Badge variant="brand" className="hidden sm:inline-flex">Beta 1.0 ao vivo</Badge>
         </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/login">Entrar</Link>
-        </Button>
+        <ButtonLink as={Link} href="/login" variant="quiet" size="sm">Entrar</ButtonLink>
       </header>
 
       {/* Hero Section */}
@@ -30,12 +28,8 @@ export default function LandingPage() {
           A primeira plataforma EdTech gamificada do Brasil com IA adaptativa. Personalizamos sua jornada do ENEM, do primeiro simulado à aprovação.
         </p>
         <div className="flex w-full flex-col justify-center gap-4 sm:w-auto sm:flex-row">
-          <Button asChild variant="cta" size="lg" className="shadow-brand">
-            <Link href="/cadastro">Começar Grátis</Link>
-          </Button>
-          <Button asChild variant="secondary" size="lg">
-            <Link href="#demonstracao">Ver demonstração</Link>
-          </Button>
+          <ButtonLink as={Link} href="/cadastro" variant="primary">Começar Grátis</ButtonLink>
+          <ButtonLink as={Link} href="#demonstracao" variant="secondary">Ver demonstração</ButtonLink>
         </div>
       </section>
 
@@ -153,7 +147,7 @@ export default function LandingPage() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" variant="cta">Assinar Plus</Button>
+              <Button className="w-full" variant="primary">Assinar Plus</Button>
             </CardFooter>
           </Card>
 

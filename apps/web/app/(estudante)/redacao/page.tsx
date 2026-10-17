@@ -182,7 +182,7 @@ export default function RedacaoPage() {
           </div>
         </div>
 
-        <Button variant="cta" fullWidth onClick={enviar} disabled={!podeEnviar}>
+        <Button variant="primary" className="w-full" onClick={enviar} disabled={!podeEnviar}>
           {corrigindo ? (
             <span className="inline-flex items-center gap-2">
               <Spinner /> IA Corrigindo...

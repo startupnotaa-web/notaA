@@ -180,7 +180,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                   <td>{v.criadoPor.nome ?? '—'}</td>
                   <td>{v.ativa ? <Badge variant="success">Vigente</Badge> : <Badge variant="neutral">Inativa</Badge>}</td>
                   <td className="space-x-2 whitespace-nowrap text-right">
-                    <Button variant="ghost" size="sm" onClick={() => setRegra(v.regra)}>
+                    <Button variant="quiet" size="sm" onClick={() => setRegra(v.regra)}>
                       Abrir no formulário<span className="sr-only"> (versão {v.versao})</span>
                     </Button>
                     {!v.ativa && !somenteLeitura ? (
@@ -404,7 +404,7 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
               Adicionar avaliação
             </Button>
             <Button
-              variant="ghost"
+              variant="quiet"
               size="sm"
               disabled={pesos.length <= 1}
               onClick={() => setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: pesos.slice(0, -1) } })}

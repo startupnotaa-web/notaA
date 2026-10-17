@@ -46,3 +46,22 @@ body {
   animation: none !important;
   transition: none !important;
 }
+
+/* Aurora: deriva e respira devagar. Quem usa é o componente Aurora (components/Aurora.tsx). */
+@keyframes na-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(12%, 10%) scale(1.15);
+  }
+}
+
+@keyframes na-breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.2);
+  }
+}

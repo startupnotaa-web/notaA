@@ -284,7 +284,7 @@ export default function PerfilPage() {
               </div>
               <div className="flex w-full sm:w-auto flex-col gap-2 sm:flex-row">
                 <Button
-                  variant="cta"
+                  variant="primary"
                   className="w-full sm:w-auto"
                   disabled={isPremium}
                   onClick={() => setAssinaturaMsg('Os pagamentos chegam em breve — deixamos seu interesse no Premium registrado. 🚀')}

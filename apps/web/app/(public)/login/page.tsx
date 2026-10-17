@@ -64,7 +64,7 @@ export default function LoginPage() {
             </p>
           )}
 
-          <Button type="submit" variant="cta" size="lg" fullWidth disabled={carregando}>
+          <Button type="submit" variant="primary" className="w-full" disabled={carregando}>
             {carregando ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
@@ -78,8 +78,8 @@ export default function LoginPage() {
         <Button
           type="button"
           variant="secondary"
-          size="lg"
-          fullWidth
+         
+          className="w-full"
           disabled={carregando}
           onClick={async () => {
             setErro(null);

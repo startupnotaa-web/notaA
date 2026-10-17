@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { SimuladoRecorte, SimuladoRelatorio } from '@notaa/contracts';
-import { Badge, Button, Card, OptionCard, Progress, Stat, cn } from '@notaa/ui';
+import { Badge, Button, Card, OptionCard, Progress, Stat, cn, ButtonLink } from '@notaa/ui';
 import { formatarDuracao, rotuloArea, rotuloDificuldade } from './labels';
 
 /** Um comentário por faixa — o número sozinho não diz ao aluno o que fazer. */
@@ -222,10 +222,8 @@ export function RelatorioSimulado({
       </Card>
 
       <div className="flex flex-wrap justify-center gap-3 pb-8">
-        <Button asChild variant="secondary" size="lg">
-          <Link href="/dashboard">Voltar ao início</Link>
-        </Button>
-        <Button variant="cta" size="lg" onClick={onRefazer}>
+        <ButtonLink as={Link} href="/dashboard" variant="secondary">Voltar ao início</ButtonLink>
+        <Button variant="primary" onClick={onRefazer}>
           Fazer outro simulado
         </Button>
       </div>

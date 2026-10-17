@@ -128,7 +128,7 @@ export function Professores() {
                           {copiado === c.token ? 'Copiado' : 'Copiar link'}
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="quiet"
                           size="sm"
                           disabled={enviando}
                           onClick={() =>
@@ -185,7 +185,7 @@ export function Professores() {
                           )}
                         </div>
                         <Button
-                          variant="ghost"
+                          variant="quiet"
                           size="sm"
                           disabled={enviando || bloqueado}
                           onClick={() =>

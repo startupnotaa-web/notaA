@@ -170,7 +170,7 @@ function ConfirmarEmail() {
                   required
                 />
               </div>
-              <Button type="submit" variant="primary" fullWidth disabled={reenviando}>
+              <Button type="submit" variant="primary" className="w-full" disabled={reenviando}>
                 {reenviando ? 'Reenviando...' : 'Reenviar link de confirmação'}
               </Button>
               {reenviado && (

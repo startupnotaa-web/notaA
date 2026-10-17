@@ -1,31 +1,39 @@
-// docs/07 §5, §7 — Select nativo com a mesma pele do Input. Nativo de propósito:
-// teclado, leitor de tela e celular já funcionam sem reimplementar listbox.
 import * as React from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Campo, classesDoControle } from './Campo';
 import { cn } from '../lib/cn';
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  /** Estado de erro: aplica borda de erro e marca aria-invalid. */
-  error?: boolean;
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
+  label: React.ReactNode;
+  options: { value: string; label: string }[];
+  hint?: React.ReactNode;
+  error?: React.ReactNode;
+  /** Rótulo só para leitores de tela (células de tabela). */
+  labelOculto?: boolean;
 }
 
+/** Select nativo de propósito: teclado, leitor de tela e celular funcionam sem reimplementar listbox. */
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { error = false, className, 'aria-invalid': ariaInvalid, children, ...props },
+  { label, options, hint, error, labelOculto, className, id, 'aria-describedby': describedBy, ...props },
   ref,
 ) {
   return (
-    <select
-      ref={ref}
-      aria-invalid={ariaInvalid ?? (error || undefined)}
-      className={cn(
-        'min-h-[44px] w-full rounded-md border bg-surface px-3 py-2 text-base text-text',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
-        'disabled:opacity-50 disabled:pointer-events-none',
-        error ? 'border-error' : 'border-border',
-        className,
+    <Campo label={label} hint={hint} error={error} id={id} describedBy={describedBy} className={className} labelOculto={labelOculto}>
+      {(ligacao) => (
+        <div className="relative">
+          <select ref={ref} className={cn(classesDoControle(Boolean(error)), 'appearance-none pr-10')} {...ligacao} {...props}>
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            aria-hidden="true"
+            className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-muted"
+          />
+        </div>
       )}
-      {...props}
-    >
-      {children}
-    </select>
+    </Campo>
   );
 });

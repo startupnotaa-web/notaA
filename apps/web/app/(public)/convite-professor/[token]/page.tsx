@@ -206,7 +206,7 @@ export default function ConviteProfessorPage() {
                 </p>
               )}
 
-              <Button type="submit" variant="cta" size="lg" fullWidth disabled={enviando}>
+              <Button type="submit" variant="primary" className="w-full" disabled={enviando}>
                 {enviando ? 'Criando conta…' : 'Criar conta de professor'}
               </Button>
             </form>
