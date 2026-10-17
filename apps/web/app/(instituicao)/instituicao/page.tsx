@@ -38,7 +38,7 @@ export default function InstituicaoPainelPage() {
   const Conteudo = ABAS.find((a) => a.id === aba)?.Conteudo ?? VisaoGeral;
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6">
+    <div className="space-y-6">
       <div
         role="tablist"
         aria-label="Seções do painel"

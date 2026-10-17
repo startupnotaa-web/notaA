@@ -17,7 +17,7 @@ export const baseConfig = [
     // Arquivos de configuração (next.config.mjs etc.) e scripts de build rodam
     // no Node, fora do bundle: `process` e `console` existem ali.
     files: ['**/*.config.{js,mjs,cjs}', '**/scripts/**/*.{js,mjs,cjs}'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+    languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly' } },
   },
   {
     // Preset do Tailwind é CommonJS (tailwind.config o carrega com require).

@@ -7,10 +7,9 @@
 // (doc 07 §3), Switches/Chips acessíveis (doc 07 §7).
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { OnboardingState } from '@notaa/contracts';
-import { Button, ChoiceChip, Input, Label, OptionCard, Progress, Switch, cn } from '@notaa/ui';
+import { Button, ChoiceChip, NotaASimbolo, Input, Label, OptionCard, Progress, Switch, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../lib/api-client';
 import { useAuth } from '../../lib/auth-context';
 import { useUser } from '../../lib/user-context';
@@ -209,7 +208,7 @@ export default function OnboardingPage() {
       <div className="flex flex-1 flex-col">
         {step === 1 && (
           <Step center>
-            <Image src="/brand/logo-full.png" alt="Nota A" width={200} height={130} priority />
+            <NotaASimbolo className="h-20 w-auto" titulo="Nota A" />
             <h1 className="text-2xl font-bold">Boas-vindas ao Nota A</h1>
             <p className="text-text-muted">Vamos montar um plano de estudos que se adapta a você.</p>
             <div className="w-full space-y-4 pt-2 text-left">

@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, cn } from '@notaa/ui';
+import { BottomNav, Button, NotaASimbolo, SideNav } from '@notaa/ui';
 import { useAuth } from '../../lib/auth-context';
 import { useUser } from '../../lib/user-context';
 import { Toaster } from './toast';
@@ -12,6 +11,8 @@ import { Toaster } from './toast';
 export interface ItemDeNavegacao {
   href: string;
   rotulo: string;
+  /** Ícone de 20px. Aparece sozinho entre 768 e 1.023px e ao lado do rótulo na navegação inferior. */
+  icone: ReactNode;
 }
 
 /**
@@ -25,9 +26,11 @@ export interface ItemDeNavegacao {
  * A guarda de papel é de interface, não de autorização: o servidor recusa por
  * conta própria. Isto só evita que alguém veja uma tela vazia e confusa.
  *
- * Com `navegacao`, ganha barra lateral fixa no desktop (o painel da instituição
- * é de uso em computador) e, abaixo de `lg`, a mesma lista vira uma faixa
- * rolável sob o cabeçalho.
+ * Com `navegacao` (até 5 destinos), o layout é desktop-first:
+ * - a partir de 1.024px, `SideNav` fixa de 248px à esquerda;
+ * - entre 768 e 1.023px, a mesma barra recolhida só com ícones;
+ * - abaixo de 768px, navegação inferior.
+ * O conteúdo fica limitado a 1.280px, com margem `space-7` (48px) no desktop.
  */
 export function PainelShell({
   titulo,
@@ -60,73 +63,77 @@ export function PainelShell({
 
   if (carregando || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg">
-        <p className="text-text-muted">Carregando…</p>
+      <div className="flex min-h-screen items-center justify-center bg-paper">
+        <p className="text-ink-muted">Carregando…</p>
       </div>
     );
   }
 
   if (!autorizado) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg">
-        <p className="text-text-muted">Verificando permissões…</p>
+      <div className="flex min-h-screen items-center justify-center bg-paper">
+        <p className="text-ink-muted">Verificando permissões…</p>
       </div>
     );
   }
 
+  // A raiz do painel só fica ativa nela mesma; as demais, em subpáginas também.
+  const atual = navegacao?.find((item) => {
+    const raiz = navegacao[0]?.href === item.href;
+    return raiz ? pathname === item.href : pathname.startsWith(item.href);
+  })?.href;
+  const itens = navegacao?.map((item) => ({ id: item.href, label: item.rotulo, href: item.href, icon: item.icone }));
+
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-text">
-      <header className="sticky top-0 z-10 border-b border-border bg-surface">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" aria-label="Nota A" className="flex items-center rounded-md">
-              <Image src="/brand/logo-full.png" alt="Nota A" width={46} height={30} priority />
-            </Link>
-            <span className="text-sm font-bold uppercase tracking-wider text-text-muted">
-              {titulo}
-            </span>
+    <div className="flex min-h-screen bg-paper text-ink">
+      <a
+        href="#conteudo"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-3 focus:font-bold focus:text-primary"
+      >
+        Pular para o conteúdo
+      </a>
+      {itens ? (
+        <div className="sticky top-0 hidden h-screen shrink-0 md:block">
+          <SideNav
+            items={itens}
+            current={atual}
+            label="Seções do painel"
+            logo={<NotaASimbolo className="h-6 w-auto flex-none" />}
+            linkAs={Link}
+            collapsible
+            className="h-full"
+          />
+        </div>
+      ) : null}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 border-b border-line bg-surface">
+          <div className="flex min-h-[56px] items-center justify-between gap-4 px-4 lg:px-12">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md font-display text-[17px] font-semibold text-ink no-underline ${itens ? 'md:hidden' : ''}`}
+              >
+                <NotaASimbolo className="h-6 w-auto" />
+                Nota A
+              </Link>
+              <p className="m-0 font-text text-sm font-bold text-ink-muted">{titulo}</p>
+            </div>
+            <Button variant="quiet" onClick={() => void signOut()}>
+              Sair
+            </Button>
           </div>
-          <Button variant="quiet" size="sm" onClick={() => void signOut()}>
-            Sair
-          </Button>
+        </header>
+        <main id="conteudo" className="min-w-0 flex-1">
+          <div className={`mx-auto w-full max-w-[1280px] px-4 py-6 md:px-6 lg:px-12 ${itens ? 'pb-24 md:pb-6' : ''}`}>
+            {children}
+          </div>
+        </main>
+      </div>
+      {itens ? (
+        <div className="md:hidden">
+          <BottomNav items={itens} current={atual} label="Seções do painel" linkAs={Link} />
         </div>
-      </header>
-      {navegacao ? (
-        <div className="flex flex-1 flex-col lg:flex-row">
-          <nav
-            aria-label="Seções do painel"
-            className="border-b border-border bg-surface lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r"
-          >
-            <ul className="flex gap-1 overflow-x-auto px-4 py-2 lg:sticky lg:top-14 lg:flex-col lg:overflow-visible lg:px-3 lg:py-6">
-              {navegacao.map((item) => {
-                // A raiz do painel só fica ativa nela mesma; as demais, em subpáginas também.
-                const raiz = navegacao[0]?.href === item.href;
-                const ativo = raiz ? pathname === item.href : pathname.startsWith(item.href);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      aria-current={ativo ? 'page' : undefined}
-                      className={cn(
-                        'flex min-h-[44px] items-center whitespace-nowrap rounded-md border-b-2 px-3 text-sm font-semibold transition-colors duration-base lg:border-b-0 lg:border-l-2',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-                        ativo
-                          ? 'border-brand-secondary bg-surface-2 text-text'
-                          : 'border-transparent text-text-muted hover:bg-surface-2 hover:text-text',
-                      )}
-                    >
-                      {item.rotulo}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-          <main className="min-w-0 flex-1">{children}</main>
-        </div>
-      ) : (
-        <main className="flex-1">{children}</main>
-      )}
+      ) : null}
       <Toaster />
     </div>
   );

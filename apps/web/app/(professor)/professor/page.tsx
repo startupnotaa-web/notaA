@@ -54,7 +54,7 @@ export default function ProfessorPainelPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-6">
+      <div>
         <Skeleton className="h-40 w-full rounded-2xl" />
       </div>
     );
@@ -73,7 +73,7 @@ export default function ProfessorPainelPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
+    <div className="space-y-6">
       <div
         role="tablist"
         aria-label="Seções do painel"
@@ -138,7 +138,7 @@ function TurmasQueLeciono({ ehIndependente }: { ehIndependente: boolean }) {
   }
 
   return (
-    <div className={cn('space-y-6', !ehIndependente && 'mx-auto w-full max-w-5xl px-4 py-6')}>
+    <div className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold text-text">Suas turmas</h1>
         <p className="text-sm text-text-muted">
@@ -307,7 +307,7 @@ function VisaoDaTurma({
 
   if (alunoAberto) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-6">
+      <div>
         <VisaoDoAluno
           turmaId={turma.turmaId}
           estudanteId={alunoAberto}
@@ -318,7 +318,7 @@ function VisaoDaTurma({
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-text">{turma.nome}</h1>

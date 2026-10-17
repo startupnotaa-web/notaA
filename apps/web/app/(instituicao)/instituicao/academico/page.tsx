@@ -52,7 +52,7 @@ export default function ConfiguracaoAcademicaPage() {
   const precisaDeAno = secao === 'periodos' || secao === 'regra';
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 lg:px-8">
+    <div className="space-y-6">
       <SectionHeader
         as="h1"
         title="Configuração acadêmica"

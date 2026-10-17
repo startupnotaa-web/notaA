@@ -1,7 +1,6 @@
 import type { SVGProps } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input, ButtonLink } from '@notaa/ui';
+import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input, ButtonLink, NotaASimbolo } from '@notaa/ui';
 import { FEATURES } from '../../lib/feature-flags';
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -12,7 +11,7 @@ export default function LandingPage() {
       {/* Nav Minimalista */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-4">
-          <Image src="/brand/logo-full.png" alt="Nota A" width={80} height={50} priority />
+          <span className="flex items-center gap-2 font-display text-xl font-semibold"><NotaASimbolo className="h-8 w-auto" />Nota A</span>
           <Badge variant="brand" className="hidden sm:inline-flex">Beta 1.0 ao vivo</Badge>
         </div>
         <ButtonLink as={Link} href="/login" variant="quiet" size="sm">Entrar</ButtonLink>
@@ -176,7 +175,7 @@ export default function LandingPage() {
       <footer className="border-t border-border bg-surface-2 pb-8 pt-12">
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 md:grid-cols-4">
           <div className="flex flex-col gap-4 md:col-span-2">
-            <Image src="/brand/logo-full.png" alt="Nota A" width={80} height={50} />
+            <span className="flex items-center gap-2 font-display text-xl font-semibold"><NotaASimbolo className="h-8 w-auto" />Nota A</span>
             <p className="text-sm text-text-muted">Aprenda jogando. Evolua estudando.</p>
             <div className="mt-2 flex max-w-md items-center gap-2">
               <Input placeholder="Seu melhor e-mail" className="bg-bg" />
