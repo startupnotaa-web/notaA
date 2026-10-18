@@ -1,3 +1,4 @@
+import { acharPiiNoAuditLog } from '@notaa/db/src/testing/audit-sem-pii';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import { gerarXlsx } from '@notaa/importacao';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -195,5 +196,13 @@ describe('arquivo acima do limite no armazenamento', () => {
     const importacao = await comLimite.obter(GESTOR_A, id);
     expect(importacao.status).toBe('falhou');
     expect(importacao.erro).toMatch(/10 MB/);
+  });
+});
+
+describe('privacidade da auditoria', () => {
+  it('confirmação e exportação não gravam dado pessoal', async () => {
+    const { rows } = await banco.pg.query('SELECT 1 FROM audit_log');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(await acharPiiNoAuditLog(banco.pg)).toEqual([]);
   });
 });

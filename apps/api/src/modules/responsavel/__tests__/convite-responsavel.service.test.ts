@@ -4,6 +4,7 @@ import {
   DIAS_VALIDADE_CONVITE_RESPONSAVEL,
   VERSAO_TERMO_RESPONSAVEL,
 } from '@notaa/contracts';
+import { acharPiiNoAuditLog } from '@notaa/db/src/testing/audit-sem-pii';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { EscopoService } from '../../escopo/escopo.service';
@@ -367,5 +368,13 @@ describe('o corpo do aceite', () => {
 
   it('recusa token curto demais', () => {
     expect(AceitarConviteResponsavelRequestSchema.safeParse({ ...valido, token: 'curto' }).success).toBe(false);
+  });
+});
+
+describe('privacidade da auditoria', () => {
+  it('emissão e aceite do convite não gravam dado pessoal nem o token', async () => {
+    const { rows } = await banco.pg.query(`SELECT 1 FROM audit_log WHERE acao LIKE 'convite_responsavel.%' OR acao LIKE 'responsavel.%'`);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(await acharPiiNoAuditLog(banco.pg)).toEqual([]);
   });
 });

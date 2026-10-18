@@ -7,6 +7,7 @@
 --
 -- 1. Responsável: vínculo por convite + consentimento, e leitura do aluno por
 --    view sem data de nascimento nem e-mail.
+-- 2. audit_log sem dado pessoal, com limpeza do que já foi gravado.
 -- (As demais seções entram nos commits seguintes.)
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -157,3 +158,71 @@ UPDATE "responsavel_aluno" SET "usuario_id" = NULL
     AND NOT EXISTS (
       SELECT 1 FROM "consentimento_responsavel" c WHERE c."responsavel_aluno_id" = "responsavel_aluno"."id"
     );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4. audit_log sem dado pessoal
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Versões anteriores gravavam e-mail, matrícula e o registro anterior do
+-- responsável em `dados`. O audit_log é só de inserção, então esse dado não
+-- saía mais. O bloqueio geral NÃO é afrouxado: o trigger de audit_log passa a
+-- aceitar UM caso, e só ele:
+--   - UPDATE (nunca DELETE nem TRUNCATE),
+--   - só quando a função anonimizar_pii_audit_log() ligou o GUC local
+--     `notaa.anonimizando` (o GUC vale só dentro da transação dela),
+--   - só em responsavel.vinculado e responsavel.atualizado,
+--   - só a coluna `dados` muda; qualquer outra coluna igual.
+-- Risco residual: quem executa SQL como superusuário e liga o GUC à mão pode
+-- reescrever `dados` dessas duas ações. Nenhuma outra coluna, nenhuma outra
+-- ação, e o histórico de quem fez o quê continua inalterável.
+CREATE OR REPLACE FUNCTION "impede_alteracao_audit_log"() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'UPDATE'
+     AND current_setting('notaa.anonimizando', true) = 'on'
+     AND OLD.acao IN ('responsavel.vinculado', 'responsavel.atualizado')
+     AND (to_jsonb(NEW) - 'dados') = (to_jsonb(OLD) - 'dados')
+  THEN
+    RETURN NEW;
+  END IF;
+  RAISE EXCEPTION 'A tabela % é só de inserção: % não é permitido.', TG_TABLE_NAME, TG_OP
+    USING ERRCODE = 'insufficient_privilege';
+END $$;
+
+DROP TRIGGER IF EXISTS "trg_audit_log_imutavel" ON "audit_log";
+CREATE TRIGGER "trg_audit_log_imutavel" BEFORE UPDATE OR DELETE ON "audit_log"
+  FOR EACH ROW EXECUTE FUNCTION "impede_alteracao_audit_log"();
+
+-- Tira de `dados` o que identifica uma pessoa e registra a execução (só a
+-- contagem). Idempotente: sem nada a limpar, não muda nem registra nada.
+CREATE OR REPLACE FUNCTION "anonimizar_pii_audit_log"() RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  n integer;
+BEGIN
+  PERFORM set_config('notaa.anonimizando', 'on', true);
+  UPDATE audit_log
+     SET dados = dados - 'email' - 'matricula' - 'antes' - 'usuarioId' - 'nome' - 'telefone'
+   WHERE acao IN ('responsavel.vinculado', 'responsavel.atualizado')
+     AND dados ?| ARRAY['email', 'matricula', 'antes', 'usuarioId', 'nome', 'telefone'];
+  GET DIAGNOSTICS n = ROW_COUNT;
+  PERFORM set_config('notaa.anonimizando', 'off', true);
+  IF n > 0 THEN
+    INSERT INTO audit_log (acao, entidade, dados)
+      VALUES ('audit_log.anonimizado', 'audit_log', jsonb_build_object('linhas', n));
+  END IF;
+  RETURN n;
+END $$;
+
+DO $$
+BEGIN
+  REVOKE ALL ON FUNCTION "anonimizar_pii_audit_log"() FROM PUBLIC;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON FUNCTION "anonimizar_pii_audit_log"() FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON FUNCTION "anonimizar_pii_audit_log"() FROM authenticated;
+  END IF;
+END $$;
+
+-- Limpa o que as versões antigas deixaram (ambientes de desenvolvimento).
+SELECT "anonimizar_pii_audit_log"();

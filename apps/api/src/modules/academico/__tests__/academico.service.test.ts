@@ -1,4 +1,5 @@
 import type { RegraAvaliativa } from '@notaa/contracts';
+import { acharPiiNoAuditLog } from '@notaa/db/src/testing/audit-sem-pii';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { EscopoService } from '../../escopo/escopo.service';
@@ -175,5 +176,13 @@ describe('simulação', () => {
     expect(resultados[0]).toMatchObject({ mediaFinal: 6.7, situacao: 'aprovado' });
     const { rows: depois } = await banco.pg.query('SELECT count(*) FROM regra_avaliativa');
     expect(depois).toEqual(antes);
+  });
+});
+
+describe('privacidade da auditoria', () => {
+  it('nada do que o serviço acadêmico audita identifica uma pessoa', async () => {
+    const { rows } = await banco.pg.query('SELECT 1 FROM audit_log');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(await acharPiiNoAuditLog(banco.pg)).toEqual([]);
   });
 });

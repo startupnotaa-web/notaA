@@ -1,4 +1,5 @@
 import { ImportacaoRepositoryDb, eq, importacao, type Database } from '@notaa/db';
+import { PII_EMAIL, PII_TELEFONE, acharPiiNoAuditLog } from '@notaa/db/src/testing/audit-sem-pii';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import {
   cabecalhoDoModelo,
@@ -297,5 +298,53 @@ describe('mesma matrícula em duas instituições', () => {
       [SO_DA_B]: 'Aluna nova na A',
     });
     expect(await daB()).toEqual(antes);
+  });
+});
+
+// Auditoria sem dado pessoal: o audit_log é imutável, então o que entra nele não
+// sai mais. Só ids, nomes de campo e tipo de evento.
+describe('audit_log sem dado pessoal', () => {
+  async function dadosDaAuditoria() {
+    const { rows } = await banco.pg.query<{ acao: string; dados: Record<string, unknown> }>(
+      `SELECT acao, dados FROM audit_log WHERE acao NOT LIKE 'audit_log.%'`,
+    );
+    return rows;
+  }
+
+  it('as expressões de e-mail e telefone pegam o que devem e deixam os UUIDs em paz', () => {
+    for (const ruim of ['mae@x.test', '(11) 99999-0000', '11999990000', '11 99999-0000', '1199990000']) {
+      expect(`{"v":"${ruim}"}`, ruim).toMatch(ruim.includes('@') ? PII_EMAIL : PII_TELEFONE);
+    }
+    expect('{"id":"48f24410-f8d5-4ab5-8123-456789012345"}').not.toMatch(PII_TELEFONE);
+  });
+
+  it('o vínculo de 280 responsáveis grava só o id do contato', async () => {
+    const vinculos = (await dadosDaAuditoria()).filter((r) => r.acao === 'responsavel.vinculado');
+    expect(vinculos.length).toBeGreaterThanOrEqual(280);
+    for (const v of vinculos) {
+      expect(Object.keys(v.dados).sort()).toEqual(['importacaoId', 'responsavelAlunoId']);
+    }
+  });
+
+  it('a atualização de um responsável grava só os nomes dos campos que mudaram', async () => {
+    const planilha = await gerarXlsx(cabecalhoDoModelo('alunos'), [
+      // mesma matrícula e mesmo e-mail de responsável da linha 100, outro nome e outro telefone
+      ['20260100', 'Nome corrigido na A', '05/03/2010', null, '1º ano A', 'Maria Nova', 'resp100@exemplo.test', '(11) 98888-7777', 'mãe', null, null, null, null],
+    ]);
+    const id = await novaImportacao(`${INST}/atualiza-resp.xlsx`, planilha);
+    const final = await confirmarEProcessar(id);
+    expect(final.status).toBe('concluida');
+
+    const atualizados = (await dadosDaAuditoria()).filter((r) => r.acao === 'responsavel.atualizado');
+    expect(atualizados).toHaveLength(1);
+    expect(atualizados[0]!.dados).toEqual({
+      importacaoId: id,
+      responsavelAlunoId: expect.any(String),
+      campos: ['nome', 'telefone'],
+    });
+  });
+
+  it('nenhuma linha do audit_log tem e-mail, telefone ou as chaves de dado pessoal', async () => {
+    expect(await acharPiiNoAuditLog(banco.pg)).toEqual([]);
   });
 });
