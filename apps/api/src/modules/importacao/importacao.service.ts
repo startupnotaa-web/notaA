@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   BUCKET_IMPORTACOES,
+  LIMITE_IMPORTACAO_BYTES,
   MapeamentoColunasSchema,
   RelatorioImportacaoSchema,
   ResumoImportacaoSchema,
@@ -126,7 +127,18 @@ export class ImportacaoService {
     return { linha, instituicaoId };
   }
 
-  private async lerArquivo(linha: LinhaImportacao): Promise<{ formato: FormatoPlanilha; planilha: Planilha }> {
+  /**
+   * Lê o arquivo enviado. O tamanho que vale é o do objeto no Storage,
+   * consultado ANTES de baixar: o `tamanhoBytes` declarado na criação vem do
+   * navegador e não prova nada.
+   */
+  private async lerArquivo(
+    linha: LinhaImportacao,
+  ): Promise<{ formato: FormatoPlanilha; planilha: Planilha; tamanho: number }> {
+    const tamanho = await this.armazenamento.tamanho(linha.arquivoPath);
+    if (tamanho === null) estadoInvalido('O arquivo ainda não chegou. Envie de novo.');
+    if (tamanho > LIMITE_IMPORTACAO_BYTES) arquivoInvalido('O arquivo passa de 10 MB.');
+
     let bytes: Uint8Array | null;
     try {
       bytes = await this.armazenamento.baixar(linha.arquivoPath);
@@ -135,9 +147,10 @@ export class ImportacaoService {
       throw e;
     }
     if (!bytes) estadoInvalido('O arquivo ainda não chegou. Envie de novo.');
+    if (bytes.length !== tamanho) arquivoInvalido('O arquivo mudou durante a leitura. Envie de novo.');
     try {
       const formato = detectarFormato(bytes, linha.nomeArquivo);
-      return { formato, planilha: await lerPlanilha(bytes, formato) };
+      return { formato, planilha: await lerPlanilha(bytes, formato), tamanho };
     } catch (e) {
       if (e instanceof ArquivoInvalidoError) arquivoInvalido(e.message);
       throw e;
@@ -230,6 +243,7 @@ export class ImportacaoService {
       .set({
         status: 'em_previa',
         formato: lido.formato,
+        tamanhoBytes: lido.tamanho,
         totalLinhas: lido.planilha.linhas.length,
         cabecalhos: lido.planilha.cabecalhos,
         mapeamento: mapeamentoSugerido,

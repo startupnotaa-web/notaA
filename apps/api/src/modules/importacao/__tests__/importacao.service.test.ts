@@ -17,9 +17,14 @@ const COORD_A = '11111111-0000-4000-8000-000000000002';
 const GESTOR_B = '11111111-0000-4000-8000-000000000003';
 
 const arquivos = new Map<string, Uint8Array>();
+const baixados: string[] = [];
 const armazenamento: ArmazenamentoPlanilhas = {
   urlDeUpload: async (path) => ({ path, token: 'token-de-teste' }),
-  baixar: async (path) => arquivos.get(path) ?? null,
+  tamanho: async (path) => arquivos.get(path)?.length ?? null,
+  baixar: async (path) => {
+    baixados.push(path);
+    return arquivos.get(path) ?? null;
+  },
 };
 
 let banco: BancoDeTeste;
@@ -184,6 +189,7 @@ describe('arquivo acima do limite no armazenamento', () => {
   it('10 MB + 1 byte: recusa, marca como falha e diz o motivo', async () => {
     const grande: ArmazenamentoPlanilhas = {
       urlDeUpload: async (path) => ({ path, token: 't' }),
+      tamanho: async () => 1000,
       baixar: async () => {
         throw new ArquivoGrandeDemaisError();
       },
@@ -196,6 +202,57 @@ describe('arquivo acima do limite no armazenamento', () => {
     const importacao = await comLimite.obter(GESTOR_A, id);
     expect(importacao.status).toBe('falhou');
     expect(importacao.erro).toMatch(/10 MB/);
+  });
+});
+
+describe('o tamanho que vale é o do objeto, não o declarado', () => {
+  const lido = async (id: string) =>
+    (await banco.pg.query<{ tamanho_bytes: number | null; status: string }>(
+      'SELECT tamanho_bytes, status FROM importacao WHERE id = $1',
+      [id],
+    )).rows[0]!;
+
+  it('11 MB no Storage com 100 bytes declarados: recusa sem baixar e marca como falha', async () => {
+    const { id } = await servico.criar(GESTOR_A, { tipo: 'alunos', nomeArquivo: 'g.csv', tamanhoBytes: 100 });
+    arquivos.set(`${INST_A}/${id}.csv`, new Uint8Array(11 * 1024 * 1024).fill(0x61));
+    baixados.length = 0;
+    await expect(servico.arquivoEnviado(GESTOR_A, id)).rejects.toMatchObject({
+      response: { error: { code: 'ARQUIVO_INVALIDO', message: expect.stringMatching(/10 MB/) } },
+    });
+    expect(baixados).toEqual([]);
+    expect((await lido(id)).status).toBe('falhou');
+  });
+
+  it('1 KB no Storage com 5 MB declarados: aceita e grava o tamanho real', async () => {
+    const { id } = await servico.criar(GESTOR_A, { tipo: 'alunos', nomeArquivo: 'p.csv', tamanhoBytes: 5 * 1024 * 1024 });
+    const csv = new TextEncoder().encode('matricula;nome\r\nT-1;Ana\r\n');
+    arquivos.set(`${INST_A}/${id}.csv`, csv);
+    await servico.arquivoEnviado(GESTOR_A, id);
+    expect(await lido(id)).toEqual({ tamanho_bytes: csv.length, status: 'em_previa' });
+  });
+
+  it('objeto que não chegou: pede para enviar de novo e não tenta baixar', async () => {
+    const { id } = await servico.criar(GESTOR_A, { tipo: 'alunos', nomeArquivo: 'x.csv', tamanhoBytes: 10 });
+    baixados.length = 0;
+    await expect(servico.arquivoEnviado(GESTOR_A, id)).rejects.toMatchObject({
+      response: { error: { code: 'ESTADO_INVALIDO' } },
+    });
+    expect(baixados).toEqual([]);
+    expect((await lido(id)).status).toBe('aguardando_arquivo');
+  });
+
+  it('objeto trocado entre a consulta e o download: recusa', async () => {
+    const trocado: ArmazenamentoPlanilhas = {
+      urlDeUpload: async (path) => ({ path, token: 't' }),
+      tamanho: async () => 10,
+      baixar: async () => new TextEncoder().encode('matricula;nome\r\nT-1;Ana\r\nT-2;Bia\r\n'),
+    };
+    const outro = new ImportacaoService(banco.db, trocado, new EscopoService(banco.db));
+    const { id } = await outro.criar(GESTOR_A, { tipo: 'alunos', nomeArquivo: 't.csv', tamanhoBytes: 10 });
+    await expect(outro.arquivoEnviado(GESTOR_A, id)).rejects.toMatchObject({
+      response: { error: { code: 'ARQUIVO_INVALIDO' } },
+    });
+    expect((await lido(id)).status).toBe('falhou');
   });
 });
 

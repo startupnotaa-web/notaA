@@ -7,7 +7,12 @@ export const ARMAZENAMENTO_PLANILHAS = Symbol('ARMAZENAMENTO_PLANILHAS');
 export interface ArmazenamentoPlanilhas {
   /** Token de upload de uso único para exatamente este caminho. */
   urlDeUpload(path: string): Promise<{ path: string; token: string }>;
-  /** Baixa o arquivo; `null` se ainda não foi enviado. Recusa acima do limite. */
+  /** Tamanho REAL do objeto no Storage, em bytes; `null` se ainda não foi enviado. */
+  tamanho(path: string): Promise<number | null>;
+  /**
+   * Baixa o arquivo; `null` se ainda não foi enviado. Consulta o tamanho antes e
+   * recusa acima do limite SEM baixar (`ArquivoGrandeDemaisError`).
+   */
   baixar(path: string): Promise<Uint8Array | null>;
 }
 
@@ -22,7 +27,8 @@ export class ArquivoGrandeDemaisError extends Error {}
  * rodam) sem credencial de Storage, e só a rota de importação exige.
  */
 export class ArmazenamentoSupabase implements ArmazenamentoPlanilhas {
-  private cliente: SupabaseClient | null = null;
+  /** `cliente` só é injetado nos testes; em produção nasce no primeiro uso. */
+  constructor(private cliente: SupabaseClient | null = null) {}
 
   private storage() {
     if (!this.cliente) {
@@ -42,9 +48,21 @@ export class ArmazenamentoSupabase implements ArmazenamentoPlanilhas {
     return { path: data.path, token: data.token };
   }
 
+  async tamanho(path: string): Promise<number | null> {
+    const { data, error } = await this.storage().info(path);
+    if (error || !data) return null;
+    // Sem o tamanho não há como conferir o limite antes de baixar: não adivinha.
+    if (typeof data.size !== 'number') throw new Error('O Storage não informou o tamanho do objeto.');
+    return data.size;
+  }
+
   async baixar(path: string): Promise<Uint8Array | null> {
+    const tamanho = await this.tamanho(path);
+    if (tamanho === null) return null;
+    if (tamanho > LIMITE_IMPORTACAO_BYTES) throw new ArquivoGrandeDemaisError();
     const { data, error } = await this.storage().download(path);
     if (error || !data) return null;
+    // O objeto pode ter sido trocado entre a consulta e o download.
     if (data.size > LIMITE_IMPORTACAO_BYTES) throw new ArquivoGrandeDemaisError();
     return new Uint8Array(await data.arrayBuffer());
   }

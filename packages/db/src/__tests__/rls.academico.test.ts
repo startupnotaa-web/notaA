@@ -582,6 +582,48 @@ describe('convite e consentimento: restrições do banco', () => {
   });
 });
 
+describe('usuário suspenso ou pendente não lê nada', () => {
+  const QUEM = [
+    ['gestor', U.gestorA],
+    ['coordenação', U.coordA],
+    ['professor', U.profA],
+    ['aluno', U.alunoA],
+    ['responsável', U.respA],
+  ] as const;
+
+  async function totalLido(uid: string): Promise<number> {
+    const v = await visao(uid);
+    const nasTabelas = TABELAS.reduce((soma, t) => soma + v[t].a + v[t].b, 0);
+    const naView = (await banco.comoUsuario(uid, (q) => q('SELECT 1 FROM aluno_do_responsavel'))).rows.length;
+    return nasTabelas + naView;
+  }
+
+  it.each(QUEM)('%s ativo lê (a consulta funciona)', async (_nome, uid) => {
+    expect(await totalLido(uid)).toBeGreaterThan(0);
+  });
+
+  it.each(
+    QUEM.flatMap(([nome, uid]) => (['suspenso', 'pendente'] as const).map((status) => ({ nome, uid, status }))),
+  )(
+    '$nome $status lê 0 linhas, em nenhuma tabela nem na view',
+    async ({ uid, status }) => {
+      await banco.pg.query(`UPDATE usuario SET status = $2 WHERE id = $1`, [uid, status]);
+      try {
+        expect(await totalLido(uid)).toBe(0);
+      } finally {
+        await banco.pg.query(`UPDATE usuario SET status = 'ativo' WHERE id = $1`, [uid]);
+      }
+    },
+  );
+
+  it('voltar a ativo devolve a leitura', async () => {
+    await banco.pg.query(`UPDATE usuario SET status = 'suspenso' WHERE id = $1`, [U.gestorA]);
+    expect(await totalLido(U.gestorA)).toBe(0);
+    await banco.pg.query(`UPDATE usuario SET status = 'ativo' WHERE id = $1`, [U.gestorA]);
+    expect(await totalLido(U.gestorA)).toBeGreaterThan(0);
+  });
+});
+
 describe('função na instituição', () => {
   // As políticas de `usuario` moram em supabase/policies (aplicadas depois das
   // migrações, e a 0002 inteira não sobe num banco limpo: ainda cita `escola`).

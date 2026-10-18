@@ -10,6 +10,67 @@
 -- 2. audit_log sem dado pessoal, com limpeza do que já foi gravado.
 -- 3. Função padrão do admin de instituição: coordenação, não gestor.
 -- 4. REVOKE de escrita nas tabelas comuns da 0015.
+-- 5. Só usuário ativo lê: suspenso e pendente deixam de passar pelas funções de RLS.
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 0. Funções de RLS: só usuário ATIVO
+-- ─────────────────────────────────────────────────────────────────────────────
+-- As funções da 0015 resolviam instituição e vínculos sem olhar `usuario.status`:
+-- quem foi suspenso (ou ainda está pendente) continuava lendo, por RLS, até o
+-- token expirar. Agora todas exigem status = 'ativo'. Mesma assinatura, então as
+-- políticas não mudam. (auth_instituicao_gestor e auth_alunos_do_responsavel são
+-- redefinidas mais abaixo, já com a checagem.)
+-- `auth_current_usuario_id()` NÃO muda aqui: é compartilhada com as políticas das
+-- tabelas anteriores (supabase/policies/0001) e reaplicar aquele arquivo
+-- desfaria a mudança. As tabelas novas usam auth_usuario_ativo_id().
+CREATE OR REPLACE FUNCTION auth_usuario_ativo_id() RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT id FROM usuario WHERE auth_uid = auth.uid() AND status = 'ativo'
+$$;
+
+CREATE OR REPLACE FUNCTION auth_instituicao_id() RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT instituicao_id FROM usuario
+   WHERE auth_uid = auth.uid()
+     AND status = 'ativo'
+     AND tipo_perfil IN ('admin_instituicao', 'professor_institucional')
+$$;
+
+CREATE OR REPLACE FUNCTION auth_instituicao_admin() RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT instituicao_id FROM usuario
+   WHERE auth_uid = auth.uid() AND status = 'ativo' AND tipo_perfil = 'admin_instituicao'
+$$;
+
+CREATE OR REPLACE FUNCTION auth_turmas_professor() RETURNS SETOF uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT pt.turma_id FROM professor_turma pt
+    JOIN usuario u ON u.id = pt.professor_id
+   WHERE u.auth_uid = auth.uid() AND u.status = 'ativo' AND u.tipo_perfil = 'professor_institucional'
+$$;
+
+CREATE OR REPLACE FUNCTION auth_instituicoes_aluno() RETURNS SETOF uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT DISTINCT t.instituicao_id FROM matricula_turma m
+    JOIN turma t ON t.id = m.turma_id
+    JOIN usuario u ON u.id = m.estudante_id
+   WHERE u.auth_uid = auth.uid()
+     AND u.status = 'ativo'
+     AND u.tipo_perfil = 'estudante'
+     AND m.status = 'ativa'
+     AND t.instituicao_id IS NOT NULL
+$$;
+
+DO $$
+BEGIN
+  REVOKE ALL ON FUNCTION auth_usuario_ativo_id() FROM PUBLIC;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON FUNCTION auth_usuario_ativo_id() FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    GRANT EXECUTE ON FUNCTION auth_usuario_ativo_id() TO authenticated;
+  END IF;
+END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. Convite e consentimento do responsável
@@ -83,7 +144,7 @@ CREATE POLICY "p_convite_responsavel_leitura" ON "convite_responsavel" FOR SELEC
 DROP POLICY IF EXISTS "p_consentimento_responsavel_leitura" ON "consentimento_responsavel";
 CREATE POLICY "p_consentimento_responsavel_leitura" ON "consentimento_responsavel" FOR SELECT USING (
   instituicao_id = auth_instituicao_admin()
-  OR (usuario_id = auth_current_usuario_id())
+  OR (usuario_id = auth_usuario_ativo_id())
 );
 
 -- Sem política de escrita: quem escreve é a API com service role. O REVOKE
@@ -113,7 +174,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
       ON c.responsavel_aluno_id = r.id
      AND c.instituicao_id = r.instituicao_id
      AND c.usuario_id = r.usuario_id
-   WHERE u.auth_uid = auth.uid() AND u.tipo_perfil = 'responsavel'
+   WHERE u.auth_uid = auth.uid() AND u.status = 'ativo' AND u.tipo_perfil = 'responsavel'
 $$;
 
 -- O responsável deixa de ler a tabela do aluno (que tem data de nascimento e
@@ -122,7 +183,7 @@ DROP POLICY IF EXISTS "p_aluno_instituicao_leitura" ON "aluno_instituicao";
 CREATE POLICY "p_aluno_instituicao_leitura" ON "aluno_instituicao" FOR SELECT USING (
   instituicao_id = auth_instituicao_admin()
   OR turma_id IN (SELECT auth_turmas_professor())
-  OR (usuario_id IS NOT NULL AND usuario_id = auth_current_usuario_id())
+  OR (usuario_id IS NOT NULL AND usuario_id = auth_usuario_ativo_id())
 );
 
 -- O que a família vê do aluno: sem data_nascimento, sem e-mail, sem usuario_id.
@@ -240,6 +301,7 @@ CREATE OR REPLACE FUNCTION auth_instituicao_gestor() RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT instituicao_id FROM usuario
    WHERE auth_uid = auth.uid()
+     AND status = 'ativo'
      AND tipo_perfil = 'admin_instituicao'
      AND coalesce(funcao_instituicao, 'coordenacao') = 'gestor'
 $$;
@@ -262,3 +324,11 @@ BEGIN
     END IF;
   END LOOP;
 END $$;
+
+-- A política do próprio responsável (0015) usava auth_current_usuario_id(), que
+-- não olha o status.
+DROP POLICY IF EXISTS "p_responsavel_aluno_leitura" ON "responsavel_aluno";
+CREATE POLICY "p_responsavel_aluno_leitura" ON "responsavel_aluno" FOR SELECT USING (
+  instituicao_id = auth_instituicao_admin()
+  OR (usuario_id IS NOT NULL AND usuario_id = auth_usuario_ativo_id())
+);
