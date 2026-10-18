@@ -267,20 +267,20 @@ describe('RLS da Gestão Acadêmica', () => {
     ).rejects.toThrow(/permission denied/);
   });
 
-  it('nenhum papel escreve direto nas tabelas novas', async () => {
+  it('nenhum papel escreve direto nas tabelas novas: falta até o privilégio', async () => {
     for (const tabela of ['disciplina', 'aluno_instituicao', 'importacao'] as const) {
       await expect(
         banco.comoUsuario(U.gestorA, (query) =>
           query(`UPDATE ${tabela} SET atualizado_em = now() WHERE instituicao_id = $1`, [INST_A]),
         ),
         tabela,
-      ).resolves.toMatchObject({ affectedRows: 0 });
+      ).rejects.toThrow(/permission denied/);
     }
     await expect(
       banco.comoUsuario(U.gestorA, (query) =>
         query(`INSERT INTO disciplina (instituicao_id, nome) VALUES ($1, 'Física')`, [INST_A]),
       ),
-    ).rejects.toThrow(/row-level security/);
+    ).rejects.toThrow(/permission denied/);
   });
 });
 

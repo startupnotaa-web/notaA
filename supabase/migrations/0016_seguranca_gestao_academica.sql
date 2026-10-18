@@ -8,7 +8,8 @@
 -- 1. Responsável: vínculo por convite + consentimento, e leitura do aluno por
 --    view sem data de nascimento nem e-mail.
 -- 2. audit_log sem dado pessoal, com limpeza do que já foi gravado.
--- (As demais seções entram nos commits seguintes.)
+-- 3. Função padrão do admin de instituição: coordenação, não gestor.
+-- 4. REVOKE de escrita nas tabelas comuns da 0015.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. Convite e consentimento do responsável
@@ -226,3 +227,38 @@ END $$;
 
 -- Limpa o que as versões antigas deixaram (ambientes de desenvolvimento).
 SELECT "anonimizar_pii_audit_log"();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 5. Função padrão: coordenação
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Admin de instituição sem função gravada era tratado como gestor, a função mais
+-- privilegiada (exporta dados e lê a auditoria). Um fluxo futuro que esquecesse
+-- de gravar a função criaria um gestor. Agora o padrão é o menos privilegiado, e
+-- gestor só existe quando gravado de propósito (instituicao.repository grava
+-- 'gestor' para quem cria a instituição; a 0015 já gravou para os existentes).
+CREATE OR REPLACE FUNCTION auth_instituicao_gestor() RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT instituicao_id FROM usuario
+   WHERE auth_uid = auth.uid()
+     AND tipo_perfil = 'admin_instituicao'
+     AND coalesce(funcao_instituicao, 'coordenacao') = 'gestor'
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 6. Sem escrita direta nas tabelas comuns
+-- ─────────────────────────────────────────────────────────────────────────────
+-- A 0015 revogou escrita só nas três tabelas de histórico; nas outras a única
+-- barreira era a ausência de política de escrita. Uma política criada por engano
+-- abriria a escrita. Agora o privilégio também não existe: quem escreve é a API
+-- com service role.
+DO $$
+DECLARE r text;
+BEGIN
+  FOREACH r IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
+      EXECUTE format(
+        'REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON "periodo_avaliativo", "disciplina", '
+        '"turma_disciplina", "aluno_instituicao", "responsavel_aluno", "importacao" FROM %I', r);
+    END IF;
+  END LOOP;
+END $$;

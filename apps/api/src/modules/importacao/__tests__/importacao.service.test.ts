@@ -199,6 +199,29 @@ describe('arquivo acima do limite no armazenamento', () => {
   });
 });
 
+describe('função padrão do admin de instituição', () => {
+  const SEM_FUNCAO = '11111111-0000-4000-8000-0000000000aa';
+
+  it('admin sem função gravada é coordenação: importa, mas não exporta', async () => {
+    await banco.pg.exec(`
+      INSERT INTO usuario (id, auth_uid, tipo_perfil, email, status, instituicao_id, funcao_instituicao)
+      VALUES ('${SEM_FUNCAO}', '${SEM_FUNCAO}', 'admin_instituicao', 'sem@a.test', 'ativo', '${INST_A}', NULL)
+    `);
+    expect(await new EscopoService(banco.db).funcaoNaInstituicao(SEM_FUNCAO)).toEqual({
+      instituicaoId: INST_A,
+      funcao: 'coordenacao',
+    });
+    await expect(servico.exportar(SEM_FUNCAO, 'admin_instituicao', 'disciplinas')).rejects.toMatchObject({
+      response: { error: { code: 'FORA_DO_ESCOPO' } },
+    });
+    await expect(servico.criar(SEM_FUNCAO, { tipo: 'alunos', nomeArquivo: 'a.csv', tamanhoBytes: 10 })).resolves.toBeDefined();
+  });
+
+  it('o gestor gravado de propósito exporta', async () => {
+    await expect(servico.exportar(GESTOR_A, 'admin_instituicao', 'disciplinas')).resolves.toContain('nome');
+  });
+});
+
 describe('privacidade da auditoria', () => {
   it('confirmação e exportação não gravam dado pessoal', async () => {
     const { rows } = await banco.pg.query('SELECT 1 FROM audit_log');
