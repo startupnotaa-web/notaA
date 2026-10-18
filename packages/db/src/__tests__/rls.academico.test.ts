@@ -17,6 +17,8 @@ const TABELAS = [
   'responsavel_aluno',
   'importacao',
   'audit_log',
+  'convite_responsavel',
+  'consentimento_responsavel',
 ] as const;
 type Tabela = (typeof TABELAS)[number];
 
@@ -34,6 +36,9 @@ const REGRA_B = 'e000000b-0000-4000-8000-000000000000';
 const ALUNO_CAD_A1 = 'ca0000a1-0000-4000-8000-000000000000'; // cadastro ligado à conta do aluno
 const ALUNO_CAD_A2 = 'ca0000a2-0000-4000-8000-000000000000'; // filho do responsável, outra turma
 const ALUNO_CAD_B = 'ca00000b-0000-4000-8000-000000000000';
+const RESP_A = 'aa0000a1-0000-4000-8000-000000000000'; // contato do responsável com conta e consentimento
+const RESP_SEM_CONSENTIMENTO = 'aa0000a2-0000-4000-8000-000000000000';
+const RESP_B = 'aa00000b-0000-4000-8000-000000000000';
 
 // Usuários: em produção id = auth_uid (auth.service), aqui também.
 const U = {
@@ -44,6 +49,7 @@ const U = {
   respA: '11111111-0000-4000-8000-000000000005',
   gestorB: '11111111-0000-4000-8000-000000000006',
   profIndependente: '11111111-0000-4000-8000-000000000007',
+  respSemConsentimento: '11111111-0000-4000-8000-000000000008',
 } as const;
 
 const SEMENTE = `
@@ -55,7 +61,8 @@ const SEMENTE = `
     ('${U.alunoA}', '${U.alunoA}', 'estudante', 'aluno@a.test', 'ativo', NULL, NULL),
     ('${U.respA}', '${U.respA}', 'responsavel', 'resp@a.test', 'ativo', NULL, NULL),
     ('${U.gestorB}', '${U.gestorB}', 'admin_instituicao', 'gestor@b.test', 'ativo', '${INST_B}', 'gestor'),
-    ('${U.profIndependente}', '${U.profIndependente}', 'professor_independente', 'indep@x.test', 'ativo', NULL, NULL);
+    ('${U.profIndependente}', '${U.profIndependente}', 'professor_independente', 'indep@x.test', 'ativo', NULL, NULL),
+    ('${U.respSemConsentimento}', '${U.respSemConsentimento}', 'responsavel', 'semc@a.test', 'ativo', NULL, NULL);
   INSERT INTO ano_letivo (id, rotulo) VALUES ('${ANO}', '2026');
   INSERT INTO turma (id, instituicao_id, ano_letivo_id, nome) VALUES
     ('${TURMA_A1}', '${INST_A}', '${ANO}', '1A'),
@@ -85,10 +92,15 @@ const SEMENTE = `
     ('${ALUNO_CAD_A1}', '${INST_A}', 'A-001', 'Aluno da 1A', '${TURMA_A1}', '${U.alunoA}'),
     ('${ALUNO_CAD_A2}', '${INST_A}', 'A-002', 'Filho do responsável', '${TURMA_A2}', NULL),
     ('${ALUNO_CAD_B}', '${INST_B}', 'B-001', 'Aluno da B', '${TURMA_B1}', NULL);
-  INSERT INTO responsavel_aluno (instituicao_id, aluno_instituicao_id, nome, email, usuario_id) VALUES
-    ('${INST_A}', '${ALUNO_CAD_A2}', 'Responsável', 'resp@a.test', '${U.respA}'),
-    ('${INST_A}', '${ALUNO_CAD_A1}', 'Outra pessoa', 'outra@a.test', NULL),
-    ('${INST_B}', '${ALUNO_CAD_B}', 'Responsável B', 'resp@b.test', NULL);
+  INSERT INTO responsavel_aluno (id, instituicao_id, aluno_instituicao_id, nome, email, usuario_id) VALUES
+    ('${RESP_A}', '${INST_A}', '${ALUNO_CAD_A2}', 'Responsável', 'resp@a.test', '${U.respA}'),
+    ('${RESP_SEM_CONSENTIMENTO}', '${INST_A}', '${ALUNO_CAD_A1}', 'Outra pessoa', 'outra@a.test', '${U.respSemConsentimento}'),
+    ('${RESP_B}', '${INST_B}', '${ALUNO_CAD_B}', 'Responsável B', 'resp@b.test', NULL);
+  INSERT INTO convite_responsavel (instituicao_id, responsavel_aluno_id, token_hash, expira_em, usado_em, usado_por, criado_por) VALUES
+    ('${INST_A}', '${RESP_A}', 'hash-a', now() + interval '7 days', now(), '${U.respA}', '${U.gestorA}'),
+    ('${INST_B}', '${RESP_B}', 'hash-b', now() + interval '7 days', NULL, NULL, '${U.gestorB}');
+  INSERT INTO consentimento_responsavel (instituicao_id, responsavel_aluno_id, usuario_id, versao_termo) VALUES
+    ('${INST_A}', '${RESP_A}', '${U.respA}', '2026-10-v1');
   INSERT INTO importacao (instituicao_id, tipo, nome_arquivo, arquivo_path, criado_por) VALUES
     ('${INST_A}', 'alunos', 'a.csv', '${INST_A}/x', '${U.gestorA}'),
     ('${INST_B}', 'alunos', 'b.csv', '${INST_B}/y', '${U.gestorB}');
@@ -166,6 +178,8 @@ describe('RLS da Gestão Acadêmica', () => {
       responsavel_aluno: { a: 2, b: 0 },
       importacao: { a: 1, b: 0 },
       audit_log: { a: 1, b: 0 },
+      convite_responsavel: { a: 1, b: 0 },
+      consentimento_responsavel: { a: 1, b: 0 },
     });
   });
 
@@ -175,6 +189,8 @@ describe('RLS da Gestão Acadêmica', () => {
     expect(v.aluno_instituicao).toEqual({ a: 2, b: 0 });
     expect(v.importacao).toEqual({ a: 1, b: 0 });
     expect(v.regra_avaliativa).toEqual({ a: 1, b: 0 });
+    expect(v.convite_responsavel).toEqual({ a: 1, b: 0 });
+    expect(v.consentimento_responsavel).toEqual({ a: 1, b: 0 });
   });
 
   it('professor lê a configuração da instituição e só o cadastro das turmas dele', async () => {
@@ -188,6 +204,8 @@ describe('RLS da Gestão Acadêmica', () => {
       responsavel_aluno: { a: 0, b: 0 },
       importacao: { a: 0, b: 0 },
       audit_log: { a: 0, b: 0 },
+      convite_responsavel: { a: 0, b: 0 },
+      consentimento_responsavel: { a: 0, b: 0 },
     });
   });
 
@@ -202,10 +220,12 @@ describe('RLS da Gestão Acadêmica', () => {
       responsavel_aluno: { a: 0, b: 0 },
       importacao: { a: 0, b: 0 },
       audit_log: { a: 0, b: 0 },
+      convite_responsavel: { a: 0, b: 0 },
+      consentimento_responsavel: { a: 0, b: 0 },
     });
   });
 
-  it('responsável lê só o próprio registro e o cadastro do aluno ligado a ele', async () => {
+  it('responsável lê o próprio registro e o próprio consentimento, e NÃO lê a tabela do aluno', async () => {
     const v = await visao(U.respA);
     expect(v).toEqual({
       regra_avaliativa: { a: 0, b: 0 },
@@ -213,15 +233,14 @@ describe('RLS da Gestão Acadêmica', () => {
       periodo_avaliativo: { a: 0, b: 0 },
       disciplina: { a: 0, b: 0 },
       turma_disciplina: { a: 0, b: 0 },
-      aluno_instituicao: { a: 1, b: 0 },
+      // O cadastro do aluno tem data de nascimento e e-mail: o responsável só o vê pela view.
+      aluno_instituicao: { a: 0, b: 0 },
       responsavel_aluno: { a: 1, b: 0 },
       importacao: { a: 0, b: 0 },
       audit_log: { a: 0, b: 0 },
+      convite_responsavel: { a: 0, b: 0 },
+      consentimento_responsavel: { a: 1, b: 0 },
     });
-    const ids = await banco.comoUsuario(U.respA, async (query) =>
-      (await query<{ id: string }>('SELECT id FROM aluno_instituicao')).rows.map((r) => r.id),
-    );
-    expect(ids).toEqual([ALUNO_CAD_A2]);
   });
 
   it('usuário de outra instituição não lê nenhuma linha das tabelas novas', async () => {
@@ -266,10 +285,11 @@ describe('RLS da Gestão Acadêmica', () => {
 });
 
 describe('tabelas só de inserção', () => {
-  it.each(['regra_avaliativa', 'regra_avaliativa_ativacao', 'audit_log'])(
+  it.each(['regra_avaliativa', 'regra_avaliativa_ativacao', 'audit_log', 'consentimento_responsavel'])(
     '%s recusa UPDATE, DELETE e TRUNCATE até para o superusuário',
     async (tabela) => {
-      const coluna = tabela === 'regra_avaliativa_ativacao' ? 'ativado_em' : 'criado_em';
+      const coluna =
+        tabela === 'regra_avaliativa_ativacao' ? 'ativado_em' : tabela === 'consentimento_responsavel' ? 'aceito_em' : 'criado_em';
       await expect(banco.pg.query(`UPDATE ${tabela} SET ${coluna} = now()`)).rejects.toThrow(
         /só de inserção/,
       );
@@ -377,6 +397,8 @@ describe('escrita direta: ninguém escreve em nenhuma tabela nova', () => {
     responsavel_aluno: 'criado_em',
     importacao: 'criado_em',
     audit_log: 'criado_em',
+    convite_responsavel: 'criado_em',
+    consentimento_responsavel: 'aceito_em',
   };
   const ESCRITORES = [
     ['gestor', U.gestorA],
@@ -416,6 +438,147 @@ describe('escrita direta: ninguém escreve em nenhuma tabela nova', () => {
       const { rows } = await banco.pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${tabela}`);
       expect(rows[0]!.n, tabela).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('responsável: consentimento e view do aluno', () => {
+  const COLUNAS_DA_VIEW = ['id', 'instituicao_id', 'matricula', 'nome', 'turma_id'];
+
+  beforeAll(async () => {
+    await banco.pg.query(
+      `UPDATE aluno_instituicao SET data_nascimento = '2012-05-01', email = 'filho@a.test' WHERE id = $1`,
+      [ALUNO_CAD_A2],
+    );
+  });
+
+  it('com consentimento, lê o aluno pela view, só com as colunas permitidas', async () => {
+    const { rows, fields } = await banco.comoUsuario(U.respA, (query) =>
+      query<Record<string, unknown>>('SELECT * FROM aluno_do_responsavel'),
+    );
+    expect(rows.map((r) => r.id)).toEqual([ALUNO_CAD_A2]);
+    expect(fields.map((f) => f.name).sort()).toEqual([...COLUNAS_DA_VIEW].sort());
+    expect(JSON.stringify(rows)).not.toMatch(/2012-05-01|filho@a\.test/);
+  });
+
+  it.each(['data_nascimento', 'email', 'usuario_id'])('a view não tem a coluna %s', async (coluna) => {
+    await expect(
+      banco.comoUsuario(U.respA, (query) => query(`SELECT ${coluna} FROM aluno_do_responsavel`)),
+    ).rejects.toThrow(/does not exist/);
+  });
+
+  it('a tabela do aluno continua fechada para ele, com ou sem filtro', async () => {
+    const { rows } = await banco.comoUsuario(U.respA, (query) =>
+      query('SELECT data_nascimento, email FROM aluno_instituicao WHERE id = $1', [ALUNO_CAD_A2]),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  it('ligado ao aluno mas SEM consentimento, não lê nada, nem pela view', async () => {
+    const { rows } = await banco.comoUsuario(U.respSemConsentimento, (query) =>
+      query('SELECT * FROM aluno_do_responsavel'),
+    );
+    expect(rows).toHaveLength(0);
+    const direto = await banco.comoUsuario(U.respSemConsentimento, (query) =>
+      query('SELECT * FROM aluno_instituicao'),
+    );
+    expect(direto.rows).toHaveLength(0);
+  });
+
+  it('o consentimento de um não vale para outro responsável do mesmo aluno', async () => {
+    await banco.pg.query(
+      `UPDATE responsavel_aluno SET usuario_id = $1 WHERE id = $2`,
+      [U.respSemConsentimento, RESP_A],
+    );
+    try {
+      const { rows } = await banco.comoUsuario(U.respSemConsentimento, (query) =>
+        query('SELECT * FROM aluno_do_responsavel'),
+      );
+      // Passou a ser o responsável da linha RESP_A, mas o consentimento é de outra pessoa.
+      expect(rows).toHaveLength(0);
+    } finally {
+      await banco.pg.query(`UPDATE responsavel_aluno SET usuario_id = $1 WHERE id = $2`, [U.respA, RESP_A]);
+    }
+  });
+
+  it.each([
+    ['responsável sem vínculo', X.respSemVinculo],
+    ['responsável da instituição B', X.respB],
+    ['gestor', U.gestorA],
+    ['professor', U.profA],
+    ['aluno', U.alunoA],
+    ['gestor de outra instituição', U.gestorB],
+  ])('%s não vê linha nenhuma na view', async (_nome, uid) => {
+    const { rows } = await banco.comoUsuario(uid, (query) => query('SELECT * FROM aluno_do_responsavel'));
+    expect(rows).toHaveLength(0);
+  });
+
+  it('anônimo é barrado na view', async () => {
+    await expect(
+      banco.comoUsuario(null, (query) => query('SELECT * FROM aluno_do_responsavel')),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  it.each(['INSERT INTO aluno_do_responsavel (nome) VALUES (\'x\')', "UPDATE aluno_do_responsavel SET nome = 'x'", 'DELETE FROM aluno_do_responsavel'])(
+    'a view não aceita escrita: %s',
+    async (sql) => {
+      await expect(banco.comoUsuario(U.respA, (query) => query(sql))).rejects.toThrow(/permission denied/);
+    },
+  );
+
+  it('o nome do aluno não mudou depois de todas as tentativas', async () => {
+    const { rows } = await banco.pg.query<{ nome: string }>('SELECT nome FROM aluno_instituicao WHERE id = $1', [
+      ALUNO_CAD_A2,
+    ]);
+    expect(rows[0]!.nome).toBe('Filho do responsável');
+  });
+});
+
+describe('convite e consentimento: restrições do banco', () => {
+  it('o convite só aponta para responsável da mesma instituição', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO convite_responsavel (instituicao_id, responsavel_aluno_id, token_hash, expira_em, criado_por)
+         VALUES ($1, $2, 'h1', now() + interval '1 day', $3)`,
+        [INST_A, RESP_B, U.gestorA],
+      ),
+    ).rejects.toThrow(/convite_responsavel_responsavel_escopo_fk/);
+  });
+
+  it('o consentimento só aponta para responsável da mesma instituição', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO consentimento_responsavel (instituicao_id, responsavel_aluno_id, usuario_id, versao_termo)
+         VALUES ($1, $2, $3, 'v-x')`,
+        [INST_A, RESP_B, U.respA],
+      ),
+    ).rejects.toThrow(/consentimento_responsavel_responsavel_escopo_fk/);
+  });
+
+  it('o token_hash é único e o convite não nasce já expirado', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO convite_responsavel (instituicao_id, responsavel_aluno_id, token_hash, expira_em, criado_por)
+         VALUES ($1, $2, 'hash-a', now() + interval '1 day', $3)`,
+        [INST_A, RESP_A, U.gestorA],
+      ),
+    ).rejects.toThrow(/duplicate key|token_hash/);
+    await expect(
+      banco.pg.query(
+        `INSERT INTO convite_responsavel (instituicao_id, responsavel_aluno_id, token_hash, expira_em, criado_por)
+         VALUES ($1, $2, 'h2', now() - interval '1 day', $3)`,
+        [INST_A, RESP_A, U.gestorA],
+      ),
+    ).rejects.toThrow(/ck_convite_responsavel_expiracao/);
+  });
+
+  it('a mesma versão do termo não é aceita duas vezes pelo mesmo responsável', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO consentimento_responsavel (instituicao_id, responsavel_aluno_id, usuario_id, versao_termo)
+         VALUES ($1, $2, $3, '2026-10-v1')`,
+        [INST_A, RESP_A, U.respA],
+      ),
+    ).rejects.toThrow(/duplicate key|uq_consentimento/);
   });
 });
 

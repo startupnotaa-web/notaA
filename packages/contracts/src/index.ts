@@ -21,3 +21,4 @@ export * from './instituicao';
 export * from './regra-avaliativa';
 export * from './academico';
 export * from './importacao';
+export * from './responsavel';

@@ -202,6 +202,12 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   'GET /importacoes/:id/previa': ['admin_instituicao'],
   'POST /importacoes/:id/confirmar': ['admin_instituicao'],
 
+  // Convite do responsável: a instituição emite (gestão ou coordenação, checado no
+  // serviço); o responsável autenticado aceita e consente. Papel e instituição
+  // nunca vêm do corpo: a instituição sai do convite, o usuário do token.
+  'POST /instituicao/responsaveis/:responsavelAlunoId/convites': ['admin_instituicao'],
+  'POST /responsavel/convites/aceitar': ['responsavel'],
+
   'GET /admin/users': ['admin'],
   'GET /admin/ai-usage': ['admin'],
 

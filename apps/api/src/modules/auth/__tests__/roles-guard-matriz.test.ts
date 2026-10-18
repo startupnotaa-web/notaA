@@ -86,6 +86,13 @@ describe('rotas da gestão acadêmica, da importação e do convite', () => {
     }
   });
 
+  it('convite do responsável: a instituição emite, só o responsável aceita', () => {
+    const emitir = rotas.find((r) => r.chave === 'POST /instituicao/responsaveis/:responsavelAlunoId/convites')!;
+    const aceitar = rotas.find((r) => r.chave === 'POST /responsavel/convites/aceitar')!;
+    expect(PAPEIS.filter((p) => entra(emitir, p))).toEqual(['admin_instituicao']);
+    expect(PAPEIS.filter((p) => entra(aceitar, p))).toEqual(['responsavel']);
+  });
+
   it('sem papel no token, 403', () => {
     const r = rotas.find((x) => x.chave === 'POST /academico/regras')!;
     const ctx = {
