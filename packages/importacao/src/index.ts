@@ -13,7 +13,6 @@ export {
   validarMapeamento,
 } from './campos';
 export {
-  emailsDeResponsaveis,
   planejarAlunos,
   type AlunoExistente,
   type ContextoAlunos,

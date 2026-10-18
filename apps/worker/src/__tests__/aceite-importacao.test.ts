@@ -178,11 +178,19 @@ describe('aceite: importação de 300 alunos', () => {
     expect(await contar('aluno_instituicao', OUTRA_INST)).toBe(0);
   });
 
-  it('casa o responsável com a conta existente pelo e-mail', async () => {
-    const { rows } = await banco.pg.query<{ usuario_id: string | null }>(
-      `SELECT usuario_id FROM responsavel_aluno WHERE email = 'resp100@exemplo.test'`,
+  it('grava o responsável só como contato: nenhuma conta é ligada, nem a que tem o mesmo e-mail', async () => {
+    // Existe uma conta de responsável com o e-mail resp100@exemplo.test (semente).
+    // Casar por e-mail daria a quem a controla leitura do cadastro de um menor.
+    const { rows } = await banco.pg.query<{ n: number; ligados: number }>(
+      `SELECT count(*)::int AS n, count(usuario_id)::int AS ligados FROM responsavel_aluno WHERE instituicao_id = $1`,
+      [INST],
     );
-    expect(rows).toEqual([{ usuario_id: CONTA_RESPONSAVEL }]);
+    expect(rows[0]).toEqual({ n: 280, ligados: 0 });
+    const { rows: conta } = await banco.pg.query(
+      `SELECT 1 FROM responsavel_aluno WHERE email = 'resp100@exemplo.test' AND usuario_id = $1`,
+      [CONTA_RESPONSAVEL],
+    );
+    expect(conta).toHaveLength(0);
   });
 
   it('audita a importação e cada vínculo de responsável', async () => {

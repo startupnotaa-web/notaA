@@ -1,7 +1,6 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AreaEnem, MapeamentoColunas, TipoImportacao } from '@notaa/contracts';
 import {
-  emailsDeResponsaveis,
   normalizarTexto,
   planejarAlunos,
   planejarDisciplinas,
@@ -21,7 +20,6 @@ import {
   disciplina,
   responsavelAluno,
   turma,
-  usuario,
 } from '../schema';
 import { registrarAuditoria, type EntradaAuditoria } from './auditoria.repository';
 
@@ -42,14 +40,6 @@ export interface ResultadoAplicacao {
 export type PlanoPorTipo =
   | { tipo: 'alunos'; plano: PlanoImportacao<ItemPlanoAlunos> }
   | { tipo: 'disciplinas'; plano: PlanoImportacao<ItemPlanoDisciplinas> };
-
-const LOTE_CONSULTA = 1000;
-
-function emLotes<T>(lista: T[], tamanho: number): T[][] {
-  const lotes: T[][] = [];
-  for (let i = 0; i < lista.length; i += tamanho) lotes.push(lista.slice(i, i + tamanho));
-  return lotes;
-}
 
 /**
  * Lado de banco da importação: carrega o que já existe (para o plano decidir
@@ -72,14 +62,14 @@ export class ImportacaoRepositoryDb {
     mapeamento: MapeamentoColunas,
   ): Promise<PlanoPorTipo> {
     if (tipo === 'alunos') {
-      const contexto = await this.contextoAlunos(instituicaoId, emailsDeResponsaveis(planilha, mapeamento));
+      const contexto = await this.contextoAlunos(instituicaoId);
       return { tipo, plano: planejarAlunos(planilha, mapeamento, contexto) };
     }
     const contexto = await this.contextoDisciplinas(instituicaoId);
     return { tipo, plano: planejarDisciplinas(planilha, mapeamento, contexto) };
   }
 
-  async contextoAlunos(instituicaoId: string, emailsResponsaveis: string[]): Promise<ContextoAlunos> {
+  async contextoAlunos(instituicaoId: string): Promise<ContextoAlunos> {
     // Turma ativa = não arquivada, de ano letivo que a instituição não arquivou.
     const turmas = await this.db
       .select({ id: turma.id, nome: turma.nome })
@@ -146,19 +136,7 @@ export class ImportacaoRepositoryDb {
       ]),
     );
 
-    // "Responsável casado por e-mail": a conta de responsável com aquele
-    // e-mail, se existir. Só papel responsável — e-mail de professor ou de
-    // aluno não vira vínculo de responsável.
-    const contasResponsavelPorEmail = new Map<string, string>();
-    for (const lote of emLotes(emailsResponsaveis, LOTE_CONSULTA)) {
-      const contas = await this.db
-        .select({ id: usuario.id, email: usuario.email })
-        .from(usuario)
-        .where(and(eq(usuario.tipoPerfil, 'responsavel'), inArray(usuario.email, lote)));
-      for (const c of contas) contasResponsavelPorEmail.set(c.email.toLowerCase(), c.id);
-    }
-
-    return { turmasPorNome, alunosPorMatricula, contasResponsavelPorEmail };
+    return { turmasPorNome, alunosPorMatricula };
   }
 
   /**
@@ -187,7 +165,7 @@ export class ImportacaoRepositoryDb {
           acao,
           entidade: 'aluno_instituicao',
           entidadeId: alunoId,
-          dados: { importacaoId: autor.importacaoId, matricula, email: r.email, usuarioId: r.usuarioId, ...(antes ? { antes } : {}) },
+          dados: { importacaoId: autor.importacaoId, matricula, email: r.email, ...(antes ? { antes } : {}) },
         });
 
       for (const item of itens) {
@@ -233,7 +211,6 @@ export class ImportacaoRepositoryDb {
                 nome: depois.nome,
                 telefone: depois.telefone,
                 parentesco: depois.parentesco,
-                usuarioId: depois.usuarioId,
                 atualizadoEm: new Date(),
               })
               .where(and(eq(responsavelAluno.id, id), eq(responsavelAluno.instituicaoId, autor.instituicaoId)));
@@ -265,7 +242,6 @@ export class ImportacaoRepositoryDb {
           email: r.email,
           telefone: r.telefone,
           parentesco: r.parentesco,
-          usuarioId: r.usuarioId,
         })),
       )
       .onConflictDoNothing({ target: [responsavelAluno.alunoInstituicaoId, responsavelAluno.email] })

@@ -184,7 +184,6 @@ describe('planejarAlunos', () => {
       ['duplicada', ['t2', 't3']],
     ]),
     alunosPorMatricula: new Map(alunos.map((a) => [a.matricula, a])),
-    contasResponsavelPorEmail: new Map([['mae@x.test', 'u-mae']]),
   });
 
   it('classifica cada linha com o motivo', () => {
@@ -212,9 +211,9 @@ describe('planejarAlunos', () => {
       email: null,
       turmaId: 't1',
     });
-    // Responsável casado pela conta existente, pelo e-mail sem diferenciar caixa.
+    // Responsável é só contato: e-mail em minúsculas, nenhuma conta ligada.
     expect(ana!.responsaveisNovos).toEqual([
-      { nome: 'Mãe', email: 'mae@x.test', telefone: null, parentesco: null, usuarioId: 'u-mae' },
+      { nome: 'Mãe', email: 'mae@x.test', telefone: null, parentesco: null },
     ]);
     expect(recusadas.map((i) => i.previa.motivos[0])).toEqual([
       'Matrícula em branco.',
