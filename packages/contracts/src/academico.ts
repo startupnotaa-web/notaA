@@ -116,8 +116,23 @@ export const RegraAvaliativaVersaoSchema = z.object({
 });
 export type RegraAvaliativaVersao = z.infer<typeof RegraAvaliativaVersaoSchema>;
 
+/**
+ * Motivo de criar ou ativar uma versão da regra. Fica na trilha de auditoria,
+ * que é imutável: é o que explica, depois, por que a nota mudou de regra.
+ */
+export const TAMANHO_MINIMO_JUSTIFICATIVA = 15;
+export const JustificativaSchema = z
+  .string()
+  .trim()
+  .min(TAMANHO_MINIMO_JUSTIFICATIVA, `Explique o motivo em pelo menos ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`)
+  .max(500, 'Use até 500 caracteres.');
+
 export const CriarRegraAvaliativaRequestSchema = z.object({
   anoLetivoId: z.string().uuid(),
   regra: RegraAvaliativaSchema,
+  justificativa: JustificativaSchema,
 });
 export type CriarRegraAvaliativaRequest = z.infer<typeof CriarRegraAvaliativaRequestSchema>;
+
+export const AtivarRegraRequestSchema = z.object({ justificativa: JustificativaSchema });
+export type AtivarRegraRequest = z.infer<typeof AtivarRegraRequestSchema>;

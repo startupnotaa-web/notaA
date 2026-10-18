@@ -8,7 +8,11 @@ import type { PGlite } from '@electric-sql/pglite';
 export const PII_EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/;
 // Telefone brasileiro, sem casar com trechos de UUID (que vêm colados a letras e hífens).
 export const PII_TELEFONE = /(?<![\w-])\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}(?![\w-])/;
+// Chaves que, nos eventos de responsável e de convite, indicam dado pessoal ou o
+// registro anterior de uma pessoa. Nos demais eventos (período, disciplina),
+// `antes`/`depois`/`nome` descrevem configuração da instituição, não pessoas.
 export const CHAVES_PII = ['email', 'telefone', 'nome', 'antes', 'depois', 'matricula', 'usuarioId', 'token'];
+const EVENTOS_DE_PESSOAS = /^(responsavel|convite_responsavel)\./;
 
 /** Lista "acao: motivo" para cada linha do audit_log que parece conter dado pessoal. */
 export async function acharPiiNoAuditLog(pg: PGlite): Promise<string[]> {
@@ -20,8 +24,10 @@ export async function acharPiiNoAuditLog(pg: PGlite): Promise<string[]> {
     const texto = JSON.stringify(dados);
     if (PII_EMAIL.test(texto)) achados.push(`${acao}: e-mail em ${texto}`);
     if (PII_TELEFONE.test(texto)) achados.push(`${acao}: telefone em ${texto}`);
-    for (const chave of CHAVES_PII) {
-      if (chave in dados) achados.push(`${acao}: chave proibida "${chave}"`);
+    if (EVENTOS_DE_PESSOAS.test(acao)) {
+      for (const chave of CHAVES_PII) {
+        if (chave in dados) achados.push(`${acao}: chave proibida "${chave}"`);
+      }
     }
   }
   return achados;

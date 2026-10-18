@@ -171,7 +171,7 @@ describe('o que vem além do schema não decide de quem é a linha', () => {
   it('criarRegra: instituicaoId e criadoPor extras são descartados', async () => {
     const corpo = comPipe<Parameters<AcademicoService['criarRegra']>[2]>(
       CriarRegraAvaliativaRequestSchema,
-      { anoLetivoId: ANO, regra: regra(), instituicaoId: INST_B, criadoPor: GESTOR_B },
+      { anoLetivoId: ANO, regra: regra(), justificativa: 'Primeira versão do ano letivo.', instituicaoId: INST_B, criadoPor: GESTOR_B },
     );
     expect(corpo).not.toHaveProperty('instituicaoId');
     expect(corpo).not.toHaveProperty('criadoPor');

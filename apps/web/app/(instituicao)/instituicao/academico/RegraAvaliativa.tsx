@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  JustificativaSchema,
   quantidadeDePeriodos,
   RegraAvaliativaSchema,
+  TAMANHO_MINIMO_JUSTIFICATIVA,
   type AnoLetivo,
   type ModoRecuperacao,
   type RegraAvaliativa as Regra,
   type RegraAvaliativaVersao,
 } from '@notaa/contracts';
-import { Button, Card, CardContent, Chip, Input, Notice, OptionCard, Skeleton, Stepper, Switch, Table, TextField } from '@notaa/ui';
+import { Button, Card, CardContent, Chip, Dialog, Input, Notice, OptionCard, Skeleton, Stepper, Switch, Table, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 import { comRegime, ETAPA_DO_CAMPO, ETAPAS, FAIXAS_PADRAO, REGRA_PADRAO } from './regra';
@@ -24,6 +26,13 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
   const [regra, setRegra] = useState<Regra>(REGRA_PADRAO);
   const [etapa, setEtapa] = useState(0);
   const [salvando, setSalvando] = useState(false);
+  // Motivo de salvar uma versão (vai para a auditoria) e o da ativação, no diálogo.
+  const [motivoSalvar, setMotivoSalvar] = useState('');
+  const [erroMotivoSalvar, setErroMotivoSalvar] = useState<string | null>(null);
+  const [ativando, setAtivando] = useState<RegraAvaliativaVersao | null>(null);
+  const [motivoAtivar, setMotivoAtivar] = useState('');
+  const [erroMotivoAtivar, setErroMotivoAtivar] = useState<string | null>(null);
+  const [ativandoAgora, setAtivandoAgora] = useState(false);
   const tituloEtapa = useRef<HTMLHeadingElement>(null);
   const somenteLeitura = anoLetivo.arquivado;
 
@@ -71,13 +80,20 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
       toast('Há campos a corrigir antes de salvar.', { variant: 'error' });
       return;
     }
+    const motivo = JustificativaSchema.safeParse(motivoSalvar);
+    if (!motivo.success) {
+      setErroMotivoSalvar(motivo.error.issues[0]!.message);
+      return;
+    }
+    setErroMotivoSalvar(null);
     setSalvando(true);
     try {
       const criada = await apiFetch<RegraAvaliativaVersao>('/academico/regras', {
         method: 'POST',
-        body: JSON.stringify({ anoLetivoId: anoLetivo.id, regra: validacao.data }),
+        body: JSON.stringify({ anoLetivoId: anoLetivo.id, regra: validacao.data, justificativa: motivo.data }),
       });
       toast(`Versão ${criada.versao} salva. Ative-a para que passe a valer.`, { variant: 'success' });
+      setMotivoSalvar('');
       await carregar(false);
     } catch (e) {
       toast(e instanceof ApiError ? e.message : 'Não foi possível salvar a regra.', { variant: 'error' });
@@ -86,13 +102,31 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
     }
   }
 
+  function pedirAtivacao(v: RegraAvaliativaVersao) {
+    setMotivoAtivar('');
+    setErroMotivoAtivar(null);
+    setAtivando(v);
+  }
+
   async function ativar(v: RegraAvaliativaVersao) {
+    const motivo = JustificativaSchema.safeParse(motivoAtivar);
+    if (!motivo.success) {
+      setErroMotivoAtivar(motivo.error.issues[0]!.message);
+      return;
+    }
+    setAtivandoAgora(true);
     try {
-      await apiFetch<RegraAvaliativaVersao>(`/academico/regras/${v.id}/ativar`, { method: 'POST' });
+      await apiFetch<RegraAvaliativaVersao>(`/academico/regras/${v.id}/ativar`, {
+        method: 'POST',
+        body: JSON.stringify({ justificativa: motivo.data }),
+      });
       toast(`Versão ${v.versao} ativada.`, { variant: 'success' });
+      setAtivando(null);
       await carregar(false);
     } catch (e) {
       toast(e instanceof ApiError ? e.message : 'Não foi possível ativar a versão.', { variant: 'error' });
+    } finally {
+      setAtivandoAgora(false);
     }
   }
 
@@ -130,6 +164,20 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                     ))}
                   </ul>
                 </Notice>
+              ) : null}
+
+              {etapa === ETAPAS.length - 1 && !somenteLeitura ? (
+                <TextField
+                  label="Motivo da mudança"
+                  hint={`Fica registrado na auditoria, com o seu nome. Mínimo de ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`}
+                  value={motivoSalvar}
+                  maxLength={500}
+                  error={erroMotivoSalvar}
+                  onChange={(e) => {
+                    setMotivoSalvar(e.target.value);
+                    setErroMotivoSalvar(null);
+                  }}
+                />
               ) : null}
 
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
@@ -186,7 +234,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                       Abrir no formulário<span className="sr-only"> (versão {v.versao})</span>
                     </Button>
                     {!v.ativa && !somenteLeitura ? (
-                      <Button variant="secondary" onClick={() => void ativar(v)}>
+                      <Button variant="secondary" onClick={() => pedirAtivacao(v)}>
                         Ativar<span className="sr-only"> versão {v.versao}</span>
                       </Button>
                     ) : null}
@@ -197,6 +245,36 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
           </Table>
         )}
       </section>
+
+      <Dialog
+        open={ativando !== null}
+        onClose={() => (ativandoAgora ? undefined : setAtivando(null))}
+        title={`Ativar a versão ${ativando?.versao ?? ''}`}
+        description="A versão passa a valer para as notas deste ano letivo. Fica registrado na auditoria quem ativou e por quê."
+        closeOnScrim={!ativandoAgora}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setAtivando(null)} disabled={ativandoAgora}>
+              Cancelar
+            </Button>
+            <Button loading={ativandoAgora} onClick={() => ativando && void ativar(ativando)}>
+              Ativar versão
+            </Button>
+          </>
+        }
+      >
+        <TextField
+          label="Motivo da ativação"
+          hint={`Mínimo de ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`}
+          value={motivoAtivar}
+          maxLength={500}
+          error={erroMotivoAtivar}
+          onChange={(e) => {
+            setMotivoAtivar(e.target.value);
+            setErroMotivoAtivar(null);
+          }}
+        />
+      </Dialog>
     </div>
   );
 }
