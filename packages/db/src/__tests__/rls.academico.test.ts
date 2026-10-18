@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { criarBancoDeTeste, type BancoDeTeste } from '../testing/banco-de-teste';
 
@@ -95,11 +97,40 @@ const SEMENTE = `
     ('${INST_B}', '${U.gestorB}', 'admin_instituicao', 'regra.criada', 'regra_avaliativa');
 `;
 
+// Quem NÃO deveria ler nada da instituição A, por motivos diferentes.
+const X = {
+  alunoSemMatricula: '22222222-0000-4000-8000-000000000001',
+  alunoPendente: '22222222-0000-4000-8000-000000000002',
+  alunoRecusado: '22222222-0000-4000-8000-000000000003',
+  alunoRemovido: '22222222-0000-4000-8000-000000000004',
+  alunoB: '22222222-0000-4000-8000-000000000005',
+  respSemVinculo: '22222222-0000-4000-8000-000000000006',
+  respB: '22222222-0000-4000-8000-000000000007',
+} as const;
+
+const SEMENTE_SEM_VINCULO = `
+  INSERT INTO usuario (id, auth_uid, tipo_perfil, email, status) VALUES
+    ('${X.alunoSemMatricula}', '${X.alunoSemMatricula}', 'estudante', 'sem@x.test', 'ativo'),
+    ('${X.alunoPendente}', '${X.alunoPendente}', 'estudante', 'pend@x.test', 'ativo'),
+    ('${X.alunoRecusado}', '${X.alunoRecusado}', 'estudante', 'rec@x.test', 'ativo'),
+    ('${X.alunoRemovido}', '${X.alunoRemovido}', 'estudante', 'rem@x.test', 'ativo'),
+    ('${X.alunoB}', '${X.alunoB}', 'estudante', 'aluno@b.test', 'ativo'),
+    ('${X.respSemVinculo}', '${X.respSemVinculo}', 'responsavel', 'solto@x.test', 'ativo'),
+    ('${X.respB}', '${X.respB}', 'responsavel', 'resp2@b.test', 'ativo');
+  INSERT INTO matricula_turma (turma_id, estudante_id, status, aprovado_em) VALUES
+    ('${TURMA_A1}', '${X.alunoPendente}', 'pendente', NULL),
+    ('${TURMA_A1}', '${X.alunoRecusado}', 'recusada', NULL),
+    ('${TURMA_A1}', '${X.alunoRemovido}', 'removida', now()),
+    ('${TURMA_B1}', '${X.alunoB}', 'ativa', now());
+  UPDATE responsavel_aluno SET usuario_id = '${X.respB}' WHERE email = 'resp@b.test';
+`;
+
 let banco: BancoDeTeste;
 
 beforeAll(async () => {
   banco = await criarBancoDeTeste();
   await banco.pg.exec(SEMENTE);
+  await banco.pg.exec(SEMENTE_SEM_VINCULO);
 }, 60_000);
 
 afterAll(async () => {
@@ -301,5 +332,124 @@ describe('integridade entre instituições', () => {
     await expect(
       banco.pg.query(`UPDATE usuario SET funcao_instituicao = 'gestor' WHERE id = $1`, [U.profA]),
     ).rejects.toThrow(/ck_usuario_funcao_so_admin_instituicao/);
+  });
+});
+
+describe('quem não tem vínculo não lê nada da instituição A', () => {
+  const SEM_VINCULO = [
+    ['aluno sem nenhuma matrícula', X.alunoSemMatricula],
+    ['aluno com matrícula pendente', X.alunoPendente],
+    ['aluno com matrícula recusada', X.alunoRecusado],
+    ['aluno com matrícula removida', X.alunoRemovido],
+    ['aluno matriculado na instituição B', X.alunoB],
+    ['responsável sem nenhuma linha em responsavel_aluno', X.respSemVinculo],
+    ['responsável ligado a aluno da instituição B', X.respB],
+  ] as const;
+
+  it.each(SEM_VINCULO)('%s', async (_nome, uid) => {
+    const v = await visao(uid);
+    for (const tabela of TABELAS) {
+      expect(v[tabela].a, tabela).toBe(0);
+    }
+  });
+
+  it('o responsável da instituição B continua lendo o que é dele (a consulta funciona)', async () => {
+    const v = await visao(X.respB);
+    expect(v.responsavel_aluno).toEqual({ a: 0, b: 1 });
+  });
+
+  it('o aluno matriculado na B lê a configuração da B, não a da A', async () => {
+    const v = await visao(X.alunoB);
+    expect(v.periodo_avaliativo).toEqual({ a: 0, b: 1 });
+    expect(v.regra_avaliativa).toEqual({ a: 0, b: 1 });
+  });
+});
+
+describe('escrita direta: ninguém escreve em nenhuma tabela nova', () => {
+  // Coluna de timestamp que cada tabela tem, para um UPDATE inofensivo.
+  const COLUNA_DE_DATA: Record<Tabela, string> = {
+    regra_avaliativa: 'criado_em',
+    regra_avaliativa_ativacao: 'ativado_em',
+    periodo_avaliativo: 'criado_em',
+    disciplina: 'criado_em',
+    turma_disciplina: 'criado_em',
+    aluno_instituicao: 'criado_em',
+    responsavel_aluno: 'criado_em',
+    importacao: 'criado_em',
+    audit_log: 'criado_em',
+  };
+  const ESCRITORES = [
+    ['gestor', U.gestorA],
+    ['coordenação', U.coordA],
+    ['professor', U.profA],
+    ['aluno', U.alunoA],
+    ['responsável', U.respA],
+    ['gestor de outra instituição', U.gestorB],
+    ['professor independente', U.profIndependente],
+    ['anônimo', null],
+  ] as const;
+
+  /** Escrita é "negada" se falha por RLS/privilégio ou se não afeta nenhuma linha. */
+  async function negada(uid: string | null, sql: string): Promise<boolean> {
+    try {
+      const r = await banco.comoUsuario(uid, (query) => query(sql));
+      return (r.affectedRows ?? 0) === 0;
+    } catch (e) {
+      return /row-level security|permission denied|só de inserção/.test((e as Error).message);
+    }
+  }
+
+  const casos = ESCRITORES.flatMap(([nome, uid]) =>
+    TABELAS.flatMap((tabela) => [
+      [nome, uid, tabela, 'INSERT', `INSERT INTO ${tabela} DEFAULT VALUES`],
+      [nome, uid, tabela, 'UPDATE', `UPDATE ${tabela} SET ${COLUNA_DE_DATA[tabela]} = now()`],
+      [nome, uid, tabela, 'DELETE', `DELETE FROM ${tabela}`],
+    ] as const),
+  );
+
+  it.each(casos)('%s não faz %s... (%s %s)', async (_nome, uid, _tabela, _op, sql) => {
+    expect(await negada(uid, sql)).toBe(true);
+  });
+
+  it('o seed continua intacto depois de todas as tentativas', async () => {
+    for (const tabela of TABELAS) {
+      const { rows } = await banco.pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${tabela}`);
+      expect(rows[0]!.n, tabela).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('função na instituição', () => {
+  // As políticas de `usuario` moram em supabase/policies (aplicadas depois das
+  // migrações, e a 0002 inteira não sobe num banco limpo: ainda cita `escola`).
+  // Aqui vale só o trecho de `usuario`, extraído do arquivo de produção, para
+  // provar que a coluna nova fica protegida por ele.
+  beforeAll(async () => {
+    const arquivo = readFileSync(
+      join(__dirname, '../../../../supabase/policies/0002_rls_restante.sql'),
+      'utf8',
+    );
+    const politica = arquivo.match(/create policy p_usuario_own on usuario[\s\S]*?;/i);
+    expect(politica, 'p_usuario_own em 0002_rls_restante.sql').not.toBeNull();
+    await banco.pg.exec('ALTER TABLE usuario ENABLE ROW LEVEL SECURITY');
+    await banco.pg.exec(politica![0]);
+  });
+
+  it('authenticated não consegue mudar a própria função nem a de outro', async () => {
+    for (const uid of [U.coordA, U.gestorA]) {
+      const r = await banco
+        .comoUsuario(uid, (query) =>
+          query(`UPDATE usuario SET funcao_instituicao = 'gestor' WHERE id = $1`, [U.coordA]),
+        )
+        .catch((e: Error) => e);
+      const negado =
+        r instanceof Error ? /permission denied|row-level security/.test(r.message) : r.affectedRows === 0;
+      expect(negado).toBe(true);
+    }
+    const { rows } = await banco.pg.query<{ funcao_instituicao: string }>(
+      `SELECT funcao_instituicao FROM usuario WHERE id = $1`,
+      [U.coordA],
+    );
+    expect(rows[0]!.funcao_instituicao).toBe('coordenacao');
   });
 });

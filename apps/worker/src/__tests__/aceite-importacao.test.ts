@@ -73,9 +73,9 @@ function linhasDaPlanilha(): (string | null)[][] {
 
 let xlsx: Uint8Array;
 
-async function novaImportacao(path: string): Promise<string> {
-  armazenadas.set(path, xlsx);
-  const planilha = await lerPlanilha(xlsx, detectarFormato(xlsx, 'alunos.xlsx'));
+async function novaImportacao(path: string, bytes: Uint8Array = xlsx): Promise<string> {
+  armazenadas.set(path, bytes);
+  const planilha = await lerPlanilha(bytes, detectarFormato(bytes, 'alunos.xlsx'));
   const [criada] = await db
     .insert(importacao)
     .values({
@@ -243,5 +243,51 @@ describe('fila', () => {
     const final = await confirmarEProcessar(id);
     expect(final.status).toBe('falhou');
     expect(final.erro).toBe('A planilha não está mais disponível. Envie de novo.');
+  });
+});
+
+describe('mesma matrícula em duas instituições', () => {
+  const MATRICULA_COMUM = '20260100'; // já existe na A, importada acima
+  const SO_DA_B = 'B-0001';
+
+  beforeAll(async () => {
+    await banco.pg.exec(`
+      INSERT INTO aluno_instituicao (instituicao_id, matricula, nome, email) VALUES
+        ('${OUTRA_INST}', '${MATRICULA_COMUM}', 'Aluno da B', 'aluno@b.test'),
+        ('${OUTRA_INST}', '${SO_DA_B}', 'Só da B', NULL);
+    `);
+  });
+
+  const daB = async () =>
+    (
+      await banco.pg.query(
+        `SELECT matricula, nome, email, turma_id, atualizado_em FROM aluno_instituicao
+          WHERE instituicao_id = $1 ORDER BY matricula`,
+        [OUTRA_INST],
+      )
+    ).rows;
+
+  it('importar na A atualiza só a linha da A e deixa a da B como estava', async () => {
+    const antes = await daB();
+    const planilha = await gerarXlsx(cabecalhoDoModelo('alunos'), [
+      [MATRICULA_COMUM, 'Nome corrigido na A', '05/03/2010', null, '1º ano A', null, null, null, null, null, null, null, null],
+      [SO_DA_B, 'Aluna nova na A', '05/03/2010', null, '1º ano B', null, null, null, null, null, null, null, null],
+    ]);
+    const id = await novaImportacao(`${INST}/comum.xlsx`, planilha);
+    const { plano } = await previa(id);
+    expect(plano.resumo).toMatchObject({ atualizar: 1, criar: 1, recusar: 0 });
+
+    const final = await confirmarEProcessar(id);
+    expect(final.status).toBe('concluida');
+
+    const naA = await banco.pg.query<{ matricula: string; nome: string }>(
+      `SELECT matricula, nome FROM aluno_instituicao WHERE instituicao_id = $1 AND matricula = ANY($2)`,
+      [INST, [MATRICULA_COMUM, SO_DA_B]],
+    );
+    expect(Object.fromEntries(naA.rows.map((r) => [r.matricula, r.nome]))).toEqual({
+      [MATRICULA_COMUM]: 'Nome corrigido na A',
+      [SO_DA_B]: 'Aluna nova na A',
+    });
+    expect(await daB()).toEqual(antes);
   });
 });

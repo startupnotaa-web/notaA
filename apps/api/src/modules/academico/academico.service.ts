@@ -143,7 +143,7 @@ export class AcademicoService {
     try {
       const [criado] = await this.db
         .insert(periodoAvaliativo)
-        .values({ instituicaoId, ...body })
+        .values({ ...body, instituicaoId })
         .returning();
       return paraPeriodo(criado!);
     } catch (e) {
@@ -182,7 +182,7 @@ export class AcademicoService {
     try {
       const [atualizado] = await this.db
         .update(periodoAvaliativo)
-        .set({ ...body, atualizadoEm: new Date() })
+        .set({ ...body, instituicaoId, atualizadoEm: new Date() })
         .where(and(eq(periodoAvaliativo.id, id), eq(periodoAvaliativo.instituicaoId, instituicaoId)))
         .returning();
       return paraPeriodo(atualizado!);
@@ -243,7 +243,7 @@ export class AcademicoService {
     try {
       const [atualizada] = await this.db
         .update(disciplina)
-        .set({ ...body, atualizadoEm: new Date() })
+        .set({ ...body, instituicaoId, atualizadoEm: new Date() })
         .where(and(eq(disciplina.id, id), eq(disciplina.instituicaoId, instituicaoId)))
         .returning();
       if (!atualizada) naoEncontrado('Disciplina não encontrada.');
