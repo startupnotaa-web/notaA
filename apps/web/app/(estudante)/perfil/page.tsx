@@ -1,12 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BookOpen, Lock, Map as MapaIcon, Target, Trophy, Users } from 'lucide-react';
 import type { MeResponse, AchievementsResponse } from '@notaa/contracts';
-import { Button, Card, CardHeader, Input, Label, SectionHeader, Skeleton, Badge, cn } from '@notaa/ui';
+import {
+  Button,
+  Carregando,
+  Chip,
+  Notice,
+  PageHeader,
+  Panel,
+  Section,
+  Skeleton,
+  TextField,
+  ThemeSwitch,
+} from '@notaa/ui';
 import { MinhasTurmas } from './MinhasTurmas';
 import { apiFetch, ApiError } from '../../../lib/api-client';
 import { useAuth } from '../../../lib/auth-context';
-import { ShortcutCard } from '../../components/ShortcutCard';
+import { aplicarPreferenciaDeTema, lerPreferenciaDeTema, type PreferenciaDeTema } from '../../../lib/tema';
+import { Atalho, AtalhoLista } from '../../components/Atalho';
+import { Pagina } from '../../components/Pagina';
 
 const PLANO_ROTULO: Record<NonNullable<MeResponse['plano']>['tipo'], string> = {
   free: 'Gratuito',
@@ -14,11 +28,22 @@ const PLANO_ROTULO: Record<NonNullable<MeResponse['plano']>['tipo'], string> = {
   instituicao: 'Instituição',
 };
 
+const MARCOS_DE_OFENSIVA = [
+  { label: '3 dias', codigo: 'streak_3_dias' },
+  { label: '7 dias', codigo: 'streak_7_dias' },
+  { label: '15 dias', codigo: 'streak_15_dias' },
+  { label: '1 mês', codigo: 'streak_30_dias' },
+  { label: '2 meses', codigo: 'streak_60_dias' },
+  { label: '4 meses', codigo: 'streak_120_dias' },
+  { label: '8 meses', codigo: 'streak_240_dias' },
+];
+
 export default function PerfilPage() {
   const { signOut } = useAuth();
   const [perfil, setPerfil] = useState<MeResponse | null>(null);
   const [achievements, setAchievements] = useState<AchievementsResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [tema, setTema] = useState<PreferenciaDeTema>('light');
 
   // Estado do formulário de Informações Pessoais.
   const [nome, setNome] = useState('');
@@ -31,6 +56,7 @@ export default function PerfilPage() {
   const [assinaturaMsg, setAssinaturaMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    setTema(lerPreferenciaDeTema());
     Promise.all([
       apiFetch<MeResponse>('/me'),
       apiFetch<AchievementsResponse>('/me/achievements')
@@ -69,7 +95,7 @@ export default function PerfilPage() {
       setNome(atualizado.nome ?? '');
       setObjetivo(atualizado.objetivo ?? '');
       setEstilo(atualizado.estiloAprendizagem?.join(', ') ?? '');
-      setFeedback({ tipo: 'ok', msg: 'Informações salvas com sucesso.' });
+      setFeedback({ tipo: 'ok', msg: 'Informações salvas.' });
     } catch (err) {
       setFeedback({
         tipo: 'erro',
@@ -82,11 +108,11 @@ export default function PerfilPage() {
 
   if (erro) {
     return (
-      <div className="p-4">
-        <p role="alert" className="text-sm text-error">
+      <Pagina>
+        <Notice tone="danger" title="Não foi possível abrir o seu perfil">
           {erro}
-        </p>
-      </div>
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -103,234 +129,209 @@ export default function PerfilPage() {
   const inalterado = nomeInalterado && objetivoInalterado && estiloInalterado;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
-      {/* Header: Identidade */}
-      <header className="flex items-center gap-4">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-3xl font-bold text-white shadow-lg">
+    <Pagina>
+      {/* Identidade */}
+      <div className="flex items-center gap-space-5">
+        <div
+          aria-hidden="true"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-pill bg-violet-tint font-display text-heading-2 text-primary"
+        >
           {perfil.nome ? perfil.nome.charAt(0).toUpperCase() : 'N'}
         </div>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-text">{perfil.nome ? perfil.nome : 'Estudante Nota A'}</h1>
-          <p className="text-sm font-medium text-text-muted">{perfil.email}</p>
-          <div className="flex items-center gap-2 mt-1">
-             <Badge variant="neutral" className="text-xs">
-               Nível {perfil.gamificacao?.nivel?.atual || 1}
-             </Badge>
-             <Badge variant={perfil.plano?.status === 'ativa' ? 'brand' : 'neutral'} className="text-xs">
-               Plano {planoRotulo}
-             </Badge>
-          </div>
-        </div>
-      </header>
+        <PageHeader
+          className="flex-1"
+          title={perfil.nome ? perfil.nome : 'Estudante Nota A'}
+          description={perfil.email}
+          status={
+            <span className="flex flex-wrap items-center gap-space-2">
+              <Chip tone="neutral">Nível {perfil.gamificacao?.nivel?.atual || 1}</Chip>
+              <Chip tone={perfil.plano?.status === 'ativa' ? 'brand' : 'neutral'}>Plano {planoRotulo}</Chip>
+            </span>
+          }
+        />
+      </div>
 
-      {/* Seção: Ferramentas Secundárias e Gamificação */}
-      <section className="space-y-4">
-        <SectionHeader title="Jornada &" accent="Conquistas" as="h2" />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-          <ShortcutCard
-            icon="🏆"
-            title="Certificados"
-            description="Conquistas e medalhas verificáveis da sua jornada."
+      <Section title="Jornada e conquistas">
+        <AtalhoLista>
+          <Atalho
+            icone={<Trophy className="h-5 w-5" />}
+            titulo="Certificados"
+            descricao="Conquistas e medalhas verificáveis da sua jornada."
             href="/certificados"
           />
-          <ShortcutCard
-            icon="📖"
-            title="Minha Narrativa"
-            description="Conecte seu sonho ao estudo e veja a timeline."
+          <Atalho
+            icone={<BookOpen className="h-5 w-5" />}
+            titulo="Minha narrativa"
+            descricao="Conecte seu sonho ao estudo e veja a linha do tempo."
             href="/minha-narrativa"
           />
-          <ShortcutCard
-            icon="🗺️"
-            title="Mapa do Conhecimento"
-            description="Grafo visual das suas lacunas de estudo."
+          <Atalho
+            icone={<MapaIcon className="h-5 w-5" />}
+            titulo="Mapa do conhecimento"
+            descricao="Seus pontos fortes e as lacunas de estudo, por área."
             href="/mapa-conhecimento"
           />
-          <ShortcutCard
-            icon="🎯"
-            title="Previsão de Nota"
-            description="IA prevê seu desempenho no SISU/ENEM."
+          <Atalho
+            icone={<Target className="h-5 w-5" />}
+            titulo="Previsão de nota"
+            descricao="Uma estimativa do seu desempenho no ENEM, com base no que você já fez."
             href="/previsao-nota"
           />
-          <ShortcutCard
-            icon="👨‍👩‍👧"
-            title="Relatório Familiar"
-            description="Boletim de progresso para pais e responsáveis."
+          <Atalho
+            icone={<Users className="h-5 w-5" />}
+            titulo="Relatório familiar"
+            descricao="Um resumo do seu progresso para pais e responsáveis."
             href="/relatorio-familiar"
           />
-        </div>
-      </section>
+        </AtalhoLista>
+      </Section>
 
-      {/* Seção: Galeria de Certificados de Ofensiva */}
       {achievements && (
-        <section className="space-y-4">
-          <SectionHeader title="Certificados de" accent="Ofensiva" as="h2" />
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap gap-4">
-                {[
-                  { dias: 3, label: '3 Dias', codigo: 'streak_3_dias' },
-                  { dias: 7, label: '7 Dias', codigo: 'streak_7_dias' },
-                  { dias: 15, label: '15 Dias', codigo: 'streak_15_dias' },
-                  { dias: 30, label: '1 Mês', codigo: 'streak_30_dias' },
-                  { dias: 60, label: '2 Meses', codigo: 'streak_60_dias' },
-                  { dias: 120, label: '4 Meses', codigo: 'streak_120_dias' },
-                  { dias: 240, label: '8 Meses', codigo: 'streak_240_dias' },
-                ].map((marco) => {
-                  const unlocked = achievements.desbloqueadas.some((a) => a.codigo === marco.codigo);
-                  return (
-                    <div
-                      key={marco.codigo}
-                      className={cn(
-                        'flex flex-col items-center justify-center rounded-xl border p-4 w-[110px] text-center transition-all',
-                        unlocked
-                          ? 'border-brand-primary/40 bg-brand-primary/10'
-                          : 'border-border bg-surface-2 grayscale opacity-60'
-                      )}
-                    >
-                      <span className="text-3xl mb-2" aria-hidden="true">
-                        {unlocked ? '🏆' : '🔒'}
-                      </span>
-                      <span className={cn('text-xs font-bold uppercase', unlocked ? 'text-brand-primary' : 'text-text-muted')}>
-                        {marco.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardHeader>
-          </Card>
-        </section>
+        <Section title="Certificados de ofensiva" description="Marcos de dias seguidos estudando." divided>
+          <ul className="m-0 flex list-none flex-col p-0">
+            {MARCOS_DE_OFENSIVA.map((marco) => {
+              const unlocked = achievements.desbloqueadas.some((a) => a.codigo === marco.codigo);
+              return (
+                <li key={marco.codigo} className="flex min-h-[44px] items-center justify-between gap-space-4 border-b border-line py-space-2 last:border-b-0">
+                  <span className="flex items-center gap-space-3 text-body text-ink">
+                    {unlocked ? (
+                      <Trophy aria-hidden="true" className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Lock aria-hidden="true" className="h-5 w-5 text-ink-muted" />
+                    )}
+                    {marco.label}
+                  </span>
+                  <Chip tone={unlocked ? 'brand' : 'neutral'}>{unlocked ? 'Conquistado' : 'Bloqueado'}</Chip>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
       )}
 
-      {/* Seção: Informações Pessoais (editável) */}
-      <section className="space-y-4">
-        <SectionHeader title="Informações" accent="Pessoais" as="h2" />
-        <Card>
-          <CardHeader>
-            <form className="space-y-4" onSubmit={handleSalvarPerfil}>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="perfil-nome">Nome</Label>
-                  <Input
-                    id="perfil-nome"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    placeholder="Como você quer ser chamado(a)"
-                    maxLength={120}
-                    autoComplete="name"
-                    disabled={salvando}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="perfil-email">E-mail</Label>
-                  <Input id="perfil-email" type="email" value={perfil.email} disabled readOnly />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                  <Label htmlFor="perfil-objetivo">Objetivo / Curso</Label>
-                  <Input 
-                    id="perfil-objetivo" 
-                    value={objetivo} 
-                    onChange={(e) => setObjetivo(e.target.value)}
-                    placeholder="Ex: Medicina, Direito" 
-                    disabled={salvando} 
-                  />
-              </div>
-              <div className="space-y-1.5">
-                  <Label htmlFor="perfil-estilo">Estilo de Aprendizado (separado por vírgula)</Label>
-                  <Input 
-                    id="perfil-estilo" 
-                    value={estilo} 
-                    onChange={(e) => setEstilo(e.target.value)}
-                    placeholder="Ex: Visual, Auditivo, Leitura, Prático" 
-                    disabled={salvando} 
-                  />
-                  <p className="text-[10px] text-text-muted mt-1">O e-mail não pode ser alterado diretamente. Entre em contato com o suporte.</p>
-              </div>
+      <Section title="Informações pessoais" divided>
+        <Panel>
+          <form className="flex flex-col gap-space-5" onSubmit={handleSalvarPerfil}>
+            <div className="grid gap-space-5 md:grid-cols-2">
+              <TextField
+                label="Nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Como você quer ser chamado(a)"
+                maxLength={120}
+                autoComplete="name"
+                disabled={salvando}
+              />
+              <TextField
+                label="E-mail"
+                type="email"
+                value={perfil.email}
+                disabled
+                readOnly
+                hint="O e-mail não pode ser alterado aqui. Fale com o suporte."
+              />
+            </div>
+            <TextField
+              label="Objetivo ou curso"
+              value={objetivo}
+              onChange={(e) => setObjetivo(e.target.value)}
+              placeholder="Ex.: Medicina, Direito"
+              disabled={salvando}
+            />
+            <TextField
+              label="Estilo de aprendizado"
+              hint="Separe por vírgula."
+              value={estilo}
+              onChange={(e) => setEstilo(e.target.value)}
+              placeholder="Ex.: visual, auditivo, leitura, prático"
+              disabled={salvando}
+            />
 
-              {feedback && (
-                <p
-                  role={feedback.tipo === 'erro' ? 'alert' : 'status'}
-                  className={cn('text-sm', feedback.tipo === 'erro' ? 'text-error' : 'text-success')}
-                >
-                  {feedback.msg}
-                </p>
-              )}
+            {feedback && <Notice tone={feedback.tipo === 'erro' ? 'danger' : 'success'}>{feedback.msg}</Notice>}
 
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={salvando || inalterado}>
-                  {salvando ? 'Salvando…' : 'Salvar alterações'}
-                </Button>
-              </div>
-            </form>
-          </CardHeader>
-        </Card>
-      </section>
+            <div>
+              <Button type="submit" loading={salvando} disabled={inalterado}>
+                {salvando ? 'Salvando' : 'Salvar alterações'}
+              </Button>
+            </div>
+          </form>
+        </Panel>
+      </Section>
 
       <MinhasTurmas />
 
-      {/* Seção: Assinatura */}
-      <section className="space-y-4">
-        <SectionHeader title="Sua" accent="Assinatura" as="h2" />
-        <Card className={cn('border-brand-primary/20', isPremium && 'bg-brand-primary/5')}>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">Plano atual</p>
-                <p className="text-xl font-extrabold text-text">{planoRotulo}</p>
-                {perfil.plano?.status && perfil.plano.status !== 'ativa' && (
-                  <Badge variant="neutral">Status: {perfil.plano.status}</Badge>
-                )}
-              </div>
-              <div className="flex w-full sm:w-auto flex-col gap-2 sm:flex-row">
-                <Button
-                  variant="primary"
-                  className="w-full sm:w-auto"
-                  disabled={isPremium}
-                  onClick={() => setAssinaturaMsg('Os pagamentos chegam em breve — deixamos seu interesse no Premium registrado. 🚀')}
-                >
-                  {isPremium ? 'Você é Premium ✨' : 'Fazer Upgrade'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-full sm:w-auto text-error hover:bg-error/10 hover:border-error/20"
-                  disabled={!isPremium}
-                  onClick={() => setAssinaturaMsg('O downgrade estará disponível assim que ativarmos os pagamentos.')}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
+      <Section
+        title="Aparência"
+        description="O tema claro é o padrão. Você pode trocar para o escuro ou seguir o seu sistema."
+        divided
+      >
+        <div>
+          <ThemeSwitch
+            value={tema}
+            onChange={(valor) => {
+              setTema(valor);
+              aplicarPreferenciaDeTema(valor);
+            }}
+          />
+        </div>
+      </Section>
 
-            {assinaturaMsg && (
-              <p role="status" className="mt-4 text-sm text-text-muted">{assinaturaMsg}</p>
+      <Section title="Sua assinatura" divided>
+        <div className="flex flex-wrap items-center justify-between gap-space-5">
+          <div className="flex flex-col gap-space-1">
+            <p className="m-0 text-label text-ink-muted">Plano atual</p>
+            <p className="m-0 font-display text-heading-2 text-ink">{planoRotulo}</p>
+            {perfil.plano?.status && perfil.plano.status !== 'ativa' && (
+              <div>
+                <Chip tone="neutral">Status: {perfil.plano.status}</Chip>
+              </div>
             )}
-          </CardHeader>
-        </Card>
-      </section>
+          </div>
+          <div className="flex flex-wrap gap-space-3">
+            <Button
+              variant="primary"
+              disabled={isPremium}
+              onClick={() => setAssinaturaMsg('Os pagamentos chegam em breve. Deixamos o seu interesse no Premium registrado.')}
+            >
+              {isPremium ? 'Você já é Premium' : 'Fazer upgrade'}
+            </Button>
+            <Button
+              variant="danger"
+              disabled={!isPremium}
+              onClick={() => setAssinaturaMsg('O downgrade estará disponível assim que ativarmos os pagamentos.')}
+            >
+              Cancelar plano
+            </Button>
+          </div>
+        </div>
+        {assinaturaMsg && <Notice tone="info">{assinaturaMsg}</Notice>}
+      </Section>
 
-      {/* Danger Zone */}
-      <section className="pt-8 border-t border-border mt-12 flex justify-center">
-        <Button variant="secondary" onClick={signOut} className="text-text-muted hover:text-error transition-colors">
-          Sair da Conta
-        </Button>
-      </section>
-    </div>
+      <Section divided>
+        <div>
+          <Button variant="secondary" onClick={signOut}>
+            Sair da conta
+          </Button>
+        </div>
+      </Section>
+    </Pagina>
   );
 }
 
 function PerfilSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-20 w-20 rounded-full" />
-        <div className="space-y-2 w-full">
-           <Skeleton className="h-8 w-1/3" />
-           <Skeleton className="h-4 w-1/4" />
+    <Pagina>
+      <Carregando rotulo="Carregando o seu perfil" className="flex flex-col gap-space-6 md:gap-space-7">
+        <div className="flex items-center gap-space-5">
+          <Skeleton className="h-16 w-16 rounded-pill" />
+          <div className="flex w-full flex-col gap-space-2">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
         </div>
-      </div>
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-64 w-full" />
-    </div>
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }
