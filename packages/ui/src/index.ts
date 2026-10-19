@@ -18,6 +18,8 @@ export { ButtonLink } from './components/ButtonLink';
 export type { ButtonLinkProps } from './components/ButtonLink';
 export { TextField } from './components/TextField';
 export type { TextFieldProps } from './components/TextField';
+export { TextArea } from './components/TextArea';
+export type { TextAreaProps } from './components/TextArea';
 export { Select } from './components/Select';
 export type { SelectProps } from './components/Select';
 export { Chip } from './components/Chip';
