@@ -3,7 +3,7 @@
 //
 //   E2E_SHOTS=../../design-handoff/antes-depois E2E_MOMENTO=antes pnpm --filter @notaa/web capturas
 //
-// Gera {E2E_SHOTS}/{E2E_MOMENTO}/{rota}-{tema}-{largura}.png nas 5 larguras e nos 2 temas.
+// Gera {E2E_SHOTS}/{E2E_MOMENTO}/{rota}-{tema}-{largura}.png nas 7 larguras e nos 2 temas.
 import { expect, test, type Page } from '@playwright/test';
 import { autenticar, type Papel, type Tema } from './fixtures';
 
@@ -92,16 +92,20 @@ const LARGURAS = [
   { nome: '360', width: 360, height: 740 },
   { nome: '768', width: 768, height: 1024 },
   { nome: '1024', width: 1024, height: 768 },
-  { nome: '1440', width: 1440, height: 900 },
+  { nome: '1366', width: 1366, height: 768 },
+  { nome: '1536', width: 1536, height: 864 },
   { nome: '1920', width: 1920, height: 1080 },
+  { nome: '2560', width: 2560, height: 1440 },
 ] as const;
+// Filtro opcional por largura, ex.: E2E_LARGURAS=1366,2560
+const SO_LARGURAS = process.env.E2E_LARGURAS?.split(',').map((s) => s.trim()).filter(Boolean);
 const TEMAS: Tema[] = ['light', 'dark'];
 
 test.skip(!PASTA, 'Defina E2E_SHOTS para gravar as capturas.');
 
 for (const captura of CAPTURAS.filter((c) => !SO || SO.includes(c.nome))) {
   for (const tema of TEMAS) {
-    for (const largura of LARGURAS) {
+    for (const largura of LARGURAS.filter((l) => !SO_LARGURAS || SO_LARGURAS.includes(l.nome))) {
       test(`${captura.nome} · ${tema} · ${largura.nome}`, async ({ page }) => {
         await page.setViewportSize({ width: largura.width, height: largura.height });
         // Aurora e demais animações param, para a imagem sair igual a cada rodada.

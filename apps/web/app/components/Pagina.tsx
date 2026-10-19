@@ -1,27 +1,32 @@
 import type { ReactNode } from 'react';
 
 const LARGURAS = {
-  /** Leitura e formulários: telas do aluno em uma coluna. */
+  /** Usa a largura toda, até `page-max` (1760px). O padrão no computador. */
+  fluida: 'max-w-pagina',
+  /** Só para texto corrido de leitura (um documento), nunca para telas de trabalho. */
+  leitura: 'max-w-3xl',
+  /** Nomes antigos, mantidos até todas as telas virarem grades. */
   estreita: 'max-w-2xl',
-  /** Aluno em telas com mais conteúdo (estudo, perfil, relatório). */
   media: 'max-w-3xl',
-  /** Painéis de instituição e professor: o PainelShell já limita a 1.280px. */
-  larga: 'max-w-none',
+  larga: 'max-w-pagina',
 } as const;
 
 /**
- * Coluna de conteúdo de uma tela: margem de 16px no celular, respiro de `space-6` a `space-7` entre
- * os blocos e largura de leitura confortável. Conteúdo alinhado à esquerda; só a landing centraliza.
+ * Área de conteúdo de uma tela dentro do `AppFrame`: margem de 16px no celular, `space-5` a `space-6` nas
+ * laterais no computador, e conteúdo fluido até `page-max` (centraliza só acima disso). Conteúdo alinhado
+ * à esquerda. Componha o interior com `Grade` e `Col` em vez de uma coluna única.
  */
 export function Pagina({
-  largura = 'media',
+  largura = 'fluida',
   children,
 }: {
   largura?: keyof typeof LARGURAS;
   children: ReactNode;
 }) {
   return (
-    <div className={`mx-auto flex w-full flex-col gap-space-6 px-4 py-space-6 md:gap-space-7 md:py-space-7 ${LARGURAS[largura]}`}>
+    <div
+      className={`mx-auto flex w-full flex-col gap-space-6 px-4 py-space-5 md:px-space-5 md:py-space-6 lg:gap-space-6 lg:px-space-6 ${LARGURAS[largura]}`}
+    >
       {children}
     </div>
   );
