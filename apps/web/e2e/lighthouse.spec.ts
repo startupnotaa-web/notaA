@@ -12,6 +12,9 @@ import { autenticar, modoReal, papelReal, type Papel } from './fixtures';
 
 const META = 95;
 const META_DESEMPENHO = 90;
+// Páginas públicas: o LCP simulado em 4G lento (o perfil móvel do Lighthouse) não passa de 2,5 s.
+const META_LCP_MS = 2500;
+const PUBLICAS_COM_LCP = ['/', '/aluno', '/professores', '/escola', '/faculdade'];
 const PORTA = 9333;
 
 const ROTAS: { rota: string; papel: Papel | null }[] = [
@@ -23,6 +26,10 @@ const ROTAS: { rota: string; papel: Papel | null }[] = [
   { rota: '/estudo', papel: 'estudante' },
   { rota: '/perfil', papel: 'estudante' },
   { rota: '/', papel: null },
+  { rota: '/aluno', papel: null },
+  { rota: '/professores', papel: null },
+  { rota: '/escola', papel: null },
+  { rota: '/faculdade', papel: null },
   { rota: '/login', papel: null },
 ];
 
@@ -31,7 +38,7 @@ const importar = new Function('m', 'return import(m)') as (m: string) => Promise
 type LighthouseFn = (
   url: string,
   flags: Record<string, unknown>,
-) => Promise<{ lhr: { finalDisplayedUrl: string; categories: { accessibility: { score: number | null }; performance: { score: number | null } }; audits: Record<string, { score: number | null; title: string }> } } | undefined>;
+) => Promise<{ lhr: { finalDisplayedUrl: string; categories: { accessibility: { score: number | null }; performance: { score: number | null } }; audits: Record<string, { score: number | null; title: string; numericValue?: number }> } } | undefined>;
 
 for (const tema of ['light', 'dark'] as const) {
   for (const formato of ['desktop', 'mobile'] as const) {
@@ -68,7 +75,8 @@ for (const tema of ['light', 'dark'] as const) {
           const reprovadas = Object.values(resultado?.lhr.audits ?? {})
             .filter((a) => a.score === 0)
             .map((a) => a.title);
-          notas.push(`${rota} (${papel ?? 'público'}): ${nota} · desempenho ${desempenho}${reprovadas.length ? ` · reprovou: ${reprovadas.join('; ')}` : ''}`);
+          const lcp = Math.round(resultado?.lhr.audits['largest-contentful-paint']?.numericValue ?? 0);
+          notas.push(`${rota} (${papel ?? 'público'}): ${nota} · desempenho ${desempenho} · LCP ${lcp}ms${reprovadas.length ? ` · reprovou: ${reprovadas.join('; ')}` : ''}`);
         } finally {
           await ctx.close();
           rmSync(perfil, { recursive: true, force: true });
@@ -79,6 +87,8 @@ for (const tema of ['light', 'dark'] as const) {
       expect(abaixo, `rotas com acessibilidade abaixo de ${META}`).toEqual([]);
       const lentas = notas.filter((n) => Number(/desempenho (\d+)/.exec(n)?.[1]) < META_DESEMPENHO);
       expect(lentas, `rotas com desempenho abaixo de ${META_DESEMPENHO}`).toEqual([]);
+      const lcpAlto = notas.filter((n) => PUBLICAS_COM_LCP.some((r) => n.startsWith(`${r} (`)) && Number(/LCP (\d+)ms/.exec(n)?.[1]) > META_LCP_MS);
+      expect(lcpAlto, `páginas públicas com LCP acima de ${META_LCP_MS} ms`).toEqual([]);
     });
   }
 }

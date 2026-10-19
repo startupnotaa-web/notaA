@@ -168,7 +168,7 @@ export function FormularioLead({ origem, campos, botao, consentimento, sucesso, 
       })}
 
       {/* Isca para robô: escondida da vista, fora da ordem de tabulação e sem rótulo para quem usa leitor de tela. */}
-      <div aria-hidden="true" className="absolute -left-[9999px] top-0 h-px w-px overflow-hidden">
+      <div aria-hidden="true" className="sr-only">
         <label>
           Não preencha este campo
           <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />

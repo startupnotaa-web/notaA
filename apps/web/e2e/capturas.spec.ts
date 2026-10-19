@@ -23,7 +23,7 @@ interface Captura {
 }
 
 const CAPTURAS: Captura[] = [
-  { nome: 'landing', rota: '/', papel: null, espera: /Aprenda jogando/ },
+  { nome: 'landing', rota: '/', papel: null, espera: /Um só caminho/ },
   { nome: 'login', rota: '/login', papel: null },
   { nome: 'cadastro', rota: '/cadastro', papel: null },
   { nome: 'convite-professor', rota: '/convite-professor/tok_exemplo', papel: null },
