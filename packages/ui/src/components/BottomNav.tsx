@@ -40,7 +40,7 @@ export function BottomNav({ items, current, label = 'Principal', linkAs, innerCl
                 href={item.href}
                 aria-current={ativo ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-[56px] min-w-[44px] flex-col items-center justify-center gap-1 px-1 py-2 font-text text-xs font-bold leading-4 no-underline',
+                  'flex min-h-[56px] min-w-[44px] flex-col items-center justify-center gap-1 px-1 py-2 font-text text-caption font-bold no-underline',
                   `transition-colors duration-fast ${EASE_OUT}`,
                   FOCO,
                   ativo ? 'text-primary' : 'text-ink-muted hover:text-ink',

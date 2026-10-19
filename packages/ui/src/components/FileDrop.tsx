@@ -45,9 +45,9 @@ export function FileDrop({
         if (f && !disabled) onArquivo(f);
       }}
       className={cn(
-        'relative rounded-lg border-2 border-dashed p-6 text-center transition-colors duration-base',
+        'relative rounded-lg border border-dashed p-space-6 text-center transition-colors duration-base ease-out',
         'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
-        arrastando ? 'border-primary bg-surface-sunken' : 'border-line bg-surface',
+        arrastando ? 'border-primary bg-violet-tint' : 'border-line-strong bg-surface',
         disabled && 'opacity-50',
         className,
       )}
@@ -66,7 +66,7 @@ export function FileDrop({
         }}
       />
       <label htmlFor={id} className={cn('flex flex-col items-center gap-2', !disabled && 'cursor-pointer')}>
-        <span className="text-base font-semibold text-ink">{rotulo}</span>
+        <span className="text-body font-bold text-ink">{rotulo}</span>
         {arquivo ? (
           <span className="text-sm text-ink">
             Selecionado: <strong>{arquivo.name}</strong>

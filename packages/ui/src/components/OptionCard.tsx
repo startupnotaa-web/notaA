@@ -1,6 +1,6 @@
 'use client';
 // docs/07 §7 — OptionCard (comporta-se como radio). Estado correct/incorrect
-// mostra ÍCONE + RÓTULO, nunca só cor. Usado no quiz e onboarding.
+// mostra ÍCONE + RÓTULO, nunca só cor. Selecionado = borda primary + tint violeta (sem anel grosso).
 import * as React from 'react';
 import { cn } from '../lib/cn';
 
@@ -51,15 +51,15 @@ export const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(f
       aria-checked={selected}
       className={cn(
         'flex w-full items-start gap-3 rounded-lg border p-4 text-left',
-        'min-h-[44px] transition-colors duration-base',
+        'min-h-[44px] transition-colors duration-fast ease-out',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'disabled:opacity-50 disabled:pointer-events-none',
-        state === 'correct' && 'border-success bg-surface-sunken',
-        state === 'incorrect' && 'border-danger bg-surface-sunken',
+        state === 'correct' && 'border-success bg-success-tint',
+        state === 'incorrect' && 'border-danger bg-danger-tint',
         state === 'neutral' &&
           (selected
-            ? 'border-primary bg-surface-sunken ring-2 ring-primary'
-            : 'border-line bg-surface hover:bg-surface-sunken'),
+            ? 'border-primary bg-violet-tint'
+            : 'border-line-strong bg-surface hover:bg-surface-sunken'),
         className,
       )}
       {...props}
@@ -70,8 +70,8 @@ export const OptionCard = React.forwardRef<HTMLButtonElement, OptionCardProps>(f
         </span>
       ) : null}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="font-medium text-ink">{title}</span>
-        {description ? <span className="text-sm text-ink-muted">{description}</span> : null}
+        <span className="text-body font-bold text-ink">{title}</span>
+        {description ? <span className="text-body-sm text-ink-muted">{description}</span> : null}
       </span>
       {isResult ? (
         <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-sm font-semibold">

@@ -44,14 +44,14 @@ export function SideNav({
     <nav
       aria-label={label}
       className={cn(
-        'flex flex-col gap-1 border-r border-line bg-surface px-3 py-5',
+        'flex flex-col gap-1 border-r border-line bg-surface px-3 py-space-5',
         recolhe ? 'w-[72px] lg:w-[248px]' : 'w-[248px]',
         className,
       )}
     >
       <div
         className={cn(
-          'flex items-center gap-2 px-3 pb-5 font-display text-[17px] font-semibold leading-6 text-ink',
+          'flex items-center gap-2 px-3 pb-space-5 font-display text-[17px] font-semibold leading-6 text-ink',
           recolhe && 'max-lg:justify-center max-lg:px-0',
         )}
       >
@@ -67,7 +67,7 @@ export function SideNav({
           return (
             <div
               key={`g-${item.group}`}
-              className={cn('px-3 pb-2 pt-4 font-text text-[12.5px] leading-[18px] text-ink-muted', recolhe && 'max-lg:sr-only')}
+              className={cn('px-3 pb-2 pt-4 font-text text-caption text-ink-muted', recolhe && 'max-lg:sr-only')}
             >
               {item.group}
             </div>
@@ -81,7 +81,7 @@ export function SideNav({
             aria-current={ativo ? 'page' : undefined}
             title={recolhe && typeof item.label === 'string' ? item.label : undefined}
             className={cn(
-              'flex min-h-[44px] items-center gap-3 rounded-sm px-3 font-text text-sm font-bold leading-5 no-underline',
+              'flex min-h-[44px] items-center gap-3 rounded-md px-3 font-text text-label no-underline',
               `transition-colors duration-fast ${EASE_OUT}`,
               FOCO,
               recolhe && 'max-lg:justify-center max-lg:px-0',
@@ -97,7 +97,7 @@ export function SideNav({
             {item.badge ? (
               <span
                 className={cn(
-                  'ml-auto min-w-[20px] rounded-pill bg-warning-tint px-1.5 text-center text-[12.5px] font-bold leading-5 text-warning',
+                  'ml-auto min-w-[20px] rounded-pill bg-warning-tint px-1.5 text-center text-caption font-bold text-warning',
                   recolhe && 'max-lg:sr-only',
                 )}
               >

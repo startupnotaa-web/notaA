@@ -164,7 +164,6 @@ export default function QuizPage() {
         <Progress
           value={respondidas}
           max={QUIZ_TOTAL_QUESTOES}
-          gradient
           aria-label="Progresso do quiz"
         />
         <p className="text-xs text-text-muted">Questão inédita gerada por IA para esta sessão.</p>

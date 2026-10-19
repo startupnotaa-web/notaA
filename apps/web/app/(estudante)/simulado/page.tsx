@@ -308,7 +308,6 @@ export default function SimuladoPage() {
         <Progress
           value={respondidas}
           max={questoes.length}
-          gradient
           aria-label="Questões respondidas"
         />
       </div>

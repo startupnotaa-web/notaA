@@ -55,7 +55,7 @@ function Aviso({ item }: { item: ToastItem }) {
       onFocus={() => setPausado(true)}
       onBlur={() => setPausado(false)}
       className={cn(
-        'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-md border border-line bg-surface p-4 font-text text-sm leading-[22px] text-ink shadow-raise',
+        'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-md border border-line bg-surface p-4 font-text text-body-sm text-ink shadow-raise',
         'animate-[na-rise-in_240ms_var(--ease-out)] motion-reduce:animate-none',
       )}
     >

@@ -10,7 +10,7 @@ export interface EmptyStateProps {
 export function EmptyState({ title, children, actions }: EmptyStateProps) {
   const titleId = React.useId();
   return (
-    <section aria-labelledby={titleId} className="flex max-w-[420px] flex-col items-start gap-3 p-6">
+    <section aria-labelledby={titleId} className="flex max-w-[420px] flex-col items-start gap-3 py-space-6">
       <svg viewBox="0 0 56 56" aria-hidden="true" className="h-14 w-14">
         <rect
           x={14}
@@ -23,10 +23,10 @@ export function EmptyState({ title, children, actions }: EmptyStateProps) {
           className="fill-surface-sunken stroke-line-strong"
         />
       </svg>
-      <h3 id={titleId} className="m-0 font-display text-[19px] font-semibold leading-[26px] text-ink">
+      <h3 id={titleId} className="m-0 font-display text-heading-3 text-ink">
         {title}
       </h3>
-      {children ? <p className="m-0 font-text text-base leading-[26px] text-ink-muted">{children}</p> : null}
+      {children ? <p className="m-0 font-text text-body text-ink-muted">{children}</p> : null}
       {actions ? <div className="mt-2 flex flex-wrap gap-3">{actions}</div> : null}
     </section>
   );

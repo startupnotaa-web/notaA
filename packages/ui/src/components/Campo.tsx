@@ -31,12 +31,12 @@ export function Campo({
   const ids = [describedBy, mensagem ? mensagemId : undefined].filter(Boolean).join(' ') || undefined;
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <label htmlFor={campoId} className={cn('font-text text-sm font-bold leading-5 text-ink', labelOculto && 'sr-only')}>
+      <label htmlFor={campoId} className={cn('font-text text-label text-ink', labelOculto && 'sr-only')}>
         {label}
       </label>
       {children({ id: campoId, 'aria-describedby': ids, 'aria-invalid': error ? true : undefined })}
       {mensagem ? (
-        <span id={mensagemId} className={cn('font-text text-sm leading-[22px]', error ? 'text-danger' : 'text-ink-muted')}>
+        <span id={mensagemId} className={cn('font-text text-body-sm', error ? 'text-danger' : 'text-ink-muted')}>
           {mensagem}
         </span>
       ) : null}
@@ -47,7 +47,7 @@ export function Campo({
 export const classesDoControle = (comErro: boolean) =>
   cn(
     'min-h-[44px] w-full rounded-sm border bg-surface px-3 font-text text-base leading-6 text-ink',
-    'transition-colors duration-fast ease-[var(--ease-out)] placeholder:text-ink-muted',
+    'transition-colors duration-fast ease-out placeholder:text-ink-muted',
     'disabled:bg-surface-sunken disabled:text-ink-muted',
     // focus-within cobre o <input type=date>, onde o foco mora num campo interno e o :focus-visible não chega ao elemento.
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',

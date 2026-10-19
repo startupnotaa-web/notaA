@@ -146,7 +146,7 @@ export function Menu({ label, ariaLabel, items, align = 'start', variant = 'seco
           role="menu"
           aria-labelledby={`${id}-botao`}
           className={cn(
-            'absolute z-40 mt-1 flex min-w-[200px] flex-col rounded-md border border-line bg-surface p-1 shadow-raise',
+            'absolute z-40 mt-2 flex min-w-[200px] flex-col rounded-md border border-line bg-surface p-1 shadow-raise',
             'animate-[na-rise-in_240ms_var(--ease-out)] motion-reduce:animate-none',
             align === 'end' ? 'right-0' : 'left-0',
           )}
@@ -167,7 +167,7 @@ export function Menu({ label, ariaLabel, items, align = 'start', variant = 'seco
                 item.onSelect();
               }}
               className={cn(
-                'min-h-[44px] rounded-sm px-3 text-left font-text text-sm font-bold leading-5',
+                'min-h-[44px] rounded-sm px-3 text-left font-text text-label',
                 `transition-colors duration-fast ${EASE_OUT}`,
                 'disabled:cursor-not-allowed disabled:opacity-50',
                 FOCO,

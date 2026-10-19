@@ -25,7 +25,7 @@ export function Notice({ tone = 'info', title, children, action, className }: No
   return (
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
-      className={cn('flex max-w-[640px] gap-3 rounded-md p-4 font-text text-sm leading-[22px] text-ink', t.fundo, className)}
+      className={cn('flex max-w-[640px] gap-3 rounded-md p-4 font-text text-body-sm text-ink', t.fundo, className)}
     >
       <StatusIcon tone={tone} className={cn('mt-px h-5 w-5 flex-none', t.icone)} />
       <div>

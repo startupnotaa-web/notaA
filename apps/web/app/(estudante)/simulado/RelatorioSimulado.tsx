@@ -72,7 +72,7 @@ export function RelatorioSimulado({
           <span className="text-6xl font-black text-brand-primary">{relatorio.acertos}</span>
           <span className="pb-2 text-2xl font-semibold text-text-muted">/ {relatorio.total}</span>
         </div>
-        <Progress value={relatorio.acertos} max={relatorio.total} gradient aria-label="Acertos" />
+        <Progress value={relatorio.acertos} max={relatorio.total} aria-label="Acertos" />
 
         <div className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
           <Stat label="Aproveitamento" value={`${relatorio.percentual}%`} />

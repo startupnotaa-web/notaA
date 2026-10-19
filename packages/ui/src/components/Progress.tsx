@@ -1,5 +1,5 @@
-// docs/07 §3 — Progress (barra linear). gradient=true reserva o gradiente da marca
-// para XP/conquista. role="progressbar" + aria-valuenow/min/max (doc 07 §7).
+// docs/07 §3 — Progress (barra linear). Preenchimento sempre em `primary`: o gradiente da marca
+// é só do ProgressTrail, da Aurora e do símbolo. role="progressbar" + aria-valuenow/min/max (doc 07 §7).
 import * as React from 'react';
 import { cn } from '../lib/cn';
 
@@ -9,12 +9,10 @@ export interface ProgressProps extends Omit<React.HTMLAttributes<HTMLDivElement>
   max?: number;
   /** Rótulo visível acima da barra; também usado como aria-label se presente. */
   label?: string;
-  /** Usa o gradiente da marca (XP/conquista). Senão, preenchimento roxo sólido. */
-  gradient?: boolean;
 }
 
 export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(function Progress(
-  { value, max = 100, label, gradient = false, className, ...props },
+  { value, max = 100, label, className, ...props },
   ref,
 ) {
   const safeMax = max <= 0 ? 100 : max;
@@ -24,7 +22,7 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(function
   return (
     <div ref={ref} className={cn('w-full', className)} {...props}>
       {label ? (
-        <div className="mb-1 flex justify-between text-sm text-ink-muted">
+        <div className="mb-2 flex justify-between text-body-sm text-ink-muted">
           <span>{label}</span>
           <span>{Math.round(pct)}%</span>
         </div>
@@ -38,12 +36,7 @@ export const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(function
         className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken"
       >
         <div
-          className={cn(
-            'h-full rounded-full transition-[width] duration-base',
-            gradient
-              ? 'bg-[linear-gradient(135deg,var(--brand-cyan),var(--brand-violet)_60%,var(--brand-magenta))]'
-              : 'bg-primary',
-          )}
+          className="h-full rounded-full bg-primary transition-[width] duration-slow ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>

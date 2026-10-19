@@ -49,6 +49,21 @@ export type { ToastVariant } from './components/Toast';
 export { Menu } from './components/Menu';
 export type { MenuProps, MenuItem } from './components/Menu';
 
+// Estrutura de página leve: seções separadas por espaço e linha fina; painel só para formulário ou tabela.
+export { Section } from './components/Section';
+export type { SectionProps } from './components/Section';
+export { Panel } from './components/Panel';
+export type { PanelProps } from './components/Panel';
+export { PageHeader } from './components/PageHeader';
+export type { PageHeaderProps } from './components/PageHeader';
+export { ActionRow } from './components/ActionRow';
+export type { ActionRowProps } from './components/ActionRow';
+export { SummaryStrip } from './components/SummaryStrip';
+export type { SummaryStripProps, SummaryItem } from './components/SummaryStrip';
+export { Inset } from './components/Inset';
+export { ThemeSwitch } from './components/ThemeSwitch';
+export type { ThemeSwitchProps, PreferenciaDeTema } from './components/ThemeSwitch';
+
 // Primitivos anteriores, ainda em uso nas telas de aluno e família.
 
 export {
@@ -84,7 +99,7 @@ export type { StatProps } from './components/Stat';
 export { SectionHeader } from './components/SectionHeader';
 export type { SectionHeaderProps } from './components/SectionHeader';
 
-export { Skeleton } from './components/Skeleton';
+export { Skeleton, SkeletonText, SkeletonLinhas, Carregando } from './components/Skeleton';
 
 export { Stepper } from './components/Stepper';
 export type { StepperProps } from './components/Stepper';

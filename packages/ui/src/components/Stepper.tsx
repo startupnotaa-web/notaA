@@ -26,9 +26,9 @@ export const Stepper = React.forwardRef<HTMLOListElement, StepperProps>(function
             className={cn(
               'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold',
               // Texto sobre superfície, não branco sobre verde (1,77:1): o estado vem do ✓ e da borda.
-              estado === 'concluido' && 'border-2 border-success bg-surface-sunken text-ink',
+              estado === 'concluido' && 'border border-success bg-success-tint text-ink',
               estado === 'atual' && 'bg-primary text-primary-on',
-              estado === 'futuro' && 'border border-line text-ink-muted',
+              estado === 'futuro' && 'border border-line-strong text-ink-muted',
             )}
           >
             {estado === 'concluido' ? '✓' : i + 1}

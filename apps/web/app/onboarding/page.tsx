@@ -202,7 +202,7 @@ export default function OnboardingPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col px-6 py-8">
       <div className="mb-8">
-        <Progress value={step} max={TOTAL} label={`Passo ${step} de ${TOTAL}`} gradient />
+        <Progress value={step} max={TOTAL} label={`Passo ${step} de ${TOTAL}`} />
       </div>
 
       <div className="flex flex-1 flex-col">

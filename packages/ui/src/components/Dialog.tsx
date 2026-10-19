@@ -94,16 +94,16 @@ export function Dialog({ open, onClose, title, description, children, footer, cl
         aria-describedby={description ? `${id}-descricao` : undefined}
         tabIndex={-1}
         className={cn(
-          'relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[520px] flex-col gap-4 overflow-auto rounded-lg border border-line bg-surface p-5 text-ink shadow-raise',
+          'relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[520px] flex-col gap-space-4 overflow-auto rounded-lg border border-line bg-surface p-space-5 text-ink shadow-raise',
           'animate-[na-rise-in_420ms_var(--ease-out)] motion-reduce:animate-none',
           className,
         )}
       >
-        <h2 id={`${id}-titulo`} className="m-0 font-display text-[19px] font-semibold leading-[26px]">
+        <h2 id={`${id}-titulo`} className="m-0 font-display text-heading-3">
           {title}
         </h2>
         {description ? (
-          <p id={`${id}-descricao`} className="m-0 font-text text-base leading-[26px] text-ink-muted">
+          <p id={`${id}-descricao`} className="m-0 font-text text-body text-ink-muted">
             {description}
           </p>
         ) : null}

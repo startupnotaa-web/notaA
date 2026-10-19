@@ -134,7 +134,7 @@ export function GradeGrid({
                   const invalida = n != null && (Number.isNaN(n) || n < min || n > max);
                   const avisoId = `${r.id}-${c.id}-aviso`;
                   return (
-                    <td key={c.id} className={cn(celula, 'group-last:border-b-0 group-hover:bg-paper')}>
+                    <td key={c.id} className={cn(celula, 'group-last:border-b-0 transition-colors duration-fast ease-out group-hover:bg-paper')}>
                       <span className="inline-flex items-center gap-1">
                         {invalida ? <StatusIcon tone="danger" className="h-4 w-4 flex-none text-danger" /> : null}
                         <input

@@ -16,7 +16,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-md border font-text text-sm font-bold leading-5 ' +
+  'inline-flex items-center justify-center gap-2 rounded-md border font-text text-label ' +
   `transition-colors duration-fast ${EASE_OUT} no-underline disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`;
 
 const variantes: Record<ButtonVariant, string> = {
@@ -27,7 +27,7 @@ const variantes: Record<ButtonVariant, string> = {
 };
 
 const tamanhos: Record<ButtonSize, string> = {
-  md: 'min-h-[44px] px-5',
+  md: 'min-h-[44px] px-space-5',
   sm: 'min-h-[36px] px-4',
 };
 
@@ -52,7 +52,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
       {loading ? (
         <span
           aria-hidden="true"
-          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
+          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent [animation-duration:700ms]"
         />
       ) : null}
       {children}

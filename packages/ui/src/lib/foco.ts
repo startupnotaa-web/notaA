@@ -3,5 +3,6 @@
 export const FOCO =
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
-// Resposta a uma ação: ease-out dos tokens. As durações vêm de duration-fast|base|slow.
-export const EASE_OUT = 'ease-[var(--ease-out)]';
+// Resposta a uma ação: `ease-out` é a curva do token --ease-out (tailwind.preset.js), não a padrão do Tailwind.
+// As durações vêm de duration-fast|base|slow.
+export const EASE_OUT = 'ease-out';
