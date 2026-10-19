@@ -11,7 +11,8 @@ import { useEffect, useState } from 'react';
  *
  * Fica no fallback quando há prefers-reduced-motion, economia de dados, aparelho fraco
  * (`hardwareConcurrency` <= 4; sem a informação, presume-se capaz) ou ausência de WebGL.
- * `three` só é pedido depois do evento `load` e de um momento ocioso, então não disputa o LCP.
+ * `three` só é pedido depois do evento `load`, de um momento ocioso e da primeira interação (ou 8 s), então não
+ * disputa o LCP nem pesa no tempo de bloqueio da página.
  */
 export type EstadoDoGate = 'aguardando' | 'estatico' | 'liberado';
 
@@ -41,6 +42,32 @@ function motivoParaFicarEstatico(): MotivoDoFallback | null {
   if (typeof nav.hardwareConcurrency === 'number' && nav.hardwareConcurrency <= 4) return 'aparelho-fraco';
   if (!temWebGL()) return 'sem-webgl';
   return null;
+}
+
+/** Tempo máximo de espera pela primeira interação antes de liberar o 3D mesmo assim. */
+const ESPERA_MAXIMA_MS = 8000;
+const EVENTOS_DE_PRESENCA = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+
+/**
+ * Roda `fn` na primeira interação da pessoa (mover o ponteiro, tocar, rolar, teclar) ou, se ela só ficar olhando,
+ * depois de `ESPERA_MAXIMA_MS`. O 3D é decoração: enquanto ninguém interage, a arte estática basta e a página não
+ * paga o custo de carregar e executar o three (é o que mantém o tempo de bloqueio da thread principal baixo).
+ */
+function quandoHouverPresenca(fn: () => void): () => void {
+  let feito = false;
+  const disparar = () => {
+    if (feito) return;
+    feito = true;
+    limpar();
+    fn();
+  };
+  const temporizador = window.setTimeout(disparar, ESPERA_MAXIMA_MS);
+  for (const e of EVENTOS_DE_PRESENCA) window.addEventListener(e, disparar, { passive: true, once: true });
+  function limpar() {
+    window.clearTimeout(temporizador);
+    for (const e of EVENTOS_DE_PRESENCA) window.removeEventListener(e, disparar);
+  }
+  return limpar;
 }
 
 /** Roda `fn` quando o navegador estiver ocioso, depois de a página terminar de carregar. */
@@ -75,7 +102,15 @@ export function useGate3D(): { estado: EstadoDoGate; motivo: MotivoDoFallback | 
       setGate({ estado: 'estatico', motivo });
       return;
     }
-    const cancelar = quandoOcioso(() => setGate({ estado: 'liberado', motivo: null }));
+    // Depois do load, num momento ocioso, e só então à espera de alguém aparecer.
+    let cancelarPresenca: (() => void) | null = null;
+    const cancelarOcioso = quandoOcioso(() => {
+      cancelarPresenca = quandoHouverPresenca(() => setGate({ estado: 'liberado', motivo: null }));
+    });
+    const cancelar = () => {
+      cancelarOcioso();
+      cancelarPresenca?.();
+    };
 
     // Se a pessoa ligar "reduzir movimento" com a página aberta, a cena sai.
     const mq = matchMedia('(prefers-reduced-motion: reduce)');

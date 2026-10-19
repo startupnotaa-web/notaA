@@ -46,10 +46,14 @@ for (const tema of ['light', 'dark'] as const) {
       test.setTimeout(240_000);
       const { default: lighthouse } = await importar('lighthouse');
       const notas: string[] = [];
-      for (const { rota, papel } of ROTAS.filter((r) => !modoReal || r.papel === null || r.papel === papelReal)) {
+      // E2E_ROTAS=/aluno,/escola limita as rotas; E2E_SEM_3D=1 finge um aparelho fraco (as cenas 3D não carregam),
+      // para separar o custo do 3D do custo do resto da página.
+      const so = process.env.E2E_ROTAS?.split(',');
+      for (const { rota, papel } of ROTAS.filter((r) => (!modoReal || r.papel === null || r.papel === papelReal) && (!so || so.includes(r.rota)))) {
         const perfil = mkdtempSync(join(tmpdir(), 'notaa-lh-'));
         const ctx = await chromium.launchPersistentContext(perfil, { args: [`--remote-debugging-port=${PORTA}`] });
         try {
+          if (process.env.E2E_SEM_3D) await ctx.addInitScript(() => Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 4 }));
           if (papel) await autenticar(ctx, papel, tema);
           else await ctx.addInitScript((t) => localStorage.setItem('notaa:tema', t), tema);
           const pagina = await ctx.newPage();

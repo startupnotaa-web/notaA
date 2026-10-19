@@ -221,7 +221,7 @@ export default function Home() {
           {IGUAL_EM_TODOS.map((item, i) => (
             <div
               key={item.titulo}
-              className={`flex-[1_1_320px] py-8 ${i === 0 ? 'pr-9' : 'border-line md:border-l md:px-9'} ${i === 2 ? 'md:pr-0' : ''}`}
+              className={`flex-[1_1_320px] py-8 ${i === 0 ? 'pr-9' : 'border-line lg:border-l lg:px-9'} ${i === 2 ? 'lg:pr-0' : ''}`}
             >
               <h3 className="mb-2.5 font-display text-heading-2 font-semibold">{item.titulo}</h3>
               <p className="max-w-[380px] text-[17px] leading-7 text-ink-muted">{item.texto}</p>

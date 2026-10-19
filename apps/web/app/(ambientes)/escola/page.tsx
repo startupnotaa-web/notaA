@@ -168,7 +168,7 @@ export default function Escola() {
         </h2>
         <div className="flex flex-wrap border-t border-amb-line">
           {SEGURANCA.map((s, i) => (
-            <div key={s.titulo} className={`flex-[1_1_300px] py-7 ${i === 0 ? 'pr-8' : 'md:border-l md:border-amb-line md:px-8'} ${i === 2 ? 'md:pr-0' : ''}`}>
+            <div key={s.titulo} className={`flex-[1_1_300px] py-7 ${i === 0 ? 'pr-8' : 'lg:border-l lg:border-amb-line lg:px-8'} ${i === 2 ? 'lg:pr-0' : ''}`}>
               <h3 className="mb-2 font-display text-[20px] font-semibold leading-7 text-amb-navy">{s.titulo}</h3>
               <p className="m-0 max-w-[380px] text-[17px] leading-[27px] text-amb-ink-muted">{s.texto}</p>
             </div>
