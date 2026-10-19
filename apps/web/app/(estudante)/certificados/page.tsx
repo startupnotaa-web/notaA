@@ -26,7 +26,7 @@ import { apiFetch, ApiError } from '../../../lib/api-client';
 import { Pagina } from '../../components/Pagina';
 import { Voltar } from '../../components/Voltar';
 
-const BADGE_DICTIONARY: Record<string, { titulo: string; descricao: string; Icone: LucideIcon }> = {
+const CONQUISTAS: Record<string, { titulo: string; descricao: string; Icone: LucideIcon }> = {
   'onboarding': { titulo: 'O despertar', descricao: 'Você deu o primeiro passo e completou o seu perfil.', Icone: Rocket },
   'primeira_redacao': { titulo: 'Mão na massa', descricao: 'Você enviou sua primeira redação para correção.', Icone: PenLine },
   'quiz_primeiro': { titulo: 'Curioso', descricao: 'Você respondeu sua primeira questão no quiz.', Icone: Target },
@@ -48,8 +48,8 @@ const BADGE_DICTIONARY: Record<string, { titulo: string; descricao: string; Icon
   'streak_240_dias': { titulo: 'Lenda do Nota A', descricao: 'Você estudou 240 dias consecutivos.', Icone: Mountain },
 };
 
-function getBadgeInfo(codigo: string) {
-  const conhecida = BADGE_DICTIONARY[codigo];
+function infoDaConquista(codigo: string) {
+  const conhecida = CONQUISTAS[codigo];
   if (conhecida) return conhecida;
 
   // Código desconhecido: monta um título legível a partir do próprio código.
@@ -113,7 +113,7 @@ export default function CertificadosPage() {
         {desbloqueadas.length > 0 ? (
           <ul className="m-0 flex list-none flex-col p-0">
             {desbloqueadas.map((ach) => {
-              const { titulo, descricao, Icone } = getBadgeInfo(ach.codigo);
+              const { titulo, descricao, Icone } = infoDaConquista(ach.codigo);
               const dataFormatada = ach.concedidoEm ? new Date(ach.concedidoEm).toLocaleDateString('pt-BR') : 'hoje';
               return (
                 <li key={ach.codigo} className="flex items-start gap-space-4 border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0">
@@ -141,7 +141,7 @@ export default function CertificadosPage() {
         <Section title="Próximos objetivos" divided>
           <ul className="m-0 flex list-none flex-col p-0">
             {bloqueadas.map((ach) => {
-              const { titulo, descricao } = getBadgeInfo(ach.codigo);
+              const { titulo, descricao } = infoDaConquista(ach.codigo);
               return (
                 <li key={ach.codigo} className="flex items-start gap-space-4 border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0">
                   <span aria-hidden="true" className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-pill bg-surface-sunken text-ink-muted">

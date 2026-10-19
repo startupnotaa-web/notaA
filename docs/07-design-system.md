@@ -56,7 +56,7 @@
 
 ## 7. Componentes (`@notaa/ui`)
 
-Button (e `ButtonLink`), TextField, Select, Chip (status), ChoiceChip (opção selecionável), Tabs, SideNav, GradeGrid, ProgressTrail, Notice, EmptyState, Aurora, Dialog, Toast e Menu, além dos primitivos anteriores (Card, Badge, Input, Table …), que serão migrados aos poucos. Ícones: `lucide-react`, traço de 2px, 20px na interface e 16px em chips; ícone sempre com texto, exceto botão só de ícone, que leva `aria-label`.
+Button (e `ButtonLink`), TextField, Select, Chip (status), ChoiceChip (opção selecionável), Tabs, SideNav, GradeGrid, ProgressTrail, Notice, EmptyState, Aurora, Dialog, Toast e Menu, Section, Panel, PageHeader, ActionRow, SummaryStrip, Inset, TextArea, Skeleton (estático) e ThemeSwitch, além dos primitivos Card, Input, Table, OptionCard e Progress (sempre em `primary`). O antigo Badge foi substituído pelo Chip. Ícones: `lucide-react`, traço de 2px, 20px na interface e 16px em chips; ícone sempre com texto, exceto botão só de ícone, que leva `aria-label`.
 
 ## 8. Acessibilidade e inclusão (checklist → testes)
 

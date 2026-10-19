@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { MessageCircle, ThumbsUp } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
-import { Card, SectionHeader, Skeleton, Badge, cn, Button } from '@notaa/ui';
+import { Button, Carregando, Chip, Notice, PageHeader, Panel, Section, Skeleton, TextArea, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Pagina } from '../../components/Pagina';
+import { Voltar } from '../../components/Voltar';
 
 type Post = {
   id: string;
@@ -28,7 +30,7 @@ const INITIAL_POSTS: Post[] = [
     autor: 'Sistema',
     nivel: 99,
     tipo: 'conquista',
-    conteudo: '🎉 Lucas M. acabou de atingir o Nível 15 e desbloqueou a insígnia "Mestre das Palavras"!',
+    conteudo: 'Lucas M. acabou de atingir o nível 15 e desbloqueou a insígnia "Mestre das Palavras"!',
     curtidas: 12,
     curtidoPorMim: false,
     tempoAtras: '5 min',
@@ -38,7 +40,7 @@ const INITIAL_POSTS: Post[] = [
     autor: 'Ana Clara',
     nivel: 8,
     tipo: 'dica',
-    conteudo: 'Dica de Redação: Usem conectivos de oposição (entretanto, contudo) no início do D2 para contrapor a ideia do D1. Aumenta muito a nota na C4! ✍️',
+    conteudo: 'Dica de redação: usem conectivos de oposição (entretanto, contudo) no início do D2 para contrapor a ideia do D1. Aumenta muito a nota na C4!',
     curtidas: 45,
     curtidoPorMim: true,
     tempoAtras: '2 horas',
@@ -48,7 +50,7 @@ const INITIAL_POSTS: Post[] = [
     autor: 'João Pedro',
     nivel: 5,
     tipo: 'duvida',
-    conteudo: 'Alguém me ajuda com Estequiometria? Nunca sei quando usar o volume molar na CNTP ou na fórmula de Clapeyron 😭',
+    conteudo: 'Alguém me ajuda com Estequiometria? Nunca sei quando usar o volume molar na CNTP ou na fórmula de Clapeyron.',
     curtidas: 3,
     curtidoPorMim: false,
     tempoAtras: '4 horas',
@@ -70,9 +72,9 @@ export default function ComunidadePage() {
       } catch (e) {
         if (!cancelled) {
           if (e instanceof ApiError && e.code === 'NETWORK_ERROR') {
-            setErro('Sem conexão com o servidor.');
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente de novo.');
           } else {
-            setErro('Erro ao carregar a Comunidade.');
+            setErro('Não foi possível carregar a comunidade. Tente recarregar a página.');
           }
         }
       }
@@ -114,172 +116,128 @@ export default function ComunidadePage() {
 
   if (erro) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-        <p className="text-sm text-error">{erro}</p>
-      </div>
+      <Pagina>
+        <Voltar />
+        <Notice tone="danger" title="Não foi possível abrir a comunidade">
+          {erro}
+        </Notice>
+      </Pagina>
     );
   }
 
   if (!data) return <ComunidadeSkeleton />;
 
-  const nomeCurto = data.perfil.nome ? data.perfil.nome.split(' ')[0] : 'Você';
-  
+  const nomeUsuario = data.perfil.nome || 'Você';
+
   // Atualiza o XP do usuário no ranking mockado
   const ranking = [...MOCK_LEADERBOARD];
   ranking[1]!.xp = data.xpTotal;
-  ranking[1]!.nome = data.perfil.nome || 'Você';
+  ranking[1]!.nome = nomeUsuario;
   // Ordena por XP
   ranking.sort((a, b) => b.xp - a.xp);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 p-4">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-2">
-          <Link href="/dashboard" className="text-sm font-semibold text-brand-primary hover:underline">
-            &larr; Voltar ao Painel
-          </Link>
-          <h1 className="text-3xl font-bold text-text">Comunidade</h1>
-          <p className="text-text-muted">Conecte-se, tire dúvidas e aprenda com outros estudantes.</p>
-        </div>
-      </header>
-
-      <div className="grid gap-8 md:grid-cols-3">
-        {/* Lado Esquerdo: Feed principal */}
-        <div className="md:col-span-2 space-y-6">
-          
-          {/* Caixa de Criação de Post */}
-          <Card className="p-4 bg-surface-2 border-border shadow-sm">
-            <div className="flex gap-4">
-               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary/20 text-brand-primary font-bold">
-                  {nomeCurto?.charAt(0)}
-               </div>
-               <div className="flex-1 space-y-3">
-                  <textarea 
-                    placeholder="Compartilhe uma dica, faça uma pergunta ou celebre uma conquista..." 
-                    className="w-full resize-none rounded-lg bg-surface p-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
-                    rows={3}
-                    value={novoPost}
-                    onChange={(e) => setNovoPost(e.target.value)}
-                  />
-                  <div className="flex justify-end">
-                     <Button onClick={handlePostar} disabled={!novoPost.trim()}>
-                        Postar
-                     </Button>
-                  </div>
-               </div>
-            </div>
-          </Card>
-
-          {/* Lista de Posts (Feed) */}
-          <div className="space-y-4">
-            {posts.map(post => (
-              <Card key={post.id} className={cn("p-5 transition-colors hover:bg-surface-2/50", post.tipo === 'conquista' ? 'border-brand-primary/30 bg-brand-primary/5' : 'border-border bg-surface-2')}>
-                 <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                       <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold", 
-                         post.tipo === 'conquista' ? 'bg-brand-primary text-primary-on' : 'bg-surface-3 text-text-muted'
-                       )}>
-                         {post.autor === 'Sistema' ? '🏆' : post.autor.charAt(0)}
-                       </div>
-                       <div>
-                         <p className="font-bold text-text text-sm flex items-center gap-2">
-                           {post.autor}
-                           {post.tipo !== 'conquista' && (
-                             <Badge variant="neutral" className="text-[10px] py-0">Nv {post.nivel}</Badge>
-                           )}
-                         </p>
-                         <p className="text-[10px] text-text-muted">{post.tempoAtras}</p>
-                       </div>
-                    </div>
-                    {post.tipo === 'duvida' && <Badge variant="warning" className="text-[10px]">Dúvida</Badge>}
-                    {post.tipo === 'dica' && <Badge variant="success" className="text-[10px]">Dica</Badge>}
-                 </div>
-                 
-                 <p className={cn("text-sm leading-relaxed mb-4", post.tipo === 'conquista' && 'font-semibold text-brand-primary')}>
-                   {post.conteudo}
-                 </p>
-                 
-                 <div className="flex items-center gap-4 border-t border-border pt-3">
-                    <button 
-                      onClick={() => handleLike(post.id)}
-                      className={cn("flex items-center gap-1.5 text-xs font-semibold transition-colors", 
-                        post.curtidoPorMim ? 'text-brand-primary' : 'text-text-muted hover:text-text'
-                      )}
-                    >
-                      <span className={cn("text-lg", post.curtidoPorMim && "animate-bounce")}>
-                        {post.curtidoPorMim ? '🔥' : '👍'}
-                      </span>
-                      {post.curtidas} {post.curtidas === 1 ? 'Kudos' : 'Kudos'}
-                    </button>
-                    
-                    <button className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text transition-colors">
-                      <span className="text-lg">💬</span> Comentar
-                    </button>
-                 </div>
-              </Card>
-            ))}
-          </div>
-
-        </div>
-
-        {/* Lado Direito: Leaderboard e Widgets */}
-        <div className="space-y-6">
-           {/* Leaderboard */}
-           <section>
-             <SectionHeader title="Ranking" accent="da Instituição" as="h2" />
-             <Card className="flex flex-col p-2 bg-surface-2/30 border-border">
-               {ranking.map((user, idx) => (
-                 <div key={user.id} className={cn("flex items-center justify-between p-3 rounded-lg transition-colors", 
-                   user.nome === (data.perfil.nome || 'Você') ? 'bg-brand-primary/10 border border-brand-primary/20' : 'hover:bg-surface-2'
-                 )}>
-                   <div className="flex items-center gap-3">
-                     <span className={cn("text-lg font-black w-5 text-center", 
-                       idx === 0 ? 'text-warning' : idx === 1 ? 'text-text-muted' : idx === 2 ? 'text-orange-400' : 'text-surface-3'
-                     )}>
-                       {idx + 1}º
-                     </span>
-                     <div>
-                       <p className={cn("text-sm font-bold", user.nome === (data.perfil.nome || 'Você') ? 'text-brand-primary' : 'text-text')}>{user.nome}</p>
-                       <p className="text-[10px] text-text-muted">{user.xp} XP acumulados</p>
-                     </div>
-                   </div>
-                 </div>
-               ))}
-               <div className="p-3 text-center border-t border-border mt-2">
-                 <Link href="#" className="text-xs text-brand-primary hover:underline">Ver ranking completo</Link>
-               </div>
-             </Card>
-           </section>
-
-           {/* Regras da Comunidade */}
-           <Card className="p-5 bg-surface-2/50 border-dashed border-border text-sm">
-             <h3 className="font-bold text-text mb-2">Regras de Ouro 📜</h3>
-             <ul className="space-y-2 text-text-muted">
-               <li><strong className="text-text">1.</strong> Respeito acima de tudo.</li>
-               <li><strong className="text-text">2.</strong> Ao responder dúvidas, explique o processo, não dê apenas a resposta final.</li>
-               <li><strong className="text-text">3.</strong> Celebre as conquistas dos colegas com Kudos (🔥).</li>
-             </ul>
-           </Card>
-        </div>
+    <Pagina largura="media">
+      <div className="flex flex-col gap-space-3">
+        <Voltar />
+        <PageHeader title="Comunidade" description="Conecte-se, tire dúvidas e aprenda com outros estudantes." />
       </div>
-    </div>
+
+      <Panel>
+        <div className="flex flex-col gap-space-4">
+          <TextArea
+            label="Nova publicação"
+            placeholder="Compartilhe uma dica, faça uma pergunta ou celebre uma conquista…"
+            rows={3}
+            value={novoPost}
+            onChange={(e) => setNovoPost(e.target.value)}
+          />
+          <div>
+            <Button onClick={handlePostar} disabled={!novoPost.trim()}>
+              Publicar
+            </Button>
+          </div>
+        </div>
+      </Panel>
+
+      <Section title="Feed">
+        <ul className="m-0 flex list-none flex-col p-0">
+          {posts.map((post) => (
+            <li key={post.id} className="flex flex-col gap-space-3 border-b border-line py-space-5 first:pt-0 last:border-b-0">
+              <div className="flex flex-wrap items-center justify-between gap-space-3">
+                <p className="m-0 flex items-center gap-space-3">
+                  <span className="text-body font-bold text-ink">{post.autor}</span>
+                  {post.tipo !== 'conquista' && <Chip tone="neutral">Nível {post.nivel}</Chip>}
+                  <span className="text-caption text-ink-muted">{post.tempoAtras}</span>
+                </p>
+                {post.tipo === 'duvida' && <Chip tone="warning">Dúvida</Chip>}
+                {post.tipo === 'dica' && <Chip tone="success">Dica</Chip>}
+                {post.tipo === 'conquista' && <Chip tone="brand">Conquista</Chip>}
+              </div>
+
+              <p className="m-0 max-w-texto text-body text-ink">{post.conteudo}</p>
+
+              <div className="flex items-center gap-space-2">
+                <Button
+                  variant="quiet"
+                  size="sm"
+                  aria-pressed={post.curtidoPorMim}
+                  onClick={() => handleLike(post.id)}
+                  className={cn(post.curtidoPorMim && 'bg-violet-tint')}
+                >
+                  <ThumbsUp aria-hidden="true" className="h-4 w-4" />
+                  {post.curtidas} Kudos
+                </Button>
+                <Button variant="quiet" size="sm">
+                  <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                  Comentar
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Ranking da instituição" divided>
+        <ol className="m-0 flex list-none flex-col p-0">
+          {ranking.map((user, idx) => (
+            <li
+              key={user.id}
+              className={cn(
+                'flex items-center gap-space-4 border-b border-line py-space-3 last:border-b-0',
+                user.nome === nomeUsuario && '-mx-space-3 rounded-md bg-violet-tint px-space-3',
+              )}
+            >
+              <span className="w-8 font-display text-heading-3 tabular-nums text-ink-muted">{idx + 1}º</span>
+              <span className="flex flex-col">
+                <span className={cn('text-body font-bold', user.nome === nomeUsuario ? 'text-primary' : 'text-ink')}>{user.nome}</span>
+                <span className="text-caption text-ink-muted">{user.xp.toLocaleString('pt-BR')} XP acumulados</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      <Section title="Regras de ouro" divided>
+        <ol className="m-0 flex list-decimal flex-col gap-space-2 pl-space-5 text-body text-ink-muted">
+          <li>Respeito acima de tudo.</li>
+          <li>Ao responder dúvidas, explique o processo, não dê só a resposta final.</li>
+          <li>Celebre as conquistas dos colegas com Kudos.</li>
+        </ol>
+      </Section>
+    </Pagina>
   );
 }
 
 function ComunidadeSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 p-4">
-      <Skeleton className="h-10 w-1/3" />
-      <div className="grid gap-8 md:grid-cols-3">
-        <div className="md:col-span-2 space-y-6">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-        </div>
-        <div>
-          <Skeleton className="h-[400px] w-full rounded-2xl" />
-        </div>
-      </div>
-    </div>
+    <Pagina>
+      <Carregando rotulo="Carregando a comunidade" className="flex flex-col gap-space-6 md:gap-space-7">
+        <Skeleton className="h-10 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }
