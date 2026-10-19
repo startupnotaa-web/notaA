@@ -6,10 +6,12 @@ import {
   ConviteResponsavelController,
 } from './convite-responsavel.controller';
 import { ConviteResponsavelService } from './convite-responsavel.service';
+import { VinculoResponsavelController } from './vinculo-responsavel.controller';
+import { VinculoResponsavelService } from './vinculo-responsavel.service';
 
 @Module({
   imports: [DbModule, EscopoModule],
-  controllers: [ConviteResponsavelAdminController, ConviteResponsavelController],
-  providers: [ConviteResponsavelService],
+  controllers: [ConviteResponsavelAdminController, ConviteResponsavelController, VinculoResponsavelController],
+  providers: [ConviteResponsavelService, VinculoResponsavelService],
 })
 export class ResponsavelModule {}

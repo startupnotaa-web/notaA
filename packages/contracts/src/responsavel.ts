@@ -32,3 +32,27 @@ export type AceitarConviteResponsavelRequest = z.infer<typeof AceitarConviteResp
 /** Resposta do aceite: de propósito, nenhum dado de aluno nem de instituição. */
 export const ConviteResponsavelAceitoSchema = z.object({ aceito: z.literal(true) });
 export type ConviteResponsavelAceito = z.infer<typeof ConviteResponsavelAceitoSchema>;
+
+// Vínculo pendente: o responsável usou o convite com uma conta cujo e-mail não é o
+// do contato. A coordenação vê quem pede e decide; nada é vinculado antes disso.
+
+export const VinculoPendenteSchema = z.object({
+  id: z.string().uuid(),
+  criadoEm: z.string(),
+  /** E-mail da conta que usou o convite; apagado quando a coordenação decide. */
+  emailDaConta: z.string().nullable(),
+  contato: z.object({
+    id: z.string().uuid(),
+    nome: z.string(),
+    parentesco: z.string().nullable(),
+    emailCadastrado: z.string(),
+  }),
+  aluno: z.object({ nome: z.string() }),
+});
+export type VinculoPendente = z.infer<typeof VinculoPendenteSchema>;
+
+export const ListaVinculosPendentesSchema = z.object({ itens: z.array(VinculoPendenteSchema) });
+export type ListaVinculosPendentes = z.infer<typeof ListaVinculosPendentesSchema>;
+
+export const VinculoDecididoSchema = z.object({ status: z.enum(['aprovada', 'recusada']) });
+export type VinculoDecidido = z.infer<typeof VinculoDecididoSchema>;

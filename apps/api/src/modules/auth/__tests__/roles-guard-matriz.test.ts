@@ -93,6 +93,16 @@ describe('rotas da gestão acadêmica, da importação e do convite', () => {
     expect(PAPEIS.filter((p) => entra(aceitar, p))).toEqual(['responsavel']);
   });
 
+  it.each([
+    'GET /instituicao/vinculos-responsavel/pendentes',
+    'POST /instituicao/vinculos-responsavel/:id/aprovar',
+    'POST /instituicao/vinculos-responsavel/:id/recusar',
+  ])('vínculo pendente do responsável: %s é só da administração da instituição', (chave) => {
+    const rota = rotas.find((r) => r.chave === chave);
+    expect(rota, chave).toBeDefined();
+    expect(PAPEIS.filter((p) => entra(rota!, p))).toEqual(['admin_instituicao']);
+  });
+
   it('sem papel no token, 403', () => {
     const r = rotas.find((x) => x.chave === 'POST /academico/regras')!;
     const ctx = {

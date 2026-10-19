@@ -207,6 +207,10 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   // nunca vêm do corpo: a instituição sai do convite, o usuário do token.
   'POST /instituicao/responsaveis/:responsavelAlunoId/convites': ['admin_instituicao'],
   'POST /responsavel/convites/aceitar': ['responsavel'],
+  // Vínculo que o e-mail não confirmou: gestão ou coordenação aprova ou recusa.
+  'GET /instituicao/vinculos-responsavel/pendentes': ['admin_instituicao'],
+  'POST /instituicao/vinculos-responsavel/:id/aprovar': ['admin_instituicao'],
+  'POST /instituicao/vinculos-responsavel/:id/recusar': ['admin_instituicao'],
 
   'GET /admin/users': ['admin'],
   'GET /admin/ai-usage': ['admin'],
