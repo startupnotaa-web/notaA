@@ -374,6 +374,40 @@ describe('o e-mail da conta tem que ser o do contato', () => {
     expect(await contatoVinculado(CONTATO)).toBe(RESP_1);
   });
 
+  // "ã" pode vir como um caractere (NFC) ou como "a" + til combinante (NFD). O
+  // mesmo e-mail digitado de um jeito ou de outro não pode virar pendência.
+  it('acento em NFD (a + til combinante) vincula ao e-mail cadastrado em NFC', async () => {
+    const NFC = 'João.pai@a.test';
+    const NFD = 'João.PAI@A.TEST';
+    const { rows } = await banco.pg.query<{ id: string }>(
+      `INSERT INTO responsavel_aluno (instituicao_id, aluno_instituicao_id, nome, email, telefone)
+       VALUES ($1, $2, 'Pai', $3, '11999990000') RETURNING id`,
+      [INST_A, ALUNO_CAD, NFC],
+    );
+    const contato = rows[0]!.id;
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', contato);
+
+    await expect(aceitarComo(RESP_2, NFD, token)).resolves.toEqual({ aceito: true });
+    expect(await contatoVinculado(contato)).toBe(RESP_2);
+    expect(await solicitacoes(contato)).toHaveLength(0);
+  });
+
+  it('acento diferente não vincula: "josé" não é "jose", e a resposta segue sendo convite inválido', async () => {
+    const { rows } = await banco.pg.query<{ id: string }>(
+      `INSERT INTO responsavel_aluno (instituicao_id, aluno_instituicao_id, nome, email, telefone)
+       VALUES ($1, $2, 'Mãe', 'jose.acento@a.test', '11999990000') RETURNING id`,
+      [INST_A, ALUNO_CAD],
+    );
+    const contato = rows[0]!.id;
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', contato);
+
+    await expect(aceitarComo(ESTRANHO, 'José.acento@a.test', token)).rejects.toMatchObject({
+      response: { error: { code: 'CONVITE_INVALIDO' } },
+    });
+    expect(await contatoVinculado(contato)).toBeNull();
+    expect((await solicitacoes(contato))[0]).toMatchObject({ status: 'pendente_aprovacao' });
+  });
+
   it('e-mail diferente não vincula: fica pendente, sem consentimento, e a view segue vazia', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
     await expect(aceitarComo(ESTRANHO, 'Estranho@Y.test ', token)).rejects.toMatchObject({
