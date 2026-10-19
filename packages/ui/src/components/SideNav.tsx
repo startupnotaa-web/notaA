@@ -21,6 +21,8 @@ export interface SideNavProps {
   logo?: string | React.ReactNode;
   brand?: React.ReactNode;
   label?: string;
+  /** Conteúdo fixo no pé da barra (ex.: o botão Sair). Fica visível também no modo recolhido. */
+  footer?: React.ReactNode;
   /** Abaixo de 1.024px recolhe para só ícones (o texto fica para leitores de tela). */
   collapsible?: boolean;
   /** Componente de link (ex.: `next/link`). Padrão: `<a>`. Recebe `href` e `aria-current`. */
@@ -34,6 +36,7 @@ export function SideNav({
   logo,
   brand = 'Nota A',
   label = 'Principal',
+  footer,
   collapsible = false,
   linkAs,
   className,
@@ -107,6 +110,7 @@ export function SideNav({
           </Link>
         );
       })}
+      {footer ? <div className="mt-auto flex flex-col gap-1 border-t border-line pt-space-4">{footer}</div> : null}
     </nav>
   );
 }

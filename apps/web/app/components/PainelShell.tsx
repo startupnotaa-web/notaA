@@ -2,10 +2,13 @@
 
 import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
+import { LogOut } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomNav, Button, NotaASimbolo, SideNav } from '@notaa/ui';
 import { useAuth } from '../../lib/auth-context';
 import { useUser } from '../../lib/user-context';
+import { AvisoOffline } from './AvisoOffline';
+import { TelaCarregando } from './TelaCarregando';
 import { Toaster } from './toast';
 
 export interface ItemDeNavegacao {
@@ -30,7 +33,9 @@ export interface ItemDeNavegacao {
  * - a partir de 1.024px, `SideNav` fixa de 248px à esquerda;
  * - entre 768 e 1.023px, a mesma barra recolhida só com ícones;
  * - abaixo de 768px, navegação inferior.
- * O conteúdo fica limitado a 1.280px, com margem `space-7` (48px) no desktop.
+ * O conteúdo fica limitado a 1.280px, com margem `space-7` (48px) no desktop. O título da tela é o
+ * h1 de cada página (PageHeader); a moldura só guarda a marca e o "Sair". Com SideNav, o "Sair" mora no
+ * pé dela; abaixo de 768px (e no painel sem navegação) há uma barra fina no topo, sem borda.
  */
 export function PainelShell({
   titulo,
@@ -61,21 +66,8 @@ export function PainelShell({
     }
   }, [authLoading, carregando, session, autorizado, router]);
 
-  if (carregando || !session) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-paper">
-        <p role="status" className="text-ink-muted">Carregando…</p>
-      </main>
-    );
-  }
-
-  if (!autorizado) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-paper">
-        <p role="status" className="text-ink-muted">Verificando permissões…</p>
-      </main>
-    );
-  }
+  if (carregando || !session) return <TelaCarregando />;
+  if (!autorizado) return <TelaCarregando rotulo="Verificando permissões" />;
 
   // A raiz do painel só fica ativa nela mesma; as demais, em subpáginas também.
   const atual = navegacao?.find((item) => {
@@ -100,31 +92,36 @@ export function PainelShell({
             label="Seções do painel"
             logo={<NotaASimbolo className="h-6 w-auto flex-none" />}
             linkAs={Link}
+            footer={
+              <Button variant="quiet" className="max-lg:px-0" onClick={() => void signOut()}>
+                <LogOut aria-hidden="true" className="h-5 w-5 flex-none" />
+                <span className="max-lg:sr-only">Sair</span>
+              </Button>
+            }
             collapsible
             className="h-full"
           />
         </div>
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 border-b border-line bg-surface">
-          <div className="flex min-h-[56px] items-center justify-between gap-4 px-4 lg:px-12">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md font-display text-[17px] font-semibold text-ink no-underline ${itens ? 'md:hidden' : ''}`}
-              >
-                <NotaASimbolo className="h-6 w-auto" />
-                Nota A
-              </Link>
-              <p className="m-0 font-text text-sm font-bold text-ink-muted">{titulo}</p>
-            </div>
-            <Button variant="quiet" onClick={() => void signOut()}>
-              Sair
-            </Button>
+        <header className={`flex min-h-[56px] items-center justify-between gap-4 px-4 lg:px-space-7 ${itens ? 'md:hidden' : ''}`}>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md font-display text-[17px] font-semibold text-ink no-underline"
+            >
+              <NotaASimbolo className="h-6 w-auto" />
+              Nota A
+            </Link>
+            <p className="m-0 text-label text-ink-muted">{titulo}</p>
           </div>
+          <Button variant="quiet" onClick={() => void signOut()}>
+            Sair
+          </Button>
         </header>
         <main id="conteudo" className="min-w-0 flex-1">
-          <div className={`mx-auto w-full max-w-[1280px] px-4 py-6 md:px-6 lg:px-12 ${itens ? 'pb-24 md:pb-6' : ''}`}>
+          <div className={`mx-auto w-full max-w-pagina px-4 py-space-5 md:px-space-6 lg:px-space-7 lg:py-space-6 ${itens ? 'pb-24 md:pb-space-6' : ''}`}>
+            <AvisoOffline className="mb-space-5" />
             {children}
           </div>
         </main>

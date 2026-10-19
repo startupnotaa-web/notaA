@@ -3,9 +3,10 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BookOpen, Compass, Flame, House, School, Target, User } from 'lucide-react';
-import { BottomNav, Chip, Menu, NotaASimbolo, ProgressTrail } from '@notaa/ui';
+import { BottomNav, Chip, Menu, NotaASimbolo } from '@notaa/ui';
 import { FEATURES } from '../../lib/feature-flags';
 import { useUser } from '../../lib/user-context';
+import { AvisoOffline } from './AvisoOffline';
 
 const ICONE = 'h-5 w-5';
 
@@ -50,7 +51,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         Pular para o conteúdo
       </a>
       <TopBar menuDaInstituicao={noMenu} />
-      <main id="conteudo" className="flex-1 pb-20">
+      <main id="conteudo" className="flex-1 pb-24">
+        <AvisoOffline className="mx-auto w-full max-w-3xl px-4 pt-space-4" />
         {children}
       </main>
       <Navegacao destinos={destinos} />
@@ -59,19 +61,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function TopBar({ menuDaInstituicao }: { menuDaInstituicao: boolean }) {
-  const { xp, level, streak, perfil, loading } = useUser();
+  const { xp, level, streak, loading } = useUser();
   const router = useRouter();
-  const isPremium = perfil?.plano && (perfil.plano.tipo === 'plus' || perfil.plano.tipo === 'instituicao');
-
-  // Fração já conquistada dentro do nível atual, calculada pelo servidor (curva
-  // única em gamificacao/nivel.ts). Substitui a régua antiga `xp % 100`, que não
-  // correspondia à curva real de níveis.
-  const progressoNivel = Math.min(Math.max(perfil?.gamificacao?.nivel.progresso ?? 0, 0), 1);
-  const ETAPAS = 5;
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface">
-      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-4 py-2.5">
+      <div className="mx-auto flex min-h-[56px] w-full max-w-3xl items-center justify-between gap-3 px-4">
         <Link
           href="/dashboard"
           aria-label="Nota A, ir para o início"
@@ -90,7 +85,6 @@ function TopBar({ menuDaInstituicao }: { menuDaInstituicao: boolean }) {
                 <Flame aria-hidden="true" className="h-3.5 w-3.5" />
                 {streak} {streak === 1 ? 'dia' : 'dias'}
               </Chip>
-              <Chip tone={isPremium ? 'brand' : 'neutral'}>{isPremium ? 'Plano Pro' : 'Plano grátis'}</Chip>
             </>
           )}
           {menuDaInstituicao && (
@@ -103,16 +97,6 @@ function TopBar({ menuDaInstituicao }: { menuDaInstituicao: boolean }) {
           )}
         </div>
       </div>
-      {!loading && (
-        <div className="mx-auto w-full max-w-4xl px-4 pb-2.5">
-          <ProgressTrail
-            total={ETAPAS}
-            done={Math.floor(progressoNivel * ETAPAS)}
-            label="Progresso até o próximo nível"
-            caption={`${Math.round(progressoNivel * 100)}% do nível ${level}`}
-          />
-        </div>
-      )}
     </header>
   );
 }
@@ -126,7 +110,7 @@ function Navegacao({ destinos }: { destinos: ReturnType<typeof destinosDoAluno>[
       current={atual}
       label="Navegação principal"
       linkAs={Link}
-      innerClassName="max-w-4xl"
+      innerClassName="max-w-3xl"
     />
   );
 }

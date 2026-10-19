@@ -20,10 +20,10 @@ const atkinson = Atkinson_Hyperlegible_Next({
   adjustFontFallback: false,
 });
 
-// Claro é o padrão (docs/07-design-system.md); o escuro é opcional por data-theme
-// em <html>. Este script roda antes da pintura para aplicar a escolha guardada e
+// Claro é o padrão absoluto (docs/07-design-system.md); o escuro é opcional por data-theme
+// em <html>, e só entra se a pessoa escolher "Escuro" ou "Do sistema" no Perfil. Este script roda antes da pintura para aplicar a escolha guardada e
 // evitar o flash do tema errado. O conteúdo é constante, sem dado de usuário.
-const TEMA_ANTES_DA_PINTURA = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}`;
+const TEMA_ANTES_DA_PINTURA = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}`;
 
 export const metadata: Metadata = {
   title: 'Nota A — Aprenda jogando. Evolua estudando.',

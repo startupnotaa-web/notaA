@@ -19,7 +19,7 @@ export function PageHeader({ title, description, status, actions, className, ...
           <h1 className="m-0 font-display text-[28px] leading-9 tracking-[-0.02em] text-ink sm:text-heading-1">{title}</h1>
           {status}
         </div>
-        {description ? <p className="m-0 max-w-texto text-body text-ink-muted">{description}</p> : null}
+        {description ? <div className="max-w-texto text-body text-ink-muted">{description}</div> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-space-3">{actions}</div> : null}
     </header>

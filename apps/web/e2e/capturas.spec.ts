@@ -117,10 +117,12 @@ for (const captura of CAPTURAS.filter((c) => !SO || SO.includes(c.nome))) {
         await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(500);
 
-        await page.screenshot({
-          path: `${PASTA}/${MOMENTO}/${captura.nome}-${tema}-${largura.nome}.png`,
-          fullPage: true,
-        });
+        // Em vez de fullPage (que espalha a barra fixa e a navegação inferior pelo meio da imagem),
+        // a janela cresce até a altura da página e a captura é só da janela.
+        const altura = await page.evaluate(() => document.documentElement.scrollHeight);
+        await page.setViewportSize({ width: largura.width, height: Math.min(Math.max(altura, largura.height), 6000) });
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: `${PASTA}/${MOMENTO}/${captura.nome}-${tema}-${largura.nome}.png` });
       });
     }
   }

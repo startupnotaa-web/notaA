@@ -44,6 +44,13 @@ describe('SideNav', () => {
     expect(screen.getByText('Painel')).toHaveClass('max-lg:sr-only');
   });
 
+  it('mostra o rodapé abaixo dos itens, separado por uma linha fina', () => {
+    render(<SideNav items={itens} footer={<button type="button">Sair</button>} />);
+    const botao = screen.getByRole('button', { name: 'Sair' });
+    expect(botao.parentElement).toHaveClass('mt-auto', 'border-t', 'border-line');
+    expect(screen.getByRole('navigation')).toContainElement(botao);
+  });
+
   it('usa o componente de link informado', () => {
     const Meu = ({ href, ...p }: { href: string; className?: string; children: React.ReactNode }) => (
       <a data-meu href={href} {...p} />

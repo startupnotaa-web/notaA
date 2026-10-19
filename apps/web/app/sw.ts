@@ -19,6 +19,10 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: defaultCache,
+  // Sem internet e sem a página salva, mostra /offline em vez do erro do navegador.
+  fallbacks: {
+    entries: [{ url: '/offline', matcher: ({ request }) => request.destination === 'document' }],
+  },
 });
 
 serwist.addEventListeners();
