@@ -52,6 +52,9 @@ const PLANOS = [
   },
 ];
 
+// A CSP com nonce (middleware.ts) exige HTML gerado por requisição: um HTML do build não teria nonce.
+export const dynamic = 'force-dynamic';
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-paper text-ink">

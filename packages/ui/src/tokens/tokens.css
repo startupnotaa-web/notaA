@@ -24,8 +24,8 @@
   --text-label-weight: 700; --text-label-tracking: 0; --text-caption-size: 12.5px; --text-caption-lh: 18px;
   --text-caption-weight: 400; --text-caption-tracking: 0; --space-1: 4px; --space-2: 8px; --space-3: 12px;
   --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 72px; --radius-sm: 8px;
-  --radius-md: 12px; --radius-lg: 20px; --radius-pill: 999px; --page-max: 1760px; --gutter: 24px;
-  --sidenav-w: 248px; --sidenav-w-collapsed: 72px; --topbar-h: 56px; --row-comfortable: 52px;
+  --radius-md: 12px; --radius-lg: 20px; --radius-pill: 999px; --page-max: 1760px; --landing-max: 1360px;
+  --gutter: 24px; --sidenav-w: 248px; --sidenav-w-collapsed: 72px; --topbar-h: 56px; --row-comfortable: 52px;
   --row-compact: 36px; --duration-fast: 160ms; --duration-base: 240ms; --duration-slow: 420ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); --ease-in-out: cubic-bezier(0.6, 0, 0.3, 1);
 }

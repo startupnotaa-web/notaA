@@ -12,6 +12,7 @@
       "default": "./tailwind.preset.js"
     },
     "./assets/*": "./assets/*",
+    "./simbolo": "./src/lib/simbolo.ts",
     "./tokens/tokens.json": "./tokens/tokens.json"
   },
   "scripts": {

@@ -3,7 +3,7 @@ import { Atkinson_Hyperlegible_Next, Sora } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { corDoToken } from '@notaa/ui';
 import { AuthProvider } from '../lib/auth-context';
-import { THEME_STORAGE_KEY } from '../lib/storage-keys';
+import { URL_DO_SITE } from '../lib/site';
 import { ErrorSuppressor } from './components/ErrorSuppressor';
 import './globals.css';
 
@@ -20,12 +20,9 @@ const atkinson = Atkinson_Hyperlegible_Next({
   adjustFontFallback: false,
 });
 
-// Claro é o padrão absoluto (docs/07-design-system.md); o escuro é opcional por data-theme
-// em <html>, e só entra se a pessoa escolher "Escuro" ou "Do sistema" no Perfil. Este script roda antes da pintura para aplicar a escolha guardada e
-// evitar o flash do tema errado. O conteúdo é constante, sem dado de usuário.
-const TEMA_ANTES_DA_PINTURA = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}`;
-
 export const metadata: Metadata = {
+  // Base dos caminhos relativos de canonical e Open Graph das páginas públicas.
+  metadataBase: new URL(URL_DO_SITE),
   title: 'Nota A — Aprenda jogando. Evolua estudando.',
   description:
     'Plataforma gamificada de preparação para o ENEM com IA adaptativa e personalização inclusiva.',
@@ -51,7 +48,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: TEMA_ANTES_DA_PINTURA }} />
+        {/* Claro é o padrão absoluto (docs/07-design-system.md); o escuro é opcional por data-theme em <html>, e só
+            entra se a pessoa escolher "Escuro" ou "Do sistema" no Perfil. O script aplica a escolha guardada antes
+            da pintura. É um arquivo estático (public/theme-init.js), não um script inline, por causa da CSP. */}
+        <script src="/theme-init.js" />
       </head>
       {/* Extensões de navegador (ColorZilla, gerenciadores de senha) injetam
           atributos em <body> antes da hidratação — ex.: cz-shortcut-listen.
