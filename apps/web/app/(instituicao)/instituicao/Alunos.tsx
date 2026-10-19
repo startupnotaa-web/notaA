@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AlunoDaInstituicao, Turma } from '@notaa/contracts';
-import { Chip, EmptyState, Notice, Select, Skeleton, Table, TextField } from '@notaa/ui';
+import { Carregando, Chip, EmptyState, Notice, Select, SkeletonLinhas, Table, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 const ROTULO_RISCO: Record<AlunoDaInstituicao['risco'], string> = {
@@ -56,7 +56,7 @@ export function Alunos() {
   }, [carregar]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-space-6">
       <div className="flex flex-wrap items-end gap-3">
         <TextField
           label="Buscar por nome"
@@ -79,7 +79,9 @@ export function Alunos() {
       {erro && <Notice tone="danger">{erro}</Notice>}
 
       {alunos === null ? (
-        <Skeleton className="h-40 w-full rounded-lg" />
+        <Carregando rotulo="Carregando os alunos">
+          <SkeletonLinhas linhas={5} />
+        </Carregando>
       ) : alunos.length === 0 ? (
         <EmptyState title="Nenhum aluno aqui">
           Alunos aparecem depois de entrarem numa turma com o código de convite e terem a entrada aprovada.
@@ -117,7 +119,7 @@ export function Alunos() {
         </Table>
       )}
 
-      <p className="text-[12.5px] leading-[18px] text-ink-muted">
+      <p className="m-0 text-caption text-ink-muted">
         &quot;Visível desde&quot; é a data de aprovação do aluno na turma. Nada anterior a ela é
         exibido. A situação considera engajamento, não nota.
       </p>

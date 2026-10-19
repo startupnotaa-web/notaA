@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tabs, propsDoPainel } from '@notaa/ui';
+import { PageHeader, Tabs, propsDoPainel } from '@notaa/ui';
 import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
 import { GestaoDeTurmas } from '../../components/painel/GestaoDeTurmas';
 import { Alunos } from './Alunos';
@@ -26,29 +26,36 @@ function TurmasDaInstituicao() {
 }
 
 const ABAS = [
-  { id: 'visao', rotulo: 'Visão geral', Conteudo: VisaoGeral },
-  { id: 'turmas', rotulo: 'Turmas', Conteudo: TurmasDaInstituicao },
-  { id: 'alunos', rotulo: 'Alunos', Conteudo: Alunos },
-  { id: 'professores', rotulo: 'Professores', Conteudo: Professores },
-  { id: 'anos', rotulo: 'Ano letivo', Conteudo: GestaoDeAnosLetivos },
+  { id: 'visao', rotulo: 'Visão geral' },
+  { id: 'turmas', rotulo: 'Turmas' },
+  { id: 'alunos', rotulo: 'Alunos' },
+  { id: 'professores', rotulo: 'Professores' },
+  { id: 'anos', rotulo: 'Ano letivo' },
 ] as const;
 
+type IdDaAba = (typeof ABAS)[number]['id'];
+
 export default function InstituicaoPainelPage() {
-  const [aba, setAba] = useState<(typeof ABAS)[number]['id']>('visao');
-  const Conteudo = ABAS.find((a) => a.id === aba)?.Conteudo ?? VisaoGeral;
+  const [aba, setAba] = useState<IdDaAba>('visao');
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-space-6">
+      <PageHeader title="Painel da instituição" description="Acompanhe turmas, alunos e professores em um só lugar." />
+
       <Tabs
         label="Seções do painel"
         idBase="painel"
         tabs={ABAS.map((a) => ({ id: a.id, label: a.rotulo }))}
         value={aba}
-        onChange={(id) => setAba(id as (typeof ABAS)[number]['id'])}
+        onChange={(id) => setAba(id as IdDaAba)}
       />
 
       <div {...propsDoPainel('painel', aba)}>
-        <Conteudo />
+        {aba === 'visao' && <VisaoGeral onIrParaAba={setAba} />}
+        {aba === 'turmas' && <TurmasDaInstituicao />}
+        {aba === 'alunos' && <Alunos />}
+        {aba === 'professores' && <Professores />}
+        {aba === 'anos' && <GestaoDeAnosLetivos />}
       </div>
     </div>
   );

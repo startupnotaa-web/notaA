@@ -137,7 +137,7 @@ export function GestaoDeAnosLetivos() {
         </ul>
       )}
 
-      <p className="text-[12.5px] leading-[18px] text-ink-muted">
+      <p className="text-caption text-ink-muted">
         Ao arquivar um ano, as turmas dele ficam somente leitura com o histórico preservado. Os alunos
         não são migrados: no ano novo, cada um entra com o código da turma nova.
       </p>

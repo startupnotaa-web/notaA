@@ -2,7 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import type { InstituicaoOverview } from '@notaa/contracts';
-import { Card, CardHeader, Chip, EmptyState, Notice, Skeleton, Stat, Table } from '@notaa/ui';
+import {
+  ActionRow,
+  Button,
+  Carregando,
+  Chip,
+  EmptyState,
+  Notice,
+  Section,
+  Skeleton,
+  SkeletonLinhas,
+  SummaryStrip,
+  Table,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 const ROTULO_AREA: Record<string, string> = {
@@ -17,17 +29,7 @@ function porcentagem(fracao: number): string {
   return `${Math.round(fracao * 100)}%`;
 }
 
-function Indicador({ rotulo, valor, detalhe }: { rotulo: string; valor: string; detalhe?: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <Stat label={rotulo} value={valor} hint={detalhe} />
-      </CardHeader>
-    </Card>
-  );
-}
-
-export function VisaoGeral() {
+export function VisaoGeral({ onIrParaAba }: { onIrParaAba: (aba: 'turmas' | 'alunos') => void }) {
   const [dados, setDados] = useState<InstituicaoOverview | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -50,69 +52,126 @@ export function VisaoGeral() {
   }, []);
 
   if (erro) {
-    return (
-      <Notice tone="danger">{erro}</Notice>
-    );
+    return <Notice tone="danger">{erro}</Notice>;
   }
 
   if (!dados) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-28 w-full rounded-lg" />
-        ))}
-      </div>
+      <Carregando rotulo="Carregando os indicadores" className="flex flex-col gap-space-6">
+        <Skeleton className="h-24 w-full" />
+        <SkeletonLinhas linhas={4} />
+      </Carregando>
     );
   }
 
+  const semAcesso = dados.turmas.filter((t) => t.alunosSemAcesso7d > 0);
+  const totalSemAcesso = semAcesso.reduce((soma, t) => soma + t.alunosSemAcesso7d, 0);
+  const nada = dados.solicitacoesPendentes === 0 && totalSemAcesso === 0;
+
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Indicador rotulo="Alunos" valor={String(dados.totalAlunos)} detalhe="Com matrícula ativa" />
-        <Indicador rotulo="Turmas ativas" valor={String(dados.totalTurmas)} />
-        <Indicador rotulo="Professores" valor={String(dados.totalProfessores)} />
-        <Indicador
-          rotulo="Entradas pendentes"
-          valor={String(dados.solicitacoesPendentes)}
-          detalhe={dados.solicitacoesPendentes > 0 ? 'Aguardando aprovação' : undefined}
-        />
-      </div>
+    <div className="flex flex-col gap-space-6 md:gap-space-7">
+      <SummaryStrip
+        aria-label="Totais da instituição"
+        items={[
+          {
+            id: 'alunos',
+            label: 'Alunos',
+            value: String(dados.totalAlunos),
+            hint: 'Com matrícula ativa',
+          },
+          { id: 'turmas', label: 'Turmas ativas', value: String(dados.totalTurmas) },
+          { id: 'professores', label: 'Professores', value: String(dados.totalProfessores) },
+          {
+            id: 'pendentes',
+            label: 'Entradas pendentes',
+            value: String(dados.solicitacoesPendentes),
+            hint: dados.solicitacoesPendentes > 0 ? 'Aguardando aprovação' : undefined,
+          },
+        ]}
+      />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Indicador
-          rotulo="Média de XP"
-          valor={dados.mediaXp.toLocaleString('pt-BR')}
-          detalhe="Contado a partir da aprovação de cada aluno"
-        />
-        <Indicador
-          rotulo="Área mais frágil"
-          valor={
-            dados.areaMaisFragil
-              ? (ROTULO_AREA[dados.areaMaisFragil.area] ?? dados.areaMaisFragil.area)
-              : 'Sem dados'
-          }
-          detalhe={
-            dados.areaMaisFragil
-              ? `${porcentagem(dados.areaMaisFragil.mediaAcertos)} de acerto`
-              : 'Ainda não há respostas suficientes'
-          }
-        />
-      </div>
+      <Section title="Precisa de você">
+        {nada ? (
+          <Notice tone="success">
+            Nenhuma entrada pendente e nenhum aluno sem acesso nos últimos 7 dias.
+          </Notice>
+        ) : (
+          <ul className="m-0 flex list-none flex-col p-0">
+            {dados.solicitacoesPendentes > 0 && (
+              <ActionRow
+                status={<Chip tone="brand">Pendente</Chip>}
+                title={`${dados.solicitacoesPendentes} ${dados.solicitacoesPendentes === 1 ? 'entrada aguardando' : 'entradas aguardando'} aprovação`}
+                description="Alunos que pediram para entrar em turmas."
+                action={
+                  <Button variant="secondary" onClick={() => onIrParaAba('turmas')}>
+                    Revisar entradas
+                  </Button>
+                }
+              />
+            )}
+            {totalSemAcesso > 0 && (
+              <ActionRow
+                status={<Chip tone="warning">Atenção</Chip>}
+                title={`${totalSemAcesso} ${totalSemAcesso === 1 ? 'aluno sem acesso' : 'alunos sem acesso'} há 7 dias`}
+                description={`Turmas: ${semAcesso.map((t) => t.nome).join(', ')}.`}
+                action={
+                  <Button variant="secondary" onClick={() => onIrParaAba('alunos')}>
+                    Ver alunos
+                  </Button>
+                }
+              />
+            )}
+          </ul>
+        )}
+      </Section>
 
-      <section className="space-y-3">
-        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Por turma</h2>
+      <Section title="Engajamento" divided>
+        <SummaryStrip
+          aria-label="Engajamento dos alunos"
+          items={[
+            {
+              id: 'xp',
+              label: 'Média de XP',
+              value: dados.mediaXp.toLocaleString('pt-BR'),
+              hint: 'Contado a partir da aprovação de cada aluno',
+            },
+            {
+              id: 'fragil',
+              label: 'Área mais frágil',
+              value: dados.areaMaisFragil
+                ? (ROTULO_AREA[dados.areaMaisFragil.area] ?? dados.areaMaisFragil.area)
+                : 'Sem dados',
+              hint: dados.areaMaisFragil
+                ? `${porcentagem(dados.areaMaisFragil.mediaAcertos)} de acerto`
+                : 'Ainda não há respostas suficientes',
+            },
+          ]}
+        />
+      </Section>
+
+      <Section title="Por turma" divided>
         {dados.turmas.length === 0 ? (
-          <EmptyState title="Nenhuma turma ativa">Crie uma turma na aba Turmas para começar.</EmptyState>
+          <EmptyState title="Nenhuma turma ativa">
+            Crie uma turma na aba Turmas para começar.
+          </EmptyState>
         ) : (
           <Table caption="Indicadores por turma" captionOculta className="min-w-[42rem]">
             <thead>
               <tr>
                 <th scope="col">Turma</th>
                 <th scope="col">Ano</th>
-                <th scope="col" className="text-right">Alunos</th>
-                <th scope="col" className="text-right">Sem acesso (7d)</th>
-                <th scope="col" className="text-right">Pendentes</th>
-                <th scope="col" className="text-right">Média XP</th>
+                <th scope="col" className="text-right">
+                  Alunos
+                </th>
+                <th scope="col" className="text-right">
+                  Sem acesso (7d)
+                </th>
+                <th scope="col" className="text-right">
+                  Pendentes
+                </th>
+                <th scope="col" className="text-right">
+                  Média XP
+                </th>
                 <th scope="col">Área frágil</th>
               </tr>
             </thead>
@@ -149,10 +208,10 @@ export function VisaoGeral() {
             </tbody>
           </Table>
         )}
-        <p className="text-[12.5px] leading-[18px] text-ink-muted">
+        <p className="m-0 text-caption text-ink-muted">
           Indicadores são por turma. A plataforma não compara nem classifica professores.
         </p>
-      </section>
+      </Section>
     </div>
   );
 }
