@@ -1,4 +1,5 @@
 // Faixa de resumo: poucos números lado a lado, separados por uma linha fina (sem um cartão por número).
+// As divisórias vêm de um vão de 1px sobre `line` (gap-px), então fecham em qualquer quebra de linha.
 // Em tela estreita empilha. Os valores usam Sora com algarismos tabulares.
 import * as React from 'react';
 import { cn } from '../lib/cn';
@@ -26,15 +27,14 @@ export function SummaryStrip({ items, className, ...props }: SummaryStripProps) 
   return (
     <dl
       className={cn(
-        'm-0 grid grid-cols-1 divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface',
-        'sm:divide-y-0 sm:divide-x',
+        'm-0 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-line bg-line',
         colunas[Math.min(Math.max(items.length, 1), 4)],
         className,
       )}
       {...props}
     >
       {items.map((item) => (
-        <div key={item.id} className="flex flex-col gap-space-1 p-space-5">
+        <div key={item.id} className="flex flex-col gap-space-1 bg-surface p-space-5">
           <dt className="text-label text-ink-muted">{item.label}</dt>
           <dd className="m-0 font-display text-figure tabular-nums text-ink">{item.value}</dd>
           {item.hint ? <dd className="m-0 text-body-sm text-ink-muted">{item.hint}</dd> : null}

@@ -162,6 +162,8 @@ const relatorioSimulado = {
 
 /** Resposta por caminho. Qualquer outro caminho devolve lista vazia. */
 function resposta(pathname: string, metodo = 'GET'): unknown {
+  if (pathname === '/socratic/history' || pathname === '/redacao/history') return { historico: [] };
+  if (pathname === '/socratic/sessions' && metodo === 'POST') return { conversaId: ID_SESSAO };
   if (pathname === '/me/achievements') return conquistas;
   if (pathname === '/study-trails/generate') return trilha;
   if (pathname === '/onboarding/state') return { passoAtual: 1, dados: {}, concluido: false };

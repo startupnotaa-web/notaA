@@ -1,5 +1,5 @@
 // Acessibilidade das telas migradas, em navegador de verdade, com sessão e API simuladas
-// (e2e/fixtures.ts). Cobre os dois temas e três larguras (desktop, tablet e celular):
+// (e2e/fixtures.ts). Cobre os dois temas e cinco larguras (360, 768, 1024, 1440 e 1920):
 // axe nas regras WCAG 2.x A e AA (inclui contraste real), alvos de 44px e foco visível.
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
@@ -19,13 +19,30 @@ const ROTAS: Rota[] = [
   { rota: '/professor', papel: 'professor_institucional', espera: /Suas turmas/ },
   { rota: '/professor', papel: 'professor_independente', espera: /Acompanhamento/ },
   { rota: '/dashboard', papel: 'estudante', espera: /XP/ },
+  { rota: '/estudo', papel: 'estudante', espera: /Ferramentas de prática/ },
+  { rota: '/trilhas', papel: 'estudante', espera: /Funções e gráficos/ },
+  { rota: '/quiz', papel: 'estudante', espera: /Escolha uma área/ },
+  { rota: '/simulado', papel: 'estudante', espera: /Começar simulado/ },
+  { rota: '/perfil', papel: 'estudante', espera: /Informações pessoais/ },
+  { rota: '/mapa-conhecimento', papel: 'estudante', espera: /Mapa do conhecimento/ },
+  { rota: '/previsao-nota', papel: 'estudante', espera: /Média geral estimada/ },
+  { rota: '/relatorio-familiar', papel: 'estudante', espera: /Boletim de progresso/ },
+  { rota: '/minha-narrativa', papel: 'estudante', espera: /Linha do tempo/ },
+  { rota: '/certificados', papel: 'estudante', espera: /Conquistas desbloqueadas/ },
+  { rota: '/tutor', papel: 'estudante', espera: /Tutor socrático/ },
+  { rota: '/redacao', papel: 'estudante', espera: /Corretor de redação/ },
+  { rota: '/onboarding', papel: 'estudante', espera: /Boas-vindas/ },
   { rota: '/', papel: null, espera: /Aprenda jogando/ },
+  { rota: '/login', papel: null, espera: /Entrar no Nota A/ },
+  { rota: '/cadastro', papel: null, espera: /Criar conta no Nota A/ },
 ];
 
 const LARGURAS = [
-  { nome: 'desktop', width: 1280, height: 800 },
-  { nome: 'tablet', width: 900, height: 800 },
-  { nome: 'celular', width: 390, height: 844 },
+  { nome: '1920', width: 1920, height: 1080 },
+  { nome: '1440', width: 1440, height: 900 },
+  { nome: '1024', width: 1024, height: 768 },
+  { nome: '768', width: 768, height: 1024 },
+  { nome: '360', width: 360, height: 740 },
 ] as const;
 const TEMAS: Tema[] = ['light', 'dark'];
 

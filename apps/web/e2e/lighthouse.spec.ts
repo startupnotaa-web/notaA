@@ -1,5 +1,5 @@
-// Lighthouse (categoria acessibilidade) nas rotas migradas, com a mesma sessão e API simuladas
-// de a11y.spec.ts. A meta é nota >= 95 em desktop e em celular.
+// Lighthouse (acessibilidade e desempenho) nas rotas principais, com a mesma sessão e API simuladas
+// de a11y.spec.ts. As metas são acessibilidade >= 95 e desempenho >= 90, em desktop e em celular.
 //
 // O Lighthouse conversa com o Chromium pela porta de depuração e abre uma aba própria, sempre no
 // contexto PADRÃO do navegador. Por isso cada rota roda num contexto persistente (que é o padrão) e a
@@ -11,6 +11,7 @@ import { chromium, expect, test } from '@playwright/test';
 import { autenticar, modoReal, papelReal, type Papel } from './fixtures';
 
 const META = 95;
+const META_DESEMPENHO = 90;
 const PORTA = 9333;
 
 const ROTAS: { rota: string; papel: Papel | null }[] = [
@@ -19,7 +20,10 @@ const ROTAS: { rota: string; papel: Papel | null }[] = [
   { rota: '/instituicao/importacao', papel: 'admin_instituicao' },
   { rota: '/professor', papel: 'professor_institucional' },
   { rota: '/dashboard', papel: 'estudante' },
+  { rota: '/estudo', papel: 'estudante' },
+  { rota: '/perfil', papel: 'estudante' },
   { rota: '/', papel: null },
+  { rota: '/login', papel: null },
 ];
 
 // lighthouse é ESM puro e o Playwright compila os testes para CommonJS: import() dinâmico "de verdade".
@@ -27,11 +31,11 @@ const importar = new Function('m', 'return import(m)') as (m: string) => Promise
 type LighthouseFn = (
   url: string,
   flags: Record<string, unknown>,
-) => Promise<{ lhr: { finalDisplayedUrl: string; categories: { accessibility: { score: number | null } }; audits: Record<string, { score: number | null; title: string }> } } | undefined>;
+) => Promise<{ lhr: { finalDisplayedUrl: string; categories: { accessibility: { score: number | null }; performance: { score: number | null } }; audits: Record<string, { score: number | null; title: string }> } } | undefined>;
 
 for (const tema of ['light', 'dark'] as const) {
   for (const formato of ['desktop', 'mobile'] as const) {
-    test(`acessibilidade ≥ ${META} · ${tema} · ${formato}`, async ({ baseURL }) => {
+    test(`acessibilidade ≥ ${META} e desempenho ≥ ${META_DESEMPENHO} · ${tema} · ${formato}`, async ({ baseURL }) => {
       test.setTimeout(240_000);
       const { default: lighthouse } = await importar('lighthouse');
       const notas: string[] = [];
@@ -48,7 +52,7 @@ for (const tema of ['light', 'dark'] as const) {
             port: PORTA,
             output: 'json',
             logLevel: 'error',
-            onlyCategories: ['accessibility'],
+            onlyCategories: ['accessibility', 'performance'],
             formFactor: formato,
             screenEmulation:
               formato === 'desktop'
@@ -60,10 +64,11 @@ for (const tema of ['light', 'dark'] as const) {
           const final = new URL(resultado?.lhr.finalDisplayedUrl ?? baseURL ?? '').pathname;
           expect(final, `${rota} redirecionou`).toBe(rota);
           const nota = Math.round((resultado?.lhr.categories.accessibility.score ?? 0) * 100);
+          const desempenho = Math.round((resultado?.lhr.categories.performance.score ?? 0) * 100);
           const reprovadas = Object.values(resultado?.lhr.audits ?? {})
             .filter((a) => a.score === 0)
             .map((a) => a.title);
-          notas.push(`${rota} (${papel ?? 'público'}): ${nota}${reprovadas.length ? ` · reprovou: ${reprovadas.join('; ')}` : ''}`);
+          notas.push(`${rota} (${papel ?? 'público'}): ${nota} · desempenho ${desempenho}${reprovadas.length ? ` · reprovou: ${reprovadas.join('; ')}` : ''}`);
         } finally {
           await ctx.close();
           rmSync(perfil, { recursive: true, force: true });
@@ -71,7 +76,9 @@ for (const tema of ['light', 'dark'] as const) {
       }
       console.log(`\n${tema} · ${formato}\n  ${notas.join('\n  ')}`);
       const abaixo = notas.filter((n) => Number(/: (\d+)/.exec(n)?.[1]) < META);
-      expect(abaixo, `rotas abaixo de ${META}`).toEqual([]);
+      expect(abaixo, `rotas com acessibilidade abaixo de ${META}`).toEqual([]);
+      const lentas = notas.filter((n) => Number(/desempenho (\d+)/.exec(n)?.[1]) < META_DESEMPENHO);
+      expect(lentas, `rotas com desempenho abaixo de ${META_DESEMPENHO}`).toEqual([]);
     });
   }
 }
