@@ -9,7 +9,7 @@ import {
   turma,
   usuario,
 } from '@notaa/db';
-import type { Papel } from '@notaa/contracts';
+import type { FuncaoInstituicao, Papel } from '@notaa/contracts';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { janelaDeDados, podeCriarTurma, type MatriculaParaJanela } from './escopo.regras';
 
@@ -66,6 +66,38 @@ export class EscopoService {
       proibido('Sua conta não está vinculada a nenhuma instituição.');
     }
     return linha.instituicaoId;
+  }
+
+  /**
+   * Instituição e função (gestor | coordenação) do admin de instituição. A
+   * função não está no JWT de propósito (perfis-decisoes.md, 2026-10-16): mudar
+   * o enum de papel quebra deploys antigos da API, então ela é lida aqui.
+   * Admin sem função gravada é gestor — é o que ele era antes da coluna existir.
+   */
+  async funcaoNaInstituicao(
+    usuarioId: string,
+  ): Promise<{ instituicaoId: string; funcao: FuncaoInstituicao }> {
+    const [linha] = await this.db
+      .select({
+        instituicaoId: usuario.instituicaoId,
+        tipoPerfil: usuario.tipoPerfil,
+        funcao: usuario.funcaoInstituicao,
+      })
+      .from(usuario)
+      .where(eq(usuario.id, usuarioId))
+      .limit(1);
+
+    if (!linha || linha.tipoPerfil !== 'admin_instituicao' || !linha.instituicaoId) {
+      proibido('Sua conta não administra nenhuma instituição.');
+    }
+    return { instituicaoId: linha.instituicaoId, funcao: linha.funcao ?? 'gestor' };
+  }
+
+  /** Como `funcaoNaInstituicao`, mas recusa a coordenação. */
+  async instituicaoDoGestor(usuarioId: string, acao: string): Promise<string> {
+    const { instituicaoId, funcao } = await this.funcaoNaInstituicao(usuarioId);
+    if (funcao !== 'gestor') proibido(`Só a gestão da instituição pode ${acao}.`);
+    return instituicaoId;
   }
 
   /**

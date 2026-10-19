@@ -169,7 +169,7 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
       { timeout: GEMINI_TIMEOUT_MS },
     );
 
-    const jsonSchema = zodToJsonSchema(input.schema as any, 'ResponseSchema');
+    const jsonSchema = zodToJsonSchema(input.schema as unknown as Parameters<typeof zodToJsonSchema>[0], 'ResponseSchema');
     const prompt =
       (input.prompt ? `Input do Usuário: ${input.prompt}\n\n` : '') +
       `Contexto (JSON):\n${JSON.stringify(input.contexto)}\n\n` +

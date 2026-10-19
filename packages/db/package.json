@@ -10,15 +10,19 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@notaa/contracts": "workspace:*",
+    "@notaa/importacao": "workspace:*",
     "drizzle-orm": "^0.38.4",
     "postgres": "^3.4.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "drizzle-kit": "^0.30.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

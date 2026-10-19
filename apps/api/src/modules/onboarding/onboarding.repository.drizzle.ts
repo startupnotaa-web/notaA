@@ -30,7 +30,7 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
         .from(perfilOnboarding)
         .where(eq(perfilOnboarding.estudanteId, estudanteId))
         .limit(1)
-        .then((res: any[]) => res[0]),
+        .then((res) => res[0]),
       this.db
         .select({ nome: usuario.nome })
         .from(usuario)
@@ -86,11 +86,26 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
         .onConflictDoNothing();
     }
 
+    // `dados` chega validado pelo schema do passo (OnboardingService); aqui
+    // só se lê o campo que cada passo grava.
+    const d = dados as Partial<
+      Pick<
+        typeof perfilOnboarding.$inferInsert,
+        | 'idade'
+        | 'serie'
+        | 'objetivoEnem'
+        | 'estiloAprendizagemAutodeclarado'
+        | 'dificuldades'
+        | 'rotinaEstudo'
+        | 'autopercepcao'
+      >
+    > & { nome?: unknown; neurodivergencia?: unknown; consentimentoBaseLegal?: string | null };
+
     // O passo 1 ("nome") mora em `usuario`, não em `perfil_onboarding`.
-    if (passo === 1 && typeof (dados as any).nome === 'string') {
+    if (passo === 1 && typeof d.nome === 'string') {
       await this.db
         .update(usuario)
-        .set({ nome: (dados as any).nome, atualizadoEm: new Date() })
+        .set({ nome: d.nome, atualizadoEm: new Date() })
         .where(eq(usuario.id, estudanteId));
     }
 
@@ -103,14 +118,14 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
     // que duplicaria a chave — ex.: passo 3 grava o objeto de estilo, não
     // { estiloAprendizagemAutodeclarado: {...} }).
     if (passo === 1) {
-      if ((dados as any).idade !== undefined) updates.idade = (dados as any).idade;
-      if ((dados as any).serie !== undefined) updates.serie = (dados as any).serie;
+      if (d.idade !== undefined) updates.idade = d.idade;
+      if (d.serie !== undefined) updates.serie = d.serie;
     }
-    if (passo === 2) updates.objetivoEnem = (dados as any).objetivoEnem ?? null;
-    if (passo === 3) updates.estiloAprendizagemAutodeclarado = (dados as any).estiloAprendizagemAutodeclarado;
-    if (passo === 4) updates.dificuldades = (dados as any).dificuldades;
-    if (passo === 5) updates.rotinaEstudo = (dados as any).rotinaEstudo;
-    if (passo === 6) updates.autopercepcao = (dados as any).autopercepcao;
+    if (passo === 2) updates.objetivoEnem = d.objetivoEnem ?? null;
+    if (passo === 3) updates.estiloAprendizagemAutodeclarado = d.estiloAprendizagemAutodeclarado;
+    if (passo === 4) updates.dificuldades = d.dificuldades;
+    if (passo === 5) updates.rotinaEstudo = d.rotinaEstudo;
+    if (passo === 6) updates.autopercepcao = d.autopercepcao;
 
     // Passo 7 — dado SENSÍVEL: vai para a tabela isolada dado_sensivel_estudante
     // (doc 10 §3, minimização), NUNCA para perfil_onboarding. O OnboardingService
@@ -118,12 +133,12 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
     // consente é o próprio titular (≥18). Antes, este passo era validado e
     // silenciosamente DESCARTADO (nenhum `if (passo === 7)` existia).
     if (passo === 7) {
-      const neurodivergencia = (dados as any).neurodivergencia as Record<string, boolean> | undefined;
+      const neurodivergencia = d.neurodivergencia as Record<string, boolean> | undefined;
       const marcouAlgo = neurodivergencia && Object.values(neurodivergencia).some(Boolean);
       if (marcouAlgo) {
         const registroSensivel = {
           neurodivergencia,
-          consentimentoBaseLegal: (dados as any).consentimentoBaseLegal ?? null,
+          consentimentoBaseLegal: d.consentimentoBaseLegal ?? null,
           consentidoPor: estudanteId,
           consentidoEm: new Date(),
           atualizadoEm: new Date(),
@@ -153,7 +168,7 @@ export class OnboardingRepositoryDrizzle implements OnboardingRepositoryPort {
   }
 
   async complete(estudanteId: string): Promise<void> {
-    await this.db.transaction(async (tx: any) => {
+    await this.db.transaction(async (tx) => {
       await tx
         .update(perfilOnboarding)
         .set({ concluidoEm: new Date(), atualizadoEm: new Date() })

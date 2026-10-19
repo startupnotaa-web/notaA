@@ -25,6 +25,8 @@ import { EscopoModule } from './modules/escopo/escopo.module';
 import { DesempenhoModule } from './modules/desempenho/desempenho.module';
 import { AnoLetivoModule } from './modules/ano-letivo/ano-letivo.module';
 import { TurmaModule } from './modules/turma/turma.module';
+import { AcademicoModule } from './modules/academico/academico.module';
+import { ImportacaoModule } from './modules/importacao/importacao.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { TurmaModule } from './modules/turma/turma.module';
     DesempenhoModule,
     AnoLetivoModule,
     TurmaModule,
+    AcademicoModule,
+    ImportacaoModule,
   ],
   providers: [
     // Filtro global de exceções — loga erros com stack trace e padroniza a

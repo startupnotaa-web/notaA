@@ -172,6 +172,36 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   'POST /me/turmas/convite': ['estudante'],
 
   // Admin
+  // Gestão Acadêmica (Fase 1). Só admin de instituição configura; a função
+  // (gestor | coordenação) é checada no serviço, porque não está no JWT.
+  'GET /academico/periodos': ['admin_instituicao'],
+  'POST /academico/periodos': ['admin_instituicao'],
+  'PATCH /academico/periodos/:id': ['admin_instituicao'],
+  'DELETE /academico/periodos/:id': ['admin_instituicao'],
+  'GET /academico/disciplinas': ['admin_instituicao'],
+  'POST /academico/disciplinas': ['admin_instituicao'],
+  'PATCH /academico/disciplinas/:id': ['admin_instituicao'],
+  'GET /academico/turmas/:turmaId/disciplinas': ['admin_instituicao'],
+  'PUT /academico/turmas/:turmaId/disciplinas/:disciplinaId': ['admin_instituicao'],
+  'DELETE /academico/turmas/:turmaId/disciplinas/:disciplinaId': ['admin_instituicao'],
+  'GET /academico/regras': ['admin_instituicao'],
+  // O professor institucional lê a regra vigente: é com ela que a nota dele será calculada.
+  'GET /academico/regras/ativa': ['admin_instituicao', 'professor_institucional'],
+  'POST /academico/regras': ['admin_instituicao'],
+  'POST /academico/regras/simular': ['admin_instituicao'],
+  'POST /academico/regras/:id/ativar': ['admin_instituicao'],
+
+  // Importação e exportação de planilhas. Exportar é só da gestão (serviço).
+  'GET /importacoes': ['admin_instituicao'],
+  'POST /importacoes': ['admin_instituicao'],
+  'GET /importacoes/modelos/:tipo': ['admin_instituicao'],
+  'GET /importacoes/exportar/:tipo': ['admin_instituicao'],
+  'GET /importacoes/:id': ['admin_instituicao'],
+  'POST /importacoes/:id/arquivo-enviado': ['admin_instituicao'],
+  'PUT /importacoes/:id/mapeamento': ['admin_instituicao'],
+  'GET /importacoes/:id/previa': ['admin_instituicao'],
+  'POST /importacoes/:id/confirmar': ['admin_instituicao'],
+
   'GET /admin/users': ['admin'],
   'GET /admin/ai-usage': ['admin'],
 

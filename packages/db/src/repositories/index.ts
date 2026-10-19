@@ -5,3 +5,10 @@ export { DashboardRepositoryDb } from './dashboard.repository';
 export { UsuarioRepositoryDb } from './usuario.repository';
 export { InstituicaoRepositoryDb } from './instituicao.repository';
 export { ErrorDetectorRepositoryDb } from './error-detector.repository';
+export { registrarAuditoria, type EntradaAuditoria } from './auditoria.repository';
+export {
+  ImportacaoRepositoryDb,
+  type AutorImportacao,
+  type PlanoPorTipo,
+  type ResultadoAplicacao,
+} from './importacao.repository';

@@ -61,8 +61,8 @@ async function uploadImageToSupabase(imageUrl: string, questionNumber: number, y
 
     const { data: publicUrlData } = supabase.storage.from('enem_images').getPublicUrl(storagePath);
     return publicUrlData.publicUrl;
-  } catch (err: any) {
-    console.error(`Erro ao processar imagem para Q${questionNumber}:`, err.message);
+  } catch (err) {
+    console.error(`Erro ao processar imagem para Q${questionNumber}:`, err instanceof Error ? err.message : err);
     return imageUrl; // Fallback: usa a url do GitHub original se der erro no upload
   }
 }
@@ -157,9 +157,9 @@ async function processFile(filePath: string, year: number, day: string) {
     for(let i = 0; i < insertPayloads.length; i += 50) {
       const batch = insertPayloads.slice(i, i + 50);
       try {
-        await db.insert(questoesEnem).values(batch as any);
-      } catch (err: any) {
-        console.error(`Erro inserindo lote:`, err.message);
+        await db.insert(questoesEnem).values(batch as (typeof questoesEnem.$inferInsert)[]);
+      } catch (err) {
+        console.error(`Erro inserindo lote:`, err instanceof Error ? err.message : err);
       }
     }
     console.log(`✅ Sucesso para ${year} Dia ${day}!`);

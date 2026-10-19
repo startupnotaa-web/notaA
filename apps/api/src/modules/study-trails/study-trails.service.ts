@@ -32,7 +32,7 @@ export class StudyTrailsService {
         id: lastTrail.id,
         titulo: lastTrail.titulo,
         descricao: lastTrail.descricao,
-        passos: lastTrail.passos as any,
+        passos: lastTrail.passos as StudyTrailResponse['passos'],
         criadoEm: lastTrail.criadoEm.toISOString(),
       };
     }
@@ -57,8 +57,8 @@ export class StudyTrailsService {
         promptVersao: PROMPT_TRILHA_TEMPLATE.versao,
       });
       data = result.data;
-    } catch (e: any) {
-      if (e.message?.includes('LLM_API_KEY não configurado')) {
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('LLM_API_KEY não configurado')) {
         this.logger.warn('LLM_API_KEY ausente. Retornando trilha mockada.');
         Sentry.captureMessage('LLM_API_KEY ausente. Trilha mockada gerada.', 'warning');
         data = {
@@ -89,7 +89,7 @@ export class StudyTrailsService {
       id: inserted.id,
       titulo: inserted.titulo,
       descricao: inserted.descricao,
-      passos: inserted.passos as any,
+      passos: inserted.passos as StudyTrailResponse['passos'],
       criadoEm: inserted.criadoEm.toISOString(),
     };
   }

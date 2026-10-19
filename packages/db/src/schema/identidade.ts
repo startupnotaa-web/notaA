@@ -14,6 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { citext } from './common';
 import {
+  funcaoInstituicaoEnum,
   matriculaStatusEnum,
   statusUsuarioEnum,
   tipoPerfilEnum,
@@ -39,6 +40,8 @@ export const usuario = pgTable(
     authUid: uuid('auth_uid').unique(), // id do Supabase Auth — credenciais NÃO ficam aqui
     status: statusUsuarioEnum('status').notNull().default('pendente'),
     instituicaoId: uuid('instituicao_id').references(() => instituicao.id, { onDelete: 'restrict' }),
+    // Só para admin_instituicao: gestor ou coordenação. Nulo nos demais papéis.
+    funcaoInstituicao: funcaoInstituicaoEnum('funcao_instituicao'),
     criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
     atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -46,6 +49,10 @@ export const usuario = pgTable(
     unique('uq_usuario_email').on(t.email),
     index('idx_usuario_instituicao').on(t.instituicaoId),
     index('idx_usuario_tipo_perfil').on(t.tipoPerfil),
+    check(
+      'ck_usuario_funcao_so_admin_instituicao',
+      sql`${t.funcaoInstituicao} is null or ${t.tipoPerfil} = 'admin_instituicao'`,
+    ),
   ],
 );
 
@@ -168,6 +175,9 @@ export const turma = pgTable(
     criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    // Alvo das FKs compostas (turma_id, instituicao_id) da Gestão Acadêmica:
+    // impede, no banco, ligar uma turma a dado de outra instituição.
+    unique('uq_turma_id_instituicao').on(t.id, t.instituicaoId),
     unique('uq_turma_instituicao_ano_nome').on(t.instituicaoId, t.anoLetivoId, t.nome),
     unique('uq_turma_professor_ano_nome').on(t.professorDonoId, t.anoLetivoId, t.nome),
     index('idx_turma_instituicao').on(t.instituicaoId),

@@ -4,7 +4,12 @@ import { Database, batalhaPvp, usuario, eq, and, sql, ne } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { StudentProfileService } from '../ai/student-profile.service';
-import type { LLMProviderPort, MatchmakeResponse } from '@notaa/contracts';
+import type {
+  AreaConhecimento,
+  FinishBattleRequest,
+  LLMProviderPort,
+  MatchmakeResponse,
+} from '@notaa/contracts';
 import { PROMPT_BATALHA, montarPromptBatalha, nomeArea } from '@notaa/prompts';
 
 @Injectable()
@@ -31,7 +36,7 @@ export class BattleService {
     .innerJoin(usuario, eq(usuario.id, batalhaPvp.usuarioId))
     .where(
       and(
-        eq(batalhaPvp.area, area as any),
+        eq(batalhaPvp.area, area as AreaConhecimento),
         ne(batalhaPvp.usuarioId, estudanteId)
       )
     )
@@ -42,14 +47,14 @@ export class BattleService {
       const ghost = fantasmas[0];
       return {
         batalhaId: ghost.id,
-        questoes: ghost.questoes as any,
+        questoes: ghost.questoes as MatchmakeResponse['questoes'],
         oponente: {
           nome: ghost.usuario.nome || 'Desafiante',
           avatarUrl: null,
           level: 10,
           isBot: false,
         },
-        tempoRespostas: ghost.tempoRespostas as any,
+        tempoRespostas: ghost.tempoRespostas as MatchmakeResponse['tempoRespostas'],
       };
     }
 
@@ -119,7 +124,7 @@ export class BattleService {
     };
   }
 
-  async finishBattle(estudanteId: string, data: any) {
+  async finishBattle(estudanteId: string, data: FinishBattleRequest) {
     const inserted = await this.db.insert(batalhaPvp).values({
       usuarioId: estudanteId,
       area: data.area,
