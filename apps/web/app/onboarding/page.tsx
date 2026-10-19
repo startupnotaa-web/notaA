@@ -3,16 +3,17 @@
 // cada "Continuar" persiste via PUT /onboarding/steps/:n (contrato exato em
 // @notaa/contracts OnboardingStepSchemas); ao montar, retoma de GET
 // /onboarding/state. Passo 7 (neurodivergência) é opcional por design (I10,
-// doc 10 §3) — pode ser pulado sem payload. Visual: progresso em gradiente
-// (doc 07 §3), Switches/Chips acessíveis (doc 07 §7).
+// doc 10 §3) — pode ser pulado sem payload. Visual: progresso em `primary`, uma
+// pergunta por tela, Switches/Chips acessíveis (doc 07 §7).
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OnboardingState } from '@notaa/contracts';
-import { Button, ChoiceChip, NotaASimbolo, Input, Label, OptionCard, Progress, Switch, cn } from '@notaa/ui';
+import { Button, ChoiceChip, Inset, Notice, NotaASimbolo, OptionCard, Progress, Switch, TextField } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../lib/api-client';
 import { useAuth } from '../../lib/auth-context';
 import { useUser } from '../../lib/user-context';
+import { TelaCarregando } from '../components/TelaCarregando';
 
 const TOTAL = 8;
 
@@ -159,7 +160,7 @@ export default function OnboardingPage() {
       setStep((s) => s + 1);
     } catch (e) {
       console.error(e);
-      setErro(e instanceof ApiError ? e.message : 'Não foi possível salvar. Tente novamente.');
+      setErro(e instanceof ApiError ? e.message : 'Não foi possível salvar. Tente de novo.');
     } finally {
       setSalvando(false);
     }
@@ -180,11 +181,7 @@ export default function OnboardingPage() {
   }
 
   if (authLoading || carregandoEstado) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <div className="text-text-muted">Carregando...</div>
-      </main>
-    );
+    return <TelaCarregando rotulo="Carregando seu cadastro" />;
   }
 
   const podeAvancar =
@@ -200,46 +197,43 @@ export default function OnboardingPage() {
     step === 8;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col px-6 py-8">
-      <div className="mb-8">
+    <main id="conteudo" className="mx-auto flex min-h-screen w-full max-w-lg flex-col px-4 py-space-6">
+      <div className="mb-space-7">
         <Progress value={step} max={TOTAL} label={`Passo ${step} de ${TOTAL}`} />
       </div>
 
       <div className="flex flex-1 flex-col">
         {step === 1 && (
-          <Step center>
-            <NotaASimbolo className="h-20 w-auto" titulo="Nota A" />
-            <h1 className="text-2xl font-bold">Boas-vindas ao Nota A</h1>
-            <p className="text-text-muted">Vamos montar um plano de estudos que se adapta a você.</p>
-            <div className="w-full space-y-4 pt-2 text-left">
-              <div className="space-y-1">
-                <Label htmlFor="nome">Como podemos te chamar?</Label>
-                <Input
-                  id="nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Seu nome"
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="idade">Qual é a sua idade?</Label>
-                <Input
-                  id="idade"
-                  type="number"
-                  min={1}
-                  value={idade}
-                  onChange={(e) => setIdade(e.target.value)}
-                  placeholder="Sua idade"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="serie">Em qual ano escolar você está?</Label>
-                <div role="radiogroup" aria-label="Série Escolar" className="space-y-2">
-                  <OptionCard title="Ensino Médio - 1º Ano" selected={serie === 'EM1'} onClick={() => setSerie('EM1')} />
-                  <OptionCard title="Ensino Médio - 2º Ano" selected={serie === 'EM2'} onClick={() => setSerie('EM2')} />
-                  <OptionCard title="Ensino Médio - 3º Ano" selected={serie === 'EM3'} onClick={() => setSerie('EM3')} />
-                  <OptionCard title="Pré-vestibular / Cursinho" selected={serie === 'CURSINHO'} onClick={() => setSerie('CURSINHO')} />
+          <Step>
+            <NotaASimbolo className="h-12 w-auto self-start" titulo="Nota A" />
+            <h1 className={TITULO}>Boas-vindas ao Nota A</h1>
+            <p className="m-0 text-body text-ink-muted">Vamos montar um plano de estudos que se adapta a você.</p>
+            <div className="flex w-full flex-col gap-space-5 pt-space-2">
+              <TextField
+                label="Como podemos te chamar?"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Seu nome"
+                autoComplete="given-name"
+                autoFocus
+              />
+              <TextField
+                label="Qual é a sua idade?"
+                type="number"
+                min={1}
+                value={idade}
+                onChange={(e) => setIdade(e.target.value)}
+                placeholder="Sua idade"
+              />
+              <div className="flex flex-col gap-space-2">
+                <p id="serie-rotulo" className="m-0 text-label text-ink">
+                  Em qual ano escolar você está?
+                </p>
+                <div role="radiogroup" aria-labelledby="serie-rotulo" className="flex flex-col gap-space-3">
+                  <OptionCard title="Ensino médio, 1º ano" selected={serie === 'EM1'} onClick={() => setSerie('EM1')} />
+                  <OptionCard title="Ensino médio, 2º ano" selected={serie === 'EM2'} onClick={() => setSerie('EM2')} />
+                  <OptionCard title="Ensino médio, 3º ano" selected={serie === 'EM3'} onClick={() => setSerie('EM3')} />
+                  <OptionCard title="Pré-vestibular ou cursinho" selected={serie === 'CURSINHO'} onClick={() => setSerie('CURSINHO')} />
                 </div>
               </div>
             </div>
@@ -248,9 +242,9 @@ export default function OnboardingPage() {
 
         {step === 2 && (
           <Step>
-            <h1 className="text-2xl font-bold">Qual é o seu curso dos sonhos?</h1>
-            <p className="text-text-muted">Selecione o curso que você tem como objetivo.</p>
-            <div role="radiogroup" aria-label="Curso" className="space-y-2 pt-2">
+            <h1 className={TITULO}>Qual é o seu curso dos sonhos?</h1>
+            <p className="m-0 text-body text-ink-muted">Selecione o curso que você tem como objetivo.</p>
+            <div role="radiogroup" aria-label="Curso" className="flex flex-col gap-space-3 pt-space-2">
               {CURSOS.map((c) => (
                 <OptionCard
                   key={c.id}
@@ -265,9 +259,9 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <Step>
-            <h1 className="text-2xl font-bold">Como você aprende melhor?</h1>
-            <p className="text-text-muted">Escolha quantas opções quiser.</p>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <h1 className={TITULO}>Como você aprende melhor?</h1>
+            <p className="m-0 text-body text-ink-muted">Escolha quantas opções quiser.</p>
+            <div className="flex flex-wrap gap-space-3 pt-space-2">
               {COMO_APRENDE.map((o) => (
                 <ChoiceChip
                   key={o}
@@ -283,9 +277,9 @@ export default function OnboardingPage() {
 
         {step === 4 && (
           <Step>
-            <h1 className="text-2xl font-bold">Onde você sente mais dificuldade?</h1>
-            <p className="text-text-muted">Isso ajuda a priorizar o que estudar primeiro.</p>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <h1 className={TITULO}>Onde você sente mais dificuldade?</h1>
+            <p className="m-0 text-body text-ink-muted">Isso ajuda a priorizar o que estudar primeiro.</p>
+            <div className="flex flex-wrap gap-space-3 pt-space-2">
               {DIFICULDADES.map((o) => (
                 <ChoiceChip
                   key={o}
@@ -301,11 +295,10 @@ export default function OnboardingPage() {
 
         {step === 5 && (
           <Step>
-            <h1 className="text-2xl font-bold">Qual sua rotina de estudo?</h1>
-            <div className="space-y-1 pt-2">
-              <Label htmlFor="minutos">Quantos minutos por dia você tem disponível para estudar?</Label>
-              <Input
-                id="minutos"
+            <h1 className={TITULO}>Qual sua rotina de estudo?</h1>
+            <div className="pt-space-2">
+              <TextField
+                label="Quantos minutos por dia você tem disponível para estudar?"
                 type="number"
                 min={0}
                 value={minutosPorDia}
@@ -318,9 +311,9 @@ export default function OnboardingPage() {
 
         {step === 6 && (
           <Step>
-            <h1 className="text-2xl font-bold">Como você se vê hoje?</h1>
-            <p className="text-text-muted">Não existe resposta errada — isso é só um ponto de partida.</p>
-            <div role="radiogroup" aria-label="Autopercepção" className="space-y-2 pt-2">
+            <h1 className={TITULO}>Como você se vê hoje?</h1>
+            <p className="m-0 text-body text-ink-muted">Não existe resposta errada. É só um ponto de partida.</p>
+            <div role="radiogroup" aria-label="Autopercepção" className="flex flex-col gap-space-3 pt-space-2">
               {AUTOPERCEPCAO.map((o) => (
                 <OptionCard
                   key={o.id}
@@ -335,75 +328,69 @@ export default function OnboardingPage() {
 
         {step === 7 && (
           <Step>
-            <h1 className="text-2xl font-bold">Como podemos te apoiar melhor?</h1>
-            <p className="text-text-muted">
+            <h1 className={TITULO}>Como podemos te apoiar melhor?</h1>
+            <p className="m-0 text-body text-ink-muted">
               Etapa opcional. Compartilhar isso nos ajuda a adaptar a experiência para você.
             </p>
             {Number(idade) < 18 ? (
               // LGPD/ECA (doc 10 §3): dado sensível de menor exige consentimento
               // do responsável — o backend rejeita a gravação para <18, então o
               // formulário nem é oferecido. O passo continua opcional (pular).
-              <div className="rounded-lg border border-border bg-surface p-4">
-                <p className="text-sm text-text-muted">
-                  Como você tem menos de 18 anos, o registro dessas informações
-                  precisa do consentimento de um responsável — estamos preparando
-                  esse recurso. Por enquanto, é só pular esta etapa: você poderá
-                  adicionar depois, junto com seu responsável.
-                </p>
-              </div>
+              <Notice tone="info">
+                Como você tem menos de 18 anos, o registro dessas informações precisa do consentimento de um responsável.
+                Estamos preparando esse recurso. Por enquanto, pule esta etapa: você poderá adicionar depois, junto com o
+                seu responsável.
+              </Notice>
             ) : (
               <>
-                <ul className="flex flex-col gap-2 pt-2">
+                <ul className="m-0 flex list-none flex-col p-0 pt-space-2">
                   <PrefRow id="pref-dislexia" title="Dislexia" checked={dislexia} onChange={setDislexia} />
                   <PrefRow id="pref-tdah" title="TDAH" checked={tdah} onChange={setTdah} />
                   <PrefRow id="pref-tea" title="TEA" checked={tea} onChange={setTea} />
                 </ul>
                 {(dislexia || tdah || tea) && (
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4">
-                    <p id="pref-consent" className="text-sm text-text-muted">
+                  <Inset className="flex items-center justify-between gap-space-4">
+                    <p id="pref-consent" className="m-0 text-body-sm text-ink">
                       Autorizo usar essas informações só para personalizar minha experiência no Nota A.
                     </p>
                     <Switch checked={consentimento} onCheckedChange={setConsentimento} aria-labelledby="pref-consent" />
-                  </div>
+                  </Inset>
                 )}
               </>
             )}
-            <Button variant="quiet" size="sm" onClick={pularPasso7} disabled={salvando} className="self-start">
+            <Button variant="quiet" onClick={pularPasso7} disabled={salvando} className="self-start">
               Pular esta etapa
             </Button>
           </Step>
         )}
 
         {step === 8 && (
-          <Step center>
-            <span
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-brand text-2xl"
-              aria-hidden="true"
-            >
-              🚀
-            </span>
-            <h1 className="text-2xl font-bold">Tudo pronto, {nome || 'estudante'}!</h1>
-            <div className="w-full rounded-lg border border-border bg-surface-2 p-4 text-left shadow-1">
-              <h2 className="mb-3 text-lg font-bold text-text">Resumo das suas escolhas:</h2>
-              <ul className="space-y-2 text-sm text-text-muted">
-                <li><strong className="text-text">Idade e Série:</strong> {idade} anos, {serie}</li>
-                <li><strong className="text-text">Curso:</strong> {CURSOS.find(c => c.id === curso)?.titulo || '-'}</li>
-                <li><strong className="text-text">Estilo:</strong> {comoAprende.join(', ') || '-'}</li>
-                <li><strong className="text-text">Tempo:</strong> {minutosPorDia ? `${minutosPorDia} min/dia` : '-'}</li>
-                <li><strong className="text-text">Neurodivergência:</strong> {[dislexia && 'Dislexia', tdah && 'TDAH', tea && 'TEA'].filter(Boolean).join(', ') || 'Nenhuma'}</li>
-              </ul>
-            </div>
+          <Step>
+            <h1 className={TITULO}>Tudo pronto, {nome || 'estudante'}!</h1>
+            <p className="m-0 text-body text-ink-muted">Confira o resumo das suas escolhas antes de começar.</p>
+            <Inset>
+              <dl className="m-0 flex flex-col gap-space-3 text-body-sm">
+                <ResumoLinha rotulo="Idade e série" valor={`${idade} anos, ${serie}`} />
+                <ResumoLinha rotulo="Curso" valor={CURSOS.find((c) => c.id === curso)?.titulo || '–'} />
+                <ResumoLinha rotulo="Estilo" valor={comoAprende.join(', ') || '–'} />
+                <ResumoLinha rotulo="Tempo" valor={minutosPorDia ? `${minutosPorDia} min por dia` : '–'} />
+                <ResumoLinha
+                  rotulo="Neurodivergência"
+                  valor={[dislexia && 'Dislexia', tdah && 'TDAH', tea && 'TEA'].filter(Boolean).join(', ') || 'Nenhuma'}
+                />
+              </dl>
+            </Inset>
           </Step>
         )}
       </div>
 
       {erro && (
-        <p role="alert" className="mt-4 text-sm text-error">
-          {erro}
-        </p>
+        <div className="mt-space-5">
+          <Notice tone="danger">{erro}</Notice>
+        </div>
       )}
 
-      <div className="mt-8 flex items-center justify-between gap-3">
+      <div className="mt-space-6 flex items-center justify-between gap-space-3">
         <Button
           variant="quiet"
           onClick={() => setStep((s) => Math.max(1, s - 1))}
@@ -411,27 +398,25 @@ export default function OnboardingPage() {
         >
           Voltar
         </Button>
-        <Button
-          variant="primary"
-          onClick={avancar}
-          disabled={!podeAvancar || salvando}
-        >
-          {salvando ? 'Salvando...' : step === TOTAL ? 'Começar minha jornada' : 'Continuar'}
+        <Button variant="primary" onClick={avancar} disabled={!podeAvancar} loading={salvando}>
+          {salvando ? 'Salvando' : step === TOTAL ? 'Começar minha jornada' : 'Continuar'}
         </Button>
       </div>
     </main>
   );
 }
 
-function Step({ children, center = false }: { children: ReactNode; center?: boolean }) {
+const TITULO = 'm-0 font-display text-[28px] leading-9 tracking-[-0.02em] text-ink sm:text-heading-1';
+
+function Step({ children }: { children: ReactNode }) {
+  return <div className="flex flex-1 flex-col gap-space-4">{children}</div>;
+}
+
+function ResumoLinha({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <div
-      className={cn(
-        'flex flex-1 flex-col gap-3',
-        center && 'items-center justify-center text-center',
-      )}
-    >
-      {children}
+    <div className="flex flex-wrap justify-between gap-x-space-4">
+      <dt className="text-ink-muted">{rotulo}</dt>
+      <dd className="m-0 font-bold text-ink">{valor}</dd>
     </div>
   );
 }
@@ -448,8 +433,8 @@ function PrefRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <li className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4">
-      <p id={id} className="font-medium text-text">
+    <li className="flex min-h-[44px] items-center justify-between gap-space-4 border-b border-line py-space-2 last:border-b-0">
+      <p id={id} className="m-0 text-body font-bold text-ink">
         {title}
       </p>
       <Switch checked={checked} onCheckedChange={onChange} aria-labelledby={id} />
