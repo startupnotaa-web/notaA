@@ -15,6 +15,8 @@ export function Atalho({
   descricao,
   metrica,
   href,
+  onSelecionar,
+  disabled = false,
   emBreve = false,
 }: {
   icone: ReactNode;
@@ -22,6 +24,9 @@ export function Atalho({
   descricao: string;
   metrica?: string;
   href?: string;
+  /** Em vez de link, o atalho é um botão que executa uma ação (ex.: começar uma sessão). */
+  onSelecionar?: () => void;
+  disabled?: boolean;
   emBreve?: boolean;
 }) {
   const corpo = (
@@ -45,15 +50,23 @@ export function Atalho({
     </>
   );
   const linha = 'flex items-start gap-space-4 border-b border-line py-space-4 last:border-b-0';
+  const destaque =
+    '-mx-space-3 rounded-md px-space-3 transition-colors duration-fast ease-out hover:bg-violet-tint';
   return (
     <li>
-      {href && !emBreve ? (
+      {onSelecionar && !emBreve ? (
+        <button
+          type="button"
+          onClick={onSelecionar}
+          disabled={disabled}
+          className={cn(linha, 'group w-full text-left disabled:pointer-events-none disabled:opacity-50', destaque)}
+        >
+          {corpo}
+        </button>
+      ) : href && !emBreve ? (
         <Link
           href={href}
-          className={cn(
-            linha,
-            'group -mx-space-3 rounded-md px-space-3 no-underline transition-colors duration-fast ease-out hover:bg-violet-tint',
-          )}
+          className={cn(linha, 'group no-underline', destaque)}
         >
           {corpo}
         </Link>

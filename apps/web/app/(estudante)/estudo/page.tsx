@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ClipboardList, Landmark, MessagesSquare, PenLine, Zap } from 'lucide-react';
+import { ClipboardList, Landmark, PenLine, Zap } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
 import { Carregando, Notice, PageHeader, Section, Skeleton } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
