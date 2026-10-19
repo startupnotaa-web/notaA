@@ -49,9 +49,12 @@ function conviteInvalido(): never {
   });
 }
 
-/** Compara e-mails sem diferenciar caixa nem espaços nas pontas. */
+/**
+ * Compara e-mails sem diferenciar caixa, espaços nas pontas nem a forma Unicode
+ * (um "ã" pode vir como um caractere ou como "a" + til combinante).
+ */
 function normalizarEmail(email: string | null | undefined): string {
-  return (email ?? '').trim().toLowerCase();
+  return (email ?? '').trim().normalize('NFC').toLowerCase();
 }
 
 /** SHA-256 em hex. O token tem 256 bits de entropia, então hash sem sal basta. */
