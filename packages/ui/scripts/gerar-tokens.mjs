@@ -2,16 +2,19 @@
 //
 //   node scripts/gerar-tokens.mjs           reescreve o CSS
 //   node scripts/gerar-tokens.mjs --check   falha se o CSS commitado divergir do JSON
+//   node scripts/gerar-tokens.mjs --handoff também reescreve design-handoff/tokens.{json,css}; o CSS
+//                                           do handoff não leva as variáveis do next/font, que só o app tem
 //
 // O tokens.json é a fonte única dos valores de cor. Nenhum outro arquivo do
 // monorepo deve repetir um hexadecimal (ver docs/07-design-system.md).
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const entrada = join(raiz, 'tokens', 'tokens.json');
 const saida = join(raiz, 'src', 'tokens', 'tokens.css');
+const pastaHandoff = join(raiz, '..', '..', 'design-handoff');
 
 // next/font injeta Sora e Atkinson em variáveis próprias (apps/web/app/layout.tsx).
 // Elas entram na frente da pilha; o resto do stack segue como fallback.
@@ -34,26 +37,39 @@ const linhas = (declaracoes) => {
   return out.join('\n');
 };
 
-const claro = [];
-const escuro = [];
-const dif = (nome, v) => {
-  claro.push(`--${nome}: ${v.light};`);
-  if (v.dark !== v.light) escuro.push(`--${nome}: ${v.dark};`);
-};
+/** `comNextFont` antepõe as variáveis do next/font às famílias de fonte. */
+function gerar(comNextFont) {
+  const claro = [];
+  const escuro = [];
+  const dif = (nome, v) => {
+    claro.push(`--${nome}: ${v.light};`);
+    if (v.dark !== v.light) escuro.push(`--${nome}: ${v.dark};`);
+  };
 
-for (const t of tokens.color.tokens) dif(t.name, t.value);
-for (const t of tokens.shadow.tokens) dif(t.name, t.value);
+  for (const t of tokens.color.tokens) dif(t.name, t.value);
+  for (const t of tokens.shadow.tokens) dif(t.name, t.value);
 
-for (const [id, pilha] of Object.entries(tokens.type.families)) {
-  const base = VARIAVEL_DA_FONTE[id];
-  claro.push(`--font-${id}: ${base ? `var(${base}), ` : ''}${pilha};`);
-}
-for (const t of tokens.spacing.tokens) claro.push(`--${t.name}: ${t.value};`);
-for (const t of tokens.radius.tokens) claro.push(`--${t.name}: ${t.value};`);
-for (const t of tokens.duration.tokens) claro.push(`--${t.name}: ${t.value};`);
-for (const t of tokens.easing.tokens) claro.push(`--${t.name}: ${t.value};`);
+  for (const [id, pilha] of Object.entries(tokens.type.families)) {
+    const base = comNextFont ? VARIAVEL_DA_FONTE[id] : undefined;
+    claro.push(`--font-${id}: ${base ? `var(${base}), ` : ''}${pilha};`);
+  }
+  // Estilos de texto: tamanho, entrelinha, peso e tracking. O preset do Tailwind aponta para estas variáveis.
+  for (const grupo of tokens.type.groups) {
+    for (const e of grupo.styles) {
+      claro.push(
+        `--text-${e.name}-size: ${e.fontSize};`,
+        `--text-${e.name}-lh: ${e.lineHeight};`,
+        `--text-${e.name}-weight: ${e.fontWeight};`,
+        `--text-${e.name}-tracking: ${e.letterSpacing ?? '0'};`,
+      );
+    }
+  }
+  for (const t of tokens.spacing.tokens) claro.push(`--${t.name}: ${t.value};`);
+  for (const t of tokens.radius.tokens) claro.push(`--${t.name}: ${t.value};`);
+  for (const t of tokens.duration.tokens) claro.push(`--${t.name}: ${t.value};`);
+  for (const t of tokens.easing.tokens) claro.push(`--${t.name}: ${t.value};`);
 
-const css = `/* Nota A tokens. Gerado por scripts/gerar-tokens.mjs a partir de tokens/tokens.json. Não edite à mão. */
+  return `/* Nota A tokens. Gerado por scripts/gerar-tokens.mjs a partir de tokens/tokens.json. Não edite à mão. */
 /* Tema escolhido por data-theme em <html> ou em qualquer contêiner; light é o padrão. */
 :root,
 [data-theme='light'] {
@@ -64,6 +80,9 @@ ${linhas(claro)}
 ${linhas(escuro)}
 }
 `;
+}
+
+const css = gerar(true);
 
 if (process.argv.includes('--check')) {
   let atual = '';
@@ -81,4 +100,9 @@ if (process.argv.includes('--check')) {
   mkdirSync(dirname(saida), { recursive: true });
   writeFileSync(saida, css);
   console.log(`gerado ${saida}`);
+  if (process.argv.includes('--handoff') && existsSync(pastaHandoff)) {
+    copyFileSync(entrada, join(pastaHandoff, 'tokens.json'));
+    writeFileSync(join(pastaHandoff, 'tokens.css'), gerar(false));
+    console.log(`atualizado ${pastaHandoff}`);
+  }
 }

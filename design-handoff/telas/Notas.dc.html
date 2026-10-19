@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Notas da turma</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/nota-a/tokens.css">
+<link rel="stylesheet" href="ds/nota-a/components/bundle.css">
+<script src="ds/nota-a/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Sora:wght@500;600&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 1060px; display: flex; flex-wrap: wrap; align-items: stretch; background: var(--paper); color: var(--ink); font-family: var(--font-text);">
+  <x-import component-from-global-scope="NotaA.SideNav" items="{{nav}}" current="turmas" logo="/_blob/54dac930fcaa51e6b872c9c04da5f36a" style="display: flex; align-self: stretch; flex: 0 0 248px;"></x-import>
+
+  <main style="flex: 999 1 640px; min-width: 0; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 32px;">
+    <header style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end; max-width: 1184px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <h1 style="margin: 0; font: 600 32px/40px var(--font-display); letter-spacing: -0.01em;">Matemática, 3º A</h1>
+          <x-import component-from-global-scope="NotaA.Chip" tone="info">Aberto para lançamento</x-import>
+        </div>
+        <p style="margin: 0; color: var(--ink-muted);">Regra Ensino médio 2026, versão 2. As médias se atualizam enquanto você digita.</p>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <x-import component-from-global-scope="NotaA.Button" variant="secondary">Salvar notas</x-import>
+        <x-import component-from-global-scope="NotaA.Button" variant="primary" disabled="{{yes}}">Enviar à coordenação</x-import>
+      </div>
+    </header>
+
+    <div style="max-width: 1184px;">
+      <x-import component-from-global-scope="NotaA.Tabs" label="Período" tabs="{{periodos}}" default-value="t1"></x-import>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; max-width: 1184px;">
+      <section aria-label="Notas dos alunos" style="flex: 3 1 640px; min-width: 0;">
+        <x-import component-from-global-scope="NotaA.GradeGrid" columns="{{colunas}}" rows="{{alunos}}" min="{{zero}}" max="{{dez}}" passing="{{seis}}" caption="Notas de 0 a 10. Médias abaixo de 6,0 aparecem em vermelho com o aviso ao lado." name-label="Aluno" average-label="Média do trimestre"></x-import>
+      </section>
+
+      <aside aria-label="Resumo do trimestre" style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <h2 style="margin: 0; font: 600 19px/26px var(--font-display);">Resumo da turma</h2>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">6,7</span>
+            <span style="color: var(--ink-muted);">Média da turma</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">3 de 11</span>
+            <span style="color: var(--ink-muted);">Alunos com média abaixo de 6,0</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">2</span>
+            <span style="color: var(--ink-muted);">Notas ainda não lançadas</span>
+          </div>
+        </div>
+        <x-import component-from-global-scope="NotaA.Notice" tone="danger" title="Nota fora do limite">A nota do trabalho de João Pedro Alves está em 11. Use um valor de 0 a 10 para poder enviar.</x-import>
+        <x-import component-from-global-scope="NotaA.Notice" tone="warning" title="Faltam 2 notas">Participação de Gabriela Moura e prova de Karen Dias. A média usa só as notas lançadas.</x-import>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const g = (p, t, q) => ({ prova: p, trabalho: t, participacao: q });
+    return {
+      theme: this.props.theme ?? 'light',
+      yes: true, zero: 0, dez: 10, seis: 6,
+      nav: [
+        { id: 'inicio', label: 'Início' },
+        { group: 'Acadêmico' },
+        { id: 'turmas', label: 'Turmas' }, { id: 'boletins', label: 'Boletins' }, { id: 'frequencia', label: 'Frequência' }, { id: 'agenda', label: 'Agenda' },
+        { group: 'Comunidade' },
+        { id: 'comunicados', label: 'Comunicados' }
+      ],
+      periodos: [{ id: 't1', label: '1º trimestre' }, { id: 't2', label: '2º trimestre' }, { id: 't3', label: '3º trimestre' }],
+      colunas: [
+        { id: 'prova', label: 'Prova', weight: 5 },
+        { id: 'trabalho', label: 'Trabalho', weight: 3 },
+        { id: 'participacao', label: 'Participação', weight: 2 }
+      ],
+      alunos: [
+        { id: 'a1', name: 'Ana Clara Souza', grades: g('8,0', '5,5', '9,0') },
+        { id: 'a2', name: 'Bruno Lima', grades: g('4,5', '8,0', '7,0') },
+        { id: 'a3', name: 'Camila Torres', grades: g('6,0', '6,0', '6,0') },
+        { id: 'a4', name: 'Davi Nascimento', grades: g('3,0', '5,0', '8,0') },
+        { id: 'a5', name: 'Eduarda Reis', grades: g('9,5', '9,0', '10,0') },
+        { id: 'a6', name: 'Felipe Andrade', grades: g('5,5', '6,5', '9,0') },
+        { id: 'a7', name: 'Gabriela Moura', grades: g('7,0', '3,0', '') },
+        { id: 'a8', name: 'Heitor Campos', grades: g('10,0', '8,5', '9,5') },
+        { id: 'a9', name: 'Isabela Prado', grades: g('2,5', '4,0', '5,0') },
+        { id: 'a10', name: 'João Pedro Alves', grades: g('6,5', '11', '7,0') },
+        { id: 'a11', name: 'Karen Dias', grades: g('', '7,0', '8,0') }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

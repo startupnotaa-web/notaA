@@ -2,19 +2,31 @@
 /* Tema escolhido por data-theme em <html> ou em qualquer contêiner; light é o padrão. */
 :root,
 [data-theme='light'] {
-  --paper: #F5F6FB; --surface: #FFFFFF; --surface-sunken: #ECEEF7; --line: #DCE0EE; --line-strong: #7F87AC;
+  --paper: #FAFBFE; --surface: #FFFFFF; --surface-sunken: #F2F4FA; --line: #E4E7F3; --line-strong: #7F87AC;
   --ink: #141A3A; --ink-muted: #545B7E; --brand-cyan: #14A3EA; --brand-violet: #7D5DE6;
   --brand-magenta: #E210E2; --brand-blue: #4C87FF; --primary: #5B3FD6; --primary-hover: #4A2FC0;
-  --on-primary: #FFFFFF; --violet-tint: #EEEAFE; --cyan-tint: #E3F4FD; --focus: #0A7CC2; --info: #0A6FAE;
-  --success: #0B7352; --success-tint: #E1F5EE; --warning: #9A5B00; --warning-tint: #FDF1DD; --danger: #BE2A33;
-  --danger-tint: #FDE7E8; --scrim: rgba(20, 26, 58, 0.48);
+  --on-primary: #FFFFFF; --violet-tint: #F3F0FE; --cyan-tint: #ECF7FD; --focus: #0A7CC2; --info: #0A6FAE;
+  --success: #0B7352; --success-tint: #E9F7F1; --warning: #9A5B00; --warning-tint: #FEF5E6; --danger: #BE2A33;
+  --danger-tint: #FEEEEF; --scrim: rgba(20, 26, 58, 0.48);
   --shadow-raise: 0 1px 2px rgba(20, 26, 58, 0.06), 0 8px 24px rgba(20, 26, 58, 0.06);
   --font-display: var(--nf-sora), Sora, "Segoe UI", system-ui, sans-serif;
   --font-text: var(--nf-atkinson), "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
-  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
-  --space-7: 48px; --space-8: 72px; --radius-sm: 6px; --radius-md: 10px; --radius-lg: 18px;
-  --radius-pill: 999px; --duration-fast: 160ms; --duration-base: 240ms; --duration-slow: 420ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); --ease-in-out: cubic-bezier(0.6, 0, 0.3, 1);
+  --text-display-size: 56px; --text-display-lh: 60px; --text-display-weight: 600;
+  --text-display-tracking: -0.025em; --text-heading-1-size: 36px; --text-heading-1-lh: 44px;
+  --text-heading-1-weight: 600; --text-heading-1-tracking: -0.02em; --text-heading-2-size: 26px;
+  --text-heading-2-lh: 34px; --text-heading-2-weight: 600; --text-heading-2-tracking: -0.015em;
+  --text-heading-3-size: 20px; --text-heading-3-lh: 28px; --text-heading-3-weight: 600;
+  --text-heading-3-tracking: -0.01em; --text-figure-size: 30px; --text-figure-lh: 34px;
+  --text-figure-weight: 600; --text-figure-tracking: -0.01em; --text-lead-size: 18px; --text-lead-lh: 30px;
+  --text-lead-weight: 400; --text-lead-tracking: 0; --text-body-size: 16px; --text-body-lh: 26px;
+  --text-body-weight: 400; --text-body-tracking: 0; --text-body-sm-size: 14px; --text-body-sm-lh: 22px;
+  --text-body-sm-weight: 400; --text-body-sm-tracking: 0; --text-label-size: 14px; --text-label-lh: 20px;
+  --text-label-weight: 700; --text-label-tracking: 0; --text-caption-size: 12.5px; --text-caption-lh: 18px;
+  --text-caption-weight: 400; --text-caption-tracking: 0; --space-1: 4px; --space-2: 8px; --space-3: 12px;
+  --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 72px; --radius-sm: 8px;
+  --radius-md: 12px; --radius-lg: 20px; --radius-pill: 999px; --duration-fast: 160ms; --duration-base: 240ms;
+  --duration-slow: 420ms; --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.6, 0, 0.3, 1);
 }
 
 [data-theme='dark'] {

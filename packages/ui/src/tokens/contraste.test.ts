@@ -41,13 +41,13 @@ const TINTS = ['violet-tint', 'cyan-tint', 'success-tint', 'warning-tint', 'dang
 const pares: { texto: string; fundos: string[]; minimo: number }[] = [
   { texto: 'ink', fundos: [...FUNDOS_NEUTROS, ...TINTS], minimo: 4.5 },
   { texto: 'ink-muted', fundos: [...FUNDOS_NEUTROS, ...TINTS], minimo: 4.5 },
-  { texto: 'primary', fundos: ['paper', 'surface', 'violet-tint'], minimo: 4.5 },
+  { texto: 'primary', fundos: ['paper', 'surface', 'surface-sunken', 'violet-tint'], minimo: 4.5 },
   { texto: 'on-primary', fundos: ['primary', 'primary-hover'], minimo: 4.5 },
-  { texto: 'info', fundos: ['paper', 'surface', 'cyan-tint'], minimo: 4.5 },
-  { texto: 'success', fundos: ['paper', 'surface', 'success-tint'], minimo: 4.5 },
-  { texto: 'warning', fundos: ['paper', 'surface', 'warning-tint'], minimo: 4.5 },
-  { texto: 'danger', fundos: ['paper', 'surface', 'danger-tint'], minimo: 4.5 },
-  { texto: 'line-strong', fundos: ['paper', 'surface'], minimo: 3 },
+  { texto: 'info', fundos: [...FUNDOS_NEUTROS, 'cyan-tint'], minimo: 4.5 },
+  { texto: 'success', fundos: [...FUNDOS_NEUTROS, 'success-tint'], minimo: 4.5 },
+  { texto: 'warning', fundos: [...FUNDOS_NEUTROS, 'warning-tint'], minimo: 4.5 },
+  { texto: 'danger', fundos: [...FUNDOS_NEUTROS, 'danger-tint'], minimo: 4.5 },
+  { texto: 'line-strong', fundos: FUNDOS_NEUTROS, minimo: 3 },
   { texto: 'focus', fundos: FUNDOS_NEUTROS, minimo: 3 },
 ];
 
