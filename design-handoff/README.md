@@ -41,11 +41,15 @@ Nota A é uma plataforma de preparo para o ENEM e de gestão acadêmica para ins
 ## Espaço e layout
 
 - Escala de 4px: `space-1` (4) a `space-8` (72). Painéis com `space-5` de padding; blocos de uma página separados por `space-5` a `space-7`, com uma linha fina quando precisam de divisão. No Tailwind: `p-space-5`, `gap-space-6`, `mt-space-7`.
-- Desktop-first para instituição, coordenação e professor: `SideNav` de 248px à esquerda a partir de 1.024px; conteúdo com largura máxima de 1.280px e margem `space-7`.
+- **O computador não é o celular esticado.** Alvo: telas 16:9 na horizontal (1366×768, 1536×864, 1920×1080, 2560×1440). A partir de 1.024px o layout é de aplicativo; abaixo disso, tablet e celular.
+- **Largura fluida.** O conteúdo usa toda a largura disponível até `page-max` (1760px) e só centraliza acima disso. Grid de 12 colunas com gutter de `gutter` (24px). Isto substitui o antigo limite de 1.280px. Nada de coluna única estreita com laterais vazias.
+- **Estrutura de aplicativo** (`AppFrame`): `SideNav` fixa à esquerda (248px, recolhível para 72px), `TopBar` de 56px com busca global, Ctrl/Cmd+K, seletor de contexto, ajuda e menu da conta. A altura é a da tela: só a área de trabalho rola; a navegação e a barra não.
+- **Zonas.** ≥1.280px: 3 zonas (navegação | conteúdo principal | contexto e ações). 1.024–1.279px: 2 zonas, e o painel de contexto vira drawer. 768–1.023px: `SideNav` só com ícones. <768px: navegação inferior e coluna única.
+- **Painéis lado a lado.** Lista e detalhe (master-detail), formulário e prévia ao vivo, tabela e painel lateral de resumo. Detalhe curto abre em `SidePanel` (drawer), sem trocar de página.
+- **Densidade de computador.** Tabelas largas (`DataTable`) com ordenação, filtros fixos no topo, seleção em lote, cabeçalho e primeira coluna fixos, colunas configuráveis e densidade confortável (`row-comfortable`, 52px) ou compacta (`row-compact`, 36px). Atalhos de teclado listados no painel "Atalhos" (tecla ?).
 - Mobile-first para aluno e família: navegação inferior com até 5 destinos abaixo de 768px, margem lateral `space-4`.
-- Entre 768px e 1.024px a barra lateral recolhe para ícones.
 - Conteúdo alinhado à esquerda, com poucos elementos por tela. Centralizar só a landing.
-- Testado em 360, 768, 1024, 1440 e 1920px.
+- Testado em 360, 768, 1024, 1366×768, 1536×864, 1920×1080 e 2560×1440.
 
 ## Forma
 
@@ -127,3 +131,5 @@ module.exports = {
 | Painéis | Painéis separados por `line` | Seções com espaço e uma linha fina; painel só para formulário ou tabela |
 | Skeleton | Pulso | Estático |
 | Barras de progresso | `gradient` opcional | Sempre `primary`; gradiente só no `ProgressTrail`, na `Aurora` e na marca |
+| Largura do conteúdo | máximo de 1.280px | fluido até 1.760px (`page-max`), grid de 12 colunas, 3 zonas a partir de 1.280px |
+| Desktop | `SideNav` e conteúdo em coluna | Estrutura de aplicativo: `AppFrame`, `TopBar` com busca e paleta de comandos, tabelas densas e painéis lado a lado |

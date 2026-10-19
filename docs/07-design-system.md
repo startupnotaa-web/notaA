@@ -45,7 +45,7 @@
 - `radius-sm` 8 em campos, `radius-md` 12 em botões e avisos, `radius-lg` 20 em painéis, cartões e diálogos, `radius-pill` em chips.
 - Painéis no fluxo não têm sombra; separam-se por `line`. `shadow-raise` só no que flutua: **Menu, Dialog e Toast**.
 - Sem borda colorida à esquerda em cartões e sem gradiente como fundo de painel.
-- **Instituição e professor (desktop-first):** `SideNav` de 248px a partir de 1.024px, só ícones entre 768 e 1.024px, navegação inferior com até 5 destinos abaixo de 768px. Conteúdo com até 1.280px e margem `space-7`.
+- **Computador (a partir de 1.024px):** layout de aplicativo, não coluna de celular. `AppFrame` com `SideNav` fixa (248px, recolhível a 72px) e `TopBar` (busca global, Ctrl/Cmd+K, contexto, ajuda e conta); só a área de trabalho rola. Conteúdo fluido até `page-max` (1.760px), grid de 12 colunas e gutter de 24px. 3 zonas a partir de 1.280px; de 1.024 a 1.279px 2 zonas, com o contexto em drawer; de 768 a 1.023px `SideNav` só com ícones; abaixo de 768px navegação inferior e coluna única. Tabelas densas (`DataTable`), painel lateral (`SidePanel`) e master-detail (`MasterDetail`). Alvos de teste: 1366×768, 1536×864, 1920×1080, 2560×1440, 1024, 768 e 360.
 - **Aluno e família (mobile-first):** navegação inferior com até 5 destinos, margem lateral `space-4`.
 
 ## 6. Movimento

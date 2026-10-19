@@ -66,6 +66,7 @@ function gerar(comNextFont) {
   }
   for (const t of tokens.spacing.tokens) claro.push(`--${t.name}: ${t.value};`);
   for (const t of tokens.radius.tokens) claro.push(`--${t.name}: ${t.value};`);
+  for (const t of tokens.layout?.tokens ?? []) claro.push(`--${t.name}: ${t.value};`);
   for (const t of tokens.duration.tokens) claro.push(`--${t.name}: ${t.value};`);
   for (const t of tokens.easing.tokens) claro.push(`--${t.name}: ${t.value};`);
 

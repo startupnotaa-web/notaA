@@ -3,7 +3,7 @@
 //
 // Texto:    text-display, text-heading-1…3, text-figure, text-lead, text-body, text-body-sm, text-label, text-caption
 // Espaço:   p-space-5, gap-space-6, mt-space-7… (a escala de 4px do design system; p-5 continua sendo o do Tailwind)
-// Movimento: duration-fast|base|slow e ease-out|ease-in-out (as curvas dos tokens, não as do Tailwind)
+// Layout:   max-w-pagina (1760px), w-sidenav, h-topbar; Movimento: duration-fast|base|slow e ease-out|ease-in-out (as curvas dos tokens, não as do Tailwind)
 const estilo = (nome) => [
   `var(--text-${nome}-size)`,
   {
@@ -47,7 +47,10 @@ module.exports = {
         caption: estilo('caption')
       },
       spacing: espaco,
-      maxWidth: { pagina: '1280px', texto: '72ch' },
+      maxWidth: { pagina: 'var(--page-max)', texto: '72ch' },
+      width: { sidenav: 'var(--sidenav-w)', 'sidenav-recolhida': 'var(--sidenav-w-collapsed)' },
+      height: { topbar: 'var(--topbar-h)' },
+      minHeight: { topbar: 'var(--topbar-h)' },
       borderRadius: { sm: 'var(--radius-sm)', md: 'var(--radius-md)', lg: 'var(--radius-lg)', pill: 'var(--radius-pill)' },
       boxShadow: { raise: 'var(--shadow-raise)' },
       transitionDuration: { fast: 'var(--duration-fast)', base: 'var(--duration-base)', slow: 'var(--duration-slow)' },
