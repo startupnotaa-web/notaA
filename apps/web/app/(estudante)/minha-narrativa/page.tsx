@@ -1,19 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Brain, Compass, Eye, GraduationCap, Landmark, ListOrdered, MessageCircle, Orbit, PenLine, Rocket, Scale, Sprout, Star, Zap, type LucideIcon } from 'lucide-react';
 import type { DashboardResponse, Eixo4D } from '@notaa/contracts';
-import { Card, SectionHeader, Skeleton, Badge, cn } from '@notaa/ui';
+import { Carregando, Chip, Notice, PageHeader, Section, Skeleton, cn } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Pagina } from '../../components/Pagina';
+import { Voltar } from '../../components/Voltar';
 
-const ARQUETIPOS: Record<string, { titulo: string, descricao: string, emoji: string }> = {
-  Visual: { titulo: 'O Observador', descricao: 'Você capta o mundo através de imagens e mapas mentais.', emoji: '👁️' },
-  Verbal: { titulo: 'O Eloquente', descricao: 'Você tem facilidade em absorver conhecimento através das palavras e textos.', emoji: '🗣️' },
-  Analítico: { titulo: 'O Estrategista', descricao: 'Você desconstrói problemas complexos em partes menores e lógicas.', emoji: '🧠' },
-  Holístico: { titulo: 'O Visionário', descricao: 'Você enxerga o todo antes das partes, conectando ideias distantes.', emoji: '🌌' },
-  Sequencial: { titulo: 'O Metódico', descricao: 'Você aprende melhor seguindo passos claros e processos ordenados.', emoji: '📝' },
-  Aleatório: { titulo: 'O Explorador', descricao: 'Sua mente gosta de pular entre conceitos e descobrir caminhos alternativos.', emoji: '🧭' },
-  Reflexivo: { titulo: 'O Sábio', descricao: 'Você pondera e avalia todas as opções antes de agir ou responder.', emoji: '🦉' },
-  Impulsivo: { titulo: 'O Relâmpago', descricao: 'Você tem raciocínio rápido e aprende melhor testando na prática imediatamente.', emoji: '⚡' },
+const ARQUETIPOS: Record<string, { titulo: string; descricao: string; Icone: LucideIcon }> = {
+  Visual: { titulo: 'O Observador', descricao: 'Você capta o mundo através de imagens e mapas mentais.', Icone: Eye },
+  Verbal: { titulo: 'O Eloquente', descricao: 'Você tem facilidade em absorver conhecimento através das palavras e textos.', Icone: MessageCircle },
+  Analítico: { titulo: 'O Estrategista', descricao: 'Você desconstrói problemas complexos em partes menores e lógicas.', Icone: Brain },
+  Holístico: { titulo: 'O Visionário', descricao: 'Você enxerga o todo antes das partes, conectando ideias distantes.', Icone: Orbit },
+  Sequencial: { titulo: 'O Metódico', descricao: 'Você aprende melhor seguindo passos claros e processos ordenados.', Icone: ListOrdered },
+  Aleatório: { titulo: 'O Explorador', descricao: 'Sua mente gosta de pular entre conceitos e descobrir caminhos alternativos.', Icone: Compass },
+  Reflexivo: { titulo: 'O Sábio', descricao: 'Você pondera e avalia todas as opções antes de agir ou responder.', Icone: Scale },
+  Impulsivo: { titulo: 'O Relâmpago', descricao: 'Você tem raciocínio rápido e aprende melhor testando na prática imediatamente.', Icone: Zap },
 };
 
 function getArquetipo(eixos: Eixo4D[]) {
@@ -32,7 +34,7 @@ function getArquetipo(eixos: Eixo4D[]) {
 
   // Fallback se nenhum eixo tiver sinal forte ainda
   if (maxMagnitude === -1 || maxMagnitude === 0) {
-    return { titulo: 'O Iniciante', descricao: 'Seu perfil cognitivo ainda está sendo mapeado.', emoji: '🌱' };
+    return { titulo: 'O Iniciante', descricao: 'Seu perfil cognitivo ainda está sendo mapeado.', Icone: Sprout };
   }
 
   return ARQUETIPOS[dominantPolo] || ARQUETIPOS.Aleatório;
@@ -60,9 +62,9 @@ export default function MinhaNarrativaPage() {
       } catch (e) {
         if (!cancelled) {
           if (e instanceof ApiError && e.code === 'NETWORK_ERROR') {
-            setErro('Sem conexão com o servidor.');
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente de novo.');
           } else {
-            setErro('Erro ao carregar a Narrativa.');
+            setErro('Não foi possível carregar a narrativa. Tente recarregar a página.');
           }
         }
       }
@@ -73,9 +75,12 @@ export default function MinhaNarrativaPage() {
 
   if (erro) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-        <p className="text-sm text-error">{erro}</p>
-      </div>
+      <Pagina>
+        <Voltar />
+        <Notice tone="danger" title="Não foi possível abrir a narrativa">
+          {erro}
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -87,16 +92,24 @@ export default function MinhaNarrativaPage() {
   const objetivoStr = CURSO_LABEL[objetivoKey] || perfil.objetivoEnem || 'Aprovação';
   const nomeAluno = perfil.nome || 'Estudante';
 
-  // Construir Timeline Dinâmica
-  const timeline = [];
-  
+  // Construir linha do tempo dinâmica
+  const timeline: {
+    id: string;
+    Icone: LucideIcon;
+    title: string;
+    description: string;
+    date: string;
+    completed: boolean;
+    isFinale?: boolean;
+  }[] = [];
+
   if (perfil.onboardingConcluido) {
     timeline.push({
       id: 'onboarding',
-      icon: '🚀',
-      title: 'O Início da Jornada',
+      Icone: Rocket,
+      title: 'O início da jornada',
       description: 'Você definiu seu objetivo e deu o primeiro passo na plataforma.',
-      date: 'Missão Inicial',
+      date: 'Missão inicial',
       completed: true,
     });
   }
@@ -104,19 +117,19 @@ export default function MinhaNarrativaPage() {
   if (xpTotal > 0) {
     timeline.push({
       id: 'primeiros-passos',
-      icon: '⭐',
-      title: 'Despertar do Conhecimento',
-      description: `Você já acumulou ${xpTotal} XP respondendo aos nossos desafios e atingiu o Nível ${nivel.atual}.`,
+      Icone: Star,
+      title: 'Despertar do conhecimento',
+      description: `Você já acumulou ${xpTotal} XP respondendo aos desafios e chegou ao nível ${nivel.atual}.`,
       date: 'Evolução',
       completed: true,
     });
   } else {
     timeline.push({
       id: 'primeiros-passos',
-      icon: '⭐',
-      title: 'Despertar do Conhecimento',
+      Icone: Star,
+      title: 'Despertar do conhecimento',
       description: 'Acumule XP respondendo aos quizzes para subir de nível.',
-      date: 'Próximo Passo',
+      date: 'Próximo passo',
       completed: false,
     });
   }
@@ -124,9 +137,9 @@ export default function MinhaNarrativaPage() {
   if (progresso.sessoesSocraticas > 0) {
     timeline.push({
       id: 'socratico',
-      icon: '🏛️',
-      title: 'Diálogos Filosóficos',
-      description: `Você já participou de ${progresso.sessoesSocraticas} sessão(ões) Socrática(s), questionando o mundo ao seu redor.`,
+      Icone: Landmark,
+      title: 'Diálogos filosóficos',
+      description: `Você já participou de ${progresso.sessoesSocraticas} ${progresso.sessoesSocraticas === 1 ? 'sessão socrática' : 'sessões socráticas'}, questionando o mundo ao seu redor.`,
       date: 'Aprofundamento',
       completed: true,
     });
@@ -135,107 +148,93 @@ export default function MinhaNarrativaPage() {
   if (progresso.redacoesEnviadas > 0) {
     timeline.push({
       id: 'redacao',
-      icon: '✍️',
-      title: 'O Poder da Escrita',
-      description: `Você enviou ${progresso.redacoesEnviadas} redação(ões) para correção nas 5 competências.`,
+      Icone: PenLine,
+      title: 'O poder da escrita',
+      description: `Você enviou ${progresso.redacoesEnviadas} ${progresso.redacoesEnviadas === 1 ? 'redação' : 'redações'} para correção nas 5 competências.`,
       date: 'Expressão',
       completed: true,
     });
   }
 
-  // Missão Final sempre existe
+  // Missão final sempre existe
   timeline.push({
     id: 'missao-final',
-    icon: '🎓',
-    title: `O Grande Sonho: ${objetivoStr}`,
-    description: `A linha de chegada. Todo o seu esforço se resume ao momento da aprovação.`,
+    Icone: GraduationCap,
+    title: `O grande sonho: ${objetivoStr}`,
+    description: 'A linha de chegada. Todo o seu esforço se resume ao momento da aprovação.',
     date: 'Destino',
     completed: false,
     isFinale: true,
   });
 
+  const IconeDoArquetipo = arquetipo?.Icone ?? Orbit;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
-      <header className="space-y-2">
-        <Link href="/dashboard" className="text-sm font-semibold text-brand-primary hover:underline">
-          &larr; Voltar ao Painel
-        </Link>
-        <h1 className="text-3xl font-bold text-text">Minha Narrativa</h1>
-        <p className="text-text-muted">Sua jornada épica rumo à aprovação.</p>
-      </header>
+    <Pagina>
+      <div className="flex flex-col gap-space-3">
+        <Voltar />
+        <PageHeader title="Minha narrativa" description="Sua jornada rumo à aprovação." />
+      </div>
 
-      {/* Hero do Arquétipo */}
-      <Card className="relative overflow-hidden border-brand-primary/30 bg-gradient-to-br from-surface to-surface-2 p-8 text-center sm:p-12">
-         <div className="absolute -right-10 -top-10 text-[150px] opacity-5 pointer-events-none select-none">
-           {arquetipo?.emoji}
-         </div>
-         <Badge variant="info" className="mx-auto mb-4 w-fit">Seu Arquétipo Cognitivo</Badge>
-         <div className="mb-2 text-6xl" aria-hidden="true">{arquetipo?.emoji}</div>
-         <h2 className="mb-2 text-4xl font-black tracking-tight text-text">
-           {nomeAluno}, <span className="text-brand-primary">{arquetipo?.titulo}</span>
-         </h2>
-         <p className="mx-auto max-w-xl text-lg text-text-muted">
-           {arquetipo?.descricao}
-         </p>
-      </Card>
-
-      {/* Timeline */}
-      <section className="space-y-6 pt-4">
-        <SectionHeader title="Linha do Tempo" accent="Da Jornada" as="h2" />
-        
-        <div className="relative mx-auto max-w-2xl">
-          {/* Linha conectora vertical */}
-          <div className="absolute bottom-0 left-[2.25rem] top-0 w-0.5 bg-surface-3 md:left-1/2 md:-ml-[1px]" />
-          
-          <div className="space-y-8">
-            {timeline.map((item, index) => {
-              const isEven = index % 2 === 0;
-              return (
-                <div key={item.id} className={cn("relative flex items-center md:justify-between", isEven ? "md:flex-row-reverse" : "")}>
-                  
-                  {/* Ponto na linha */}
-                  <div className="absolute left-[2.25rem] flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border-4 border-surface bg-surface-2 md:left-1/2">
-                    <div className={cn("h-3 w-3 rounded-full", item.completed ? (item.isFinale ? "bg-brand-primary animate-pulse" : "bg-success") : "bg-surface-3")} />
-                  </div>
-
-                  {/* Espaçador para o layout desktop */}
-                  <div className="hidden w-5/12 md:block" />
-
-                  {/* Card de Conteúdo */}
-                  <Card className={cn(
-                    "ml-[4.5rem] w-full p-5 transition-all md:ml-0 md:w-5/12 hover:-translate-y-1 hover:shadow-md",
-                    item.completed ? (item.isFinale ? "border-brand-primary bg-brand-primary/5" : "border-success/30 bg-surface") : "opacity-70 grayscale border-dashed border-border"
-                  )}>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-2xl" aria-hidden="true">{item.icon}</span>
-                      <Badge variant={item.completed ? (item.isFinale ? 'info' : 'success') : 'neutral'}>{item.date}</Badge>
-                    </div>
-                    <h3 className={cn("mb-2 text-lg font-bold", item.completed && !item.isFinale ? "text-success" : "text-text")}>
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-text-muted">{item.description}</p>
-                  </Card>
-                </div>
-              );
-            })}
+      <Section divided>
+        <div className="flex items-start gap-space-5">
+          <span aria-hidden="true" className="inline-flex h-14 w-14 flex-none items-center justify-center rounded-pill bg-violet-tint text-primary">
+            <IconeDoArquetipo className="h-7 w-7" />
+          </span>
+          <div className="flex flex-col gap-space-2">
+            <div>
+              <Chip tone="info">Seu arquétipo cognitivo</Chip>
+            </div>
+            <h2 className="m-0 font-display text-heading-1 text-ink">
+              {nomeAluno}, <span className="text-primary">{arquetipo?.titulo}</span>
+            </h2>
+            <p className="m-0 max-w-texto text-body text-ink-muted">{arquetipo?.descricao}</p>
           </div>
         </div>
-      </section>
-    </div>
+      </Section>
+
+      <Section title="Linha do tempo da jornada" divided>
+        <ol className="m-0 flex list-none flex-col p-0">
+          {timeline.map((item, index) => (
+            <li key={item.id} className="flex gap-space-4">
+              <div className="flex flex-col items-center">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'inline-flex h-9 w-9 flex-none items-center justify-center rounded-pill',
+                    item.completed ? 'bg-success-tint text-success' : item.isFinale ? 'bg-violet-tint text-primary' : 'bg-surface-sunken text-ink-muted',
+                  )}
+                >
+                  <item.Icone className="h-5 w-5" />
+                </span>
+                {index < timeline.length - 1 ? <span aria-hidden="true" className="w-px flex-1 bg-line" /> : null}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-space-2 pb-space-6">
+                <div className="flex flex-wrap items-center gap-space-3 pt-1">
+                  <h3 className="m-0 font-display text-heading-3 text-ink">{item.title}</h3>
+                  <Chip tone={item.completed ? 'success' : item.isFinale ? 'brand' : 'neutral'}>
+                    {item.completed ? 'Concluído' : item.date}
+                  </Chip>
+                </div>
+                <p className="m-0 max-w-texto text-body text-ink-muted">{item.description}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Section>
+    </Pagina>
   );
 }
 
 function NarrativaSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
-      <Skeleton className="h-10 w-1/3" />
-      <Skeleton className="h-[300px] w-full rounded-2xl" />
-      <div className="space-y-4 pt-8">
-        <Skeleton className="h-32 w-3/4 md:w-1/2 rounded-xl" />
-        <Skeleton className="ml-auto h-32 w-3/4 md:w-1/2 rounded-xl" />
-        <Skeleton className="h-32 w-3/4 md:w-1/2 rounded-xl" />
-      </div>
-    </div>
+    <Pagina>
+      <Carregando rotulo="Carregando a narrativa" className="flex flex-col gap-space-6 md:gap-space-7">
+        <Skeleton className="h-10 w-1/3" />
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }
