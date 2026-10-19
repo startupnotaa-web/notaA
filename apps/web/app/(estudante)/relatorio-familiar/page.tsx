@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Share2 } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
-import { Card, Skeleton, Button } from '@notaa/ui';
+import { Button, Carregando, Notice, PageHeader, Section, Skeleton, SummaryStrip } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Pagina } from '../../components/Pagina';
+import { Voltar } from '../../components/Voltar';
 
 const AREA_LABELS: Record<string, string> = {
   linguagens: 'Linguagens',
@@ -25,9 +27,9 @@ export default function RelatorioFamiliarPage() {
       } catch (e) {
         if (!cancelled) {
           if (e instanceof ApiError && e.code === 'NETWORK_ERROR') {
-            setErro('Sem conexão com o servidor.');
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente de novo.');
           } else {
-            setErro('Erro ao carregar o Relatório.');
+            setErro('Não foi possível carregar o relatório. Tente recarregar a página.');
           }
         }
       }
@@ -39,7 +41,7 @@ export default function RelatorioFamiliarPage() {
   const handleShare = () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
-        title: 'Relatório Familiar - Nota A',
+        title: 'Relatório familiar - Nota A',
         text: `Confira o progresso de ${data?.perfil.nome || 'nosso estudante'} na plataforma!`,
         url: window.location.href,
       }).catch(console.error);
@@ -50,9 +52,12 @@ export default function RelatorioFamiliarPage() {
 
   if (erro) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-        <p className="text-sm text-error">{erro}</p>
-      </div>
+      <Pagina largura="estreita">
+        <Voltar />
+        <Notice tone="danger" title="Não foi possível abrir o relatório">
+          {erro}
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -80,105 +85,82 @@ export default function RelatorioFamiliarPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8 p-4">
-      <header className="space-y-2 print:hidden">
-        <Link href="/dashboard" className="text-sm font-semibold text-brand-primary hover:underline">
-          &larr; Voltar ao Painel
-        </Link>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text">Relatório Familiar</h1>
-            <p className="text-text-muted">Um resumo simples para compartilhar em casa.</p>
+    <Pagina largura="estreita">
+      <div className="flex flex-col gap-space-3 print:hidden">
+        <Voltar />
+        <PageHeader
+          title="Relatório familiar"
+          description="Um resumo simples para compartilhar em casa."
+          actions={
+            <Button variant="secondary" onClick={handleShare}>
+              <Share2 aria-hidden="true" className="h-5 w-5" />
+              Compartilhar
+            </Button>
+          }
+        />
+      </div>
+
+      {/* Documento compartilhável: sai limpo na impressão. */}
+      <article id="relatorio-card" aria-label="Boletim de progresso" className="flex flex-col gap-space-6 md:gap-space-7">
+        <header className="flex flex-col gap-space-1">
+          <p className="m-0 text-label text-ink-muted">Boletim de progresso</p>
+          <p className="m-0 font-display text-heading-1 text-ink">{nomeAluno}</p>
+          <p className="m-0 text-body-sm text-ink-muted">Plataforma Nota A · {new Date().toLocaleDateString('pt-BR')}</p>
+        </header>
+
+        <SummaryStrip
+          aria-label="Resumo do progresso"
+          items={[
+            { id: 'dias', label: 'Dias seguidos', value: streak.diasConsecutivos },
+            { id: 'xp', label: 'XP acumulado', value: xpTotal.toLocaleString('pt-BR') },
+            { id: 'nivel', label: 'Nível', value: nivel.atual },
+          ]}
+        />
+
+        <Section title="Consistência" divided>
+          <p className="m-0 max-w-texto text-body text-ink-muted">
+            {nomeAluno} estudou por <strong className="text-ink">{streak.diasConsecutivos}</strong> dias seguidos. Manter
+            um ritmo constante é o principal segredo para a aprovação.
+          </p>
+        </Section>
+
+        <Section title="Onde está o foco" divided>
+          <div className="grid gap-space-4 sm:grid-cols-2">
+            <Notice tone="success" title="Maior domínio" className="max-w-none">
+              O maior domínio atual é em <strong>{AREA_LABELS[melhorArea] || melhorArea}</strong>.
+            </Notice>
+            <Notice tone="warning" title="Área de crescimento" className="max-w-none">
+              O sistema está recomendando mais treinos em <strong>{AREA_LABELS[piorArea] || piorArea}</strong>.
+            </Notice>
           </div>
-          <Button onClick={handleShare} className="gap-2">
-            <span>📤</span> Compartilhar
-          </Button>
-        </div>
-      </header>
+        </Section>
 
-      {/* Cartão Compartilhável */}
-      <Card id="relatorio-card" className="overflow-hidden border-brand-primary/20 bg-surface-2 p-0 shadow-lg print:shadow-none print:border-none print:bg-transparent">
-        
-        {/* Top Header do Card */}
-        <div className="bg-brand-primary p-6 text-primary-on text-center space-y-2">
-           <h2 className="text-sm font-bold uppercase tracking-widest opacity-80">Boletim de Progresso</h2>
-           <p className="text-3xl font-black">{nomeAluno}</p>
-           <p className="text-sm opacity-90">Plataforma Nota A • {new Date().toLocaleDateString('pt-BR')}</p>
-        </div>
+        <Section title="Além do básico" divided>
+          <p className="m-0 max-w-texto text-body text-ink-muted">
+            Além das questões normais, completou <strong className="text-ink">{atividadesExtras} atividades extras</strong>,
+            entre redações enviadas e sessões com o tutor de IA.
+          </p>
+        </Section>
 
-        <div className="p-6 sm:p-10 space-y-10">
-          
-          {/* Seção 1: Esforço */}
-          <div className="space-y-4 text-center">
-             <div className="text-5xl mb-2">🔥</div>
-             <h3 className="text-xl font-bold text-text">Consistência Admirável</h3>
-             <p className="text-text-muted">
-               {nomeAluno} estudou por <strong className="text-brand-primary text-xl">{streak.diasConsecutivos}</strong> dias seguidos! 
-               Manter um ritmo constante é o principal segredo para a aprovação.
-             </p>
-          </div>
-
-          <div className="h-px w-full bg-border" />
-
-          {/* Seção 2: Desempenho */}
-          <div className="space-y-6">
-             <h3 className="text-lg font-bold text-text text-center uppercase tracking-widest">Onde está o Foco?</h3>
-             
-             <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl bg-success/10 p-5 text-center border border-success/20">
-                   <div className="text-3xl mb-2">🚀</div>
-                   <h4 className="font-bold text-success mb-1">Voando Alto</h4>
-                   <p className="text-sm text-text-muted">
-                     O maior domínio atual é em <strong className="text-text">{AREA_LABELS[melhorArea] || melhorArea}</strong>.
-                   </p>
-                </div>
-                
-                <div className="rounded-xl bg-warning/10 p-5 text-center border border-warning/20">
-                   <div className="text-3xl mb-2">💪</div>
-                   <h4 className="font-bold text-warning mb-1">Área de Crescimento</h4>
-                   <p className="text-sm text-text-muted">
-                     O sistema está recomendando mais treinos em <strong className="text-text">{AREA_LABELS[piorArea] || piorArea}</strong>.
-                   </p>
-                </div>
-             </div>
-          </div>
-
-          <div className="h-px w-full bg-border" />
-
-          {/* Seção 3: Atividades Extras */}
-          <div className="space-y-4 text-center">
-             <div className="text-5xl mb-2">🏆</div>
-             <h3 className="text-xl font-bold text-text">Além do Básico</h3>
-             <p className="text-text-muted">
-               Com <strong className="text-brand-primary">{xpTotal} XP</strong> acumulados, 
-               já alcançou o <strong className="text-text">Nível {nivel.atual}</strong>.
-             </p>
-             <p className="text-text-muted">
-               Além das questões normais, completou <strong className="text-text">{atividadesExtras} atividades extras</strong> 
-               (incluindo redações enviadas e tutorias particulares com IA).
-             </p>
-          </div>
-
-        </div>
-        
-        {/* Footer do Card */}
-        <div className="bg-surface-3 p-4 text-center text-xs text-text-muted">
-           Este é um relatório gerado automaticamente com base na interação contínua na Plataforma Educacional.
-        </div>
-
-      </Card>
-    </div>
+        <p className="m-0 border-t border-line pt-space-4 text-caption text-ink-muted">
+          Este relatório é gerado automaticamente a partir do uso contínuo da plataforma.
+        </p>
+      </article>
+    </Pagina>
   );
 }
 
 function RelatorioSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8 p-4">
-      <div className="flex justify-between">
-        <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <Skeleton className="h-[600px] w-full rounded-2xl" />
-    </div>
+    <Pagina largura="estreita">
+      <Carregando rotulo="Carregando o relatório" className="flex flex-col gap-space-6">
+        <div className="flex justify-between">
+          <Skeleton className="h-10 w-1/3" />
+          <Skeleton className="h-11 w-32" />
+        </div>
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }
