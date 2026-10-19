@@ -169,7 +169,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
               {etapa === ETAPAS.length - 1 && !somenteLeitura ? (
                 <TextField
                   label="Motivo da mudança"
-                  hint={`Fica registrado na auditoria, com o seu nome. Mínimo de ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`}
+                  hint={`Fica registrado na auditoria, com o seu nome. Não cite nomes de pessoas. Mínimo de ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`}
                   value={motivoSalvar}
                   maxLength={500}
                   error={erroMotivoSalvar}
@@ -265,7 +265,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
       >
         <TextField
           label="Motivo da ativação"
-          hint={`Mínimo de ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`}
+          hint={`Fica registrado na auditoria. Não cite nomes de pessoas. Mínimo de ${TAMANHO_MINIMO_JUSTIFICATIVA} caracteres.`}
           value={motivoAtivar}
           maxLength={500}
           error={erroMotivoAtivar}
