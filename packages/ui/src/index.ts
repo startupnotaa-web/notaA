@@ -67,6 +67,33 @@ export type { InsetProps } from './components/Inset';
 export { ThemeSwitch } from './components/ThemeSwitch';
 export type { ThemeSwitchProps, PreferenciaDeTema } from './components/ThemeSwitch';
 
+// Estrutura de aplicativo para computador (a partir de 1.024px): moldura de altura da tela, barra superior com
+// busca e Ctrl/Cmd+K, grade de 12 colunas, zonas, master-detail, painel lateral e tabela densa.
+export { AppFrame } from './components/AppFrame';
+export type { AppFrameProps } from './components/AppFrame';
+export { TopBar } from './components/TopBar';
+export type { TopBarProps } from './components/TopBar';
+export { CommandPalette } from './components/CommandPalette';
+export type { CommandPaletteProps, ComandoItem } from './components/CommandPalette';
+export { ShortcutsDialog } from './components/ShortcutsDialog';
+export type { ShortcutsDialogProps, GrupoDeAtalhos } from './components/ShortcutsDialog';
+export { SidePanel } from './components/SidePanel';
+export type { SidePanelProps } from './components/SidePanel';
+export { Grade, Col } from './components/Grade';
+export type { ColProps } from './components/Grade';
+export { Zonas } from './components/Zonas';
+export type { ZonasProps } from './components/Zonas';
+export { MasterDetail } from './components/MasterDetail';
+export type { MasterDetailProps } from './components/MasterDetail';
+export { DataTable } from './components/DataTable';
+export type { DataTableProps, ColunaDaTabela, Densidade } from './components/DataTable';
+export { Breadcrumbs } from './components/Breadcrumbs';
+export type { BreadcrumbsProps, BreadcrumbItem } from './components/Breadcrumbs';
+export { KpiRow } from './components/KpiRow';
+export type { KpiRowProps, KpiItem } from './components/KpiRow';
+export { useAtalhos, teclaModificadora } from './lib/atalhos';
+export type { Atalho } from './lib/atalhos';
+
 // Primitivos anteriores, ainda em uso nas telas de aluno e família.
 
 export {

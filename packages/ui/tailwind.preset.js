@@ -14,6 +14,7 @@ const estilo = (nome) => [
 ];
 
 const espaco = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`space-${n}`, `var(--space-${n})`]));
+const vaos = { ...espaco, gutter: 'var(--gutter)' };
 
 module.exports = {
   theme: {
@@ -46,7 +47,7 @@ module.exports = {
         label: estilo('label'),
         caption: estilo('caption')
       },
-      spacing: espaco,
+      spacing: vaos,
       maxWidth: { pagina: 'var(--page-max)', texto: '72ch' },
       width: { sidenav: 'var(--sidenav-w)', 'sidenav-recolhida': 'var(--sidenav-w-collapsed)' },
       height: { topbar: 'var(--topbar-h)' },

@@ -9,12 +9,15 @@ export interface PageHeaderProps extends Omit<React.HTMLAttributes<HTMLElement>,
   status?: React.ReactNode;
   /** Ações à direita; no celular descem para baixo do título. */
   actions?: React.ReactNode;
+  /** Trilha de navegação acima do título (Breadcrumbs). */
+  breadcrumbs?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, status, actions, className, ...props }: PageHeaderProps) {
+export function PageHeader({ title, description, status, actions, breadcrumbs, className, ...props }: PageHeaderProps) {
   return (
     <header className={cn('flex flex-wrap items-end justify-between gap-space-5', className)} {...props}>
       <div className="flex min-w-[min(18rem,100%)] flex-1 flex-col gap-space-2">
+        {breadcrumbs}
         <div className="flex flex-wrap items-center gap-x-space-4 gap-y-space-2">
           <h1 className="m-0 font-display text-[28px] leading-9 tracking-[-0.02em] text-ink sm:text-heading-1">{title}</h1>
           {status}

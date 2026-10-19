@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { EASE_OUT, FOCO } from '../lib/foco';
 
@@ -23,6 +24,9 @@ export interface SideNavProps {
   label?: string;
   /** Conteúdo fixo no pé da barra (ex.: o botão Sair). Fica visível também no modo recolhido. */
   footer?: React.ReactNode;
+  /** Força o modo só de ícones em qualquer largura (escolha da pessoa). Com `onRecolher`, a barra mostra o botão de recolher e expandir. */
+  recolhida?: boolean;
+  onRecolher?: () => void;
   /** Abaixo de 1.024px recolhe para só ícones (o texto fica para leitores de tela). */
   collapsible?: boolean;
   /** Componente de link (ex.: `next/link`). Padrão: `<a>`. Recebe `href` e `aria-current`. */
@@ -37,25 +41,30 @@ export function SideNav({
   brand = 'Nota A',
   label = 'Principal',
   footer,
+  recolhida = false,
+  onRecolher,
   collapsible = false,
   linkAs,
   className,
 }: SideNavProps) {
   const Link: React.ElementType = linkAs ?? 'a';
-  const recolhe = collapsible;
+  // `recolhida` vale em todas as larguras; `collapsible` só abaixo de 1.024px.
+  const recolhe = collapsible || recolhida;
+  const rotuloOculto = recolhida ? 'sr-only' : 'max-lg:sr-only';
+  const centraliza = recolhida ? 'justify-center px-0' : 'max-lg:justify-center max-lg:px-0';
   return (
     <nav
       aria-label={label}
       className={cn(
         'flex flex-col gap-1 border-r border-line bg-surface px-3 py-space-5',
-        recolhe ? 'w-[72px] lg:w-[248px]' : 'w-[248px]',
+        recolhida ? 'w-sidenav-recolhida' : recolhe ? 'w-sidenav-recolhida lg:w-sidenav' : 'w-sidenav',
         className,
       )}
     >
       <div
         className={cn(
           'flex items-center gap-2 px-3 pb-space-5 font-display text-[17px] font-semibold leading-6 text-ink',
-          recolhe && 'max-lg:justify-center max-lg:px-0',
+          recolhe && centraliza,
         )}
       >
         {typeof logo === 'string' ? (
@@ -63,14 +72,14 @@ export function SideNav({
         ) : (
           logo
         )}
-        <span className={cn(recolhe && 'max-lg:sr-only')}>{brand}</span>
+        <span className={cn(recolhe && rotuloOculto)}>{brand}</span>
       </div>
       {items.map((item) => {
         if ('group' in item) {
           return (
             <div
               key={`g-${item.group}`}
-              className={cn('px-3 pb-2 pt-4 font-text text-caption text-ink-muted', recolhe && 'max-lg:sr-only')}
+              className={cn('px-3 pb-2 pt-4 font-text text-caption text-ink-muted', recolhe && rotuloOculto)}
             >
               {item.group}
             </div>
@@ -87,7 +96,7 @@ export function SideNav({
               'flex min-h-[44px] items-center gap-3 rounded-md px-3 font-text text-label no-underline',
               `transition-colors duration-fast ${EASE_OUT}`,
               FOCO,
-              recolhe && 'max-lg:justify-center max-lg:px-0',
+              recolhe && centraliza,
               ativo ? 'bg-violet-tint text-primary' : 'text-ink hover:bg-surface-sunken',
             )}
           >
@@ -96,12 +105,12 @@ export function SideNav({
                 {item.icon}
               </span>
             ) : null}
-            <span className={cn(recolhe && Boolean(item.icon) && 'max-lg:sr-only')}>{item.label}</span>
+            <span className={cn(recolhe && Boolean(item.icon) && rotuloOculto)}>{item.label}</span>
             {item.badge ? (
               <span
                 className={cn(
                   'ml-auto min-w-[20px] rounded-pill bg-warning-tint px-1.5 text-center text-caption font-bold text-warning',
-                  recolhe && 'max-lg:sr-only',
+                  recolhe && rotuloOculto,
                 )}
               >
                 {item.badge}
@@ -110,7 +119,28 @@ export function SideNav({
           </Link>
         );
       })}
-      {footer ? <div className="mt-auto flex flex-col gap-1 border-t border-line pt-space-4">{footer}</div> : null}
+      {footer || onRecolher ? (
+        <div className="mt-auto flex flex-col gap-1 border-t border-line pt-space-4">
+          {footer}
+          {onRecolher ? (
+            <button
+              type="button"
+              onClick={onRecolher}
+              aria-pressed={recolhida}
+              className={cn(
+                'hidden min-h-[44px] items-center gap-3 rounded-md px-3 font-text text-label text-ink-muted lg:flex',
+                `transition-colors duration-fast ${EASE_OUT}`,
+                FOCO,
+                'hover:bg-surface-sunken hover:text-ink',
+                recolhida && 'justify-center px-0',
+              )}
+            >
+              {recolhida ? <PanelLeftOpen aria-hidden="true" className="h-5 w-5" /> : <PanelLeftClose aria-hidden="true" className="h-5 w-5" />}
+              <span className={cn(recolhida && 'sr-only')}>{recolhida ? 'Expandir menu' : 'Recolher menu'}</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </nav>
   );
 }

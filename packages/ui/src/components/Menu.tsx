@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { Check } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { EASE_OUT, FOCO } from '../lib/foco';
 import { Button, type ButtonSize, type ButtonVariant } from './Button';
@@ -11,6 +12,8 @@ export interface MenuItem {
   /** `danger` para ações destrutivas: o texto vai em danger. */
   tone?: 'default' | 'danger';
   disabled?: boolean;
+  /** Opção marcável (ex.: o contexto atual): vira menuitemradio, com aria-checked e um visto. */
+  checked?: boolean;
 }
 
 export interface MenuProps {
@@ -158,7 +161,8 @@ export function Menu({ label, ariaLabel, items, align = 'start', variant = 'seco
                 refs.current[i] = el;
               }}
               type="button"
-              role="menuitem"
+              role={item.checked === undefined ? 'menuitem' : 'menuitemradio'}
+              aria-checked={item.checked}
               tabIndex={-1}
               disabled={item.disabled}
               onKeyDown={(e) => aoTeclarNoItem(e, i)}
@@ -167,7 +171,7 @@ export function Menu({ label, ariaLabel, items, align = 'start', variant = 'seco
                 item.onSelect();
               }}
               className={cn(
-                'min-h-[44px] rounded-sm px-3 text-left font-text text-label',
+                'flex min-h-[44px] items-center justify-between gap-3 rounded-sm px-3 text-left font-text text-label',
                 `transition-colors duration-fast ${EASE_OUT}`,
                 'disabled:cursor-not-allowed disabled:opacity-50',
                 FOCO,
@@ -175,6 +179,7 @@ export function Menu({ label, ariaLabel, items, align = 'start', variant = 'seco
               )}
             >
               {item.label}
+              {item.checked ? <Check aria-hidden="true" className="h-4 w-4 flex-none text-primary" /> : null}
             </button>
           ))}
         </div>
