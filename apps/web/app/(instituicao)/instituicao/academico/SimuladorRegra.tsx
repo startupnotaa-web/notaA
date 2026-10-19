@@ -8,7 +8,7 @@ import {
   type RegraAvaliativa,
   type SimularRegraResponse,
 } from '@notaa/contracts';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Chip, Notice, TextField } from '@notaa/ui';
+import { Button, Chip, Inset, Notice, Panel, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { formatarNota, SITUACAO } from './regra';
 
@@ -22,9 +22,27 @@ interface AlunoDeExemplo {
 }
 
 const EXEMPLOS: AlunoDeExemplo[] = [
-  { rotulo: 'Ana', notas: ['7 8', '6,5', '8', '9'], frequencia: '95', recuperacaoFinal: '', conselhoAprova: false },
-  { rotulo: 'Bruno', notas: ['4 5', '5', '6', '5,5'], frequencia: '88', recuperacaoFinal: '7', conselhoAprova: false },
-  { rotulo: 'Carla', notas: ['9', '9', '8,5', '10'], frequencia: '70', recuperacaoFinal: '', conselhoAprova: false },
+  {
+    rotulo: 'Ana',
+    notas: ['7 8', '6,5', '8', '9'],
+    frequencia: '95',
+    recuperacaoFinal: '',
+    conselhoAprova: false,
+  },
+  {
+    rotulo: 'Bruno',
+    notas: ['4 5', '5', '6', '5,5'],
+    frequencia: '88',
+    recuperacaoFinal: '7',
+    conselhoAprova: false,
+  },
+  {
+    rotulo: 'Carla',
+    notas: ['9', '9', '8,5', '10'],
+    frequencia: '70',
+    recuperacaoFinal: '',
+    conselhoAprova: false,
+  },
 ];
 
 function lerNotas(texto: string): NotaLancada[] {
@@ -61,7 +79,10 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
     const corpo = { regra, alunos: alunos.map((a) => paraRequisicao(a, periodos)) };
     // Espera a pessoa parar de digitar antes de chamar o servidor.
     const espera = setTimeout(() => {
-      apiFetch<SimularRegraResponse>('/academico/regras/simular', { method: 'POST', body: JSON.stringify(corpo) })
+      apiFetch<SimularRegraResponse>('/academico/regras/simular', {
+        method: 'POST',
+        body: JSON.stringify(corpo),
+      })
         .then((r) => {
           setResultado(r);
           setErro(null);
@@ -76,18 +97,13 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Simulador</CardTitle>
-        <CardDescription>
-          Mude as notas para ver médias e situação com a regra ao lado. Nada é salvo.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
+    <Panel
+      title="Simulador"
+      description="Mude as notas para ver médias e situação com a regra ao lado. Nada é salvo."
+    >
+      <div className="flex flex-col gap-space-5">
         {!valida ? (
-          <p className="rounded-md border border-warning p-3 text-sm text-ink">
-            Corrija os campos da regra para ver a simulação.
-          </p>
+          <Notice tone="warning">Corrija os campos da regra para ver a simulação.</Notice>
         ) : erro ? (
           <Notice tone="danger">{erro}</Notice>
         ) : null}
@@ -97,7 +113,10 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
         <p aria-live="polite" className="sr-only">
           {resultado
             ? `Simulação atualizada. ${resultado.resultados
-                .map((r) => `${r.rotulo}: ${r.erro ? 'entrada inválida' : SITUACAO[r.situacao].rotulo}`)
+                .map(
+                  (r) =>
+                    `${r.rotulo}: ${r.erro ? 'entrada inválida' : SITUACAO[r.situacao].rotulo}`,
+                )
                 .join('. ')}.`
             : ''}
         </p>
@@ -105,9 +124,12 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
           const r = resultado?.resultados[i];
           const situacao = r && !r.erro ? SITUACAO[r.situacao] : null;
           return (
-            <fieldset key={i} className="space-y-3 rounded-lg border border-line p-3">
-              <legend className="px-1 text-sm font-semibold text-ink">{a.rotulo}</legend>
-              <div className="grid grid-cols-2 gap-2">
+            <fieldset
+              key={i}
+              className="m-0 flex min-w-0 flex-col gap-space-3 border-0 border-t border-line p-0 pt-space-4"
+            >
+              <legend className="p-0 pb-space-3 text-label text-ink">{a.rotulo}</legend>
+              <div className="grid grid-cols-2 gap-space-3">
                 {Array.from({ length: periodos }, (_, p) => (
                   <TextField
                     key={p}
@@ -139,7 +161,7 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
                 ) : null}
               </div>
               {regra.conselhoDeClasse.habilitado ? (
-                <label className="flex min-h-[44px] items-center gap-2 text-sm text-ink">
+                <label className="flex min-h-[44px] items-center gap-space-3 text-body-sm text-ink">
                   <input
                     type="checkbox"
                     checked={a.conselhoAprova}
@@ -150,35 +172,42 @@ export function SimuladorRegra({ regra, valida }: { regra: RegraAvaliativa; vali
                 </label>
               ) : null}
 
-              <div className="space-y-1 border-t border-line pt-2 text-sm">
+              <Inset className="flex flex-col gap-space-1 text-body-sm">
                 {r?.erro ? (
-                  <p className="text-danger">{r.erro}</p>
+                  <p className="m-0 text-danger">{r.erro}</p>
                 ) : r ? (
                   <>
-                    <p className="text-ink-muted">
-                      Períodos: <span className="text-ink">{r.notasPeriodo.map(formatarNota).join(' · ')}</span>
+                    <p className="m-0 text-ink-muted">
+                      Períodos:{' '}
+                      <span className="text-ink">
+                        {r.notasPeriodo.map(formatarNota).join(' · ')}
+                      </span>
                     </p>
-                    <p className="flex flex-wrap items-center gap-2">
+                    <p className="m-0 flex flex-wrap items-center gap-space-2">
                       <span className="text-ink-muted">Média final</span>
-                      <strong className="text-lg text-ink">{formatarNota(r.mediaFinal)}</strong>
+                      <strong className="font-display text-figure tabular-nums text-ink">
+                        {formatarNota(r.mediaFinal)}
+                      </strong>
                       {r.conceito ? <span className="text-ink">({r.conceito})</span> : null}
                       {r.mediaAposRecuperacao !== null ? (
-                        <span className="text-ink-muted">→ {formatarNota(r.mediaAposRecuperacao)} após a final</span>
+                        <span className="text-ink-muted">
+                          → {formatarNota(r.mediaAposRecuperacao)} após a final
+                        </span>
                       ) : null}
                     </p>
                     {situacao ? <Chip tone={situacao.variante}>{situacao.rotulo}</Chip> : null}
                   </>
                 ) : (
-                  <p className="text-ink-muted">Calculando…</p>
+                  <p className="m-0 text-ink-muted">Calculando…</p>
                 )}
-              </div>
+              </Inset>
             </fieldset>
           );
         })}
         <Button variant="quiet" onClick={() => setAlunos(EXEMPLOS)}>
           Restaurar exemplos
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </Panel>
   );
 }

@@ -11,7 +11,21 @@ import {
   type RegraAvaliativa as Regra,
   type RegraAvaliativaVersao,
 } from '@notaa/contracts';
-import { Button, Card, CardContent, Chip, Dialog, Input, Notice, OptionCard, Skeleton, Stepper, Switch, Table, TextField } from '@notaa/ui';
+import {
+  Button,
+  Carregando,
+  Chip,
+  Dialog,
+  Input,
+  Notice,
+  OptionCard,
+  Panel,
+  SkeletonLinhas,
+  Stepper,
+  Switch,
+  Table,
+  TextField,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 import { comRegime, ETAPA_DO_CAMPO, ETAPAS, FAIXAS_PADRAO, REGRA_PADRAO } from './regra';
@@ -39,11 +53,15 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
   const carregar = useCallback(
     async (preencher: boolean) => {
       try {
-        const lista = await apiFetch<RegraAvaliativaVersao[]>(`/academico/regras?anoLetivoId=${anoLetivo.id}`);
+        const lista = await apiFetch<RegraAvaliativaVersao[]>(
+          `/academico/regras?anoLetivoId=${anoLetivo.id}`,
+        );
         setVersoes(lista);
         if (preencher) setRegra((lista.find((v) => v.ativa) ?? lista[0])?.regra ?? REGRA_PADRAO);
       } catch (e) {
-        toast(e instanceof ApiError ? e.message : 'Não foi possível carregar as regras.', { variant: 'error' });
+        toast(e instanceof ApiError ? e.message : 'Não foi possível carregar as regras.', {
+          variant: 'error',
+        });
         setVersoes([]);
       }
     },
@@ -90,13 +108,21 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
     try {
       const criada = await apiFetch<RegraAvaliativaVersao>('/academico/regras', {
         method: 'POST',
-        body: JSON.stringify({ anoLetivoId: anoLetivo.id, regra: validacao.data, justificativa: motivo.data }),
+        body: JSON.stringify({
+          anoLetivoId: anoLetivo.id,
+          regra: validacao.data,
+          justificativa: motivo.data,
+        }),
       });
-      toast(`Versão ${criada.versao} salva. Ative-a para que passe a valer.`, { variant: 'success' });
+      toast(`Versão ${criada.versao} salva. Ative-a para que passe a valer.`, {
+        variant: 'success',
+      });
       setMotivoSalvar('');
       await carregar(false);
     } catch (e) {
-      toast(e instanceof ApiError ? e.message : 'Não foi possível salvar a regra.', { variant: 'error' });
+      toast(e instanceof ApiError ? e.message : 'Não foi possível salvar a regra.', {
+        variant: 'error',
+      });
     } finally {
       setSalvando(false);
     }
@@ -124,7 +150,9 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
       setAtivando(null);
       await carregar(false);
     } catch (e) {
-      toast(e instanceof ApiError ? e.message : 'Não foi possível ativar a versão.', { variant: 'error' });
+      toast(e instanceof ApiError ? e.message : 'Não foi possível ativar a versão.', {
+        variant: 'error',
+      });
     } finally {
       setAtivandoAgora(false);
     }
@@ -134,22 +162,36 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
   const periodos = quantidadeDePeriodos(regra.regime);
 
   return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="space-y-6">
-          <Stepper passos={ETAPAS} atual={etapa} onIrPara={irPara} aria-label="Etapas da regra avaliativa" />
+    <div className="flex flex-col gap-space-7">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-space-7 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="flex flex-col gap-space-6">
+          <Stepper
+            passos={ETAPAS}
+            atual={etapa}
+            onIrPara={irPara}
+            aria-label="Etapas da regra avaliativa"
+          />
 
-          <Card>
-            <CardContent className="space-y-6 pt-6">
-              <h2 ref={tituloEtapa} tabIndex={-1} className="font-display text-heading-3 text-ink focus:outline-none">
+          <Panel>
+            <div className="flex flex-col gap-space-6">
+              <h2
+                ref={tituloEtapa}
+                tabIndex={-1}
+                className="font-display text-heading-3 text-ink focus:outline-none"
+              >
                 {etapa + 1}. {ETAPAS[etapa]}
               </h2>
-              <fieldset disabled={somenteLeitura} className="space-y-6">
+              <fieldset
+                disabled={somenteLeitura}
+                className="m-0 flex min-w-0 flex-col gap-space-6 border-0 p-0"
+              >
                 <legend className="sr-only">{ETAPAS[etapa]}</legend>
                 {etapa === 0 ? <EtapaRegime regra={regra} setRegra={setRegra} /> : null}
                 {etapa === 1 ? <EtapaEscala regra={regra} setRegra={setRegra} /> : null}
                 {etapa === 2 ? <EtapaNotaPeriodo regra={regra} setRegra={setRegra} /> : null}
-                {etapa === 3 ? <EtapaMediaFinal regra={regra} setRegra={setRegra} periodos={periodos} /> : null}
+                {etapa === 3 ? (
+                  <EtapaMediaFinal regra={regra} setRegra={setRegra} periodos={periodos} />
+                ) : null}
                 {etapa === 4 ? <EtapaArredondamento regra={regra} setRegra={setRegra} /> : null}
                 {etapa === 5 ? <EtapaRecuperacao regra={regra} setRegra={setRegra} /> : null}
                 {etapa === 6 ? <EtapaAprovacao regra={regra} setRegra={setRegra} /> : null}
@@ -158,7 +200,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
 
               {erros.length ? (
                 <Notice tone="danger" title="Confira a regra">
-                  <ul className="m-0 list-disc space-y-1 pl-5">
+                  <ul className="m-0 flex list-disc flex-col gap-space-1 pl-5">
                     {erros.map((m) => (
                       <li key={m}>{m}</li>
                     ))}
@@ -180,20 +222,28 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                 />
               ) : null}
 
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-                <Button variant="secondary" onClick={() => irPara(etapa - 1)} disabled={etapa === 0}>
+              <div className="flex flex-wrap items-center justify-between gap-space-3 border-t border-line pt-space-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => irPara(etapa - 1)}
+                  disabled={etapa === 0}
+                >
                   Voltar
                 </Button>
                 {etapa < ETAPAS.length - 1 ? (
                   <Button onClick={() => irPara(etapa + 1)}>Próxima: {ETAPAS[etapa + 1]}</Button>
                 ) : (
-                  <Button onClick={() => void salvar()} disabled={salvando || somenteLeitura}>
-                    {salvando ? 'Salvando…' : 'Salvar como nova versão'}
+                  <Button
+                    onClick={() => void salvar()}
+                    disabled={somenteLeitura}
+                    loading={salvando}
+                  >
+                    {salvando ? 'Salvando' : 'Salvar como nova versão'}
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
         </div>
 
         <aside aria-label="Simulador" className="lg:sticky lg:top-20 lg:self-start">
@@ -206,7 +256,9 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
           Versões da regra em {anoLetivo.rotulo}
         </h2>
         {versoes === null ? (
-          <Skeleton className="h-24 w-full" />
+          <Carregando rotulo="Carregando as versões da regra">
+            <SkeletonLinhas linhas={2} />
+          </Carregando>
         ) : versoes.length === 0 ? (
           <p className="text-sm text-ink-muted">Nenhuma versão salva ainda.</p>
         ) : (
@@ -228,7 +280,13 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                   <td className="font-semibold text-ink">v{v.versao}</td>
                   <td>{new Date(v.criadoEm).toLocaleString('pt-BR')}</td>
                   <td>{v.criadoPor.nome ?? '—'}</td>
-                  <td>{v.ativa ? <Chip tone="success">Vigente</Chip> : <Chip tone="neutral">Inativa</Chip>}</td>
+                  <td>
+                    {v.ativa ? (
+                      <Chip tone="success">Vigente</Chip>
+                    ) : (
+                      <Chip tone="neutral">Inativa</Chip>
+                    )}
+                  </td>
                   <td className="space-x-2 whitespace-nowrap text-right">
                     <Button variant="quiet" onClick={() => setRegra(v.regra)}>
                       Abrir no formulário<span className="sr-only"> (versão {v.versao})</span>
@@ -340,7 +398,12 @@ function EtapaRegime({ regra, setRegra }: PropsEtapa) {
             description={o.desc}
             selected={regra.regime.tipo === o.tipo}
             onClick={() =>
-              setRegra(comRegime(regra, o.tipo === 'personalizado' ? { tipo: o.tipo, quantidade: 5 } : { tipo: o.tipo }))
+              setRegra(
+                comRegime(
+                  regra,
+                  o.tipo === 'personalizado' ? { tipo: o.tipo, quantidade: 5 } : { tipo: o.tipo },
+                ),
+              )
             }
           />
         ))}
@@ -380,7 +443,9 @@ function EtapaEscala({ regra, setRegra }: PropsEtapa) {
           title="Conceitos"
           description="A, B, C, D… com faixas de nota"
           selected={e.tipo === 'conceitos'}
-          onClick={() => setRegra({ ...regra, escala: { tipo: 'conceitos', maximo: 10, faixas: FAIXAS_PADRAO } })}
+          onClick={() =>
+            setRegra({ ...regra, escala: { tipo: 'conceitos', maximo: 10, faixas: FAIXAS_PADRAO } })
+          }
         />
       </Opcoes>
       {e.tipo === 'conceitos' ? (
@@ -441,7 +506,9 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
           title="Média ponderada"
           description="Cada avaliação tem um peso"
           selected={n.tipo === 'media_ponderada'}
-          onClick={() => setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: [1, 2] } })}
+          onClick={() =>
+            setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: [1, 2] } })
+          }
         />
         <OptionCard
           title="Soma de pontos"
@@ -452,7 +519,9 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
       </Opcoes>
       {n.tipo === 'media_ponderada' ? (
         <div className="space-y-3">
-          <p className="text-sm text-ink-muted">Um peso por avaliação, na ordem em que são lançadas.</p>
+          <p className="text-sm text-ink-muted">
+            Um peso por avaliação, na ordem em que são lançadas.
+          </p>
           <div className="flex flex-wrap items-end gap-3">
             {pesos.map((p, i) => (
               <div key={i} className="w-28">
@@ -461,24 +530,40 @@ function EtapaNotaPeriodo({ regra, setRegra }: PropsEtapa) {
                   valor={p}
                   min={0.1}
                   onChange={(v) =>
-                    setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: pesos.map((x, j) => (j === i ? v : x)) } })
+                    setRegra({
+                      ...regra,
+                      notaPeriodo: {
+                        tipo: 'media_ponderada',
+                        pesos: pesos.map((x, j) => (j === i ? v : x)),
+                      },
+                    })
                   }
                 />
               </div>
             ))}
             <Button
               variant="secondary"
-             
+
               disabled={pesos.length >= 20}
-              onClick={() => setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: [...pesos, 1] } })}
+              onClick={() =>
+                setRegra({
+                  ...regra,
+                  notaPeriodo: { tipo: 'media_ponderada', pesos: [...pesos, 1] },
+                })
+              }
             >
               Adicionar avaliação
             </Button>
             <Button
               variant="quiet"
-             
+
               disabled={pesos.length <= 1}
-              onClick={() => setRegra({ ...regra, notaPeriodo: { tipo: 'media_ponderada', pesos: pesos.slice(0, -1) } })}
+              onClick={() =>
+                setRegra({
+                  ...regra,
+                  notaPeriodo: { tipo: 'media_ponderada', pesos: pesos.slice(0, -1) },
+                })
+              }
             >
               Remover a última
             </Button>
@@ -494,7 +579,8 @@ function EtapaMediaFinal({ regra, setRegra, periodos }: PropsEtapa & { periodos:
   return (
     <>
       <p className="text-sm text-ink-muted">
-        Peso de cada período na média final. Pesos iguais dão a média aritmética. Exemplo comum: 2, 2, 3 e 3.
+        Peso de cada período na média final. Pesos iguais dão a média aritmética. Exemplo comum: 2,
+        2, 3 e 3.
       </p>
       <div className="flex flex-wrap gap-3">
         {Array.from({ length: periodos }, (_, i) => (
@@ -503,7 +589,12 @@ function EtapaMediaFinal({ regra, setRegra, periodos }: PropsEtapa & { periodos:
               rotulo={`${i + 1}º período`}
               valor={pesos[i] ?? null}
               min={0.1}
-              onChange={(v) => setRegra({ ...regra, mediaFinal: { pesosPorPeriodo: pesos.map((x, j) => (j === i ? v : x)) } })}
+              onChange={(v) =>
+                setRegra({
+                  ...regra,
+                  mediaFinal: { pesosPorPeriodo: pesos.map((x, j) => (j === i ? v : x)) },
+                })
+              }
             />
           </div>
         ))}
@@ -534,13 +625,17 @@ function EtapaArredondamento({ regra, setRegra }: PropsEtapa) {
           title="Meio ponto, o mais próximo"
           description="6,2 vira 6,0; 6,3 vira 6,5"
           selected={a.tipo === 'meio_ponto' && a.modo === 'proximo'}
-          onClick={() => setRegra({ ...regra, arredondamento: { tipo: 'meio_ponto', modo: 'proximo' } })}
+          onClick={() =>
+            setRegra({ ...regra, arredondamento: { tipo: 'meio_ponto', modo: 'proximo' } })
+          }
         />
         <OptionCard
           title="Meio ponto, sempre acima"
           description="6,1 vira 6,5; 6,6 vira 7,0"
           selected={a.tipo === 'meio_ponto' && a.modo === 'acima'}
-          onClick={() => setRegra({ ...regra, arredondamento: { tipo: 'meio_ponto', modo: 'acima' } })}
+          onClick={() =>
+            setRegra({ ...regra, arredondamento: { tipo: 'meio_ponto', modo: 'acima' } })
+          }
         />
       </Opcoes>
       {a.tipo !== 'meio_ponto' ? (
@@ -548,14 +643,20 @@ function EtapaArredondamento({ regra, setRegra }: PropsEtapa) {
           {([0, 1, 2] as const).map((c) => (
             <OptionCard
               key={c}
-              title={c === 0 ? 'Sem casas decimais' : `${c} casa${c > 1 ? 's' : ''} decimal${c > 1 ? 'is' : ''}`}
+              title={
+                c === 0
+                  ? 'Sem casas decimais'
+                  : `${c} casa${c > 1 ? 's' : ''} decimal${c > 1 ? 'is' : ''}`
+              }
               selected={a.casas === c}
               onClick={() => setRegra({ ...regra, arredondamento: { tipo: a.tipo, casas: c } })}
             />
           ))}
         </Opcoes>
       ) : null}
-      <p className="text-sm text-ink-muted">Vale para a nota de cada período, a média final e as recuperações.</p>
+      <p className="text-sm text-ink-muted">
+        Vale para a nota de cada período, a média final e as recuperações.
+      </p>
     </>
   );
 }
@@ -577,7 +678,9 @@ function EtapaRecuperacao({ regra, setRegra }: PropsEtapa) {
           <Switch
             checked={paralela !== null}
             aria-label="Recuperação paralela"
-            onCheckedChange={(ligada) => set({ final, paralela: ligada ? { modo: 'maior' } : null })}
+            onCheckedChange={(ligada) =>
+              set({ final, paralela: ligada ? { modo: 'maior' } : null })
+            }
           />
         </div>
         {paralela ? (
@@ -604,7 +707,11 @@ function EtapaRecuperacao({ regra, setRegra }: PropsEtapa) {
               set({
                 paralela,
                 final: ligada
-                  ? { modo: 'media', mediaMinimaParaAcesso: null, mediaMinimaAposRecuperacao: regra.aprovacao.mediaMinima - 1 }
+                  ? {
+                      modo: 'media',
+                      mediaMinimaParaAcesso: null,
+                      mediaMinimaAposRecuperacao: regra.aprovacao.mediaMinima - 1,
+                    }
                   : null,
               })
             }
@@ -629,13 +736,20 @@ function EtapaRecuperacao({ regra, setRegra }: PropsEtapa) {
                 valor={final.mediaMinimaParaAcesso}
                 min={0}
                 dica="Deixe em branco para todos abaixo da média terem direito."
-                onChange={(n) => set({ paralela, final: { ...final, mediaMinimaParaAcesso: Number.isNaN(n) ? null : n } })}
+                onChange={(n) =>
+                  set({
+                    paralela,
+                    final: { ...final, mediaMinimaParaAcesso: Number.isNaN(n) ? null : n },
+                  })
+                }
               />
               <CampoNumero
                 rotulo="Média para aprovar depois da final"
                 valor={final.mediaMinimaAposRecuperacao}
                 min={0}
-                onChange={(n) => set({ paralela, final: { ...final, mediaMinimaAposRecuperacao: n } })}
+                onChange={(n) =>
+                  set({ paralela, final: { ...final, mediaMinimaAposRecuperacao: n } })
+                }
               />
             </div>
           </>
@@ -668,12 +782,16 @@ function EtapaAprovacao({ regra, setRegra }: PropsEtapa) {
       <div className="flex items-center justify-between gap-4 sm:col-span-2">
         <div>
           <h3 className="font-semibold text-ink">Falta justificada conta como presença</h3>
-          <p className="text-sm text-ink-muted">Desligado, a falta justificada continua contando como falta no percentual.</p>
+          <p className="text-sm text-ink-muted">
+            Desligado, a falta justificada continua contando como falta no percentual.
+          </p>
         </div>
         <Switch
           checked={a.abonaFaltaJustificada}
           aria-label="Falta justificada conta como presença"
-          onCheckedChange={(abonaFaltaJustificada) => setRegra({ ...regra, aprovacao: { ...a, abonaFaltaJustificada } })}
+          onCheckedChange={(abonaFaltaJustificada) =>
+            setRegra({ ...regra, aprovacao: { ...a, abonaFaltaJustificada } })
+          }
         />
       </div>
     </div>
@@ -687,12 +805,16 @@ function EtapaConselho({ regra, setRegra }: PropsEtapa) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="font-semibold text-ink">Conselho de classe pode aprovar</h3>
-          <p className="text-sm text-ink-muted">Decide sobre quem ficou abaixo da média. Nunca sobre falta.</p>
+          <p className="text-sm text-ink-muted">
+            Decide sobre quem ficou abaixo da média. Nunca sobre falta.
+          </p>
         </div>
         <Switch
           checked={c.habilitado}
           aria-label="Conselho de classe pode aprovar"
-          onCheckedChange={(habilitado) => setRegra({ ...regra, conselhoDeClasse: { ...c, habilitado } })}
+          onCheckedChange={(habilitado) =>
+            setRegra({ ...regra, conselhoDeClasse: { ...c, habilitado } })
+          }
         />
       </div>
       {c.habilitado ? (
@@ -702,7 +824,12 @@ function EtapaConselho({ regra, setRegra }: PropsEtapa) {
             valor={c.margemMaxima}
             min={0}
             dica="Em branco: sem limite."
-            onChange={(n) => setRegra({ ...regra, conselhoDeClasse: { ...c, margemMaxima: Number.isNaN(n) ? null : n } })}
+            onChange={(n) =>
+              setRegra({
+                ...regra,
+                conselhoDeClasse: { ...c, margemMaxima: Number.isNaN(n) ? null : n },
+              })
+            }
           />
         </div>
       ) : null}
