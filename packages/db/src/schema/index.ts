@@ -12,3 +12,4 @@ export * from './study-trails';
 export * from './questoes';
 export * from './simulado';
 export * from './academico';
+export * from './lead';

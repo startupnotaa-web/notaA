@@ -12,3 +12,4 @@ export {
   type PlanoPorTipo,
   type ResultadoAplicacao,
 } from './importacao.repository';
+export * from './lead.repository';
