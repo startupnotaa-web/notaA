@@ -13,6 +13,15 @@ const estilo = (nome) => [
   },
 ];
 
+// Paletas dos ambientes da landing (tokens.json → ambientes): amb-bg, amb-ink, amb-accent… valem dentro de data-ambiente.
+// Opacidade vem dos tokens derivados (amb-line) ou de color-mix, porque var() não aceita o modificador /N do Tailwind.
+// O preset é CommonJS (o Tailwind o carrega com require), então não há import estático possível.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const tokensAmbientes = require('./tokens/tokens.json').ambientes?.groups ?? [];
+const ambientes = Object.fromEntries(
+  [...new Set(tokensAmbientes.flatMap((g) => g.tokens.map((t) => t.name.replace(/^amb-/, ''))))].map((n) => [n, `var(--amb-${n})`])
+);
+
 const espaco = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`space-${n}`, `var(--space-${n})`]));
 const vaos = { ...espaco, gutter: 'var(--gutter)' };
 
@@ -32,7 +41,8 @@ module.exports = {
         // Cores exatas do símbolo: só em formas (gradiente da marca, aurora, losango), nunca em texto.
         'brand-cyan': 'var(--brand-cyan)', 'brand-violet': 'var(--brand-violet)',
         'brand-magenta': 'var(--brand-magenta)', 'brand-blue': 'var(--brand-blue)',
-        scrim: 'var(--scrim)'
+        scrim: 'var(--scrim)',
+        amb: ambientes
       },
       fontFamily: { display: ['var(--font-display)'], text: ['var(--font-text)'] },
       fontSize: {
