@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0 && node ../../scripts/verificar-cores.mjs",
     "typecheck": "tsc --noEmit",
     "icones": "node scripts/gerar-icones.mjs",
+    "og": "node scripts/gerar-og.mjs",
     "e2e": "playwright test e2e/a11y.spec.ts",
     "e2e:lighthouse": "playwright test e2e/lighthouse.spec.ts",
     "capturas": "playwright test e2e/capturas.spec.ts"
