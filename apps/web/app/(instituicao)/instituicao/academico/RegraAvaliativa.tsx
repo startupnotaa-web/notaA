@@ -665,6 +665,17 @@ function EtapaAprovacao({ regra, setRegra }: PropsEtapa) {
         dica="A lei exige pelo menos 75%. Reprovação por falta não é revertida por recuperação nem conselho."
         onChange={(n) => setRegra({ ...regra, aprovacao: { ...a, frequenciaMinima: n / 100 } })}
       />
+      <div className="flex items-center justify-between gap-4 sm:col-span-2">
+        <div>
+          <h3 className="font-semibold text-ink">Falta justificada conta como presença</h3>
+          <p className="text-sm text-ink-muted">Desligado, a falta justificada continua contando como falta no percentual.</p>
+        </div>
+        <Switch
+          checked={a.abonaFaltaJustificada}
+          aria-label="Falta justificada conta como presença"
+          onCheckedChange={(abonaFaltaJustificada) => setRegra({ ...regra, aprovacao: { ...a, abonaFaltaJustificada } })}
+        />
+      </div>
     </div>
   );
 }

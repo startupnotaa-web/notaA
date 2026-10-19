@@ -8,7 +8,7 @@ export const REGRA_PADRAO: RegraAvaliativa = {
   mediaFinal: { pesosPorPeriodo: [1, 1, 1, 1] },
   arredondamento: { tipo: 'normal', casas: 1 },
   recuperacao: { paralela: { modo: 'maior' }, final: null },
-  aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75 },
+  aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75, abonaFaltaJustificada: false },
   conselhoDeClasse: { habilitado: false, margemMaxima: null },
 };
 

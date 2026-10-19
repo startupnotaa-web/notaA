@@ -38,6 +38,16 @@ describe('RegraAvaliativaSchema', () => {
     expect(RegraAvaliativaSchema.safeParse(r).success).toBe(true);
   });
 
+  it('não abona falta justificada quando a regra não diz nada', () => {
+    const r = RegraAvaliativaSchema.parse(regraValida());
+    expect(r.aprovacao.abonaFaltaJustificada).toBe(false);
+  });
+
+  it('aceita abonar falta justificada', () => {
+    const r = { ...regraValida(), aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75, abonaFaltaJustificada: true } };
+    expect(RegraAvaliativaSchema.parse(r).aprovacao.abonaFaltaJustificada).toBe(true);
+  });
+
   it('recusa pesos em número diferente do de períodos', () => {
     const r = { ...regraValida(), regime: { tipo: 'trimestral' } };
     expect(mensagens(RegraAvaliativaSchema.safeParse(r))).toContain('Informe 3 pesos, um por período.');

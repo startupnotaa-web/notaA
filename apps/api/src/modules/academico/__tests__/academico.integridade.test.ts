@@ -26,7 +26,7 @@ const regra = (mediaMinima = 6): RegraAvaliativa => ({
   mediaFinal: { pesosPorPeriodo: [2, 2, 3, 3] },
   arredondamento: { tipo: 'normal', casas: 1 },
   recuperacao: { paralela: null, final: null },
-  aprovacao: { mediaMinima, frequenciaMinima: 0.75 },
+  aprovacao: { mediaMinima, frequenciaMinima: 0.75, abonaFaltaJustificada: false },
   conselhoDeClasse: { habilitado: false, margemMaxima: null },
 });
 

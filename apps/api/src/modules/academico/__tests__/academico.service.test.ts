@@ -28,7 +28,7 @@ function regra(overrides: Partial<RegraAvaliativa> = {}): RegraAvaliativa {
     mediaFinal: { pesosPorPeriodo: [2, 2, 3, 3] },
     arredondamento: { tipo: 'normal', casas: 1 },
     recuperacao: { paralela: null, final: null },
-    aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75 },
+    aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75, abonaFaltaJustificada: false },
     conselhoDeClasse: { habilitado: false, margemMaxima: null },
     ...overrides,
   };
@@ -73,7 +73,7 @@ describe('regra avaliativa versionada', () => {
 
     const segunda = await servico.criarRegra(COORD_A, 'admin_instituicao', {
       anoLetivoId: ANO,
-      regra: regra({ aprovacao: { mediaMinima: 7, frequenciaMinima: 0.8 } }),
+      regra: regra({ aprovacao: { mediaMinima: 7, frequenciaMinima: 0.8, abonaFaltaJustificada: false } }),
       justificativa: MOTIVO,
     });
     expect([primeira.versao, segunda.versao]).toEqual([1, 2]);

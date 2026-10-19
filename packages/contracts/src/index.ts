@@ -22,3 +22,6 @@ export * from './regra-avaliativa';
 export * from './academico';
 export * from './importacao';
 export * from './responsavel';
+export * from './frequencia';
+export * from './notas';
+export * from './boletim';
