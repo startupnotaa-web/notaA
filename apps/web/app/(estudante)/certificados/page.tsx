@@ -1,40 +1,62 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import {
+  ClipboardList,
+  Crown,
+  Flame,
+  Gem,
+  Landmark,
+  Lock,
+  Medal,
+  Mountain,
+  PenLine,
+  Rocket,
+  Shield,
+  Sparkles,
+  Star,
+  Swords,
+  Target,
+  Trophy,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import type { AchievementsResponse } from '@notaa/contracts';
-import { Card, SectionHeader, Skeleton, Badge } from '@notaa/ui';
+import { Carregando, Chip, EmptyState, Notice, PageHeader, Progress, Section, Skeleton } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Pagina } from '../../components/Pagina';
+import { Voltar } from '../../components/Voltar';
 
-const BADGE_DICTIONARY: Record<string, { titulo: string, descricao: string, emoji: string }> = {
-  'onboarding': { titulo: 'O Despertar', descricao: 'Você deu o primeiro passo e completou o seu perfil.', emoji: '🚀' },
-  'primeira_redacao': { titulo: 'Mão na Massa', descricao: 'Você enviou sua primeira redação para correção.', emoji: '✍️' },
-  'quiz_primeiro': { titulo: 'Curioso', descricao: 'Você respondeu sua primeira questão no Quiz.', emoji: '🎯' },
-  'socratico_primeiro': { titulo: 'Aprendiz Filosófico', descricao: 'Você questionou o Tutor Socrático pela primeira vez.', emoji: '🏛️' },
-  'simulado_primeiro': { titulo: 'Teste de Fogo', descricao: 'Você completou seu primeiro Simulado Adaptativo.', emoji: '📊' },
-  'ofensiva_3': { titulo: 'Fogo Brando', descricao: 'Você estudou 3 dias consecutivos.', emoji: '🔥' },
-  'ofensiva_7': { titulo: 'Em Chamas', descricao: 'Você estudou 7 dias consecutivos.', emoji: '☄️' },
-  'redacao_900': { titulo: 'Mestre das Palavras', descricao: 'Você alcançou 900+ em uma redação.', emoji: '🏅' },
-  'batalha_vencedor': { titulo: 'Gladiador', descricao: 'Você venceu o seu primeiro duelo no Modo Batalha.', emoji: '⚔️' },
-  'primeiro_xp': { titulo: 'Primeiros Passos', descricao: 'Você ganhou o seu primeiro XP na plataforma.', emoji: '✨' },
-  'xp_100': { titulo: 'Ganhando Ritmo', descricao: 'Você acumulou 100 XP.', emoji: '⚡' },
-  'xp_500': { titulo: 'Dedicação', descricao: 'Você acumulou 500 XP.', emoji: '💎' },
-  'streak_3_dias': { titulo: 'Fogo Brando', descricao: 'Você estudou 3 dias consecutivos.', emoji: '🔥' },
-  'streak_7_dias': { titulo: 'Em Chamas', descricao: 'Você estudou 7 dias consecutivos.', emoji: '☄️' },
-  'streak_15_dias': { titulo: 'Ofensiva de Ferro', descricao: 'Você estudou 15 dias consecutivos.', emoji: '🛡️' },
-  'streak_30_dias': { titulo: 'Imparável', descricao: 'Você estudou 30 dias consecutivos.', emoji: '🏆' },
-  'streak_60_dias': { titulo: 'Lenda em Formação', descricao: 'Você estudou 60 dias consecutivos.', emoji: '🌟' },
-  'streak_120_dias': { titulo: 'Mestre da Constância', descricao: 'Você estudou 120 dias consecutivos.', emoji: '👑' },
-  'streak_240_dias': { titulo: 'Lenda do NotaA', descricao: 'Você estudou 240 dias consecutivos.', emoji: '🏔️' },
+const BADGE_DICTIONARY: Record<string, { titulo: string; descricao: string; Icone: LucideIcon }> = {
+  'onboarding': { titulo: 'O despertar', descricao: 'Você deu o primeiro passo e completou o seu perfil.', Icone: Rocket },
+  'primeira_redacao': { titulo: 'Mão na massa', descricao: 'Você enviou sua primeira redação para correção.', Icone: PenLine },
+  'quiz_primeiro': { titulo: 'Curioso', descricao: 'Você respondeu sua primeira questão no quiz.', Icone: Target },
+  'socratico_primeiro': { titulo: 'Aprendiz filosófico', descricao: 'Você questionou o tutor socrático pela primeira vez.', Icone: Landmark },
+  'simulado_primeiro': { titulo: 'Teste de fogo', descricao: 'Você completou seu primeiro simulado adaptativo.', Icone: ClipboardList },
+  'ofensiva_3': { titulo: 'Fogo brando', descricao: 'Você estudou 3 dias consecutivos.', Icone: Flame },
+  'ofensiva_7': { titulo: 'Em chamas', descricao: 'Você estudou 7 dias consecutivos.', Icone: Flame },
+  'redacao_900': { titulo: 'Mestre das palavras', descricao: 'Você alcançou 900 ou mais em uma redação.', Icone: Medal },
+  'batalha_vencedor': { titulo: 'Gladiador', descricao: 'Você venceu o seu primeiro duelo no modo batalha.', Icone: Swords },
+  'primeiro_xp': { titulo: 'Primeiros passos', descricao: 'Você ganhou o seu primeiro XP na plataforma.', Icone: Sparkles },
+  'xp_100': { titulo: 'Ganhando ritmo', descricao: 'Você acumulou 100 XP.', Icone: Zap },
+  'xp_500': { titulo: 'Dedicação', descricao: 'Você acumulou 500 XP.', Icone: Gem },
+  'streak_3_dias': { titulo: 'Fogo brando', descricao: 'Você estudou 3 dias consecutivos.', Icone: Flame },
+  'streak_7_dias': { titulo: 'Em chamas', descricao: 'Você estudou 7 dias consecutivos.', Icone: Flame },
+  'streak_15_dias': { titulo: 'Ofensiva de ferro', descricao: 'Você estudou 15 dias consecutivos.', Icone: Shield },
+  'streak_30_dias': { titulo: 'Imparável', descricao: 'Você estudou 30 dias consecutivos.', Icone: Trophy },
+  'streak_60_dias': { titulo: 'Lenda em formação', descricao: 'Você estudou 60 dias consecutivos.', Icone: Star },
+  'streak_120_dias': { titulo: 'Mestre da constância', descricao: 'Você estudou 120 dias consecutivos.', Icone: Crown },
+  'streak_240_dias': { titulo: 'Lenda do Nota A', descricao: 'Você estudou 240 dias consecutivos.', Icone: Mountain },
 };
 
 function getBadgeInfo(codigo: string) {
-  if (BADGE_DICTIONARY[codigo]) return BADGE_DICTIONARY[codigo];
-  
-  // Fallback for unknown codes
+  const conhecida = BADGE_DICTIONARY[codigo];
+  if (conhecida) return conhecida;
+
+  // Código desconhecido: monta um título legível a partir do próprio código.
   return {
-    titulo: codigo.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    titulo: codigo.split('_').map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join(' '),
     descricao: 'Conquista secreta desbloqueada.',
-    emoji: '🏆',
+    Icone: Trophy,
   };
 }
 
@@ -51,9 +73,9 @@ export default function CertificadosPage() {
       } catch (e) {
         if (!cancelled) {
           if (e instanceof ApiError && e.code === 'NETWORK_ERROR') {
-            setErro('Sem conexão com o servidor.');
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente de novo.');
           } else {
-            setErro('Erro ao carregar as Conquistas.');
+            setErro('Não foi possível carregar as conquistas. Tente recarregar a página.');
           }
         }
       }
@@ -64,9 +86,12 @@ export default function CertificadosPage() {
 
   if (erro) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-        <p className="text-sm text-error">{erro}</p>
-      </div>
+      <Pagina>
+        <Voltar />
+        <Notice tone="danger" title="Não foi possível abrir as conquistas">
+          {erro}
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -74,125 +99,81 @@ export default function CertificadosPage() {
 
   const { desbloqueadas, bloqueadas } = data;
   const total = desbloqueadas.length + bloqueadas.length;
-  const pct = total > 0 ? Math.round((desbloqueadas.length / total) * 100) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 p-4">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-2">
-          <Link href="/dashboard" className="text-sm font-semibold text-brand-primary hover:underline">
-            &larr; Voltar ao Painel
-          </Link>
-          <h1 className="text-3xl font-bold text-text">Certificados e Conquistas</h1>
-          <p className="text-text-muted">A sua parede de troféus. Colecione medalhas pela sua jornada.</p>
-        </div>
-        
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface-2 p-4 min-w-[200px]">
-           <div className="flex justify-between text-sm">
-             <span className="font-bold text-text">Progresso</span>
-             <span className="text-brand-primary font-bold">{desbloqueadas.length} / {total}</span>
-           </div>
-           <div className="h-2 w-full overflow-hidden rounded-full bg-surface-3">
-             <div className="h-full bg-brand-primary transition-all" style={{ width: `${pct}%` }} />
-           </div>
-        </div>
-      </header>
+    <Pagina>
+      <div className="flex flex-col gap-space-3">
+        <Voltar />
+        <PageHeader title="Certificados e conquistas" description="Colecione medalhas pela sua jornada." />
+      </div>
 
-      {/* Seção: Desbloqueadas */}
-      <section className="space-y-4">
-        <SectionHeader title="Conquistas" accent="Desbloqueadas" as="h2" />
-        
+      <Progress value={desbloqueadas.length} max={Math.max(total, 1)} label={`${desbloqueadas.length} de ${total} conquistas`} />
+
+      <Section title="Conquistas desbloqueadas">
         {desbloqueadas.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {desbloqueadas.map(ach => {
-              const info = getBadgeInfo(ach.codigo);
-              const dataFormatada = ach.concedidoEm 
-                ? new Date(ach.concedidoEm).toLocaleDateString('pt-BR') 
-                : 'Hoje';
-
+          <ul className="m-0 flex list-none flex-col p-0">
+            {desbloqueadas.map((ach) => {
+              const { titulo, descricao, Icone } = getBadgeInfo(ach.codigo);
+              const dataFormatada = ach.concedidoEm ? new Date(ach.concedidoEm).toLocaleDateString('pt-BR') : 'hoje';
               return (
-                <Card key={ach.codigo} className="relative overflow-hidden border-brand-primary/30 bg-surface-2 p-5 transition-transform hover:-translate-y-1 group">
-                   <div className="absolute -right-4 -top-4 text-7xl opacity-5 transition-transform group-hover:scale-110 pointer-events-none select-none">
-                     {info.emoji}
-                   </div>
-                   
-                   <div className="relative z-10 flex items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-primary/20 text-3xl">
-                        {info.emoji}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-text leading-tight mb-1">{info.titulo}</h3>
-                        <p className="text-xs text-text-muted leading-relaxed mb-3">{info.descricao}</p>
-                        
-                        <div className="flex flex-wrap items-center gap-2">
-                           <Badge variant="success" className="text-[10px] uppercase tracking-wider py-0.5">
-                             +{ach.xpAssociado} XP
-                           </Badge>
-                           <span className="text-[10px] text-text-muted">
-                             Em {dataFormatada}
-                           </span>
-                        </div>
-                      </div>
-                   </div>
-                </Card>
+                <li key={ach.codigo} className="flex items-start gap-space-4 border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0">
+                  <span aria-hidden="true" className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-pill bg-violet-tint text-primary">
+                    <Icone className="h-5 w-5" />
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-space-1">
+                    <h3 className="m-0 text-body font-bold text-ink">{titulo}</h3>
+                    <p className="m-0 max-w-texto text-body-sm text-ink-muted">{descricao}</p>
+                    <p className="m-0 flex flex-wrap items-center gap-space-2 text-caption text-ink-muted">
+                      <Chip tone="success">+{ach.xpAssociado} XP</Chip>
+                      Conquistada em {dataFormatada}
+                    </p>
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         ) : (
-          <Card className="p-8 text-center bg-surface-2/30 border-dashed border-border">
-             <span className="text-4xl block mb-3 opacity-50">🌱</span>
-             <p className="text-text font-bold">Nenhuma conquista ainda.</p>
-             <p className="text-sm text-text-muted mt-1">Continue estudando para desbloquear sua primeira medalha!</p>
-          </Card>
+          <EmptyState title="Nenhuma conquista ainda">Continue estudando para desbloquear a sua primeira medalha.</EmptyState>
         )}
-      </section>
+      </Section>
 
-      {/* Seção: Bloqueadas */}
       {bloqueadas.length > 0 && (
-        <section className="space-y-4 pt-4">
-          <SectionHeader title="Próximos" accent="Objetivos" as="h2" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {bloqueadas.map(ach => {
-              const info = getBadgeInfo(ach.codigo);
-              
+        <Section title="Próximos objetivos" divided>
+          <ul className="m-0 flex list-none flex-col p-0">
+            {bloqueadas.map((ach) => {
+              const { titulo, descricao } = getBadgeInfo(ach.codigo);
               return (
-                <Card key={ach.codigo} className="p-4 bg-surface-2/20 border-dashed border-border/50 opacity-60 transition-opacity hover:opacity-100 flex flex-col items-center text-center">
-                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-3 text-2xl grayscale mb-3">
-                     {info.emoji}
-                   </div>
-                   <h3 className="text-sm font-bold text-text-muted mb-1">{info.titulo}</h3>
-                   <p className="text-[10px] text-text-muted mb-3 flex-1">{info.descricao}</p>
-                   
-                   <div className="flex items-center gap-1 text-[10px] font-bold text-brand-primary/70 bg-brand-primary/5 px-2 py-1 rounded-md">
-                     <span>🔒</span>
-                     <span>+{ach.xpAssociado} XP</span>
-                   </div>
-                </Card>
+                <li key={ach.codigo} className="flex items-start gap-space-4 border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0">
+                  <span aria-hidden="true" className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-pill bg-surface-sunken text-ink-muted">
+                    <Lock className="h-5 w-5" />
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-space-1">
+                    <h3 className="m-0 text-body font-bold text-ink">{titulo}</h3>
+                    <p className="m-0 max-w-texto text-body-sm text-ink-muted">{descricao}</p>
+                    <p className="m-0 flex flex-wrap items-center gap-space-2 text-caption text-ink-muted">
+                      <Chip tone="neutral">Bloqueada</Chip>
+                      Vale +{ach.xpAssociado} XP
+                    </p>
+                  </div>
+                </li>
               );
             })}
-          </div>
-        </section>
+          </ul>
+        </Section>
       )}
-    </div>
+    </Pagina>
   );
 }
 
 function CertificadosSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 p-4">
-      <div className="flex justify-between">
+    <Pagina>
+      <Carregando rotulo="Carregando as conquistas" className="flex flex-col gap-space-6 md:gap-space-7">
         <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-16 w-48 rounded-xl" />
-      </div>
-      
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-32 w-full rounded-2xl" />
-        </div>
-      </div>
-    </div>
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }
