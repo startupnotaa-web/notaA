@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo, PeriodoAvaliativo } from '@notaa/contracts';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, EmptyState, Notice, Skeleton, Table, TextField } from '@notaa/ui';
+import {
+  Button,
+  Carregando,
+  Dialog,
+  EmptyState,
+  Notice,
+  Panel,
+  Section,
+  SkeletonLinhas,
+  Table,
+  TextField,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 
@@ -29,7 +40,9 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
 
   const carregar = useCallback(async () => {
     try {
-      setPeriodos(await apiFetch<PeriodoAvaliativo[]>(`/academico/periodos?anoLetivoId=${anoLetivo.id}`));
+      setPeriodos(
+        await apiFetch<PeriodoAvaliativo[]>(`/academico/periodos?anoLetivoId=${anoLetivo.id}`),
+      );
     } catch (e) {
       setErro(e instanceof ApiError ? e.message : 'Não foi possível carregar os períodos.');
       setPeriodos([]);
@@ -49,7 +62,13 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
     try {
       await apiFetch<PeriodoAvaliativo>('/academico/periodos', {
         method: 'POST',
-        body: JSON.stringify({ anoLetivoId: anoLetivo.id, ordem: proximaOrdem, nome: nome.trim(), dataInicio, dataFim }),
+        body: JSON.stringify({
+          anoLetivoId: anoLetivo.id,
+          ordem: proximaOrdem,
+          nome: nome.trim(),
+          dataInicio,
+          dataFim,
+        }),
       });
       setNome('');
       setDataInicio('');
@@ -70,7 +89,9 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
       toast('Período removido.', { variant: 'success' });
       await carregar();
     } catch (e) {
-      toast(e instanceof ApiError ? e.message : 'Não foi possível remover o período.', { variant: 'error' });
+      toast(e instanceof ApiError ? e.message : 'Não foi possível remover o período.', {
+        variant: 'error',
+      });
     } finally {
       setRemovendoAgora(false);
       setRemovendo(null);
@@ -78,11 +99,12 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
   }
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="min-w-0 space-y-3">
-        <h2 className="font-display text-[19px] font-semibold leading-[26px] text-ink">Períodos de {anoLetivo.rotulo}</h2>
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-space-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-space-7">
+      <Section title={`Períodos de ${anoLetivo.rotulo}`} className="min-w-0">
         {periodos === null ? (
-          <Skeleton className="h-40 w-full" />
+          <Carregando rotulo="Carregando os períodos">
+            <SkeletonLinhas linhas={3} />
+          </Carregando>
         ) : periodos.length === 0 ? (
           <EmptyState title="Nenhum período cadastrado">
             Adicione os bimestres, trimestres ou semestres do ano ao lado.
@@ -109,7 +131,11 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
                   <td>{dataBr(p.dataFim)}</td>
                   <td className="text-right">
                     {somenteLeitura ? null : (
-                      <Button variant="danger" onClick={() => setRemovendo(p)} aria-label={`Remover ${p.nome}`}>
+                      <Button
+                        variant="danger"
+                        onClick={() => setRemovendo(p)}
+                        aria-label={`Remover ${p.nome}`}
+                      >
                         Remover
                       </Button>
                     )}
@@ -119,39 +145,63 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
             </tbody>
           </Table>
         )}
-      </div>
+      </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicionar período</CardTitle>
-          <CardDescription>
-            {somenteLeitura ? 'Este ano letivo está arquivado.' : `Entra como ${proximaOrdem}º período.`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void criar();
-            }}
+      <Panel
+        title="Adicionar período"
+        description={
+          somenteLeitura
+            ? 'Este ano letivo está arquivado.'
+            : `Entra como ${proximaOrdem}º período.`
+        }
+        className="self-start"
+      >
+        <form
+          className="flex flex-col gap-space-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void criar();
+          }}
+        >
+          <fieldset
+            disabled={somenteLeitura || enviando}
+            className="m-0 flex min-w-0 flex-col gap-space-5 border-0 p-0"
           >
-            <fieldset disabled={somenteLeitura || enviando} className="space-y-4">
-              <TextField label="Nome" id="periodo-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder={`${proximaOrdem}º bimestre`} required minLength={2} />
-              <div className="grid grid-cols-2 gap-3">
-                <TextField label="Início" id="periodo-inicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required />
-                <TextField label="Fim" id="periodo-fim" type="date" value={dataFim} min={dataInicio || undefined} onChange={(e) => setDataFim(e.target.value)} required />
-              </div>
-              {erro ? (
-                <Notice tone="danger">{erro}</Notice>
-              ) : null}
-              <Button type="submit" className="w-full">
-                {enviando ? 'Salvando…' : 'Adicionar período'}
-              </Button>
-            </fieldset>
-          </form>
-        </CardContent>
-      </Card>
+            <TextField
+              label="Nome"
+              id="periodo-nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder={`${proximaOrdem}º bimestre`}
+              required
+              minLength={2}
+            />
+            <div className="grid grid-cols-2 gap-space-3">
+              <TextField
+                label="Início"
+                id="periodo-inicio"
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                required
+              />
+              <TextField
+                label="Fim"
+                id="periodo-fim"
+                type="date"
+                value={dataFim}
+                min={dataInicio || undefined}
+                onChange={(e) => setDataFim(e.target.value)}
+                required
+              />
+            </div>
+            {erro ? <Notice tone="danger">{erro}</Notice> : null}
+            <Button type="submit" className="w-full" loading={enviando}>
+              {enviando ? 'Salvando' : 'Adicionar período'}
+            </Button>
+          </fieldset>
+        </form>
+      </Panel>
       <Dialog
         open={removendo !== null}
         onClose={() => (removendoAgora ? undefined : setRemovendo(null))}
@@ -160,10 +210,18 @@ export function Periodos({ anoLetivo }: { anoLetivo: AnoLetivo }) {
         closeOnScrim={!removendoAgora}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRemovendo(null)} disabled={removendoAgora}>
+            <Button
+              variant="secondary"
+              onClick={() => setRemovendo(null)}
+              disabled={removendoAgora}
+            >
               Cancelar
             </Button>
-            <Button variant="danger" loading={removendoAgora} onClick={() => removendo && void remover(removendo)}>
+            <Button
+              variant="danger"
+              loading={removendoAgora}
+              onClick={() => removendo && void remover(removendo)}
+            >
               Remover período
             </Button>
           </>

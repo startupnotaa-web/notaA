@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
-import { Card, CardDescription, CardHeader, CardTitle, SectionHeader, Select, Skeleton, Tabs, propsDoPainel, Notice } from '@notaa/ui';
+import {
+  Carregando,
+  EmptyState,
+  Notice,
+  PageHeader,
+  Select,
+  Skeleton,
+  Tabs,
+  propsDoPainel,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { GestaoDeAnosLetivos } from '../../../components/painel/GestaoDeAnosLetivos';
 import { Disciplinas } from './Disciplinas';
@@ -52,27 +61,27 @@ export default function ConfiguracaoAcademicaPage() {
   const precisaDeAno = secao === 'periodos' || secao === 'regra';
 
   return (
-    <div className="space-y-6">
-      <SectionHeader
-        as="h1"
+    <div className="flex flex-col gap-space-6">
+      <PageHeader
         title="Configuração acadêmica"
         description="Defina o calendário avaliativo, as disciplinas e como as notas viram média e situação final."
-        action={
+        actions={
           anos && anos.length > 0 ? (
             <Select
               label="Ano letivo"
               className="w-56"
               value={anoLetivoId}
               onChange={(e) => setAnoLetivoId(e.target.value)}
-              options={anos.map((a) => ({ value: a.id, label: `${a.rotulo}${a.arquivado ? ' (arquivado)' : ''}` }))}
+              options={anos.map((a) => ({
+                value: a.id,
+                label: `${a.rotulo}${a.arquivado ? ' (arquivado)' : ''}`,
+              }))}
             />
           ) : null
         }
       />
 
-      {erro ? (
-        <Notice tone="danger">{erro}</Notice>
-      ) : null}
+      {erro ? <Notice tone="danger">{erro}</Notice> : null}
 
       <Tabs
         label="Seções da configuração acadêmica"
@@ -84,18 +93,16 @@ export default function ConfiguracaoAcademicaPage() {
 
       <section {...propsDoPainel('config', secao)}>
         {anos === null ? (
-          <Skeleton className="h-48 w-full" />
+          <Carregando rotulo="Carregando a configuração acadêmica">
+            <Skeleton className="h-48 w-full" />
+          </Carregando>
         ) : secao === 'ano' ? (
           <GestaoDeAnosLetivos />
         ) : precisaDeAno && !anoSelecionado ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Crie um ano letivo primeiro</CardTitle>
-              <CardDescription>
-                Períodos e regra avaliativa pertencem a um ano letivo. Cadastre o ano na aba “Ano letivo”.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <EmptyState title="Crie um ano letivo primeiro">
+            Períodos e regra avaliativa pertencem a um ano letivo. Cadastre o ano na aba “Ano
+            letivo”.
+          </EmptyState>
         ) : secao === 'periodos' && anoSelecionado ? (
           <Periodos anoLetivo={anoSelecionado} />
         ) : secao === 'disciplinas' ? (

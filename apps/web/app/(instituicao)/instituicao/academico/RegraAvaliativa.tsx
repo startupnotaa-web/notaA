@@ -141,7 +141,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
 
           <Card>
             <CardContent className="space-y-6 pt-6">
-              <h2 ref={tituloEtapa} tabIndex={-1} className="font-display text-[19px] font-semibold leading-[26px] text-ink focus:outline-none">
+              <h2 ref={tituloEtapa} tabIndex={-1} className="font-display text-heading-3 text-ink focus:outline-none">
                 {etapa + 1}. {ETAPAS[etapa]}
               </h2>
               <fieldset disabled={somenteLeitura} className="space-y-6">
@@ -202,7 +202,7 @@ export function RegraAvaliativa({ anoLetivo }: { anoLetivo: AnoLetivo }) {
       </div>
 
       <section aria-labelledby="titulo-versoes" className="space-y-3">
-        <h2 id="titulo-versoes" className="font-display text-[19px] font-semibold leading-[26px] text-ink">
+        <h2 id="titulo-versoes" className="font-display text-heading-3 text-ink">
           Versões da regra em {anoLetivo.rotulo}
         </h2>
         {versoes === null ? (
