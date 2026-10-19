@@ -7,3 +7,4 @@ import { Palco, type PalcoProps } from './Palco';
 type Props = Omit<PalcoProps, 'carregar'>;
 
 export const PalcoHome = (p: Props) => <Palco carregar={() => import('../cenas/home')} {...p} />;
+export const PalcoAluno = (p: Props) => <Palco carregar={() => import('../cenas/aluno')} {...p} />;
