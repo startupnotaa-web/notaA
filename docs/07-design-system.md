@@ -19,7 +19,7 @@
 ## 2. Tokens e Tailwind
 
 - `tailwind.preset.js` (em `packages/ui`) mapeia os tokens para utilitários: `bg-paper`, `bg-surface`, `bg-surface-sunken`, `border-line`, `border-line-strong`, `text-ink`, `text-ink-muted`, `bg-primary`, `text-primary`, `bg-violet-tint`, `bg-success-tint`, `text-danger`, `shadow-raise`, `rounded-sm|md|lg|pill`, `duration-fast|base|slow`, `ease-out|ease-in-out` (as curvas dos tokens), `font-display`, `font-text`, os estilos de texto (`text-display`, `text-heading-1` a `-3`, `text-figure`, `text-lead`, `text-body`, `text-body-sm`, `text-label`, `text-caption`) e a escala de espaço (`p-space-5`, `gap-space-6`, `mt-space-7`…). `p-5` e companhia continuam sendo a escala padrão do Tailwind.
-- `apps/web/tailwind.config.ts` usa o preset e carrega um bloco `legacy` com os nomes do sistema antigo (`bg-bg`, `text-text`, `text-text-muted`, `border-border`, `bg-surface-2`, `text-error`, `bg-brand-primary` …), apontados para os tokens novos. **Dívida declarada:** só as telas de aluno, família e onboarding ainda o usam. Remova cada alias quando nada mais o referenciar.
+- `apps/web/tailwind.config.ts` só usa o preset (e a pilha de fontes). Os aliases do sistema antigo (`bg-bg`, `text-text`, `border-border`, `bg-surface-2`, `text-error`, `bg-brand-primary`, `shadow-1`, `bg-gradient-brand` …) foram removidos: use os tokens.
 - Código que não aceita `var()` (manifest, `themeColor`, geração de ícones) lê os valores de `corDoToken()`, exportado por `@notaa/ui`.
 - Hex fora de `tokens.json`/`tokens.css` é erro. A única exceção é `packages/ui/assets/nota-a-simbolo.svg`, arquivo-fonte da marca usado para gerar os ícones; a interface usa o componente `NotaASimbolo`, que lê as variáveis.
 
