@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Input, Label } from '@notaa/ui';
+import { Button, Notice, Panel, TextField } from '@notaa/ui';
+import { AuthPagina, IconeGoogle, SeparadorOu } from '../../components/auth';
 import { garantirRegistro } from '../../../lib/post-auth';
 import { rotaInicialPorPapel } from '../../../lib/rota-inicial';
 import { supabaseBrowser } from '../../../lib/supabase-browser';
@@ -38,47 +39,33 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-8">
-      <h1 className="text-2xl font-bold">Entrar no Nota A</h1>
+    <AuthPagina titulo="Entrar no Nota A">
+      <Panel>
+        <form onSubmit={onSubmit} className="flex flex-col gap-space-5">
+          <TextField label="E-mail" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <TextField
+            label="Senha"
+            type="password"
+            autoComplete="current-password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
 
-      <Card className="p-6">
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="senha">Senha</Label>
-            <Input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-            />
-          </div>
+          {erro && <Notice tone="danger">{erro}</Notice>}
 
-          {erro && (
-            <p role="alert" className="text-sm text-error">
-              {erro}
-            </p>
-          )}
-
-          <Button type="submit" variant="primary" className="w-full" disabled={carregando}>
-            {carregando ? 'Entrando...' : 'Entrar'}
+          <Button type="submit" variant="primary" className="w-full" loading={carregando}>
+            {carregando ? 'Entrando' : 'Entrar'}
           </Button>
         </form>
 
-        <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-text-muted uppercase tracking-wider">ou continue com</span>
-          <div className="h-px flex-1 bg-border" />
+        <div className="my-space-5">
+          <SeparadorOu />
         </div>
 
         <Button
           type="button"
           variant="secondary"
-         
           className="w-full"
           disabled={carregando}
           onClick={async () => {
@@ -89,24 +76,22 @@ export default function LoginPage() {
               options: { redirectTo: `${window.location.origin}/onboarding` },
             });
             if (error) {
-              setErro('Erro ao redirecionar para o Google.');
+              setErro('Não foi possível abrir o login com o Google. Tente de novo.');
               setCarregando(false);
             }
           }}
         >
-          <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" fill="currentColor">
-            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" />
-          </svg>
+          <IconeGoogle />
           Google
         </Button>
-      </Card>
+      </Panel>
 
-      <p className="text-center text-sm text-text-muted">
+      <p className="m-0 text-body-sm text-ink-muted">
         Ainda não tem conta?{' '}
-        <Link href="/cadastro" className="text-brand-primary underline">
+        <Link href="/cadastro" className="font-bold text-primary underline">
           Criar conta
         </Link>
       </p>
-    </main>
+    </AuthPagina>
   );
 }

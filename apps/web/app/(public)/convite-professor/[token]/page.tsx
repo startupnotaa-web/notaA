@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import type { PreviaConviteProfessor } from '@notaa/contracts';
-import { Button, Card, Input, Label } from '@notaa/ui';
+import { Button, Chip, Notice, Panel, TextField } from '@notaa/ui';
+import { AuthPagina } from '../../../components/auth';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { supabaseBrowser } from '../../../../lib/supabase-browser';
 
@@ -121,105 +122,83 @@ export default function ConviteProfessorPage() {
     }
   }
 
+  if (estado.fase === 'carregando') {
+    return <AuthPagina titulo="Verificando convite" descricao="Só um instante." />;
+  }
+
+  if (estado.fase === 'conviteInvalido') {
+    return (
+      <AuthPagina titulo="Convite indisponível">
+        <Notice tone="danger">{estado.mensagem}</Notice>
+        <p className="m-0 text-body-sm text-ink-muted">
+          Já tem conta?{' '}
+          <Link href="/login" className="font-bold text-primary underline">
+            Ir para o login
+          </Link>
+        </p>
+      </AuthPagina>
+    );
+  }
+
+  if (estado.fase === 'aguardandoConfirmacao') {
+    return (
+      <AuthPagina
+        titulo="Confirme seu e-mail"
+        descricao={
+          <>
+            Enviamos um link para <strong className="text-ink">{email}</strong>. Depois de confirmar, abra este convite
+            novamente para concluir o cadastro.
+          </>
+        }
+      />
+    );
+  }
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-8">
-      {estado.fase === 'carregando' && (
-        <Card className="space-y-2 p-6 text-center">
-          <h1 className="text-xl font-bold text-text">Verificando convite…</h1>
-          <p className="text-text-muted">Só um instante.</p>
-        </Card>
-      )}
+    <AuthPagina
+      titulo={estado.previa.instituicaoNome}
+      descricao="Crie sua conta de professor. Você vai lecionar nas turmas que a instituição atribuir a você."
+    >
+      <div>
+        <Chip tone="brand">Convite para lecionar</Chip>
+      </div>
+      <Panel>
+        <form onSubmit={criarConta} className="flex flex-col gap-space-5">
+          <TextField label="Nome" autoComplete="name" value={nome} onChange={(ev) => setNome(ev.target.value)} required />
+          <TextField
+            label="E-mail"
+            type="email"
+            autoComplete="email"
+            hint="Use um e-mail que ainda não tenha conta no Nota A. Cada conta tem um papel só, então a conta de professor da instituição é separada de qualquer outra que você já use."
+            value={email}
+            onChange={(ev) => setEmail(ev.target.value)}
+            required
+          />
+          <TextField
+            label="Senha"
+            type="password"
+            autoComplete="new-password"
+            hint="Use pelo menos 6 caracteres."
+            minLength={6}
+            value={senha}
+            onChange={(ev) => setSenha(ev.target.value)}
+            required
+          />
 
-      {estado.fase === 'conviteInvalido' && (
-        <Card className="space-y-3 p-6 text-center">
-          <h1 className="text-xl font-bold text-text">Convite indisponível</h1>
-          <p role="alert" className="text-sm text-error">
-            {estado.mensagem}
-          </p>
-          <p className="text-sm text-text-muted">
-            Já tem conta?{' '}
-            <Link href="/login" className="text-brand-primary underline">
-              Ir para o login
-            </Link>
-          </p>
-        </Card>
-      )}
+          {erro && <Notice tone="danger">{erro}</Notice>}
 
-      {estado.fase === 'aguardandoConfirmacao' && (
-        <Card className="space-y-3 p-6 text-center">
-          <h1 className="text-xl font-bold text-text">Confirme seu e-mail</h1>
-          <p className="text-text-muted">
-            Enviamos um link para <strong className="text-text">{email}</strong>. Depois de
-            confirmar, abra este convite novamente para concluir o cadastro.
-          </p>
-        </Card>
-      )}
+          <Button type="submit" variant="primary" className="w-full" loading={enviando}>
+            {enviando ? 'Criando conta' : 'Criar conta de professor'}
+          </Button>
+        </form>
+      </Panel>
 
-      {estado.fase === 'formulario' && (
-        <>
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
-              Convite para lecionar
-            </p>
-            <h1 className="text-2xl font-bold text-text">{estado.previa.instituicaoNome}</h1>
-            <p className="text-sm text-text-muted">
-              Crie sua conta de professor. Você vai lecionar nas turmas que a instituição atribuir a
-              você.
-            </p>
-            <p className="text-xs text-text-muted">
-              Use um e-mail que ainda não tenha conta no Nota A. Cada conta tem um papel só, então a
-              conta de professor da instituição é separada de qualquer outra que você já use.
-            </p>
-          </div>
-
-          <Card className="p-6">
-            <form onSubmit={criarConta} className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="nome">Nome</Label>
-                <Input id="nome" value={nome} onChange={(ev) => setNome(ev.target.value)} required />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(ev) => setEmail(ev.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="senha">Senha</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  minLength={6}
-                  value={senha}
-                  onChange={(ev) => setSenha(ev.target.value)}
-                  required
-                />
-              </div>
-
-              {erro && (
-                <p role="alert" className="text-sm text-error">
-                  {erro}
-                </p>
-              )}
-
-              <Button type="submit" variant="primary" className="w-full" disabled={enviando}>
-                {enviando ? 'Criando conta…' : 'Criar conta de professor'}
-              </Button>
-            </form>
-          </Card>
-
-          <p className="text-center text-sm text-text-muted">
-            Já tem conta?{' '}
-            <Link href="/login" className="text-brand-primary underline">
-              Entrar
-            </Link>
-          </p>
-        </>
-      )}
-    </main>
+      <p className="m-0 text-body-sm text-ink-muted">
+        Já tem conta?{' '}
+        <Link href="/login" className="font-bold text-primary underline">
+          Entrar
+        </Link>
+      </p>
+    </AuthPagina>
   );
 }

@@ -1,206 +1,186 @@
 import type { SVGProps } from 'react';
 import Link from 'next/link';
-import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input, ButtonLink, Aurora, NotaASimbolo } from '@notaa/ui';
+import { Aurora, ButtonLink, Chip, NotaASimbolo } from '@notaa/ui';
 import { FEATURES } from '../../lib/feature-flags';
 
 type IconProps = SVGProps<SVGSVGElement>;
 
+const RECURSOS = [
+  { i: DiagnosticIcon, t: 'Diagnóstico com IA', d: 'Descubra onde focar em 10 minutos.' },
+  { i: WritingIcon, t: 'Redação corrigida', d: 'Correção instantânea pelas 5 competências do ENEM.' },
+  { i: ExamIcon, t: 'Simulado adaptativo', d: 'Questões que evoluem junto com o seu nível.' },
+  { i: SocraticIcon, t: 'Tutor socrático', d: 'Um tutor que ensina a pensar, não só dá a resposta.' },
+  // A vitrine só anuncia o que está no ar. Com a Arena oculta (lib/feature-flags.ts), a Batalha PvP
+  // cede o lugar à Previsão de nota, que já existe em /previsao-nota.
+  FEATURES.arena
+    ? { i: PvpIcon, t: 'Batalha PvP', d: 'Desafie amigos e aprenda de forma gamificada.' }
+    : { i: ForecastIcon, t: 'Previsão de nota', d: 'Veja a projeção da sua nota crescer a cada simulado.' },
+  { i: CertIcon, t: 'Certificados', d: 'Comprove suas horas de estudo e suas habilidades.' },
+];
+
+const PUBLICOS = [
+  { quem: 'Estudante', texto: 'Plano de estudos que se ajusta a você, simulados e redações corrigidas em segundos.' },
+  { quem: 'Professor', texto: 'Métricas da turma, lacunas à vista e tarefas personalizadas.' },
+  { quem: 'Instituição', texto: 'Painel com o rendimento e o histórico dos alunos vinculados.' },
+];
+
+const PLANOS = [
+  {
+    nome: 'Grátis',
+    preco: 'R$ 0',
+    periodo: '/mês',
+    descricao: 'Para conhecer o método.',
+    itens: ['Diagnóstico inicial', '1 simulado adaptativo por mês', 'Tutoria com IA limitada'],
+    acao: { rotulo: 'Começar grátis', href: '/cadastro', variante: 'secondary' as const },
+  },
+  {
+    nome: 'Plus',
+    preco: 'R$ 39',
+    periodo: '/mês',
+    descricao: 'O kit completo para a sua aprovação.',
+    itens: ['Tudo do plano grátis', 'Correção ilimitada de redação', 'Simulados e desafios semanais', 'Acesso total ao tutor socrático'],
+    destaque: true,
+    acao: { rotulo: 'Ver o plano Plus', href: '/planos', variante: 'primary' as const },
+  },
+  {
+    nome: 'Instituição',
+    preco: 'R$ 2.400',
+    periodo: '/ano',
+    descricao: 'Licença completa para instituições.',
+    itens: ['Até 100 alunos inclusos', 'Painéis e relatórios', 'Gestão de turmas e tarefas'],
+    acao: { rotulo: 'Falar com a equipe', href: 'mailto:contato@notaa.com.br', variante: 'secondary' as const },
+  },
+];
+
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-bg text-text">
-      {/* Nav Minimalista */}
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-2 font-display text-xl font-semibold"><NotaASimbolo className="h-8 w-auto" />Nota A</span>
-          <Badge variant="brand" className="hidden sm:inline-flex">Beta 1.0 ao vivo</Badge>
+    <div className="min-h-screen bg-paper text-ink">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-space-4 md:px-space-6">
+        <div className="flex items-center gap-space-4">
+          <span className="flex items-center gap-2 font-display text-xl font-semibold">
+            <NotaASimbolo className="h-8 w-auto" />
+            Nota A
+          </span>
+          <Chip tone="brand" className="hidden sm:inline-flex">
+            Beta ao vivo
+          </Chip>
         </div>
-        <ButtonLink as={Link} href="/login" variant="quiet">Entrar</ButtonLink>
+        <ButtonLink as={Link} href="/login" variant="quiet">
+          Entrar
+        </ButtonLink>
       </header>
 
       <main>
+        {/* Hero: a única tela centralizada do produto. A Aurora é o destaque de cor; o símbolo ocupa o espaço
+            que o 3D vai usar depois (troque o conteúdo de data-slot="hero-3d" quando ele existir). */}
+        <Aurora as="section">
+          <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-space-6 px-4 pb-space-8 pt-space-7 text-center md:pt-space-8">
+            <div data-slot="hero-3d" className="flex h-24 items-center justify-center sm:h-32">
+              <NotaASimbolo className="h-16 w-auto sm:h-24" />
+            </div>
+            <h1 className="m-0 font-display text-[40px] font-semibold leading-[44px] tracking-[-0.025em] text-ink sm:text-display">
+              Aprenda jogando.
+              <br />
+              Evolua estudando.
+            </h1>
+            <p className="m-0 max-w-[30rem] text-lead text-ink-muted">
+              Preparação para o ENEM que se adapta ao seu ritmo.
+            </p>
+            <div className="flex w-full flex-col justify-center gap-space-3 sm:w-auto sm:flex-row">
+              <ButtonLink as={Link} href="/cadastro" variant="primary">
+                Começar grátis
+              </ButtonLink>
+              <ButtonLink as={Link} href="#recursos" variant="secondary">
+                Ver recursos
+              </ButtonLink>
+            </div>
+          </div>
+        </Aurora>
 
-      {/* Hero Section */}
-      <Aurora as="section">
-       <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-6 pb-20 pt-16 text-center">
-        <h1 className="font-display text-5xl font-semibold leading-[52px] tracking-[-0.02em] text-ink">
-          Aprenda jogando.<br />
-          Evolua estudando.
-        </h1>
-        <p className="max-w-2xl text-xl text-text-muted">
-          A primeira plataforma EdTech gamificada do Brasil com IA adaptativa. Personalizamos sua jornada do ENEM, do primeiro simulado à aprovação.
-        </p>
-        <div className="flex w-full flex-col justify-center gap-4 sm:w-auto sm:flex-row">
-          <ButtonLink as={Link} href="/cadastro" variant="primary">Começar Grátis</ButtonLink>
-          <ButtonLink as={Link} href="#demonstracao" variant="secondary">Ver demonstração</ButtonLink>
-        </div>
-       </div>
-      </Aurora>
-
-      {/* O problema é real (Glassmorphism) */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-16">
-        <h2 className="mb-12 text-center text-3xl font-bold">O problema é real</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { t: 'Sem direcionamento', d: 'Você estuda o que já sabe e ignora o que mais cai.' },
-            { t: 'Sem tempo', d: 'Rotinas pesadas que não se adaptam à sua vida real.' },
-            { t: 'Método genérico', d: 'O cursinho ensina igual para todos, sem respeitar seu ritmo.' },
-            { t: 'Neurodivergentes ignorados', d: 'TDAH, dislexia e autismo não são contemplados nos métodos.' },
-          ].map((prob) => (
-            <Card key={prob.t} className="border-white/5 bg-surface/40 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-lg">{prob.t}</CardTitle>
-                <CardDescription>{prob.d}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* A Solução */}
-      <section id="demonstracao" className="mx-auto w-full max-w-6xl px-6 py-16">
-        <h2 className="mb-12 text-center text-3xl font-bold">A solução: Nota A</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { i: DiagnosticIcon, t: 'IA Diagnóstica', d: 'Descubra exatamente onde focar em 10 minutos.' },
-            { i: WritingIcon, t: 'Redação com IA', d: 'Correção instantânea pelas 5 competências do ENEM.' },
-            { i: ExamIcon, t: 'Simulado Adaptativo', d: 'Questões que evoluem junto com seu nível.' },
-            { i: SocraticIcon, t: 'IA Socrática', d: 'Um tutor que ensina a pensar, não apenas dá respostas.' },
-            // A vitrine só anuncia o que está no ar. Com a Arena oculta
-            // (lib/feature-flags.ts), Batalha PvP cede o lugar à Previsão de
-            // Nota, que já existe em /previsao-nota.
-            FEATURES.arena
-              ? { i: PvpIcon, t: 'Batalha PvP', d: 'Desafie amigos e aprenda de forma gamificada.' }
-              : { i: ForecastIcon, t: 'Previsão de Nota', d: 'Veja a projeção da sua nota evoluir a cada simulado.' },
-            { i: CertIcon, t: 'Certificados', d: 'Comprove suas horas de estudo e habilidades.' },
-          ].map(({ i: Icon, t, d }) => (
-            <Card key={t} className="border-border bg-surface-2">
-              <CardHeader>
-                <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-surface text-brand-primary">
-                  <Icon className="h-6 w-6" aria-hidden="true" />
-                </span>
-                <CardTitle className="text-xl">{t}</CardTitle>
-                <CardDescription>{d}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Para quem é */}
-      <section className="bg-surface py-16">
-        <div className="mx-auto w-full max-w-6xl px-6">
-          <h2 className="mb-12 text-center text-3xl font-bold">Feito para todo o ecossistema</h2>
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              { role: 'Estudante', desc: 'Plano de estudos dinâmico, simulados gamificados e redações corrigidas em segundos.' },
-              { role: 'Professor', desc: 'Acompanhe métricas da turma, identifique lacunas e personalize tarefas facilmente.' },
-              { role: 'Instituição', desc: 'Painel administrativo com rendimento e histórico dos alunos vinculados.' },
-            ].map((persona) => (
-              <div key={persona.role} className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-2">
-                  <span className="text-2xl font-bold text-brand-accent">{persona.role.charAt(0)}</span>
+        <section id="recursos" aria-labelledby="recursos-titulo" className="mx-auto w-full max-w-5xl px-4 py-space-7 md:px-space-6 md:py-space-8">
+          <h2 id="recursos-titulo" className="m-0 mb-space-7 font-display text-heading-2 text-ink">
+            O que você encontra no Nota A
+          </h2>
+          <ul className="m-0 grid list-none grid-cols-1 gap-x-space-7 gap-y-space-6 p-0 sm:grid-cols-2">
+            {RECURSOS.map(({ i: Icon, t, d }) => (
+              <li key={t} className="flex gap-space-4 border-t border-line pt-space-5">
+                <Icon className="mt-1 h-5 w-5 flex-none text-primary" aria-hidden="true" />
+                <div className="flex flex-col gap-space-1">
+                  <h3 className="m-0 font-display text-heading-3 text-ink">{t}</h3>
+                  <p className="m-0 max-w-texto text-body text-ink-muted">{d}</p>
                 </div>
-                <h3 className="mb-2 text-xl font-semibold">{persona.role}</h3>
-                <p className="text-text-muted">{persona.desc}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-labelledby="publicos-titulo" className="mx-auto w-full max-w-5xl px-4 pb-space-7 md:px-space-6 md:pb-space-8">
+          <h2 id="publicos-titulo" className="m-0 mb-space-7 font-display text-heading-2 text-ink">
+            Feito para quem estuda e para quem ensina
+          </h2>
+          <div className="grid grid-cols-1 gap-x-space-7 gap-y-space-6 md:grid-cols-3">
+            {PUBLICOS.map((p) => (
+              <div key={p.quem} className="flex flex-col gap-space-2 border-t border-line pt-space-5">
+                <h3 className="m-0 font-display text-heading-3 text-ink">{p.quem}</h3>
+                <p className="m-0 text-body text-ink-muted">{p.texto}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Planos (Pricing) */}
-      <section className="mx-auto w-full max-w-5xl px-6 py-20">
-        <h2 className="mb-4 text-center text-3xl font-bold">Planos que cabem no bolso</h2>
-        <p className="mb-12 text-center text-text-muted">Comece de graça, faça upgrade quando quiser.</p>
-        <div className="grid items-center gap-6 lg:grid-cols-3">
-          
-          <Card className="flex flex-col border-border bg-surface">
-            <CardHeader>
-              <CardTitle>Free</CardTitle>
-              <div className="mt-2 flex items-baseline text-3xl font-bold">R$ 0<span className="text-sm font-normal text-text-muted">/mês</span></div>
-              <CardDescription>Para testar a metodologia.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <ul className="space-y-3 text-sm text-text-muted">
-                <li>• Diagnóstico inicial</li>
-                <li>• 1 Simulado adaptativo por mês</li>
-                <li>• Tutoria IA limitada</li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="secondary">Começar Grátis</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="relative flex transform flex-col border-brand-primary bg-surface-2 shadow-brand lg:-translate-y-4">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-on">
-              Mais Popular
-            </div>
-            <CardHeader>
-              <CardTitle>Plus</CardTitle>
-              <div className="mt-2 flex items-baseline text-4xl font-bold text-brand-primary">R$ 39<span className="text-sm font-normal text-text-muted">/mês</span></div>
-              <CardDescription>O kit completo para sua aprovação.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <ul className="space-y-3 text-sm text-text-muted">
-                <li>• Tudo do plano Free</li>
-                <li>• Correção ilimitada de Redação</li>
-                <li>• Simulados e desafios semanais</li>
-                <li>• Acesso total à IA Socrática</li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="primary">Assinar Plus</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="flex flex-col border-border bg-surface">
-            <CardHeader>
-              <CardTitle>Instituição</CardTitle>
-              <div className="mt-2 flex items-baseline text-3xl font-bold">R$ 2.400<span className="text-sm font-normal text-text-muted">/ano</span></div>
-              <CardDescription>Licença completa para instituições.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <ul className="space-y-3 text-sm text-text-muted">
-                <li>• Até 100 alunos inclusos</li>
-                <li>• Dashboards e relatórios MEC</li>
-                <li>• Gestão de turmas e tarefas</li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="secondary">Falar com Vendas</Button>
-            </CardFooter>
-          </Card>
-
-        </div>
-      </section>
-
+        <section aria-labelledby="planos-titulo" className="mx-auto w-full max-w-5xl px-4 pb-space-8 md:px-space-6">
+          <h2 id="planos-titulo" className="m-0 font-display text-heading-2 text-ink">
+            Planos
+          </h2>
+          <p className="m-0 mb-space-7 mt-space-2 text-body text-ink-muted">Comece de graça e mude de plano quando quiser.</p>
+          <div className="grid grid-cols-1 gap-x-space-7 gap-y-space-7 md:grid-cols-3">
+            {PLANOS.map((plano) => (
+              <div key={plano.nome} className="flex flex-col gap-space-4 border-t border-line pt-space-5">
+                <div className="flex items-center gap-space-3">
+                  <h3 className="m-0 font-display text-heading-3 text-ink">{plano.nome}</h3>
+                  {plano.destaque ? <Chip tone="brand">Mais escolhido</Chip> : null}
+                </div>
+                <p className="m-0 font-display text-figure tabular-nums text-ink">
+                  {plano.preco}
+                  <span className="text-body font-normal text-ink-muted">{plano.periodo}</span>
+                </p>
+                <p className="m-0 text-body text-ink-muted">{plano.descricao}</p>
+                <ul className="m-0 flex list-none flex-col gap-space-2 p-0 text-body-sm text-ink">
+                  {plano.itens.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <div className="mt-space-2">
+                  <ButtonLink as={Link} href={plano.acao.href} variant={plano.acao.variante}>
+                    {plano.acao.rotulo}
+                  </ButtonLink>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-surface-2 pb-8 pt-12">
-        <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 md:grid-cols-4">
-          <div className="flex flex-col gap-4 md:col-span-2">
-            <span className="flex items-center gap-2 font-display text-xl font-semibold"><NotaASimbolo className="h-8 w-auto" />Nota A</span>
-            <p className="text-sm text-text-muted">Aprenda jogando. Evolua estudando.</p>
-            <div className="mt-2 flex max-w-md items-center gap-2">
-              <Input placeholder="Seu melhor e-mail" className="bg-bg" />
-              <Button variant="primary">Lista de espera</Button>
-            </div>
+      <footer className="border-t border-line">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-space-5 px-4 py-space-7 md:flex-row md:items-start md:justify-between md:px-space-6">
+          <div className="flex flex-col gap-space-2">
+            <span className="flex items-center gap-2 font-display text-xl font-semibold">
+              <NotaASimbolo className="h-8 w-auto" />
+              Nota A
+            </span>
+            <p className="m-0 text-body-sm text-ink-muted">Aprenda jogando. Evolua estudando.</p>
           </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="font-bold">Plataforma</h4>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Sobre nós</Link>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Para Instituições</Link>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Planos</Link>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="font-bold">Contato</h4>
-            <span className="text-sm text-text-muted">contato@notaa.com.br</span>
-            <span className="text-sm text-text-muted">CNPJ: 12.345.678/0001-99</span>
-            <div className="mt-2 flex gap-4">
-              <Link href="#" className="text-sm text-text-muted hover:text-text">Privacidade</Link>
-              <Link href="#" className="text-sm text-text-muted hover:text-text">Termos</Link>
+          <div className="flex flex-col gap-space-2 text-body-sm">
+            <a href="mailto:contato@notaa.com.br" className="text-ink-muted hover:text-ink">
+              contato@notaa.com.br
+            </a>
+            <div className="flex gap-space-5">
+              <Link href="#" className="text-ink-muted hover:text-ink">
+                Privacidade
+              </Link>
+              <Link href="#" className="text-ink-muted hover:text-ink">
+                Termos
+              </Link>
             </div>
           </div>
         </div>
