@@ -63,6 +63,7 @@ export type { ActionRowProps } from './components/ActionRow';
 export { SummaryStrip } from './components/SummaryStrip';
 export type { SummaryStripProps, SummaryItem } from './components/SummaryStrip';
 export { Inset } from './components/Inset';
+export type { InsetProps } from './components/Inset';
 export { ThemeSwitch } from './components/ThemeSwitch';
 export type { ThemeSwitchProps, PreferenciaDeTema } from './components/ThemeSwitch';
 

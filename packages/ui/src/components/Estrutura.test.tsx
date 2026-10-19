@@ -4,6 +4,7 @@ import { axe } from 'vitest-axe';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionRow } from './ActionRow';
 import { Chip } from './Chip';
+import { Inset } from './Inset';
 import { PageHeader } from './PageHeader';
 import { Panel } from './Panel';
 import { Section } from './Section';
@@ -97,6 +98,22 @@ describe('SummaryStrip', () => {
     expect(screen.getByText('Alunos').tagName).toBe('DT');
     expect(screen.getByText('7,8').tagName).toBe('DD');
     expect(screen.getByText('Acima do mínimo')).toBeInTheDocument();
+  });
+});
+
+describe('Inset', () => {
+  it('é uma caixa recuada sem sombra, e o tom violet usa o tint da marca', () => {
+    const { container } = render(
+      <>
+        <Inset>conta</Inset>
+        <Inset tom="violet">dica</Inset>
+      </>,
+    );
+    const [a, b] = Array.from(container.children) as HTMLElement[];
+    expect(a!.className).toContain('bg-surface-sunken');
+    expect(b!.className).toContain('bg-violet-tint');
+    expect(b!.className).not.toContain('bg-surface-sunken');
+    expect(container.innerHTML).not.toContain('shadow');
   });
 });
 
