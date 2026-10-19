@@ -9,7 +9,7 @@ import type {
   PreviaResponse,
   TipoImportacao,
 } from '@notaa/contracts';
-import { Chip, Button, FileDrop, OptionCard, Progress, Select, Skeleton, Stat, Table, cn, Notice } from '@notaa/ui';
+import { Button, Carregando, Chip, FileDrop, Notice, OptionCard, Progress, Select, SkeletonLinhas, SummaryStrip, Table, Tabs } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 
 const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'danger' }> = {
@@ -131,7 +131,7 @@ export function PassoMapeamento({
                     {c.obrigatorio ? <Chip tone="warning">Obrigatório</Chip> : null}
                   </p>
                   {c.descricao ? (
-                    <p id={idDica} className="mt-1 text-[12.5px] leading-[18px] text-ink-muted">
+                    <p id={idDica} className="mt-1 text-caption text-ink-muted">
                       {c.descricao}
                     </p>
                   ) : null}
@@ -236,32 +236,27 @@ export function PassoPrevia({
 
   return (
     <div className="space-y-6">
-      <div role="group" aria-label="Filtrar linhas por resultado" className="grid gap-3 sm:grid-cols-4">
-        {(Object.keys(ACOES) as AcaoLinha[]).map((acao) => (
-          <button
-            key={acao}
-            type="button"
-            aria-pressed={filtro === acao}
-            onClick={() => {
-              setFiltro(filtro === acao ? null : acao);
-              setPagina(1);
-            }}
-            className={cn(
-              'min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-base',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-              filtro === acao ? 'border-primary bg-surface-sunken' : 'border-line bg-surface hover:bg-surface-sunken',
-            )}
-          >
-            <span className="block font-display text-2xl font-semibold leading-8 text-ink">
-              {resumo ? resumo[acao].toLocaleString('pt-BR') : '…'}
-            </span>
-            <span className="text-sm text-ink-muted">{ACOES[acao].rotulo}</span>
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Filtrar linhas por resultado"
+        value={filtro ?? 'todas'}
+        onChange={(id) => {
+          setFiltro(id === 'todas' ? null : (id as AcaoLinha));
+          setPagina(1);
+        }}
+        tabs={[
+          {
+            id: 'todas',
+            label: 'Todas',
+            count: resumo ? (Object.keys(ACOES) as AcaoLinha[]).reduce((soma, acao) => soma + resumo[acao], 0) : undefined,
+          },
+          ...(Object.keys(ACOES) as AcaoLinha[]).map((acao) => ({ id: acao, label: ACOES[acao].rotulo, count: resumo ? resumo[acao] : undefined })),
+        ]}
+      />
 
       {previa === null ? (
-        <Skeleton className="h-64 w-full" />
+        <Carregando rotulo="Montando a prévia">
+          <SkeletonLinhas linhas={6} />
+        </Carregando>
       ) : previa.linhas.length === 0 ? (
         <p className="text-sm text-ink-muted">Nenhuma linha neste filtro.</p>
       ) : (
@@ -279,7 +274,7 @@ export function PassoPrevia({
             {previa.linhas.map((l) => (
               <tr key={l.linha}>
                 <td className="tabular-nums">{l.linha}</td>
-                <td className="font-mono text-[12.5px] leading-[18px]">{l.chave ?? '—'}</td>
+                <td className="font-mono text-caption">{l.chave ?? '—'}</td>
                 <td>{l.nome ?? '—'}</td>
                 <td>
                   <Chip tone={ACOES[l.acao].variante}>{ACOES[l.acao].rotulo}</Chip>
@@ -353,7 +348,13 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
     };
   }, [importacaoId]);
 
-  if (!imp) return <Skeleton className="h-32 w-full" />;
+  if (!imp) {
+    return (
+      <Carregando rotulo="Carregando o resultado">
+        <SkeletonLinhas linhas={3} />
+      </Carregando>
+    );
+  }
   const emAndamento = imp.status === 'pendente' || imp.status === 'processando';
   const r = imp.relatorio;
 
@@ -382,12 +383,15 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
 
       {r ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Stat label="Criados" value={r.criados.toLocaleString('pt-BR')} />
-            <Stat label="Atualizados" value={r.atualizados.toLocaleString('pt-BR')} />
-            <Stat label="Sem alteração" value={r.semAlteracao.toLocaleString('pt-BR')} />
-            <Stat label="Recusados" value={r.recusados.toLocaleString('pt-BR')} />
-          </div>
+          <SummaryStrip
+            aria-label="Resumo da importação"
+            items={[
+              { id: 'criados', label: 'Criados', value: r.criados.toLocaleString('pt-BR') },
+              { id: 'atualizados', label: 'Atualizados', value: r.atualizados.toLocaleString('pt-BR') },
+              { id: 'sem', label: 'Sem alteração', value: r.semAlteracao.toLocaleString('pt-BR') },
+              { id: 'recusados', label: 'Recusados', value: r.recusados.toLocaleString('pt-BR') },
+            ]}
+          />
           {r.responsaveisVinculados > 0 ? (
             <p className="text-sm text-ink-muted">
               {r.responsaveisVinculados.toLocaleString('pt-BR')} responsável(is) vinculado(s) a alunos.
@@ -406,7 +410,7 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
                 {r.recusas.slice(0, 200).map((l) => (
                   <tr key={l.linha}>
                     <td className="tabular-nums">{l.linha}</td>
-                    <td className="font-mono text-[12.5px] leading-[18px]">{l.chave ?? '—'}</td>
+                    <td className="font-mono text-caption">{l.chave ?? '—'}</td>
                     <td className="text-danger">{l.motivos.join(' ')}</td>
                   </tr>
                 ))}
@@ -417,7 +421,7 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
       ) : null}
 
       {!emAndamento ? (
-        <div className="flex justify-end">
+        <div>
           <Button onClick={onNova}>Nova importação</Button>
         </div>
       ) : null}
