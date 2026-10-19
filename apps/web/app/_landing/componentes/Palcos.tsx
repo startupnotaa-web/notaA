@@ -10,3 +10,4 @@ export const PalcoHome = (p: Props) => <Palco carregar={() => import('../cenas/h
 export const PalcoAluno = (p: Props) => <Palco carregar={() => import('../cenas/aluno')} {...p} />;
 export const PalcoProfessores = (p: Props) => <Palco carregar={() => import('../cenas/professores')} {...p} />;
 export const PalcoEscola = (p: Props) => <Palco carregar={() => import('../cenas/escola')} {...p} />;
+export const PalcoFaculdade = (p: Props) => <Palco carregar={() => import('../cenas/faculdade')} {...p} />;
