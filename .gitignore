@@ -52,3 +52,6 @@ supabase/.temp/
 # Playwright
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Capturas antes/depois da refatoração visual (geradas localmente)
+design-handoff/antes-depois/

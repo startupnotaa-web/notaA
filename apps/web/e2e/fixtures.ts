@@ -99,13 +99,78 @@ const dashboard: DashboardResponse = {
   nivel: { atual: 3, xpNoNivel: 60, xpParaProximoNivel: 100, progresso: 0.6, naoCalibrado: false },
   xpTotal: 340,
   streak: { diasConsecutivos: 5, freezesDisponiveis: 1, ultimaAtividade: '2026-10-16T12:00:00Z' },
-  perfilCognitivo4d: { confianca: 0.4, eixos: [] },
+  perfilCognitivo4d: {
+    confianca: 0.4,
+    eixos: [
+      { chave: 'visual_verbal', poloA: 'Visual', poloB: 'Verbal', valor: 0, temSinal: false },
+      { chave: 'analitico_holistico', poloA: 'Analítico', poloB: 'Holístico', valor: 0, temSinal: false },
+      { chave: 'sequencial_aleatorio', poloA: 'Sequencial', poloB: 'Aleatório', valor: 0, temSinal: false },
+      { chave: 'reflexivo_impulsivo', poloA: 'Reflexivo', poloB: 'Impulsivo', valor: -0.4, temSinal: true },
+    ],
+  },
   theta: {},
   progresso: { redacoesEnviadas: 2, sessoesSocraticas: 4 },
 };
 
+
+const ID_SESSAO = '66666666-6666-4666-8666-666666666666';
+const itemId = (n: number) => `77777777-7777-4777-8777-${String(n).padStart(12, '0')}`;
+const alternativas = ['A', 'B', 'C', 'D', 'E'].map((id) => ({ id, texto: `Alternativa ${id} da questão de exemplo` }));
+const ENUNCIADO = 'Um reservatório com formato de bloco retangular recebe água a uma vazão constante. Depois de duas horas, o nível subiu 30 cm. Quanto tempo falta para encher os 90 cm restantes?';
+
+const conquistas = {
+  desbloqueadas: [{ codigo: 'primeira_sessao', xpAssociado: 50, concedidoEm: '2026-10-01T12:00:00Z' }],
+  bloqueadas: [{ codigo: 'ofensiva_7_dias', xpAssociado: 100, concedidoEm: null }],
+};
+
+const trilha = {
+  id: uuid(60),
+  titulo: 'Funções e gráficos em quatro passos',
+  descricao: 'Uma sequência curta para firmar o que mais cai em Matemática.',
+  criadoEm: '2026-10-10T12:00:00Z',
+  passos: [
+    { titulo: 'Leia o gráfico antes da conta', descricao: 'Identifique eixos, unidades e o ponto onde a curva muda.', dica: 'Marque os pontos que o enunciado cita.' },
+    { titulo: 'Monte a função', descricao: 'Escreva a lei de formação com os dados que você já tem.' },
+    { titulo: 'Teste com um valor', descricao: 'Substitua um valor simples para conferir o resultado.' },
+  ],
+};
+
+const questaoPublica = (n: number) => ({
+  itemId: itemId(n), ordem: n, numero: n, area: n % 2 ? 'matematica' : 'linguagens', enunciado: ENUNCIADO, alternativas, imagemUrl: null,
+});
+
+const relatorioSimulado = {
+  sessaoId: ID_SESSAO, modo: 'livre', limiteMinutos: null, expirado: false, total: 40, acertos: 26, emBranco: 3,
+  percentual: 65, duracaoSegundos: 5400, xpGanho: 120, xpBloqueadoPorDesempenho: false,
+  porArea: [
+    { chave: 'linguagens', acertos: 8, total: 10, percentual: 80 },
+    { chave: 'humanas', acertos: 7, total: 10, percentual: 70 },
+    { chave: 'natureza', acertos: 6, total: 10, percentual: 60 },
+    { chave: 'matematica', acertos: 5, total: 10, percentual: 50 },
+  ],
+  porDificuldade: [
+    { chave: 'facil', acertos: 12, total: 14, percentual: 86 },
+    { chave: 'media', acertos: 10, total: 16, percentual: 63 },
+    { chave: 'dificil', acertos: 4, total: 10, percentual: 40 },
+  ],
+  melhorArea: 'linguagens', areaAMelhorar: 'matematica',
+  questoes: [1, 2, 3].map((n) => ({
+    itemId: itemId(n), ordem: n, area: n % 2 ? 'matematica' : 'linguagens', dificuldade: 'media', origem: 'enem',
+    enunciado: ENUNCIADO, alternativas, gabarito: 'C', respostaDada: n === 2 ? 'C' : 'B', acerto: n === 2,
+  })),
+};
+
 /** Resposta por caminho. Qualquer outro caminho devolve lista vazia. */
-function resposta(pathname: string): unknown {
+function resposta(pathname: string, metodo = 'GET'): unknown {
+  if (pathname === '/me/achievements') return conquistas;
+  if (pathname === '/study-trails/generate') return trilha;
+  if (pathname === '/onboarding/state') return { passoAtual: 1, dados: {}, concluido: false };
+  if (pathname === '/quiz/sessions' && metodo === 'POST') return { sessaoId: ID_SESSAO, primeiraQuestao: questaoPublica(1) };
+  if (pathname === '/simulado/sessions' && metodo === 'POST') {
+    return { sessaoId: ID_SESSAO, modo: 'livre', limiteMinutos: null, expiraEm: null, questoes: [1, 2, 3].map(questaoPublica) };
+  }
+  if (/^\/simulado\/sessions\/[^/]+\/answers$/.test(pathname)) return { registrada: true, respondidas: 1, total: 3 };
+  if (/^\/simulado\/sessions\/[^/]+\/finish$/.test(pathname)) return relatorioSimulado;
   if (pathname === '/me/dashboard') return dashboard;
   if (pathname === '/instituicao/overview') return overview;
   if (pathname === '/instituicao/alunos') return alunos;
@@ -140,7 +205,7 @@ export async function simular(alvo: Page | BrowserContext, papel: Papel, tema: T
     if (!ehApi(req.resourceType())) return rota.continue();
     const { pathname } = new URL(req.url());
     if (pathname === '/me') return rota.fulfill({ json: me(papel) });
-    return rota.fulfill({ json: resposta(pathname) });
+    return rota.fulfill({ json: resposta(pathname, req.method()) });
   });
 }
 
