@@ -42,6 +42,6 @@ export class ConviteResponsavelController {
     @Body(new ZodValidationPipe(AceitarConviteResponsavelRequestSchema))
     body: AceitarConviteResponsavelRequest,
   ): Promise<ConviteResponsavelAceito> {
-    return this.convites.aceitarConvite(req.user.sub, body);
+    return this.convites.aceitarConvite(req.user.sub, req.user.email, body);
   }
 }

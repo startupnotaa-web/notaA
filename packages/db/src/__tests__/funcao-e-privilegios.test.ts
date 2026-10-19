@@ -25,6 +25,7 @@ const TABELAS = [
   'audit_log',
   'convite_responsavel',
   'consentimento_responsavel',
+  'solicitacao_vinculo_responsavel',
 ] as const;
 
 let banco: BancoDeTeste;

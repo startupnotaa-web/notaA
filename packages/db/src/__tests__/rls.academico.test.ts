@@ -19,6 +19,7 @@ const TABELAS = [
   'audit_log',
   'convite_responsavel',
   'consentimento_responsavel',
+  'solicitacao_vinculo_responsavel',
 ] as const;
 type Tabela = (typeof TABELAS)[number];
 
@@ -101,6 +102,16 @@ const SEMENTE = `
     ('${INST_B}', '${RESP_B}', 'hash-b', now() + interval '7 days', NULL, NULL, '${U.gestorB}');
   INSERT INTO consentimento_responsavel (instituicao_id, responsavel_aluno_id, usuario_id, versao_termo) VALUES
     ('${INST_A}', '${RESP_A}', '${U.respA}', '2026-10-v1');
+  -- Tentativa de vínculo com e-mail diferente, à espera da coordenação: o solicitante
+  -- é a conta U.respSemConsentimento, em cada instituição.
+  INSERT INTO convite_responsavel (instituicao_id, responsavel_aluno_id, token_hash, expira_em, usado_em, usado_por, criado_por) VALUES
+    ('${INST_A}', '${RESP_SEM_CONSENTIMENTO}', 'hash-pend-a', now() + interval '7 days', now(), '${U.respSemConsentimento}', '${U.gestorA}');
+  INSERT INTO solicitacao_vinculo_responsavel (instituicao_id, responsavel_aluno_id, convite_id, usuario_id, versao_termo, email_conta)
+    SELECT instituicao_id, responsavel_aluno_id, id, '${U.respSemConsentimento}', '2026-10-v1', 'outro@y.test'
+      FROM convite_responsavel WHERE token_hash = 'hash-pend-a';
+  INSERT INTO solicitacao_vinculo_responsavel (instituicao_id, responsavel_aluno_id, convite_id, usuario_id, versao_termo, email_conta)
+    SELECT instituicao_id, responsavel_aluno_id, id, '${U.respSemConsentimento}', '2026-10-v1', 'outro@y.test'
+      FROM convite_responsavel WHERE token_hash = 'hash-b';
   INSERT INTO importacao (instituicao_id, tipo, nome_arquivo, arquivo_path, criado_por) VALUES
     ('${INST_A}', 'alunos', 'a.csv', '${INST_A}/x', '${U.gestorA}'),
     ('${INST_B}', 'alunos', 'b.csv', '${INST_B}/y', '${U.gestorB}');
@@ -178,8 +189,9 @@ describe('RLS da Gestão Acadêmica', () => {
       responsavel_aluno: { a: 2, b: 0 },
       importacao: { a: 1, b: 0 },
       audit_log: { a: 1, b: 0 },
-      convite_responsavel: { a: 1, b: 0 },
+      convite_responsavel: { a: 2, b: 0 },
       consentimento_responsavel: { a: 1, b: 0 },
+      solicitacao_vinculo_responsavel: { a: 1, b: 0 },
     });
   });
 
@@ -189,8 +201,9 @@ describe('RLS da Gestão Acadêmica', () => {
     expect(v.aluno_instituicao).toEqual({ a: 2, b: 0 });
     expect(v.importacao).toEqual({ a: 1, b: 0 });
     expect(v.regra_avaliativa).toEqual({ a: 1, b: 0 });
-    expect(v.convite_responsavel).toEqual({ a: 1, b: 0 });
+    expect(v.convite_responsavel).toEqual({ a: 2, b: 0 });
     expect(v.consentimento_responsavel).toEqual({ a: 1, b: 0 });
+    expect(v.solicitacao_vinculo_responsavel).toEqual({ a: 1, b: 0 });
   });
 
   it('professor lê a configuração da instituição e só o cadastro das turmas dele', async () => {
@@ -206,6 +219,7 @@ describe('RLS da Gestão Acadêmica', () => {
       audit_log: { a: 0, b: 0 },
       convite_responsavel: { a: 0, b: 0 },
       consentimento_responsavel: { a: 0, b: 0 },
+      solicitacao_vinculo_responsavel: { a: 0, b: 0 },
     });
   });
 
@@ -222,6 +236,7 @@ describe('RLS da Gestão Acadêmica', () => {
       audit_log: { a: 0, b: 0 },
       convite_responsavel: { a: 0, b: 0 },
       consentimento_responsavel: { a: 0, b: 0 },
+      solicitacao_vinculo_responsavel: { a: 0, b: 0 },
     });
   });
 
@@ -240,6 +255,7 @@ describe('RLS da Gestão Acadêmica', () => {
       audit_log: { a: 0, b: 0 },
       convite_responsavel: { a: 0, b: 0 },
       consentimento_responsavel: { a: 1, b: 0 },
+      solicitacao_vinculo_responsavel: { a: 0, b: 0 },
     });
   });
 
@@ -399,6 +415,7 @@ describe('escrita direta: ninguém escreve em nenhuma tabela nova', () => {
     audit_log: 'criado_em',
     convite_responsavel: 'criado_em',
     consentimento_responsavel: 'aceito_em',
+    solicitacao_vinculo_responsavel: 'criado_em',
   };
   const ESCRITORES = [
     ['gestor', U.gestorA],
@@ -656,5 +673,60 @@ describe('função na instituição', () => {
       [U.coordA],
     );
     expect(rows[0]!.funcao_instituicao).toBe('coordenacao');
+  });
+});
+
+describe('solicitação de vínculo do responsável (e-mail diferente, à espera da coordenação)', () => {
+  const lerComo = (uid: string) =>
+    banco.comoUsuario(uid, (query) => query('SELECT id FROM solicitacao_vinculo_responsavel'));
+
+  it('quem fez a tentativa não lê a própria solicitação: não pode saber que ela virou pendência', async () => {
+    expect((await lerComo(U.respSemConsentimento)).rows).toHaveLength(0);
+  });
+
+  it('gestão e coordenação da instituição leem; outra instituição, professor e aluno não', async () => {
+    expect((await lerComo(U.gestorA)).rows).toHaveLength(1);
+    expect((await lerComo(U.coordA)).rows).toHaveLength(1);
+    expect((await lerComo(U.gestorB)).rows).toHaveLength(1); // a da B, não a da A
+    for (const uid of [U.profA, U.alunoA, U.respA, U.profIndependente]) {
+      expect((await lerComo(uid)).rows, uid).toHaveLength(0);
+    }
+  });
+
+  it('pendente não abre nada: a conta solicitante continua sem ler o aluno', async () => {
+    const view = await banco.comoUsuario(U.respSemConsentimento, (q) => q('SELECT * FROM aluno_do_responsavel'));
+    expect(view.rows).toHaveLength(0);
+  });
+
+  it('só uma pendência aberta por contato', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO solicitacao_vinculo_responsavel (instituicao_id, responsavel_aluno_id, convite_id, usuario_id, versao_termo)
+         SELECT instituicao_id, responsavel_aluno_id, id, $1, '2026-10-v1' FROM convite_responsavel WHERE token_hash = 'hash-pend-a'`,
+        [U.respSemConsentimento],
+      ),
+    ).rejects.toThrow(/uq_solicitacao_vinculo_pendente/);
+  });
+
+  it('o status só aceita os quatro valores, e decidido exige data', async () => {
+    await expect(
+      banco.pg.query(`UPDATE solicitacao_vinculo_responsavel SET status = 'qualquer', decidido_em = now() WHERE instituicao_id = $1`, [INST_A]),
+    ).rejects.toThrow(/ck_solicitacao_vinculo_status/);
+    await expect(
+      banco.pg.query(
+        `UPDATE solicitacao_vinculo_responsavel SET status = 'aprovada', decidido_em = NULL WHERE instituicao_id = $1`,
+        [INST_A],
+      ),
+    ).rejects.toThrow(/ck_solicitacao_vinculo_decisao/);
+  });
+
+  it('a instituição da solicitação tem que ser a do contato e a do convite', async () => {
+    await expect(
+      banco.pg.query(
+        `INSERT INTO solicitacao_vinculo_responsavel (instituicao_id, responsavel_aluno_id, convite_id, usuario_id, versao_termo, status, decidido_em)
+         SELECT $1, responsavel_aluno_id, id, $2, '2026-10-v1', 'cancelada', now() FROM convite_responsavel WHERE token_hash = 'hash-b'`,
+        [INST_A, U.respSemConsentimento],
+      ),
+    ).rejects.toThrow(/solicitacao_vinculo_responsavel_responsavel_escopo_fk/);
   });
 });

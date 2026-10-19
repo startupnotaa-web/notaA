@@ -22,6 +22,7 @@ import {
   isNull,
   registrarAuditoria,
   responsavelAluno,
+  solicitacaoVinculoResponsavel,
   sql,
   usuario,
 } from '@notaa/db';
@@ -46,6 +47,11 @@ function conviteInvalido(): never {
       message: 'Este convite é inválido, já foi usado ou expirou. Peça um novo à instituição.',
     },
   });
+}
+
+/** Compara e-mails sem diferenciar caixa nem espaços nas pontas. */
+function normalizarEmail(email: string | null | undefined): string {
+  return (email ?? '').trim().toLowerCase();
 }
 
 /** SHA-256 em hex. O token tem 256 bits de entropia, então hash sem sal basta. */
@@ -133,22 +139,30 @@ export class ConviteResponsavelService {
   }
 
   /**
-   * Quem aceita é o usuário autenticado, e só se for responsável. Instituição e
-   * contato vêm do convite, nunca do corpo. Tudo numa transação: se qualquer
+   * Quem aceita é o usuário autenticado, e só se for responsável ativo. Instituição
+   * e contato vêm do convite, nunca do corpo. Tudo numa transação: se qualquer
    * passo falha, o convite não é consumido.
+   *
+   * O vínculo só nasce se o e-mail da CONTA (`emailDaConta`, claim do token
+   * assinado; o `usuario.email` é digitado no cadastro e não prova posse) for o
+   * do contato. Se diferir, nada é vinculado: a tentativa vira solicitação
+   * `pendente_aprovacao` para a coordenação decidir, o token é consumido e o
+   * responsável recebe a mesma resposta de qualquer convite inválido.
    */
   async aceitarConvite(
     usuarioId: string,
+    emailDaConta: string | undefined,
     body: AceitarConviteResponsavelRequest,
   ): Promise<ConviteResponsavelAceito> {
+    let resultado: 'vinculado' | 'pendente';
     try {
-      await this.db.transaction(async (tx) => {
+      resultado = await this.db.transaction(async (tx) => {
         const [quem] = await tx
-          .select({ tipoPerfil: usuario.tipoPerfil })
+          .select({ tipoPerfil: usuario.tipoPerfil, status: usuario.status })
           .from(usuario)
           .where(eq(usuario.id, usuarioId))
           .limit(1);
-        if (quem?.tipoPerfil !== 'responsavel') {
+        if (quem?.tipoPerfil !== 'responsavel' || quem.status !== 'ativo') {
           throw new ForbiddenException({
             error: { code: 'FORA_DO_ESCOPO', message: 'Só uma conta de responsável aceita este convite.' },
           });
@@ -173,9 +187,9 @@ export class ConviteResponsavelService {
           });
         if (!convite) conviteInvalido();
 
-        const [ligado] = await tx
-          .update(responsavelAluno)
-          .set({ usuarioId, atualizadoEm: new Date() })
+        const [contato] = await tx
+          .select({ email: responsavelAluno.email })
+          .from(responsavelAluno)
           .where(
             and(
               eq(responsavelAluno.id, convite.responsavelAlunoId),
@@ -183,8 +197,58 @@ export class ConviteResponsavelService {
               isNull(responsavelAluno.usuarioId),
             ),
           )
-          .returning({ id: responsavelAluno.id });
-        if (!ligado) conviteInvalido();
+          .limit(1);
+        if (!contato) conviteInvalido();
+
+        const emailConta = normalizarEmail(emailDaConta);
+        if (!emailConta || emailConta !== normalizarEmail(contato.email)) {
+          const [pendente] = await tx
+            .insert(solicitacaoVinculoResponsavel)
+            .values({
+              instituicaoId: convite.instituicaoId,
+              responsavelAlunoId: convite.responsavelAlunoId,
+              conviteId: convite.id,
+              usuarioId,
+              versaoTermo: body.versaoTermo,
+              emailConta: emailConta || null,
+            })
+            .returning({ id: solicitacaoVinculoResponsavel.id });
+          await registrarAuditoria(tx, {
+            instituicaoId: convite.instituicaoId,
+            atorId: usuarioId,
+            papel: 'responsavel',
+            acao: 'responsavel.vinculo_pendente',
+            entidade: 'responsavel_aluno',
+            entidadeId: convite.responsavelAlunoId,
+            dados: {
+              solicitacaoId: pendente!.id,
+              conviteId: convite.id,
+              responsavelAlunoId: convite.responsavelAlunoId,
+            },
+          });
+          return 'pendente' as const;
+        }
+
+        await tx
+          .update(responsavelAluno)
+          .set({ usuarioId, atualizadoEm: new Date() })
+          .where(
+            and(
+              eq(responsavelAluno.id, convite.responsavelAlunoId),
+              eq(responsavelAluno.instituicaoId, convite.instituicaoId),
+            ),
+          );
+        // Pendências antigas deste contato perdem o sentido: o vínculo já existe.
+        await tx
+          .update(solicitacaoVinculoResponsavel)
+          .set({ status: 'cancelada', decididoEm: new Date(), emailConta: null })
+          .where(
+            and(
+              eq(solicitacaoVinculoResponsavel.responsavelAlunoId, convite.responsavelAlunoId),
+              eq(solicitacaoVinculoResponsavel.instituicaoId, convite.instituicaoId),
+              eq(solicitacaoVinculoResponsavel.status, 'pendente_aprovacao'),
+            ),
+          );
 
         await tx.insert(consentimentoResponsavel).values({
           instituicaoId: convite.instituicaoId,
@@ -206,12 +270,15 @@ export class ConviteResponsavelService {
             versaoTermo: body.versaoTermo,
           },
         });
+        return 'vinculado' as const;
       });
     } catch (e) {
-      // Consentimento duplicado para este contato e versão: mesma resposta dos demais casos.
+      // Consentimento duplicado ou segunda pendência do contato: mesma resposta dos demais casos.
       if (temViolacaoDeUnicidade(e)) conviteInvalido();
       throw e;
     }
+    // Lançar só depois do commit: dentro da transação o rollback desfaria a pendência.
+    if (resultado === 'pendente') conviteInvalido();
     return { aceito: true };
   }
 }

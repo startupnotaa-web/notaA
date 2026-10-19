@@ -23,6 +23,9 @@ const RESP_1 = '11111111-0000-4000-8000-000000000004';
 const RESP_2 = '11111111-0000-4000-8000-000000000005';
 const ALUNO_USER = '11111111-0000-4000-8000-000000000006';
 const GESTOR_B = '11111111-0000-4000-8000-000000000007';
+// Conta de responsável que NUNCA liga contato nenhum nesta suíte: serve para provar "não lê nada".
+const ESTRANHO = '11111111-0000-4000-8000-000000000008';
+const RESP_SUSPENSO = '11111111-0000-4000-8000-000000000009';
 const ALUNO_CAD = 'ca0000a1-0000-4000-8000-000000000000';
 const ALUNO_CAD_B = 'ca00000b-0000-4000-8000-000000000000';
 const CONTATO_B = 'aa00000b-0000-4000-8000-000000000000';
@@ -37,6 +40,20 @@ const aceite = (token: string) => ({
   versaoTermo: VERSAO_TERMO_RESPONSAVEL as typeof VERSAO_TERMO_RESPONSAVEL,
 });
 
+// E-mail cadastrado de cada contato criado aqui. O aceite compara com o e-mail
+// da conta (claim do token); `aceitar` manda o do contato, como faria o dono.
+const EMAIL_DO_CONTATO = new Map<string, string>();
+const aceitar = (quem: string, token: string, contato?: string) =>
+  servico.aceitarConvite(quem, EMAIL_DO_CONTATO.get(contato ?? CONTATO), aceite(token));
+// Aceite de uma conta com o e-mail que ela quiser (ou nenhum).
+const aceitarComo = (quem: string, email: string | undefined, token: string) =>
+  servico.aceitarConvite(quem, email, aceite(token));
+
+const ERRO_DE_CONVITE_INVALIDO = async (p: Promise<unknown>) => {
+  const erro = await p.catch((e: unknown) => e);
+  return JSON.stringify({ status: (erro as { status: number }).status, corpo: (erro as { response: unknown }).response });
+};
+
 // O consentimento e a auditoria são só de inserção: não dá para limpar entre
 // os testes. Cada teste ganha dois contatos novos, e as consultas filtram por eles.
 let CONTATO: string;
@@ -50,6 +67,7 @@ async function novoContato(): Promise<string> {
      VALUES ($1, $2, 'Mãe', $3, '11999990000') RETURNING id`,
     [INST_A, ALUNO_CAD, `mae-${n}@a.test`],
   );
+  EMAIL_DO_CONTATO.set(rows[0]!.id, `mae-${n}@a.test`);
   return rows[0]!.id;
 }
 
@@ -64,7 +82,9 @@ beforeAll(async () => {
       ('${RESP_1}', '${RESP_1}', 'responsavel', 'r1@x.test', 'Responsável 1', 'ativo', NULL, NULL),
       ('${RESP_2}', '${RESP_2}', 'responsavel', 'r2@x.test', 'Responsável 2', 'ativo', NULL, NULL),
       ('${ALUNO_USER}', '${ALUNO_USER}', 'estudante', 'e@x.test', 'Estudante', 'ativo', NULL, NULL),
-      ('${GESTOR_B}', '${GESTOR_B}', 'admin_instituicao', 'g@b.test', 'Gestor B', 'ativo', '${INST_B}', 'gestor');
+      ('${GESTOR_B}', '${GESTOR_B}', 'admin_instituicao', 'g@b.test', 'Gestor B', 'ativo', '${INST_B}', 'gestor'),
+      ('${ESTRANHO}', '${ESTRANHO}', 'responsavel', 'estranho@y.test', 'Estranho', 'ativo', NULL, NULL),
+      ('${RESP_SUSPENSO}', '${RESP_SUSPENSO}', 'responsavel', 'susp@x.test', 'Suspenso', 'suspenso', NULL, NULL);
     INSERT INTO aluno_instituicao (id, instituicao_id, matricula, nome, data_nascimento, email) VALUES
       ('${ALUNO_CAD}', '${INST_A}', 'A-1', 'Aluno A', '2012-05-01', 'aluno@a.test'),
       ('${ALUNO_CAD_B}', '${INST_B}', 'B-1', 'Aluno B', '2012-06-01', NULL);
@@ -138,15 +158,15 @@ describe('emitir o convite', () => {
   it('um convite novo revoga o anterior ainda pendente do mesmo contato', async () => {
     const velho = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
     const novo = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
-    await expect(servico.aceitarConvite(RESP_1, aceite(velho.token))).rejects.toMatchObject({
+    await expect(aceitar(RESP_1, velho.token)).rejects.toMatchObject({
       response: { error: { code: 'CONVITE_INVALIDO' } },
     });
-    await expect(servico.aceitarConvite(RESP_1, aceite(novo.token))).resolves.toEqual({ aceito: true });
+    await expect(aceitar(RESP_1, novo.token)).resolves.toEqual({ aceito: true });
   });
 
   it('não emite para contato que já está ligado a uma conta', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
-    await servico.aceitarConvite(RESP_1, aceite(token));
+    await aceitar(RESP_1, token);
     await expect(servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO)).rejects.toMatchObject({
       response: { error: { code: 'CONTATO_JA_VINCULADO' } },
     });
@@ -174,7 +194,7 @@ describe('aceitar o convite', () => {
     const antes = await banco.comoUsuario(RESP_2, (q) => q('SELECT * FROM aluno_do_responsavel'));
     expect(antes.rows).toHaveLength(0);
 
-    const resposta = await servico.aceitarConvite(RESP_1, aceite(token));
+    const resposta = await aceitar(RESP_1, token);
     expect(resposta).toEqual({ aceito: true });
 
     const { rows: contato } = await banco.pg.query<{ usuario_id: string }>(
@@ -212,7 +232,7 @@ describe('aceitar o convite', () => {
 
   it('a auditoria do aceite tem só ids e a versão do termo', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
-    await servico.aceitarConvite(RESP_1, aceite(token));
+    await aceitar(RESP_1, token);
     const { rows } = await banco.pg.query<{ ator_id: string; papel: string; dados: Record<string, unknown> }>(
       `SELECT ator_id, papel, dados FROM audit_log WHERE acao = 'responsavel.aceitou_convite' AND dados->>'responsavelAlunoId' = $1`,
       [CONTATO],
@@ -225,9 +245,9 @@ describe('aceitar o convite', () => {
 
   it('uso único: o segundo aceite falha, da mesma conta ou de outra', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
-    await servico.aceitarConvite(RESP_1, aceite(token));
+    await aceitar(RESP_1, token);
     for (const quem of [RESP_1, RESP_2]) {
-      await expect(servico.aceitarConvite(quem, aceite(token))).rejects.toMatchObject({
+      await expect(aceitar(quem, token)).rejects.toMatchObject({
         response: { error: { code: 'CONVITE_INVALIDO' } },
       });
     }
@@ -244,8 +264,8 @@ describe('aceitar o convite', () => {
   it('corrida: dois aceites ao mesmo tempo, só um vence', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
     const resultados = await Promise.allSettled([
-      servico.aceitarConvite(RESP_1, aceite(token)),
-      servico.aceitarConvite(RESP_2, aceite(token)),
+      aceitar(RESP_1, token),
+      aceitar(RESP_2, token),
     ]);
     expect(resultados.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
     expect(resultados.filter((r) => r.status === 'rejected')).toHaveLength(1);
@@ -261,7 +281,7 @@ describe('aceitar o convite', () => {
         WHERE responsavel_aluno_id = $1`,
       [CONTATO],
     );
-    await expect(servico.aceitarConvite(RESP_1, aceite(token))).rejects.toMatchObject({
+    await expect(aceitar(RESP_1, token)).rejects.toMatchObject({
       response: { error: { code: 'CONVITE_INVALIDO' } },
     });
     expect(
@@ -272,7 +292,7 @@ describe('aceitar o convite', () => {
   it('convite revogado não vale', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
     await banco.pg.query(`UPDATE convite_responsavel SET revogado_em = now() WHERE responsavel_aluno_id = $1`, [CONTATO]);
-    await expect(servico.aceitarConvite(RESP_1, aceite(token))).rejects.toMatchObject({
+    await expect(aceitar(RESP_1, token)).rejects.toMatchObject({
       response: { error: { code: 'CONVITE_INVALIDO' } },
     });
   });
@@ -280,7 +300,7 @@ describe('aceitar o convite', () => {
   it('só quem é responsável aceita; o convite continua valendo para o responsável de verdade', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
     for (const quem of [ALUNO_USER, PROF_A, GESTOR_A, GESTOR_B]) {
-      await expect(servico.aceitarConvite(quem, aceite(token))).rejects.toMatchObject({
+      await expect(aceitar(quem, token)).rejects.toMatchObject({
         response: { error: { code: 'FORA_DO_ESCOPO' } },
       });
     }
@@ -289,7 +309,7 @@ describe('aceitar o convite', () => {
       [CONTATO],
     );
     expect(rows[0]!.usado_em).toBeNull();
-    await expect(servico.aceitarConvite(RESP_1, aceite(token))).resolves.toEqual({ aceito: true });
+    await expect(aceitar(RESP_1, token)).resolves.toEqual({ aceito: true });
   });
 
   it('é tudo ou nada: se o consentimento não grava, o convite não é consumido nem a conta ligada', async () => {
@@ -300,7 +320,7 @@ describe('aceitar o convite', () => {
        VALUES ($1, $2, $3, $4)`,
       [INST_A, CONTATO, RESP_2, VERSAO_TERMO_RESPONSAVEL],
     );
-    await expect(servico.aceitarConvite(RESP_1, aceite(token))).rejects.toMatchObject({
+    await expect(aceitar(RESP_1, token)).rejects.toMatchObject({
       response: { error: { code: 'CONVITE_INVALIDO' } },
     });
     const { rows: convite } = await banco.pg.query<{ usado_em: Date | null }>(
@@ -316,10 +336,163 @@ describe('aceitar o convite', () => {
   });
 });
 
+describe('o e-mail da conta tem que ser o do contato', () => {
+  const vistoPela = (uid: string) =>
+    banco.comoUsuario(uid, (q) => q<Record<string, unknown>>('SELECT * FROM aluno_do_responsavel'));
+  const solicitacoes = async (contato: string) =>
+    (
+      await banco.pg.query<{
+        status: string;
+        usuario_id: string;
+        email_conta: string | null;
+        versao_termo: string;
+        convite_id: string;
+      }>('SELECT * FROM solicitacao_vinculo_responsavel WHERE responsavel_aluno_id = $1', [contato])
+    ).rows;
+  const contatoVinculado = async (contato: string) =>
+    (await banco.pg.query<{ usuario_id: string | null }>('SELECT usuario_id FROM responsavel_aluno WHERE id = $1', [contato]))
+      .rows[0]!.usuario_id;
+  const consentimentos = async (contato: string) =>
+    (await banco.pg.query('SELECT 1 FROM consentimento_responsavel WHERE responsavel_aluno_id = $1', [contato])).rows;
+  const conviteUsado = async (contato: string) =>
+    (await banco.pg.query<{ usado_em: Date | null }>('SELECT usado_em FROM convite_responsavel WHERE responsavel_aluno_id = $1', [contato]))
+      .rows[0]!.usado_em;
+
+  it('e-mail igual vincula, grava o consentimento e abre a view', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    await expect(aceitar(RESP_1, token)).resolves.toEqual({ aceito: true });
+    expect(await contatoVinculado(CONTATO)).toBe(RESP_1);
+    expect(await consentimentos(CONTATO)).toHaveLength(1);
+    expect(await solicitacoes(CONTATO)).toHaveLength(0);
+    expect((await vistoPela(RESP_1)).rows.length).toBeGreaterThan(0);
+  });
+
+  it('a comparação ignora caixa e espaços nas pontas', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    const cadastrado = EMAIL_DO_CONTATO.get(CONTATO)!;
+    await expect(aceitarComo(RESP_1, `  ${cadastrado.toUpperCase()} `, token)).resolves.toEqual({ aceito: true });
+    expect(await contatoVinculado(CONTATO)).toBe(RESP_1);
+  });
+
+  it('e-mail diferente não vincula: fica pendente, sem consentimento, e a view segue vazia', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    await expect(aceitarComo(ESTRANHO, 'Estranho@Y.test ', token)).rejects.toMatchObject({
+      response: { error: { code: 'CONVITE_INVALIDO' } },
+    });
+
+    expect(await contatoVinculado(CONTATO)).toBeNull();
+    expect(await consentimentos(CONTATO)).toHaveLength(0);
+    // A tentativa fica registrada, e o token é consumido (uso único).
+    const [pendente, ...resto] = await solicitacoes(CONTATO);
+    expect(resto).toHaveLength(0);
+    expect(pendente).toMatchObject({
+      status: 'pendente_aprovacao',
+      usuario_id: ESTRANHO,
+      email_conta: 'estranho@y.test',
+      versao_termo: VERSAO_TERMO_RESPONSAVEL,
+    });
+    expect(await conviteUsado(CONTATO)).not.toBeNull();
+
+    expect((await vistoPela(ESTRANHO)).rows).toHaveLength(0);
+    const direto = await banco.comoUsuario(ESTRANHO, (q) => q('SELECT * FROM aluno_instituicao'));
+    expect(direto.rows).toHaveLength(0);
+  });
+
+  it('sem e-mail no token, a tentativa também fica pendente', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    await expect(aceitarComo(ESTRANHO, undefined, token)).rejects.toMatchObject({
+      response: { error: { code: 'CONVITE_INVALIDO' } },
+    });
+    expect(await contatoVinculado(CONTATO)).toBeNull();
+    expect((await solicitacoes(CONTATO))[0]).toMatchObject({ status: 'pendente_aprovacao', email_conta: null });
+  });
+
+  it('a resposta da divergência é igual à de token inexistente: mesmo status e mesmo corpo', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    const divergente = await ERRO_DE_CONVITE_INVALIDO(aceitarComo(ESTRANHO, 'estranho@y.test', token));
+    const inexistente = await ERRO_DE_CONVITE_INVALIDO(aceitarComo(ESTRANHO, 'estranho@y.test', 'x'.repeat(43)));
+    expect(divergente).toBe(inexistente);
+    expect(divergente).toContain('CONVITE_INVALIDO');
+    expect(divergente).not.toMatch(/pendente|aprova|e-?mail|Aluno|Mãe/i);
+  });
+
+  it('token repassado a outra conta não lê nada, e quem era o dono depois só recebe "convite inválido"', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+
+    await expect(aceitarComo(ESTRANHO, 'estranho@y.test', token)).rejects.toMatchObject({
+      response: { error: { code: 'CONVITE_INVALIDO' } },
+    });
+    expect((await vistoPela(ESTRANHO)).rows).toHaveLength(0);
+    expect(
+      (await banco.comoUsuario(ESTRANHO, (q) => q('SELECT * FROM responsavel_aluno'))).rows,
+    ).toHaveLength(0);
+    expect(
+      (await banco.comoUsuario(ESTRANHO, (q) => q('SELECT * FROM solicitacao_vinculo_responsavel'))).rows,
+    ).toHaveLength(0);
+
+    await expect(aceitar(RESP_1, token)).rejects.toMatchObject({
+      response: { error: { code: 'CONVITE_INVALIDO' } },
+    });
+    expect(await contatoVinculado(CONTATO)).toBeNull();
+  });
+
+  it('com a pendência aberta, um convite novo e o e-mail certo vinculam e fecham a pendência', async () => {
+    const velho = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    await aceitarComo(ESTRANHO, 'estranho@y.test', velho.token).catch(() => undefined);
+    const novo = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+
+    await expect(aceitar(RESP_1, novo.token)).resolves.toEqual({ aceito: true });
+    expect(await contatoVinculado(CONTATO)).toBe(RESP_1);
+    expect((await solicitacoes(CONTATO)).map((s) => s.status)).toEqual(['cancelada']);
+    expect((await solicitacoes(CONTATO))[0]!.email_conta).toBeNull();
+  });
+
+  it('segunda pendência para o mesmo contato falha como convite inválido e não consome o token', async () => {
+    const primeiro = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    await aceitarComo(ESTRANHO, 'estranho@y.test', primeiro.token).catch(() => undefined);
+    const segundo = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+
+    await expect(aceitarComo(RESP_2, 'r2@x.test', segundo.token)).rejects.toMatchObject({
+      response: { error: { code: 'CONVITE_INVALIDO' } },
+    });
+    expect(await solicitacoes(CONTATO)).toHaveLength(1);
+    const { rows } = await banco.pg.query<{ usado_em: Date | null }>(
+      'SELECT usado_em FROM convite_responsavel WHERE token_hash = $1',
+      [sha256(segundo.token)],
+    );
+    expect(rows[0]!.usado_em).toBeNull();
+  });
+
+  it('quem não é responsável ativo não cria nem pendência, e o token segue valendo', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    for (const quem of [ALUNO_USER, PROF_A, GESTOR_B, RESP_SUSPENSO]) {
+      await expect(aceitarComo(quem, 'qualquer@y.test', token)).rejects.toMatchObject({
+        response: { error: { code: 'FORA_DO_ESCOPO' } },
+      });
+    }
+    expect(await solicitacoes(CONTATO)).toHaveLength(0);
+    expect(await conviteUsado(CONTATO)).toBeNull();
+  });
+
+  it('a auditoria da pendência tem só ids', async () => {
+    const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
+    await aceitarComo(ESTRANHO, 'estranho@y.test', token).catch(() => undefined);
+    const { rows } = await banco.pg.query<{ ator_id: string; papel: string; entidade: string; dados: Record<string, unknown> }>(
+      `SELECT ator_id, papel, entidade, dados FROM audit_log
+        WHERE acao = 'responsavel.vinculo_pendente' AND dados->>'responsavelAlunoId' = $1`,
+      [CONTATO],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ ator_id: ESTRANHO, papel: 'responsavel' });
+    expect(Object.keys(rows[0]!.dados).sort()).toEqual(['conviteId', 'responsavelAlunoId', 'solicitacaoId']);
+    expect(JSON.stringify(rows)).not.toMatch(/@|estranho|Mãe|Aluno A|11999990000/i);
+  });
+});
+
 describe('sem pistas sobre alunos', () => {
   it('token inexistente, usado, expirado e revogado dão exatamente a mesma resposta', async () => {
     const usado = (await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO)).token;
-    await servico.aceitarConvite(RESP_1, aceite(usado));
+    await aceitar(RESP_1, usado);
     const expirado = (await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO_2)).token;
     await banco.pg.query(
       `UPDATE convite_responsavel SET criado_em = now() - interval '8 days', expira_em = now() - interval '1 day'
@@ -332,7 +505,7 @@ describe('sem pistas sobre alunos', () => {
 
     const respostas: string[] = [];
     for (const token of ['x'.repeat(43), usado, expirado, revogado]) {
-      const erro = await servico.aceitarConvite(RESP_2, aceite(token)).catch((e: unknown) => e);
+      const erro = await aceitar(RESP_2, token).catch((e: unknown) => e);
       respostas.push(JSON.stringify({ status: (erro as { status: number }).status, corpo: (erro as { response: unknown }).response }));
     }
     expect(new Set(respostas).size).toBe(1);
@@ -342,7 +515,7 @@ describe('sem pistas sobre alunos', () => {
 
   it('a resposta de sucesso não traz nenhum dado do aluno nem da instituição', async () => {
     const { token } = await servico.criarConvite(GESTOR_A, 'admin_instituicao', CONTATO);
-    const resposta = await servico.aceitarConvite(RESP_1, aceite(token));
+    const resposta = await aceitar(RESP_1, token);
     expect(Object.keys(resposta)).toEqual(['aceito']);
   });
 });

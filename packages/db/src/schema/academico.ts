@@ -13,6 +13,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { citext } from './common';
@@ -380,5 +381,56 @@ export const consentimentoResponsavel = pgTable(
       foreignColumns: [conviteResponsavel.id, conviteResponsavel.instituicaoId],
     }).onDelete('restrict'),
     index('idx_consentimento_responsavel_usuario').on(t.usuarioId),
+  ],
+);
+
+/**
+ * Tentativa de vínculo cujo e-mail da conta não é o do contato (migração 0017).
+ * Não abre leitura nenhuma: o contato segue sem `usuario_id` e sem consentimento.
+ * A coordenação aprova (aí o vínculo e o consentimento nascem, com os dados da
+ * própria solicitação) ou recusa. `emailConta` existe só para ela decidir e é
+ * apagado na decisão.
+ */
+export const solicitacaoVinculoResponsavel = pgTable(
+  'solicitacao_vinculo_responsavel',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    instituicaoId: uuid('instituicao_id')
+      .notNull()
+      .references(() => instituicao.id, { onDelete: 'restrict' }),
+    responsavelAlunoId: uuid('responsavel_aluno_id').notNull(),
+    conviteId: uuid('convite_id').notNull(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'restrict' }),
+    versaoTermo: text('versao_termo').notNull(),
+    emailConta: text('email_conta'),
+    status: text('status', { enum: ['pendente_aprovacao', 'aprovada', 'recusada', 'cancelada'] })
+      .notNull()
+      .default('pendente_aprovacao'),
+    decididoPor: uuid('decidido_por').references(() => usuario.id, { onDelete: 'restrict' }),
+    decididoEm: timestamp('decidido_em', { withTimezone: true }),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: 'solicitacao_vinculo_responsavel_responsavel_escopo_fk',
+      columns: [t.responsavelAlunoId, t.instituicaoId],
+      foreignColumns: [responsavelAluno.id, responsavelAluno.instituicaoId],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'solicitacao_vinculo_responsavel_convite_escopo_fk',
+      columns: [t.conviteId, t.instituicaoId],
+      foreignColumns: [conviteResponsavel.id, conviteResponsavel.instituicaoId],
+    }).onDelete('cascade'),
+    check(
+      'ck_solicitacao_vinculo_status',
+      sql`${t.status} in ('pendente_aprovacao', 'aprovada', 'recusada', 'cancelada')`,
+    ),
+    check('ck_solicitacao_vinculo_decisao', sql`(${t.status} = 'pendente_aprovacao') = (${t.decididoEm} is null)`),
+    uniqueIndex('uq_solicitacao_vinculo_pendente')
+      .on(t.responsavelAlunoId)
+      .where(sql`${t.status} = 'pendente_aprovacao'`),
+    index('idx_solicitacao_vinculo_instituicao').on(t.instituicaoId, t.status),
   ],
 );

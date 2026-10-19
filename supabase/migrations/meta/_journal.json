@@ -85,6 +85,13 @@
       "when": 1792287375175,
       "tag": "0016_seguranca_gestao_academica",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792390048473,
+      "tag": "0017_vinculo_responsavel_pendente",
+      "breakpoints": true
     }
   ]
 }
