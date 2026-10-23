@@ -77,7 +77,6 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   'GET /study-trails/generate': TODOS_OS_PAPEIS,
   'POST /battle/matchmake': TODOS_OS_PAPEIS,
   'POST /battle/finish': TODOS_OS_PAPEIS,
-  'GET /simulado/next-item': TODOS_OS_PAPEIS,
   // Prova fechada de 40 questões. A dona da sessão é checada no serviço (o
   // papel só diz quem pode abrir uma prova, não de quem ela é).
   'POST /simulado/sessions': TODOS_OS_PAPEIS,

@@ -1,11 +1,10 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import {
   ImportQuestoesEnemRequestSchema,
   SaveSimuladoAnswerRequestSchema,
   StartSimuladoRequestSchema,
 } from '@notaa/contracts';
 import type {
-  AreaConhecimento,
   ImportQuestoesEnemRequest,
   SaveSimuladoAnswerRequest,
   StartSimuladoRequest,
@@ -59,27 +58,6 @@ export class SimuladoController {
   @Get('sessions/:id/report')
   async report(@Req() req: AuthenticatedRequest, @Param('id') sessaoId: string) {
     return this.sessao.relatorio(sessaoId, req.user.sub);
-  }
-
-  @Get('next-item')
-  async getNextItem(
-    @Req() req: AuthenticatedRequest,
-    @Query('nivel') nivelStr?: string,
-    @Query('excluir') excluirStr?: string,
-    @Query('area') area?: string,
-  ) {
-    let nivel: number | undefined;
-    if (nivelStr !== undefined) {
-      nivel = parseInt(nivelStr, 10);
-      if (!Number.isFinite(nivel) || nivel < 1 || nivel > 3) {
-        throw new BadRequestException({
-          error: { code: 'VALIDATION_ERROR', message: '"nivel" deve ser 1, 2 ou 3.' },
-        });
-      }
-    }
-    const excluirIds = excluirStr ? excluirStr.split(',').filter(Boolean) : [];
-
-    return this.simulado.getNextItem(req.user.sub, nivel, excluirIds, area as AreaConhecimento);
   }
 
   @Roles('admin')
