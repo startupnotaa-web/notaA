@@ -7,15 +7,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
+  IDIOMAS_ESTRANGEIROS,
   SIMULADO_LIMITES_MINUTOS,
   SIMULADO_QUESTOES_POR_AREA,
   SIMULADO_TOTAL_QUESTOES,
+  type IdiomaEstrangeiro,
   type ResumeSimuladoResponse,
   type SaveSimuladoAnswerResponse,
   type SimuladoRelatorio,
   type StartSimuladoResponse,
 } from '@notaa/contracts';
-import { Badge, Button, Card, OptionCard, Progress, Skeleton, cn } from '@notaa/ui';
+import { Badge, Button, Card, Label, OptionCard, Progress, Select, Skeleton, cn } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 import { useUser } from '../../../lib/user-context';
 import { toast } from '../../components/toast';
@@ -35,6 +37,22 @@ const ALERTA_TEMPO_SEGUNDOS = 5 * 60;
  * (inclusive quais alternativas existem) vem do servidor, nunca do navegador.
  */
 const CHAVE_SESSAO_ABERTA = 'notaa:simulado:sessao-aberta';
+
+/**
+ * Língua estrangeira escolhida (itens 1–5 de Linguagens). Lembrada só para o
+ * aluno não escolher toda vez; quem decide o que é servido é o servidor.
+ */
+const CHAVE_IDIOMA = 'notaa:simulado:idioma';
+const ROTULO_IDIOMA: Record<IdiomaEstrangeiro, string> = { ingles: 'Inglês', espanhol: 'Espanhol' };
+
+function lerIdiomaSalvo(): IdiomaEstrangeiro | '' {
+  try {
+    const salvo = localStorage.getItem(CHAVE_IDIOMA);
+    return IDIOMAS_ESTRANGEIROS.find((i) => i === salvo) ?? '';
+  } catch {
+    return '';
+  }
+}
 
 export default function SimuladoPage() {
   const { addXP, refreshPerfil } = useUser();
@@ -112,13 +130,18 @@ export default function SimuladoPage() {
 
   // ── início ───────────────────────────────────────────────────────────────
 
-  async function iniciar(escolha: Escolha) {
+  async function iniciar(escolha: Escolha, idiomaEstrangeiro: IdiomaEstrangeiro) {
     setErro(null);
     setCarregando(true);
     try {
+      try {
+        localStorage.setItem(CHAVE_IDIOMA, idiomaEstrangeiro);
+      } catch {
+        // sem armazenamento (navegação privada): só não lembra a escolha.
+      }
       const res = await apiFetch<StartSimuladoResponse>('/simulado/sessions', {
         method: 'POST',
-        body: JSON.stringify(escolha),
+        body: JSON.stringify({ ...escolha, idiomaEstrangeiro }),
       });
       pendentes.current.clear();
       finalizando.current = false;
@@ -480,10 +503,16 @@ function TelaConfig({
 }: {
   carregando: boolean;
   erro: string | null;
-  onIniciar: (escolha: Escolha) => void;
+  onIniciar: (escolha: Escolha, idioma: IdiomaEstrangeiro) => void;
 }) {
   const [selecionada, setSelecionada] = useState(0);
+  const [idioma, setIdioma] = useState<IdiomaEstrangeiro | ''>('');
   const opcao = OPCOES[selecionada]!;
+
+  // Lido depois da montagem: o servidor não tem localStorage.
+  useEffect(() => {
+    setIdioma(lerIdiomaSalvo());
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 p-4">
@@ -519,6 +548,26 @@ function TelaConfig({
         ))}
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="simulado-idioma">Língua estrangeira da prova</Label>
+        <Select
+          id="simulado-idioma"
+          value={idioma}
+          onChange={(e) => setIdioma(e.target.value as IdiomaEstrangeiro | '')}
+          aria-describedby="simulado-idioma-ajuda"
+        >
+          <option value="">Escolha uma língua</option>
+          {IDIOMAS_ESTRANGEIROS.map((i) => (
+            <option key={i} value={i}>
+              {ROTULO_IDIOMA[i]}
+            </option>
+          ))}
+        </Select>
+        <p id="simulado-idioma-ajuda" className="text-xs text-text-muted">
+          As questões de língua estrangeira de Linguagens vêm só na língua que você escolher.
+        </p>
+      </div>
+
       <Card className="space-y-2 p-4 text-sm text-text-muted">
         <p className="font-semibold text-text">Como funciona</p>
         <ul className="list-inside list-disc space-y-1">
@@ -542,12 +591,17 @@ function TelaConfig({
         <Button
           variant="cta"
           size="lg"
-          onClick={() => onIniciar(opcao.escolha)}
-          disabled={carregando}
+          onClick={() => idioma && onIniciar(opcao.escolha, idioma)}
+          disabled={carregando || !idioma}
         >
           {carregando ? 'Montando sua prova…' : 'Começar simulado'}
         </Button>
       </div>
+      {!idioma && !carregando && (
+        <p className="text-center text-xs text-text-muted">
+          Escolha a língua estrangeira para começar.
+        </p>
+      )}
       {carregando && (
         <p className="text-center text-xs text-text-muted">
           Montando {SIMULADO_TOTAL_QUESTOES} questões — isso pode levar alguns segundos.
