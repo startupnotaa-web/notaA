@@ -18,6 +18,7 @@ import { AuthPagina } from '../../../components/auth';
 import { supabaseBrowser } from '../../../../lib/supabase-browser';
 import { USER_STATE_STORAGE_KEY } from '../../../../lib/storage-keys';
 import { garantirRegistro } from '../../../../lib/post-auth';
+import { caminhoInternoSeguro } from '../../../../lib/destino';
 import { rotaPosRegistro } from '../../../../lib/rota-inicial';
 
 const TIPOS_OTP: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
@@ -38,7 +39,8 @@ function ConfirmarEmail() {
   // (dev), que consumiria "de novo" o token e mostraria erro após o sucesso.
   const jaProcessou = useRef(false);
 
-  const next = params.get('next') ?? '/onboarding';
+  // `next` vem da URL do e-mail e pode ser forjado: só passa caminho interno (sem open redirect).
+  const next = caminhoInternoSeguro(params.get('next')) ?? '/onboarding';
 
   useEffect(() => {
     if (jaProcessou.current) return;

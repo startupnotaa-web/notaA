@@ -168,7 +168,7 @@ export default function CadastroPage() {
             const { error } = await supabaseBrowser.auth.signInWithOAuth({
               provider: 'google',
               options: {
-                redirectTo: `${window.location.origin}/onboarding`,
+                redirectTo: `${window.location.origin}/auth/destino`,
               },
             });
             if (error) {

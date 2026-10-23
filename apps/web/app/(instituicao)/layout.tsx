@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { FileSpreadsheet, LayoutDashboard, Settings } from 'lucide-react';
 import { PainelShell, type ItemDeNavegacao } from '../components/PainelShell';
+import { papeisDaRota } from '../../lib/destino';
 import { UserProvider } from '../../lib/user-context';
 
 // O painel da instituição NÃO fica no grupo de rotas do aluno de propósito: a
@@ -19,7 +20,7 @@ export default function InstituicaoLayout({ children }: { children: ReactNode })
     <UserProvider>
       <PainelShell
         titulo="Painel da instituição"
-        papeisPermitidos={['admin_instituicao', 'admin']}
+        papeisPermitidos={papeisDaRota('/instituicao')}
         navegacao={NAVEGACAO}
       >
         {children}

@@ -9,3 +9,6 @@ export const THEME_STORAGE_KEY = 'notaa:tema';
 export const NAV_RECOLHIDA_STORAGE_KEY = 'notaa:nav-recolhida';
 // Contexto de trabalho do painel: ano letivo e turma escolhidos na barra superior.
 export const CONTEXTO_STORAGE_KEY = 'notaa:contexto:v1';
+// Último contexto de acesso escolhido em "Entrar como…" ({ authUid, contexto }). É só uma dica de
+// interface: o servidor valida o contexto a cada requisição e ignora o que não for da conta.
+export const ACESSO_STORAGE_KEY = 'notaa:acesso:v1';

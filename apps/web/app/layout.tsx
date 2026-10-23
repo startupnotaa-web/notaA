@@ -3,6 +3,7 @@ import { Atkinson_Hyperlegible_Next, Sora } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { corDoToken } from '@notaa/ui';
 import { AuthProvider } from '../lib/auth-context';
+import { ContextoDeAcessoProvider } from '../lib/contexto-de-acesso-provider';
 import { THEME_STORAGE_KEY } from '../lib/storage-keys';
 import { ErrorSuppressor } from './components/ErrorSuppressor';
 import './globals.css';
@@ -59,7 +60,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           mismatches reais dentro da árvore continuam sendo reportados. */}
       <body suppressHydrationWarning>
         <ErrorSuppressor />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ContextoDeAcessoProvider>{children}</ContextoDeAcessoProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,33 +1,22 @@
+import { HOME_POR_PAPEL, papelConhecido } from './destino';
+
 /**
- * Para onde cada papel vai depois de entrar.
+ * Home de cada papel depois de entrar. O mapa mora em `destino.ts`; este arquivo só mantém os dois
+ * nomes que o resto do app já usa.
  *
- * Antes TODO login ia para `/dashboard`, que é o hub do aluno. Isso tinha duas
- * consequências ruins: o admin de instituição caía numa tela de gamificação que
- * não é dele, e o professor não tinha caminho nenhum até o próprio painel — a
- * rota existia, mas nenhum link no app levava até ela, só digitar a URL.
- *
- * Função pura e num arquivo só porque o destino é decidido em três lugares
- * diferentes: o redirecionamento do contexto de autenticação, a tela de login e
- * o pós-cadastro.
+ * Papel desconhecido ou ausente NÃO cai mais no hub do aluno: volta ao login. Era esse padrão que
+ * mandava professor e instituição para `/dashboard` sempre que o papel não chegava a tempo.
  */
 export function rotaInicialPorPapel(papel: string | null | undefined): string {
-  switch (papel) {
-    case 'admin_instituicao':
-      return '/instituicao';
-    case 'professor_institucional':
-    case 'professor_independente':
-      return '/professor';
-    default:
-      // Estudante, responsável e admin da plataforma seguem no hub do aluno.
-      return '/dashboard';
-  }
+  const conhecido = papelConhecido(papel);
+  return conhecido ? HOME_POR_PAPEL[conhecido] : '/login';
 }
 
 /**
- * Destino logo depois do PRIMEIRO registro (confirmação de e-mail, cadastro,
- * primeiro login OAuth). Igual ao de cima, exceto o aluno, que ainda precisa
- * passar pelo onboarding. O papel tem que vir do token JÁ renovado pelo
- * `garantirRegistro` — antes dele o token não tem `papel`.
+ * Destino logo depois do PRIMEIRO registro (confirmação de e-mail, cadastro, primeiro login OAuth).
+ * Igual ao de cima, exceto o aluno, que ainda precisa passar pelo onboarding. Sem papel, a conta é
+ * nova e vai para o onboarding (o sync-oauth cria como estudante). O papel tem que vir do token JÁ
+ * renovado pelo `garantirRegistro` — antes dele o token não tem `papel`.
  */
 export function rotaPosRegistro(papel: string | null | undefined): string {
   if (!papel || papel === 'estudante') return '/onboarding';
