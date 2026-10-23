@@ -3,7 +3,9 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { AuthGuard } from './common/guards/auth.guard';
 import { FeatureGuard } from './common/guards/feature.guard';
+import { ContextoGuard } from './common/guards/contexto.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { UsuarioAtivoGuard } from './common/guards/usuario-ativo.guard';
 import { DbModule } from './db/db.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
@@ -64,10 +66,13 @@ import { ResponsavelModule } from './modules/responsavel/responsavel.module';
     // Ordem importa: Nest executa APP_GUARD na ordem registrada.
     // FeatureGuard primeiro — uma rota de funcionalidade oculta responde 404
     // para todo mundo, antes mesmo de olhar o token. AuthGuard depois (anexa
-    // request.user) e RolesGuard por último (decide com base nele).
+    // request.user), UsuarioAtivoGuard barra conta suspensa ou pendente, RolesGuard
+    // decide o papel e ContextoGuard confere o contexto escolhido por último.
     { provide: APP_GUARD, useClass: FeatureGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: UsuarioAtivoGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: ContextoGuard },
   ],
 })
 export class AppModule {}

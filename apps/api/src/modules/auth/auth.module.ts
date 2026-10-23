@@ -3,19 +3,29 @@ import { createClient } from '@supabase/supabase-js';
 import { InstituicaoRepositoryDb, UsuarioRepositoryDb, type Database } from '@notaa/db';
 import { DB_CLIENT } from '../../db/db.tokens';
 import { AuthController } from './auth.controller';
+import { ContextosController } from './contextos.controller';
+import { ContextosService } from './contextos.service';
 import { AuthService } from './auth.service';
 import { MeController } from './me.controller';
 import { SupabaseAuthAdminAdapter } from './supabase-admin.adapter';
-import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY } from './auth.tokens';
+import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY, USUARIO_STATUS } from './auth.tokens';
+import { UsuarioStatusDb } from './usuario-status';
 
 @Module({
-  controllers: [AuthController, MeController],
+  controllers: [AuthController, MeController, ContextosController],
   providers: [
     AuthService,
+    ContextosService,
     {
       provide: USUARIO_REPOSITORY,
       inject: [DB_CLIENT],
       useFactory: (db: Database) => new UsuarioRepositoryDb(db),
+    },
+    {
+      // Status da conta, lido pelo UsuarioAtivoGuard (global) em toda rota autenticada.
+      provide: USUARIO_STATUS,
+      inject: [DB_CLIENT],
+      useFactory: (db: Database) => new UsuarioStatusDb(db),
     },
     {
       // Cria a instituição de quem se cadastra representando uma, no mesmo fluxo
@@ -41,6 +51,6 @@ import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY } from './auth.t
       },
     },
   ],
-  exports: [AuthService],
+  exports: [AuthService, ContextosService, USUARIO_STATUS],
 })
 export class AuthModule {}
