@@ -6,6 +6,7 @@ import type {
   UsuarioRegistro,
   UsuarioRepositoryPort,
 } from '@notaa/contracts';
+import type { StatusDeUsuario, UsuarioStatusPort } from './usuario-status';
 
 /** ⚠️ Adaptadores EM MEMÓRIA — dev/test doubles (ver gamificacao.repository.memory.ts). */
 @Injectable()
@@ -45,5 +46,15 @@ export class AuthAdminMemory implements AuthAdminPort {
 
   async setPapel(authUid: string, papel: Papel, instituicaoId: string | null): Promise<void> {
     this.chamadas.push({ authUid, papel, instituicaoId });
+  }
+}
+
+/** Todo mundo ativo, salvo quem o teste marcar. Os e2e de guards não têm banco. */
+@Injectable()
+export class UsuarioStatusMemory implements UsuarioStatusPort {
+  readonly status = new Map<string, StatusDeUsuario>();
+
+  async statusDe(usuarioId: string): Promise<StatusDeUsuario | null> {
+    return this.status.get(usuarioId) ?? 'ativo';
   }
 }

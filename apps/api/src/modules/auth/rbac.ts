@@ -48,6 +48,9 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   'GET /me/achievements': TODOS_OS_PAPEIS,
   'GET /me/cognitive-profile': TODOS_OS_PAPEIS,
   'GET /me/dashboard': TODOS_OS_PAPEIS,
+  // Contexto de acesso ("Entrar como…"): lista os vínculos reais e registra a troca. Todos os papéis.
+  'GET /me/contextos': TODOS_OS_PAPEIS,
+  'POST /me/contexto': TODOS_OS_PAPEIS,
 
   // Onboarding (a regra "só estudante" é da camada de serviço, doc 05 §3)
   'GET /onboarding/state': TODOS_OS_PAPEIS,

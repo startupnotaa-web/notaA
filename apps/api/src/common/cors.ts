@@ -27,6 +27,8 @@ export const CORS_OPTIONS = {
     'Content-Type',
     'Authorization',
     'x-development-mode',
+    // Contexto de acesso escolhido em "Entrar como…" (CABECALHO_CONTEXTO). Sem ele o preflight recusa a requisição.
+    'x-contexto',
     'Accept',
     'idempotency-key',
     'Idempotency-Key',
