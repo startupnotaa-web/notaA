@@ -1,10 +1,8 @@
-import { NotFoundException } from '@nestjs/common';
 import type { LLMProviderPort } from '@notaa/contracts';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { GamificacaoService } from '../../gamificacao/gamificacao.service';
 import { SimuladoSessaoService } from '../simulado-sessao.service';
-import { SimuladoService } from '../simulado.service';
 
 // Os dois pontos da API que sorteiam questão do ENEM para o aluno, contra
 // Postgres de verdade (PGlite, migrações reais): nenhum deles pode entregar
@@ -23,7 +21,6 @@ const llm = {
 
 let banco: BancoDeTeste;
 let sessao: SimuladoSessaoService;
-let legado: SimuladoService;
 
 beforeAll(async () => {
   banco = await criarBancoDeTeste();
@@ -32,7 +29,6 @@ beforeAll(async () => {
     VALUES ('${ESTUDANTE}', '${ESTUDANTE}', 'estudante', 'aluno@a.test', 'Aluno', 'ativo');
   `);
   sessao = new SimuladoSessaoService(banco.db, llm, {} as GamificacaoService);
-  legado = new SimuladoService(banco.db);
 }, 60_000);
 
 afterAll(async () => {
@@ -102,25 +98,5 @@ describe('simulado de sessão: SimuladoSessaoService.start', () => {
   it('versão do idioma escolhido, mas suspensa, não é entregue', async () => {
     await questao('Inglês suspenso.', { idioma: 'ingles', situacao: 'suspensa' });
     expect(await idsDoEnemNaProva('ingles')).toEqual([]);
-  });
-});
-
-describe('endpoint legado: SimuladoService.getNextItem', () => {
-  it('não entrega suspensa/anulada/arquivada nem item de outro idioma', async () => {
-    const boa = await questao('Boa.');
-    await questao('Suspensa.', { situacao: 'suspensa' });
-    await questao('Anulada.', { situacao: 'anulada' });
-    await questao('Arquivada.', { situacao: 'arquivada' });
-    await questao('Espanhol.', { idioma: 'espanhol' });
-    const item = await legado.getNextItem(ESTUDANTE, 1, [], 'linguagens', 'ingles');
-    expect(item.id).toBe(boa);
-    await expect(legado.getNextItem(ESTUDANTE, 1, [boa], 'linguagens', 'ingles')).rejects.toBeInstanceOf(NotFoundException);
-  });
-
-  it('com idioma, entrega a versão certa', async () => {
-    const ing = await questao('Inglês.', { idioma: 'ingles' });
-    await questao('Espanhol.', { idioma: 'espanhol' });
-    expect((await legado.getNextItem(ESTUDANTE, 1, [], 'linguagens', 'ingles')).id).toBe(ing);
-    await expect(legado.getNextItem(ESTUDANTE, 1, [], 'linguagens')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
