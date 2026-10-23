@@ -4,9 +4,10 @@ import type { FastifyRequest } from 'fastify';
 import { verifySupabaseJwt } from '../../modules/auth/verify-jwt';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { MOCK_DEV_USER_ID, isDevBypassEnabled } from '../dev-user';
-import type { JwtClaims } from '@notaa/contracts';
+import type { ContextoDeAcesso, JwtClaims } from '@notaa/contracts';
 
-export type AuthenticatedRequest = FastifyRequest & { user: JwtClaims };
+/** `contexto` só existe depois do ContextoGuard, e só quando o cliente mandou `x-contexto` e o servidor confirmou. */
+export type AuthenticatedRequest = FastifyRequest & { user: JwtClaims; contexto?: ContextoDeAcesso };
 
 /**
  * Guard global (doc 03 §4 camada de Orquestração — "AuthGuard + RoleGuard").

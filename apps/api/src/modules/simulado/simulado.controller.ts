@@ -28,7 +28,7 @@ export class SimuladoController {
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(StartSimuladoRequestSchema)) body: StartSimuladoRequest,
   ) {
-    return this.sessao.start(req.user.sub, body.modo, body.limiteMinutos);
+    return this.sessao.start(req.user.sub, body.modo, body.limiteMinutos, body.idiomaEstrangeiro);
   }
 
   /**

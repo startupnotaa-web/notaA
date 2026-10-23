@@ -1,6 +1,7 @@
 export * from './schema';
 export * from './client';
 export * from './repositories';
+export * from './filtros/questoes-servidas';
 
 // Operadores do drizzle-orm re-exportados para consumidores externos (apps/api).
 // NUNCA declare `drizzle-orm` como dependência direta de outro pacote do

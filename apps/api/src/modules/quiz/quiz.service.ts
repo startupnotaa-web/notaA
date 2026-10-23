@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  ConflictException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -247,6 +248,7 @@ export class QuizService {
     // (ainda sem respostas aqui, então parte do θ).
     const { sessaoId } = await this.repo.createSession(estudanteId, area);
     const item = await this.obterProximoItem(estudanteId, sessaoId, area, theta);
+    await this.repo.registrarItemServido(sessaoId, item.itemId, 1);
     return { sessaoId, primeiraQuestao: toItemPublico(item, 1) };
   }
 
@@ -255,6 +257,7 @@ export class QuizService {
     const { theta } = await this.repo.getHabilidade(estudanteId, sessao.area);
     const expostos = await this.repo.getExpostos(sessaoId);
     const item = await this.obterProximoItem(estudanteId, sessaoId, sessao.area, theta);
+    await this.repo.registrarItemServido(sessaoId, item.itemId, expostos.length + 1);
     return toItemPublico(item, expostos.length + 1);
   }
 
@@ -268,6 +271,23 @@ export class QuizService {
     if (sessao.status !== 'em_andamento') {
       throw new BadRequestException({
         error: { code: 'VALIDATION_ERROR', message: 'Sessão não está em andamento.' },
+      });
+    }
+
+    // O item tem de ter sido servido NESTA sessão. Sem isto, qualquer itemId do
+    // banco (outra sessão, simulado em andamento, outro aluno) devolveria o gabarito
+    // na resposta. A mensagem não distingue "não existe" de "não é desta sessão".
+    const servido = await this.repo.getItemServido(sessaoId, body.itemId);
+    if (!servido) {
+      throw new NotFoundException({
+        error: { code: 'ITEM_NAO_SERVIDO', message: 'Esta questão não faz parte desta sessão.' },
+      });
+    }
+    // Item já respondido por outra tentativa não é corrigido de novo. Reenvio com a
+    // mesma chave segue o caminho idempotente (duplicate), sem XP novo.
+    if (servido.idempotencyKey !== null && servido.idempotencyKey !== idempotencyKey) {
+      throw new ConflictException({
+        error: { code: 'ITEM_JA_RESPONDIDO', message: 'Esta questão já foi respondida nesta sessão.' },
       });
     }
 
@@ -349,6 +369,15 @@ export class QuizService {
         },
       };
     });
+    // Duplicata só vale para a MESMA resposta: a chave tem de ter sido gravada para
+    // este item. Chave de outro item faz o INSERT cair em 23505 (duplicate), e seguir
+    // por aqui devolveria o gabarito de um item que ainda não foi respondido.
+    if (nucleo.duplicate && servido.idempotencyKey !== idempotencyKey) {
+      throw new ConflictException({
+        error: { code: 'CHAVE_EM_USO', message: 'Esta chave já foi usada em outra resposta.' },
+      });
+    }
+
     const { theta, erroPadrao, xpGanho, gamificacao } = nucleo;
 
     let classificacaoErro: SubmitAnswerResponse['feedback']['classificacaoErro'] = null;

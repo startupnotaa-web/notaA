@@ -11,6 +11,7 @@ import {
   bancoDeItens,
   eq,
   notInArray,
+  questaoServivel,
   questoesEnem,
   sessaoAvaliativa,
   simuladoQuestao,
@@ -24,6 +25,7 @@ import {
   SIMULADO_AREAS,
   type AreaConhecimento,
   type DificuldadeTri,
+  type IdiomaEstrangeiro,
   type LLMProviderPort,
   type ResumeSimuladoResponse,
   type SaveSimuladoAnswerRequest,
@@ -38,22 +40,6 @@ import { DB_CLIENT } from '../../db/db.tokens';
 import { LLM_PROVIDER } from '../ai/ai.tokens';
 import { GamificacaoService } from '../gamificacao/gamificacao.service';
 import { LETRAS, calcularXp, intercalarPorArea, montarPlano } from './simulado.montador';
-
-/**
- * Questão do banco público só entra na prova se estiver legível: a extração do
- * PDF quebrou frações em várias linhas (91 de 278) e deixou questões citando
- * figura sem `imagem_url` (38). Servir essas seria entregar questão impossível.
- */
-const FILTRO_QUALIDADE = sql`
-  not exists (
-    select 1 from jsonb_array_elements_text(${questoesEnem.alternativas}) alt
-    where alt like '%' || chr(10) || '%' or length(trim(alt)) <= 3
-  )
-  and (
-    ${questoesEnem.imagemUrl} is not null
-    or ${questoesEnem.enunciado} !~* '(esquema|figura|gr[áa]fico|imagem|tabela|mapa|charge|tirinha)'
-  )
-`;
 
 interface QuestaoMontada {
   itemId: string;
@@ -80,6 +66,7 @@ export class SimuladoSessaoService {
     estudanteId: string,
     modo: SimuladoModo,
     limiteMinutos?: number,
+    idioma?: IdiomaEstrangeiro,
   ): Promise<StartSimuladoResponse> {
     const plano = montarPlano(SIMULADO_AREAS);
     const usados: string[] = [];
@@ -88,7 +75,7 @@ export class SimuladoSessaoService {
 
     // 1ª passada: consome o banco real, respeitando área + dificuldade.
     for (const slot of plano) {
-      const questao = await this.sortearDoEnem(slot.area, slot.dificuldade, usados);
+      const questao = await this.sortearDoEnem(slot.area, slot.dificuldade, usados, idioma);
       if (questao) {
         usados.push(questao.itemId);
         montadas.push(questao);
@@ -182,11 +169,14 @@ export class SimuladoSessaoService {
     area: AreaConhecimento,
     dificuldade: DificuldadeTri,
     excluir: string[],
+    idioma?: IdiomaEstrangeiro,
   ): Promise<QuestaoMontada | null> {
+    // `questaoServivel` é a regra única: legível, não suspensa/anulada/arquivada
+    // e, nos itens de língua estrangeira, só o idioma que o aluno escolheu.
     const condicoes = [
       eq(questoesEnem.area, area),
       eq(questoesEnem.dificuldadeTri, dificuldade),
-      FILTRO_QUALIDADE,
+      questaoServivel(idioma),
     ];
     if (excluir.length > 0) condicoes.push(notInArray(questoesEnem.id, excluir));
 

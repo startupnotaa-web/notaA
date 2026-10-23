@@ -5,6 +5,7 @@ import {
   bancoDeItens,
   habilidadeEstudante,
   quizIaGerado,
+  quizItemServido,
   sessaoAvaliativa,
   tentativaResposta,
   thetaEvento,
@@ -117,6 +118,26 @@ export class QuizRepositoryDb implements QuizRepositoryPort {
   async getItem(itemId: string): Promise<BancoDeItemRegistro | null> {
     const [row] = await this.db.select().from(bancoDeItens).where(eq(bancoDeItens.id, itemId)).limit(1);
     return row ? toRegistro(row) : null;
+  }
+
+  async registrarItemServido(sessaoId: string, itemId: string, ordem: number): Promise<void> {
+    await this.db.insert(quizItemServido).values({ sessaoId, itemId, ordem }).onConflictDoNothing();
+  }
+
+  async getItemServido(sessaoId: string, itemId: string): Promise<{ idempotencyKey: string | null } | null> {
+    const [row] = await this.db
+      .select({ idempotencyKey: tentativaResposta.idempotencyKey })
+      .from(quizItemServido)
+      .leftJoin(
+        tentativaResposta,
+        and(
+          eq(tentativaResposta.sessaoId, quizItemServido.sessaoId),
+          eq(tentativaResposta.itemId, quizItemServido.itemId),
+        ),
+      )
+      .where(and(eq(quizItemServido.sessaoId, sessaoId), eq(quizItemServido.itemId, itemId)))
+      .limit(1);
+    return row ? { idempotencyKey: row.idempotencyKey ?? null } : null;
   }
 
   async getExpostos(sessaoId: string): Promise<string[]> {

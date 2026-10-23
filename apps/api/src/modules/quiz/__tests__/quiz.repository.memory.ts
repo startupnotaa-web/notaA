@@ -28,6 +28,8 @@ interface TentativaMemoria extends Tentativa {
 export class QuizRepositoryMemory implements QuizRepositoryPort {
   private readonly sessoes = new Map<string, SessaoMemoria>();
   private readonly habilidades = new Map<string, { theta: number; erroPadrao: number }>();
+  private readonly servidos = new Map<string, { ordem: number; idempotencyKey: string | null }>();
+  private readonly chavesPorTentativa = new Map<object, string>();
   private readonly idempotencyKeysVistas = new Set<string>();
   private readonly tentativas: TentativaMemoria[] = [];
   private readonly perguntasIA: { estudanteId: string; area: AreaConhecimento; enunciado: string }[] = [];
@@ -78,6 +80,18 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
     this.itensDinamicos.push(item);
   }
 
+  async registrarItemServido(sessaoId: string, itemId: string, ordem: number): Promise<void> {
+    const chave = `${sessaoId}:${itemId}`;
+    if (!this.servidos.has(chave)) this.servidos.set(chave, { ordem, idempotencyKey: null });
+  }
+
+  async getItemServido(sessaoId: string, itemId: string): Promise<{ idempotencyKey: string | null } | null> {
+    const registro = this.servidos.get(`${sessaoId}:${itemId}`);
+    if (!registro) return null;
+    const resposta = this.tentativas.find((t) => t.sessaoId === sessaoId && t.itemId === itemId);
+    return { idempotencyKey: resposta ? (this.chavesPorTentativa.get(resposta) ?? null) : null };
+  }
+
   async getExpostos(sessaoId: string): Promise<string[]> {
     return this.sessoes.get(sessaoId)?.expostos ?? [];
   }
@@ -107,7 +121,7 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
     if (sessao && !sessao.expostos.includes(input.itemId)) {
       sessao.expostos.push(input.itemId);
     }
-    this.tentativas.push({
+    const tentativa = {
       itemId: input.itemId,
       acerto: input.acerto,
       tempoMs: input.tempoRespostaMs,
@@ -116,7 +130,9 @@ export class QuizRepositoryMemory implements QuizRepositoryPort {
       sessaoId: input.sessaoId,
       area: sessao?.area ?? 'matematica',
       temasErro: input.temasErro ?? null, // espelha o repo Drizzle (auditoria R6)
-    });
+    };
+    this.tentativas.push(tentativa);
+    this.chavesPorTentativa.set(tentativa, input.idempotencyKey);
     return { duplicate: false, tentativaId: randomUUID() };
   }
 
