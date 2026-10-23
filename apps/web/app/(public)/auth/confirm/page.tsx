@@ -19,6 +19,7 @@ import { supabaseBrowser } from '../../../../lib/supabase-browser';
 import { USER_STATE_STORAGE_KEY } from '../../../../lib/storage-keys';
 import { garantirRegistro } from '../../../../lib/post-auth';
 import { rotaPosRegistro } from '../../../../lib/rota-inicial';
+import { destinoSemPapelAposConfirmar } from '../../../../lib/confirmacao';
 
 const TIPOS_OTP: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 
@@ -52,7 +53,7 @@ function ConfirmarEmail() {
       await garantirRegistro();
       const { data } = await supabaseBrowser.auth.getSession();
       const papel = data.session?.user.app_metadata?.papel;
-      router.replace(papel ? rotaPosRegistro(papel) : next);
+      router.replace(papel ? rotaPosRegistro(papel) : destinoSemPapelAposConfirmar(next));
     }
 
     async function confirmar() {

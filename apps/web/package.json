@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0 && node ../../scripts/verificar-cores.mjs",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
     "icones": "node scripts/gerar-icones.mjs",
     "og": "node scripts/gerar-og.mjs",
     "verificar:bundle": "node scripts/verificar-bundle.mjs",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
+    "vitest": "^2.1.8",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@types/three": "^0.186.0",
