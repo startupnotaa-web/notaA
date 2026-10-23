@@ -6,11 +6,12 @@ import { SignJWT } from 'jose';
 import supertest from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from './app.module';
-import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY } from './modules/auth/auth.tokens';
+import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY, USUARIO_STATUS } from './modules/auth/auth.tokens';
 import {
   AuthAdminMemory,
   InstituicaoRepositoryMemory,
   UsuarioRepositoryMemory,
+  UsuarioStatusMemory,
 } from './modules/auth/auth.repository.memory';
 
 // e2e real: app Nest+Fastify de verdade, sem mocks de Guard — prova que
@@ -79,6 +80,8 @@ describe('API e2e — Guards de auth/RBAC (passo 6, doc 03 §4)', () => {
       .useClass(InstituicaoRepositoryMemory)
       .overrideProvider(AUTH_ADMIN)
       .useClass(AuthAdminMemory)
+      .overrideProvider(USUARIO_STATUS)
+      .useClass(UsuarioStatusMemory)
       .compile();
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     await app.init();
