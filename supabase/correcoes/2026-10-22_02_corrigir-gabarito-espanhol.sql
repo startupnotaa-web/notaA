@@ -42,4 +42,5 @@ update public.banco_de_itens b
    and b.gabarito <> chr(65 + q.correta)
    and left(md5(q.enunciado), 8) in (select h8 from (values ('8c30bb51'), ('803fc6b4'), ('33eda5d3'), ('6fab72c5'), ('64d301ab'), ('abc9e170'), ('43184058'), ('377018bf')) as v(h8));
 
-commit;
+rollback;  -- trocar pelo COMMIT abaixo só depois de conferir os números acima
+-- commit;  -- descomentar e remover o rollback somente depois de conferir os números

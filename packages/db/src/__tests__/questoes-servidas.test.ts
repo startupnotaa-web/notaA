@@ -169,6 +169,9 @@ describe('questao_suspensa: estrutura e RLS', () => {
 // enunciado e semeia linhas cujo enunciado É a chave. Todo o resto do script
 // (inserts, updates, conferências) roda como está.
 
+// Scripts entregues terminam em `rollback;`. Para testar o efeito de gravar, troca
+// só essa linha pelo COMMIT que o operador descomenta depois de conferir.
+const commitar = (sql: string) => sql.replace(/^rollback;.*$/m, 'commit;');
 const MD5 = /left\(md5\((q\.)?enunciado\), 8\)/g;
 const sem_md5 = (sql: string) => sql.replace(MD5, (_m, q: string | undefined) => `${q ?? ''}enunciado`);
 const chaves = (sql: string) => [...sql.matchAll(/\('([0-9a-f]{8})'/g)].map((m) => m[1]!);
@@ -186,8 +189,8 @@ describe('supabase/correcoes/01 — marcar suspensas e idioma', () => {
   it('com as questões presentes, grava 82 (1 anulada) e 10+10 idiomas, e roda de novo sem mudar nada', async () => {
     const todas = [...new Set(chaves(arquivo))];
     for (const chave of todas) await questao(chave);
-    await banco.pg.exec(sem_md5(arquivo));
-    await banco.pg.exec(sem_md5(arquivo));
+    await banco.pg.exec(sem_md5(commitar(arquivo)));
+    await banco.pg.exec(sem_md5(commitar(arquivo)));
     const r = await banco.pg.query<{ situacao: string; n: number }>(
       `SELECT situacao, count(*)::int AS n FROM questao_suspensa GROUP BY situacao ORDER BY situacao`,
     );
@@ -209,6 +212,15 @@ describe('supabase/correcoes/01 — marcar suspensas e idioma', () => {
     for (const s of suspensas.rows) expect(ids).not.toContain(s.questao_id);
     const comIdioma = await banco.pg.query<{ id: string }>('SELECT id FROM questoes_enem WHERE idioma IS NOT NULL');
     for (const s of comIdioma.rows) expect(ids).not.toContain(s.id);
+  });
+
+  it('como entregue (rollback), não grava nada mesmo com as questões presentes', async () => {
+    for (const chave of [...new Set(chaves(arquivo))]) await questao(chave);
+    await banco.pg.exec(sem_md5(arquivo));
+    const n = await banco.pg.query('SELECT count(*)::int AS n FROM questao_suspensa');
+    const idi = await banco.pg.query('SELECT count(*)::int AS n FROM questoes_enem WHERE idioma IS NOT NULL');
+    expect((n.rows[0] as { n: number }).n).toBe(0);
+    expect((idi.rows[0] as { n: number }).n).toBe(0);
   });
 
   it('sem a migração 0019, avisa o que falta', async () => {
@@ -246,7 +258,7 @@ describe('supabase/correcoes/02 — corrigir gabarito do espanhol', () => {
       [ids[copiada.h8], String.fromCharCode(65 + copiada.atual)],
     );
 
-    await banco.pg.exec(sem_md5(arquivo));
+    await banco.pg.exec(sem_md5(commitar(arquivo)));
 
     for (const t of trios) {
       const r = await banco.pg.query<{ correta: number }>('SELECT correta FROM questoes_enem WHERE id = $1', [ids[t.h8]]);
@@ -255,7 +267,17 @@ describe('supabase/correcoes/02 — corrigir gabarito do espanhol', () => {
     const copia = await banco.pg.query<{ gabarito: string }>('SELECT gabarito FROM banco_de_itens WHERE id = $1', [ids[copiada.h8]]);
     expect(copia.rows[0]?.gabarito).toBe(String.fromCharCode(65 + copiada.nova));
 
-    await expect(banco.pg.exec(sem_md5(arquivo))).rejects.toThrow(/afetou 0 linhas/);
+    await expect(banco.pg.exec(sem_md5(commitar(arquivo)))).rejects.toThrow(/afetou 0 linhas/);
     await banco.pg.exec('ROLLBACK');
+  });
+
+  it('como entregue (rollback), não altera letra nem cópia', async () => {
+    const ids: Record<string, string> = {};
+    for (const t of trios) ids[t.h8] = await questao(t.h8, { correta: t.atual, idioma: 'espanhol' });
+    await banco.pg.exec(sem_md5(arquivo));
+    for (const t of trios) {
+      const r = await banco.pg.query<{ correta: number }>('SELECT correta FROM questoes_enem WHERE id = $1', [ids[t.h8]]);
+      expect(r.rows[0]?.correta).toBe(t.atual);
+    }
   });
 });

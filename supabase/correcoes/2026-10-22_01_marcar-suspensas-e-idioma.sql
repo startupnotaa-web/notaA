@@ -153,4 +153,5 @@ begin
   end if;
 end $$;
 
-commit;
+rollback;  -- trocar pelo COMMIT abaixo só depois de conferir os números acima
+-- commit;  -- descomentar e remover o rollback somente depois de conferir os números
