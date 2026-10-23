@@ -1,3 +1,4 @@
+'use client';
 import * as React from 'react';
 import { cn } from '../lib/cn';
 
@@ -20,6 +21,23 @@ export interface AppFrameProps {
  * ficam por conta de quem o compõe (ver `Pagina` no app e `max-w-pagina`).
  */
 export function AppFrame({ nav, topbar, bottomNav, pularPara = 'Pular para o conteúdo', className, children }: AppFrameProps) {
+  // Uma região que rola precisa poder ser alcançada pelo teclado (axe: scrollable-region-focusable);
+  // se nada dentro dela é focável, o próprio `main` entra na ordem do Tab. Só quando de fato rola, para não
+  // criar uma parada de Tab à toa.
+  const principal = React.useRef<HTMLElement>(null);
+  const [rola, setRola] = React.useState(false);
+  React.useEffect(() => {
+    const el = principal.current;
+    if (!el) return;
+    const medir = () => setRola(el.scrollHeight > el.clientHeight);
+    medir();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observador = new ResizeObserver(medir);
+    observador.observe(el);
+    for (const filho of Array.from(el.children)) observador.observe(filho);
+    return () => observador.disconnect();
+  }, [children]);
+
   return (
     <div className={cn('flex h-dvh overflow-hidden bg-paper text-ink', className)}>
       <a
@@ -31,8 +49,9 @@ export function AppFrame({ nav, topbar, bottomNav, pularPara = 'Pular para o con
       {nav ? <div className="hidden h-full shrink-0 md:block">{nav}</div> : null}
       <div className="flex min-w-0 flex-1 flex-col">
         {topbar}
-        <main id="conteudo" tabIndex={-1} className={cn(
+        <main ref={principal} id="conteudo" tabIndex={rola ? 0 : -1} className={cn(
             'min-h-0 flex-1 overflow-y-auto overscroll-contain focus:outline-none',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus',
             // A navegação inferior é fixa e cobriria o fim da página.
             bottomNav ? 'pb-[72px] md:pb-0' : null,
           )}>

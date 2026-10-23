@@ -30,7 +30,8 @@ export function TopBar({ esquerda, aoBuscar, placeholderBusca = 'Buscar telas e 
         <button
           type="button"
           onClick={aoBuscar}
-          aria-label={`${placeholderBusca} (${tecla} K)`}
+          // O nome acessível repete o texto visível, na mesma ordem (WCAG 2.5.3): "Buscar telas e ações Ctrl K".
+          aria-label={`${placeholderBusca} ${tecla} K`}
           aria-keyshortcuts="Control+K Meta+K"
           className={cn(
             'mx-auto flex min-h-[44px] w-full max-w-xl items-center gap-space-3 rounded-md border border-line-strong bg-paper px-space-3 text-left font-text text-body-sm text-ink-muted',
