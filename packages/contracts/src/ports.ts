@@ -137,6 +137,17 @@ export interface QuizRepositoryPort {
   ): Promise<void>;
   getItemPool(area: AreaConhecimento): Promise<BancoDeItemRegistro[]>;
   getItem(itemId: string): Promise<BancoDeItemRegistro | null>;
+  /**
+   * Registra que `itemId` foi servido nesta sessão, na posição `ordem`. Só o que
+   * foi servido aqui pode receber resposta: é o que impede a sessão de consultar
+   * o gabarito de item de outra sessão, de simulado ou de outro aluno.
+   */
+  registrarItemServido(sessaoId: string, itemId: string, ordem: number): Promise<void>;
+  /**
+   * `null` se o item NÃO foi servido nesta sessão. Senão, a chave de idempotência
+   * da resposta já dada (`null` = servido e ainda não respondido).
+   */
+  getItemServido(sessaoId: string, itemId: string): Promise<{ idempotencyKey: string | null } | null>;
   addItem(item: BancoDeItemRegistro): Promise<void>;
   getExpostos(sessaoId: string): Promise<string[]>;
   /**
