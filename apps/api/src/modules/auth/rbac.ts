@@ -165,6 +165,8 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly Papel[]>> = {
   // autoriza é o token do convite, não o papel de quem chama.
   'GET /convite-professor/:token': PUBLICO,
   'POST /convite-professor/registrar': PUBLICO,
+  // Landing pública: contato, demonstração e lista de espera (sem conta, sem token).
+  'POST /leads': PUBLICO,
 
   // Turma, lado do aluno. Entrar em turma é opcional.
   'GET /me/turmas': ['estudante'],

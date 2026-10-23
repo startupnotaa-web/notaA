@@ -3,7 +3,7 @@
 //
 // Texto:    text-display, text-heading-1…3, text-figure, text-lead, text-body, text-body-sm, text-label, text-caption
 // Espaço:   p-space-5, gap-space-6, mt-space-7… (a escala de 4px do design system; p-5 continua sendo o do Tailwind)
-// Layout:   max-w-pagina (1760px), w-sidenav, h-topbar; Movimento: duration-fast|base|slow e ease-out|ease-in-out (as curvas dos tokens, não as do Tailwind)
+// Layout:   max-w-pagina (1760px), max-w-landing (1360px, páginas públicas), w-sidenav, h-topbar; Movimento: duration-fast|base|slow e ease-out|ease-in-out (as curvas dos tokens, não as do Tailwind)
 const estilo = (nome) => [
   `var(--text-${nome}-size)`,
   {
@@ -12,6 +12,15 @@ const estilo = (nome) => [
     fontWeight: `var(--text-${nome}-weight)`,
   },
 ];
+
+// Paletas dos ambientes da landing (tokens.json → ambientes): amb-bg, amb-ink, amb-accent… valem dentro de data-ambiente.
+// Opacidade vem dos tokens derivados (amb-line) ou de color-mix, porque var() não aceita o modificador /N do Tailwind.
+// O preset é CommonJS (o Tailwind o carrega com require), então não há import estático possível.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const tokensAmbientes = require('./tokens/tokens.json').ambientes?.groups ?? [];
+const ambientes = Object.fromEntries(
+  [...new Set(tokensAmbientes.flatMap((g) => g.tokens.map((t) => t.name.replace(/^amb-/, ''))))].map((n) => [n, `var(--amb-${n})`])
+);
 
 const espaco = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`space-${n}`, `var(--space-${n})`]));
 const vaos = { ...espaco, gutter: 'var(--gutter)' };
@@ -32,7 +41,8 @@ module.exports = {
         // Cores exatas do símbolo: só em formas (gradiente da marca, aurora, losango), nunca em texto.
         'brand-cyan': 'var(--brand-cyan)', 'brand-violet': 'var(--brand-violet)',
         'brand-magenta': 'var(--brand-magenta)', 'brand-blue': 'var(--brand-blue)',
-        scrim: 'var(--scrim)'
+        scrim: 'var(--scrim)',
+        amb: ambientes
       },
       fontFamily: { display: ['var(--font-display)'], text: ['var(--font-text)'] },
       fontSize: {
@@ -48,7 +58,7 @@ module.exports = {
         caption: estilo('caption')
       },
       spacing: vaos,
-      maxWidth: { pagina: 'var(--page-max)', texto: '72ch' },
+      maxWidth: { pagina: 'var(--page-max)', landing: 'var(--landing-max)', texto: '72ch' },
       width: { sidenav: 'var(--sidenav-w)', 'sidenav-recolhida': 'var(--sidenav-w-collapsed)' },
       height: { topbar: 'var(--topbar-h)' },
       minHeight: { topbar: 'var(--topbar-h)' },

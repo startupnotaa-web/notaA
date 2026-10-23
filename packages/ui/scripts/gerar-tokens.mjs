@@ -70,6 +70,12 @@ function gerar(comNextFont) {
   for (const t of tokens.duration.tokens) claro.push(`--${t.name}: ${t.value};`);
   for (const t of tokens.easing.tokens) claro.push(`--${t.name}: ${t.value};`);
 
+  // Paletas dos ambientes da landing (aluno, professor, escola, faculdade). Valor único, sem tema escuro:
+  // cada ambiente tem identidade própria e só vale dentro de data-ambiente="<id>".
+  const ambientes = (tokens.ambientes?.groups ?? [])
+    .map((g) => `\n/* ${g.description} */\n[data-ambiente='${g.id}'] {\n${linhas(g.tokens.map((t) => `--${t.name}: ${t.value};`))}\n}\n`)
+    .join('');
+
   return `/* Nota A tokens. Gerado por scripts/gerar-tokens.mjs a partir de tokens/tokens.json. Não edite à mão. */
 /* Tema escolhido por data-theme em <html> ou em qualquer contêiner; light é o padrão. */
 :root,
@@ -80,7 +86,7 @@ ${linhas(claro)}
 [data-theme='dark'] {
 ${linhas(escuro)}
 }
-`;
+${ambientes}`;
 }
 
 const css = gerar(true);

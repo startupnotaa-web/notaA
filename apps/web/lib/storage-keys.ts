@@ -2,8 +2,8 @@
 // dependências de propósito — user-context e auth-context importam daqui sem
 // criar ciclo entre si.
 export const USER_STATE_STORAGE_KEY = 'notaa:user-state:v1';
-// Tema escolhido pela pessoa ('light' | 'dark' | 'system'). Lido antes da pintura por um
-// script inline em app/layout.tsx; sem valor, vale o claro.
+// Tema escolhido pela pessoa ('light' | 'dark' | 'system'). Lido antes da pintura por
+// public/theme-init.js (a chave está repetida lá, porque é um arquivo estático); sem valor, vale o claro.
 export const THEME_STORAGE_KEY = 'notaa:tema';
 // Barra lateral recolhida ('1') ou expandida (ausente). Só vale a partir de 1.024px.
 export const NAV_RECOLHIDA_STORAGE_KEY = 'notaa:nav-recolhida';

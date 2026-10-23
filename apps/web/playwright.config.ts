@@ -9,7 +9,11 @@ export default defineConfig({
   timeout: 60_000,
   fullyParallel: false,
   reporter: [['list']],
-  use: { baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${PORTA}` },
+  use: {
+    baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${PORTA}`,
+    // Sem GPU, o WebGL das cenas 3D da landing roda por software (SwiftShader).
+    launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] },
+  },
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
