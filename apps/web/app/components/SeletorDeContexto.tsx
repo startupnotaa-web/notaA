@@ -16,7 +16,8 @@ export function SeletorDeContexto() {
       {anos.length > 0 ? (
         <Menu
           label={`Ano ${ano?.rotulo ?? '—'}`}
-          ariaLabel={`Ano letivo: ${ano?.rotulo ?? 'nenhum'}. Trocar`}
+          // Começa pelo texto visível (WCAG 2.5.3).
+          ariaLabel={`Ano ${ano?.rotulo ?? '—'}. Trocar o ano letivo`}
           variant="quiet"
           items={anos.map((a) => ({
             id: a.id,
@@ -29,7 +30,7 @@ export function SeletorDeContexto() {
       {turmasDoAno.length > 0 ? (
         <Menu
           label={turma?.nome ?? 'Todas as turmas'}
-          ariaLabel={`Turma: ${turma?.nome ?? 'todas'}. Trocar`}
+          ariaLabel={`${turma?.nome ?? 'Todas as turmas'}. Trocar a turma`}
           variant="quiet"
           items={[
             { id: 'todas', label: 'Todas as turmas', checked: !turmaId, onSelect: () => escolherTurma('') },
