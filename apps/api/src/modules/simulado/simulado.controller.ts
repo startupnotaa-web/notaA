@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import {
+  IdiomaEstrangeiroSchema,
   ImportQuestoesEnemRequestSchema,
   SaveSimuladoAnswerRequestSchema,
   StartSimuladoRequestSchema,
@@ -29,7 +30,7 @@ export class SimuladoController {
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(StartSimuladoRequestSchema)) body: StartSimuladoRequest,
   ) {
-    return this.sessao.start(req.user.sub, body.modo, body.limiteMinutos);
+    return this.sessao.start(req.user.sub, body.modo, body.limiteMinutos, body.idiomaEstrangeiro);
   }
 
   /**
@@ -67,6 +68,7 @@ export class SimuladoController {
     @Query('nivel') nivelStr?: string,
     @Query('excluir') excluirStr?: string,
     @Query('area') area?: string,
+    @Query('idioma') idiomaStr?: string,
   ) {
     let nivel: number | undefined;
     if (nivelStr !== undefined) {
@@ -78,8 +80,20 @@ export class SimuladoController {
       }
     }
     const excluirIds = excluirStr ? excluirStr.split(',').filter(Boolean) : [];
+    const idioma = idiomaStr === undefined ? undefined : IdiomaEstrangeiroSchema.safeParse(idiomaStr);
+    if (idioma && !idioma.success) {
+      throw new BadRequestException({
+        error: { code: 'VALIDATION_ERROR', message: '"idioma" deve ser "ingles" ou "espanhol".' },
+      });
+    }
 
-    return this.simulado.getNextItem(req.user.sub, nivel, excluirIds, area as AreaConhecimento);
+    return this.simulado.getNextItem(
+      req.user.sub,
+      nivel,
+      excluirIds,
+      area as AreaConhecimento,
+      idioma?.data,
+    );
   }
 
   @Roles('admin')
