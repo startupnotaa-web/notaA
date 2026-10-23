@@ -1,6 +1,5 @@
 import { Cabecalho } from '../../_landing/componentes/Cabecalho';
 import { FormularioLead } from '../../_landing/componentes/FormularioLead';
-import { Confirmar } from '../../_landing/componentes/Marcador';
 import { PalcoEscola } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_ESCOLA, FORM_ESCOLA } from '../../_landing/componentes/estilos';
@@ -55,17 +54,7 @@ const RECURSOS: RecursoDaEscola[] = [
     itens: [
       { texto: 'Percentual por aluno e disciplina' },
       { texto: 'Falta justificada com referência do documento' },
-      { texto: 'Alerta de risco de reprovação', aviso: <Confirmar nota="o alerta de risco de reprovação não foi encontrado no produto" /> },
     ],
-  },
-  {
-    id: 'com',
-    rotulo: 'Agenda e comunicados',
-    titulo: 'Um aviso, e você sabe quem leu.',
-    avisoDoTitulo: <Confirmar nota="agenda, comunicados e confirmação de leitura não existem no produto hoje" />,
-    texto:
-      'Publique eventos na agenda e envie comunicados por turma. Cada pessoa tem a própria confirmação de leitura.',
-    itens: [{ texto: 'Agenda por turma' }, { texto: 'Comunicados só em texto' }, { texto: 'Confirmação de leitura por pessoa' }],
   },
 ];
 
@@ -149,7 +138,6 @@ export default function Escola() {
       <section id="etapas" aria-labelledby="eta" className="mx-auto w-full max-w-landing px-5 pb-6 pt-20 md:px-10">
         <h2 id="eta" className={`${H2} mb-8 max-w-[700px]`}>
           Implantação em quatro etapas.
-          <Confirmar nota="é o processo comercial de implantação, não uma função do produto" />
         </h2>
         <ol className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(250px,1fr))] border-t-[3px] border-amb-navy p-0">
           {ETAPAS.map((e, i) => (
@@ -182,10 +170,6 @@ export default function Escola() {
             <h2 id="dem" className="m-0 font-display text-[clamp(1.75rem,3.2vw,2.5rem)] font-semibold leading-[1.15] tracking-[-0.02em]">
               Veja o Nota A com a sua regra de média.
             </h2>
-            <p className="m-0 max-w-[440px] text-[18px] leading-[29px] text-amb-on-navy-muted">
-              Na demonstração, usamos um exemplo da sua instituição para mostrar boletim e frequência funcionando.
-              <Confirmar nota="é uma promessa comercial sobre o formato da demonstração" className="!bg-warning-tint" />
-            </p>
           </div>
           <FormularioLead
             origem="demo"

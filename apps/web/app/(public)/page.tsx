@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Aurora } from '@notaa/ui';
 import { Cabecalho } from '../_landing/componentes/Cabecalho';
 import { FormularioLead } from '../_landing/componentes/FormularioLead';
-import { Placeholder } from '../_landing/componentes/Marcador';
 import { PalcoHome } from '../_landing/componentes/Palcos';
 import { Rodape } from '../_landing/componentes/Rodape';
 import { BOTAO_HOME, FOCO, FORM_HOME } from '../_landing/componentes/estilos';
@@ -253,10 +252,6 @@ export default function Home() {
             >
               Conte quem você é e indicamos o caminho.
             </h2>
-            <p className="m-0 max-w-[440px] text-[18px] leading-[29px]">
-              Respondemos por e-mail com o ambiente certo para você e os próximos passos.{' '}
-              <Placeholder nota="canal e prazo de resposta" />
-            </p>
           </div>
           <FormularioLead
             origem="contato"

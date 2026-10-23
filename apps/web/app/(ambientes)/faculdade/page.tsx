@@ -1,6 +1,5 @@
 import { Cabecalho } from '../../_landing/componentes/Cabecalho';
 import { FormularioLead } from '../../_landing/componentes/FormularioLead';
-import { Confirmar, Placeholder } from '../../_landing/componentes/Marcador';
 import { PalcoFaculdade } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_FACULDADE, FOCO, FORM_FACULDADE } from '../../_landing/componentes/estilos';
@@ -64,11 +63,6 @@ export default function Faculdade() {
               <h1 className="max-w-[700px] animate-landing-fade font-serifa text-[clamp(2.75rem,5.6vw,5rem)] font-medium leading-[1.04] tracking-[-0.02em] [animation-delay:120ms]">
                 ENADE com método e evidência.
               </h1>
-              <p className="max-w-[540px] animate-landing-fade text-[20px] leading-8 text-amb-ink-muted [animation-delay:260ms]">
-                O módulo Faculdade do Nota A está em desenvolvimento.
-                <Confirmar nota="status do projeto: confirmar que o módulo está mesmo em desenvolvimento" /> Ele vai reunir simulados
-                no formato do exame, diagnóstico por curso e relatórios para a coordenação.
-              </p>
               <div className="flex animate-landing-fade flex-wrap gap-3.5 [animation-delay:400ms]">
                 <a href="#espera" className={BOTAO_FACULDADE.primario}>
                   Entrar na lista de espera
@@ -110,7 +104,7 @@ export default function Faculdade() {
               <div className="font-serifa text-[40px] font-medium leading-[44px] text-amb-accent">{i + 1}</div>
               <h3 className="mb-2 mt-1.5 font-serifa text-[24px] font-medium leading-[30px]">{e.titulo}</h3>
               <p className="m-0 text-[17px] leading-[27px] text-amb-ink-muted">
-                {e.texto} Previsão: <Placeholder nota="período" />
+                {e.texto}
               </p>
             </li>
           ))}
@@ -133,8 +127,7 @@ export default function Faculdade() {
               p: 'Quando o módulo chega?',
               r: (
                 <>
-                  Ainda não temos data. Quem entrar na lista de espera recebe aviso antes de qualquer abertura.
-                  <Confirmar nota="promessa de aviso prévio: confirmar que será cumprida" />
+                  Ainda não temos data.
                 </>
               ),
             },
@@ -142,8 +135,7 @@ export default function Faculdade() {
               p: 'Minha faculdade pode participar do piloto?',
               r: (
                 <>
-                  Sim. Deixe seus dados na lista de espera e conte qual curso tem interesse. Entramos em contato com a coordenação.
-                  <Confirmar nota="promessa comercial sobre o piloto" />
+                  Deixe seus dados na lista de espera e conte qual curso tem interesse.
                 </>
               ),
             },

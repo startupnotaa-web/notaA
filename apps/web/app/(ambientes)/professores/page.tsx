@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Cabecalho } from '../../_landing/componentes/Cabecalho';
-import { Confirmar, Placeholder } from '../../_landing/componentes/Marcador';
 import { PalcoProfessores } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_PROFESSOR } from '../../_landing/componentes/estilos';
@@ -17,43 +16,19 @@ export const metadata = metadadosDaPagina({
 
 const H2 = 'font-display text-[clamp(1.875rem,3.4vw,2.75rem)] font-semibold leading-[1.14] tracking-[-0.02em] text-amb-accent-hover';
 
-const RECURSOS: { titulo: string; texto: string; confirmar?: string }[] = [
-  {
-    titulo: 'Agenda de aulas',
-    texto: 'Veja a semana inteira, com horário, turma e assunto de cada aula.',
-    confirmar: 'o produto ainda não tem agenda de aulas no schema',
-  },
+const RECURSOS: { titulo: string; texto: string }[] = [
   {
     titulo: 'Turmas e alunos',
     texto: 'Cadastre turmas e importe a lista de alunos da planilha que você já tem.',
-    confirmar: 'a importação de planilha existe para a instituição; confirmar para o professor independente',
   },
   {
     titulo: 'Presença em poucos toques',
     texto: 'Marque quem veio e quem faltou. O percentual de frequência se atualiza sozinho.',
-    confirmar: 'confirmar o registro de presença pelo professor',
   },
   {
     titulo: 'Notas com a sua regra',
     texto: 'Você define pesos e média de aprovação. O cálculo segue a regra, sempre igual.',
-    confirmar: 'a regra de média existe para a instituição; confirmar para o professor independente',
   },
-  {
-    titulo: 'Recados com confirmação',
-    texto: 'Envie um aviso e veja quem já leu. Só texto, direto no Nota A.',
-    confirmar: 'o produto ainda não tem recados nem confirmação de leitura',
-  },
-  {
-    titulo: 'Responsáveis no circuito',
-    texto: 'Para alunos menores, o responsável acompanha notas e agenda depois de autorizar.',
-    confirmar: 'o vínculo do responsável existe; confirmar o que ele vê (notas, agenda)',
-  },
-];
-
-const DIA = [
-  { n: 1, titulo: 'Antes da aula', texto: 'Abra a agenda e veja quais recados ainda não foram lidos.' },
-  { n: 2, titulo: 'Na aula', texto: 'Marque a presença da turma pelo celular ou pelo computador.' },
-  { n: 3, titulo: 'Depois da aula', texto: 'Lance as notas e envie o recado da próxima atividade.' },
 ];
 
 export default function Professores() {
@@ -68,7 +43,6 @@ export default function Professores() {
           }
           links={[
             { href: '#recursos', rotulo: 'Recursos' },
-            { href: '#dia', rotulo: 'Um dia de aula' },
             { href: '#antes', rotulo: 'Antes e depois' },
           ]}
           secundario={{ href: '/', rotulo: 'Voltar ao Nota A' }}
@@ -118,30 +92,11 @@ export default function Professores() {
               </span>
               <h3 className="m-0 font-display text-[21px] font-semibold leading-7">
                 {r.titulo}
-                {r.confirmar ? <Confirmar nota={r.confirmar} /> : null}
               </h3>
               <p className="m-0 text-[16.5px] leading-[26px] text-amb-ink-muted">{r.texto}</p>
             </li>
           ))}
         </ul>
-      </section>
-
-      <section id="dia" aria-labelledby="dia-t" className="mx-auto w-full max-w-landing px-5 pb-6 pt-[72px] md:px-10">
-        <h2 id="dia-t" className={`${H2} mb-8 max-w-[680px]`}>
-          Um dia de aula, em três momentos.
-          <Confirmar nota="os três momentos dependem de agenda, presença e recados" />
-        </h2>
-        <ol className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(290px,1fr))] border-t-2 border-amb-accent p-0">
-          {DIA.map((d, i) => (
-            <li key={d.n} className={`pb-2 pt-7 ${i === 0 ? 'pr-7' : i === 2 ? 'md:pl-7' : 'md:px-7'}`}>
-              {/* O âmbar não passa 3:1 sobre fundo claro: o numeral é do tom do painel, e o âmbar fica na forma. */}
-              <div className="font-display text-[40px] font-semibold leading-[44px] tabular-nums text-amb-accent">{d.n}</div>
-              <span aria-hidden="true" className="mt-1 block h-1 w-10 rounded-pill bg-amb-amber" />
-              <h3 className="mb-2 mt-3 font-display text-[22px] font-semibold leading-7">{d.titulo}</h3>
-              <p className="m-0 max-w-[340px] text-[17px] leading-[27px] text-amb-ink-muted">{d.texto}</p>
-            </li>
-          ))}
-        </ol>
       </section>
 
       <section id="antes" aria-labelledby="ant" className="mx-auto w-full max-w-landing px-5 pb-6 pt-[72px] md:px-10">
@@ -158,10 +113,9 @@ export default function Professores() {
           <div className="flex flex-[1_1_380px] flex-col gap-3 bg-amb-accent p-8 text-amb-on-accent">
             <h3 className="m-0 font-display text-[20px] font-semibold leading-[26px]">
               Com o Nota A
-              <Confirmar nota="depende de presença e recados" />
             </h3>
             <p className="m-0 text-[17px] leading-[27px]">
-              Um cadastro por turma, presença e notas no mesmo lugar, e cada recado com a lista de quem leu.
+              Um cadastro por turma, presença e notas no mesmo lugar.
             </p>
           </div>
         </div>
@@ -174,9 +128,6 @@ export default function Professores() {
             <h2 id="cri" className="m-0 font-display text-[clamp(1.75rem,3.2vw,2.5rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-amb-accent-hover">
               Crie o seu painel de professor.
             </h2>
-            <p className="m-0 max-w-[440px] text-[18px] leading-[29px] text-amb-ink-muted">
-              Os valores do plano entram aqui assim que definidos: <Placeholder nota="valores do plano" />.
-            </p>
           </div>
           <Link href="/cadastro" className={BOTAO_PROFESSOR.primario}>
             Criar meu painel
