@@ -7,9 +7,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
+  IDIOMAS_ESTRANGEIROS,
   SIMULADO_LIMITES_MINUTOS,
   SIMULADO_QUESTOES_POR_AREA,
   SIMULADO_TOTAL_QUESTOES,
+  type IdiomaEstrangeiro,
   type ResumeSimuladoResponse,
   type SaveSimuladoAnswerResponse,
   type SimuladoRelatorio,
@@ -28,6 +30,7 @@ import {
   PageHeader,
   Progress,
   Section,
+  Select,
   Skeleton,
   cn,
 } from '@notaa/ui';
@@ -51,6 +54,22 @@ const ALERTA_TEMPO_SEGUNDOS = 5 * 60;
  * (inclusive quais alternativas existem) vem do servidor, nunca do navegador.
  */
 const CHAVE_SESSAO_ABERTA = 'notaa:simulado:sessao-aberta';
+
+/**
+ * Língua estrangeira escolhida (itens 1–5 de Linguagens). Lembrada só para o
+ * aluno não escolher toda vez; quem decide o que é servido é o servidor.
+ */
+const CHAVE_IDIOMA = 'notaa:simulado:idioma';
+const ROTULO_IDIOMA: Record<IdiomaEstrangeiro, string> = { ingles: 'Inglês', espanhol: 'Espanhol' };
+
+function lerIdiomaSalvo(): IdiomaEstrangeiro | '' {
+  try {
+    const salvo = localStorage.getItem(CHAVE_IDIOMA);
+    return IDIOMAS_ESTRANGEIROS.find((i) => i === salvo) ?? '';
+  } catch {
+    return '';
+  }
+}
 
 export default function SimuladoPage() {
   const { addXP, refreshPerfil } = useUser();
@@ -128,13 +147,18 @@ export default function SimuladoPage() {
 
   // ── início ───────────────────────────────────────────────────────────────
 
-  async function iniciar(escolha: Escolha) {
+  async function iniciar(escolha: Escolha, idiomaEstrangeiro: IdiomaEstrangeiro) {
     setErro(null);
     setCarregando(true);
     try {
+      try {
+        localStorage.setItem(CHAVE_IDIOMA, idiomaEstrangeiro);
+      } catch {
+        // sem armazenamento (navegação privada): só não lembra a escolha.
+      }
       const res = await apiFetch<StartSimuladoResponse>('/simulado/sessions', {
         method: 'POST',
-        body: JSON.stringify(escolha),
+        body: JSON.stringify({ ...escolha, idiomaEstrangeiro }),
       });
       pendentes.current.clear();
       finalizando.current = false;
@@ -489,10 +513,16 @@ function TelaConfig({
 }: {
   carregando: boolean;
   erro: string | null;
-  onIniciar: (escolha: Escolha) => void;
+  onIniciar: (escolha: Escolha, idioma: IdiomaEstrangeiro) => void;
 }) {
   const [selecionada, setSelecionada] = useState(0);
+  const [idioma, setIdioma] = useState<IdiomaEstrangeiro | ''>('');
   const opcao = OPCOES[selecionada]!;
+
+  // Lido depois da montagem: o servidor não tem localStorage.
+  useEffect(() => {
+    setIdioma(lerIdiomaSalvo());
+  }, []);
 
   return (
     <Pagina largura="estreita">
@@ -526,6 +556,18 @@ function TelaConfig({
         </div>
       </Section>
 
+      <Select
+        id="simulado-idioma"
+        label="Língua estrangeira da prova"
+        hint="As questões de língua estrangeira de Linguagens vêm só na língua que você escolher."
+        value={idioma}
+        onChange={(e) => setIdioma(e.target.value as IdiomaEstrangeiro | '')}
+        options={[
+          { value: '', label: 'Escolha uma língua' },
+          ...IDIOMAS_ESTRANGEIROS.map((i) => ({ value: i, label: ROTULO_IDIOMA[i] })),
+        ]}
+      />
+
       <Section title="Como funciona" as="h2" divided>
         <ul className="m-0 flex list-none flex-col gap-space-2 p-0 text-body text-ink-muted">
           <li>Você pode navegar entre as questões e trocar de resposta quando quiser.</li>
@@ -538,13 +580,21 @@ function TelaConfig({
       {erro && <Notice tone="danger">{erro}</Notice>}
 
       <div className="flex flex-wrap gap-space-3">
-        <Button variant="primary" onClick={() => onIniciar(opcao.escolha)} loading={carregando}>
+        <Button
+          variant="primary"
+          onClick={() => idioma && onIniciar(opcao.escolha, idioma)}
+          loading={carregando}
+          disabled={!idioma}
+        >
           {carregando ? 'Montando sua prova' : 'Começar simulado'}
         </Button>
         <ButtonLink as={Link} href="/dashboard" variant="secondary">
           Voltar
         </ButtonLink>
       </div>
+      {!idioma && !carregando && (
+        <p className="m-0 text-body-sm text-ink-muted">Escolha a língua estrangeira para começar.</p>
+      )}
       {carregando && (
         <p role="status" className="m-0 text-body-sm text-ink-muted">
           Montando {SIMULADO_TOTAL_QUESTOES} questões. Isso pode levar alguns segundos.

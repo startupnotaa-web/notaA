@@ -16,6 +16,14 @@ export function initSentry(): void {
     dsn,
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? 'development',
     tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0),
+    // O corpo de POST /leads é nome e e-mail de quem preencheu a landing: nunca sai da API.
+    beforeSend(evento) {
+      if (evento.request?.url?.includes('/leads')) {
+        delete evento.request.data;
+        delete evento.request.cookies;
+      }
+      return evento;
+    },
   });
   inicializado = true;
   logger.log('Sentry inicializado.');

@@ -1,7 +1,22 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DB_CLIENT } from '../../db/db.tokens';
-import { and, eq, habilidadeEstudante, notInArray, questoesEnem, sql, type Database } from '@notaa/db';
-import type { AreaConhecimento, DificuldadeTri, ImportQuestoesEnemRequest, QuestaoSimuladoResponse } from '@notaa/contracts';
+import {
+  and,
+  eq,
+  habilidadeEstudante,
+  notInArray,
+  questaoServivel,
+  questoesEnem,
+  sql,
+  type Database,
+} from '@notaa/db';
+import type {
+  AreaConhecimento,
+  DificuldadeTri,
+  IdiomaEstrangeiro,
+  ImportQuestoesEnemRequest,
+  QuestaoSimuladoResponse,
+} from '@notaa/contracts';
 
 function nivelParaDificuldade(nivel: number): DificuldadeTri {
   if (nivel <= 1) return 'facil';
@@ -36,11 +51,13 @@ export class SimuladoService {
     nivelSolicitado: number | undefined,
     excluirIds: string[],
     area?: AreaConhecimento,
+    idioma?: IdiomaEstrangeiro,
   ): Promise<QuestaoSimuladoResponse> {
     const nivel = nivelSolicitado ?? (await this.inferirNivelInicial(estudanteId));
     const dificuldadeTri = nivelParaDificuldade(nivel);
 
-    const condicoes = [eq(questoesEnem.dificuldadeTri, dificuldadeTri)];
+    // Mesma regra do simulado de sessão: sem suspensas/anuladas/arquivadas e com idioma.
+    const condicoes = [eq(questoesEnem.dificuldadeTri, dificuldadeTri), questaoServivel(idioma)];
     if (area) condicoes.push(eq(questoesEnem.area, area));
     if (excluirIds.length > 0) condicoes.push(notInArray(questoesEnem.id, excluirIds));
 

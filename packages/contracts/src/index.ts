@@ -26,3 +26,4 @@ export * from './frequencia';
 export * from './notas';
 export * from './boletim';
 export * from './contexto';
+export * from './lead';

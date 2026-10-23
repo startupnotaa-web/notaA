@@ -60,10 +60,19 @@ export const SIMULADO_LIMITES_MINUTOS = [60, 90] as const;
 export const SimuladoModoSchema = z.enum(['cronometrado', 'livre']);
 export type SimuladoModo = z.infer<typeof SimuladoModoSchema>;
 
+/**
+ * Língua estrangeira da prova do ENEM: o aluno faz UMA das duas versões dos
+ * itens 1–5 de Linguagens. Sem idioma informado, esses itens não são servidos.
+ */
+export const IDIOMAS_ESTRANGEIROS = ['ingles', 'espanhol'] as const;
+export const IdiomaEstrangeiroSchema = z.enum(IDIOMAS_ESTRANGEIROS);
+export type IdiomaEstrangeiro = z.infer<typeof IdiomaEstrangeiroSchema>;
+
 export const StartSimuladoRequestSchema = z
   .object({
     modo: SimuladoModoSchema,
     limiteMinutos: z.union([z.literal(60), z.literal(90)]).optional(),
+    idiomaEstrangeiro: IdiomaEstrangeiroSchema.optional(),
   })
   .refine((v) => (v.modo === 'cronometrado' ? v.limiteMinutos !== undefined : true), {
     message: 'modo "cronometrado" exige limiteMinutos (60 ou 90).',

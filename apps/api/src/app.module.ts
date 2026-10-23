@@ -30,6 +30,7 @@ import { TurmaModule } from './modules/turma/turma.module';
 import { AcademicoModule } from './modules/academico/academico.module';
 import { ImportacaoModule } from './modules/importacao/importacao.module';
 import { ResponsavelModule } from './modules/responsavel/responsavel.module';
+import { LeadModule } from './modules/lead/lead.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { ResponsavelModule } from './modules/responsavel/responsavel.module';
     AcademicoModule,
     ImportacaoModule,
     ResponsavelModule,
+    LeadModule,
   ],
   providers: [
     // Filtro global de exceções — loga erros com stack trace e padroniza a

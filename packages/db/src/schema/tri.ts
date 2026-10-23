@@ -136,6 +136,23 @@ export const quizIaGerado = pgTable(
   ],
 );
 
+// Itens que a sessão de quiz serviu ao aluno. Sem isto, o submit não tem como
+// saber se um `itemId` pertence à sessão — e o gabarito sairia para qualquer item.
+export const quizItemServido = pgTable(
+  'quiz_item_servido',
+  {
+    sessaoId: uuid('sessao_id')
+      .notNull()
+      .references(() => sessaoAvaliativa.id, { onDelete: 'restrict' }),
+    itemId: uuid('item_id')
+      .notNull()
+      .references(() => bancoDeItens.id, { onDelete: 'restrict' }),
+    ordem: integer('ordem').notNull(),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.sessaoId, t.itemId] })],
+);
+
 export const sessaoAvaliativa = pgTable(
   'sessao_avaliativa',
   {

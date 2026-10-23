@@ -7,7 +7,7 @@ Dois conjuntos, ambos em Chromium real:
   abas é auditada.
 - `lighthouse.spec.ts`: Lighthouse, categoria acessibilidade, meta ≥ 95, em desktop e celular, nos dois temas.
 
-Rotas cobertas: `/instituicao`, `/instituicao/academico`, `/instituicao/importacao`, `/professor` (institucional
+Rotas cobertas (as públicas incluem `/aluno`, `/professores`, `/escola`, `/faculdade`, `/privacidade` e `/termos`): `/instituicao`, `/instituicao/academico`, `/instituicao/importacao`, `/professor` (institucional
 e independente), `/dashboard` (home do aluno) e `/` (landing).
 
 ## Login por perfil
@@ -49,3 +49,24 @@ E2E_BASE_URL=https://seu-ambiente E2E_EMAIL=... E2E_SENHA=... E2E_PAPEL=admin_in
 Só rodam as rotas do papel da conta (`E2E_PAPEL`, padrão `admin_instituicao`) e as públicas. Os textos que o
 teste espera na tela (`espera`, em `a11y.spec.ts`) valem para dados normais; com a conta vazia, ajuste-os.
 Este modo não foi executado contra um ambiente real ao ser escrito.
+
+
+## Páginas públicas (landing)
+
+- `landing.spec.ts`: metadados (título, canonical, Open Graph), CSP com nonce sem nenhuma violação, o three fora do
+  JS que carrega antes do `load`, os fallbacks do 3D (movimento reduzido, sem WebGL, aparelho com 4 núcleos ou menos),
+  pausa da cena fora da viewport, os três formulários de lead (a API é simulada na rota) e o teclado. O WebGL roda por
+  software (SwiftShader), configurado em `playwright.config.ts`.
+- `capturas-landing.spec.ts`: grava as páginas em 390, 768, 1366 e 1920 px, com a cena 3D e com a arte estática:
+
+```bash
+E2E_SHOTS=../../design-handoff/landing-depois pnpm --filter @notaa/web exec playwright test e2e/capturas-landing.spec.ts
+```
+
+- `pnpm --filter @notaa/web verificar:bundle` (depois do build) falha se o `three` entrar no JS inicial de uma rota.
+- `pnpm --filter @notaa/web og` regenera as imagens de compartilhamento em `public/og/` a partir dos tokens.
+- O Lighthouse exige LCP de até 2,5 s nas páginas públicas.
+
+Variáveis da landing: `NEXT_PUBLIC_API_URL` (destino do formulário), `NEXT_PUBLIC_SITE_URL` (canonical; padrão
+`https://notaa.com.br`) e, na API, `LEAD_HASH_SALT` (segredo do limite de envios; sem ele o limite fica desligado) e
+`LEAD_LIMITE_POR_HORA` (padrão 5).
