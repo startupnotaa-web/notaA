@@ -369,6 +369,15 @@ export class QuizService {
         },
       };
     });
+    // Duplicata só vale para a MESMA resposta: a chave tem de ter sido gravada para
+    // este item. Chave de outro item faz o INSERT cair em 23505 (duplicate), e seguir
+    // por aqui devolveria o gabarito de um item que ainda não foi respondido.
+    if (nucleo.duplicate && servido.idempotencyKey !== idempotencyKey) {
+      throw new ConflictException({
+        error: { code: 'CHAVE_EM_USO', message: 'Esta chave já foi usada em outra resposta.' },
+      });
+    }
+
     const { theta, erroPadrao, xpGanho, gamificacao } = nucleo;
 
     let classificacaoErro: SubmitAnswerResponse['feedback']['classificacaoErro'] = null;

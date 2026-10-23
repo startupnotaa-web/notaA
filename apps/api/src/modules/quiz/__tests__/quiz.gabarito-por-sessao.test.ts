@@ -146,6 +146,34 @@ describe('quiz: gabarito só para item servido nesta sessão', () => {
     expect(await contaTentativas()).toBe(1);
   });
 
+  it('ataque: item servido e não respondido com chave já usada em OUTRO item não devolve gabarito', async () => {
+    // Y1 e Y2 são servidos na mesma sessão (startSession + nextItem, sem responder).
+    const s = servico();
+    const { sessaoId, primeiraQuestao: y1 } = await s.startSession(ALUNO, 'matematica');
+    const y2 = await s.nextItem(sessaoId, ALUNO);
+    const chave = randomUUID();
+    // Y1 respondido com K.
+    const respondida = await s.submitAnswer(
+      sessaoId,
+      ALUNO,
+      { itemId: y1.itemId, respostaId: 'B', tempoRespostaMs: 1000 },
+      chave,
+    );
+    expect(respondida.gabarito).toBe('A');
+    // Y2 (nunca respondido) enviado com a MESMA K: não pode revelar o gabarito dele.
+    let corpo: unknown;
+    let erro: string | undefined;
+    try {
+      corpo = await s.submitAnswer(sessaoId, ALUNO, { itemId: y2.itemId, respostaId: 'B', tempoRespostaMs: 1000 }, chave);
+    } catch (e) {
+      erro = (e as { getResponse?: () => { error?: { code?: string } } }).getResponse?.()?.error?.code;
+    }
+    expect(corpo).toBeUndefined();
+    expect(erro).toBe('CHAVE_EM_USO');
+    // e Y2 continua sem tentativa
+    expect(await contaTentativas()).toBe(1);
+  });
+
   it('reenvio com a MESMA chave segue idempotente (duplicate, sem tentativa nova)', async () => {
     const s = servico();
     const { sessaoId, primeiraQuestao } = await s.startSession(ALUNO, 'matematica');
