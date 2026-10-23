@@ -18,8 +18,8 @@ import { AuthPagina } from '../../../components/auth';
 import { supabaseBrowser } from '../../../../lib/supabase-browser';
 import { USER_STATE_STORAGE_KEY } from '../../../../lib/storage-keys';
 import { garantirRegistro } from '../../../../lib/post-auth';
+import { caminhoInternoSeguro } from '../../../../lib/destino';
 import { rotaPosRegistro } from '../../../../lib/rota-inicial';
-import { destinoSemPapelAposConfirmar } from '../../../../lib/confirmacao';
 
 const TIPOS_OTP: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 
@@ -39,7 +39,8 @@ function ConfirmarEmail() {
   // (dev), que consumiria "de novo" o token e mostraria erro após o sucesso.
   const jaProcessou = useRef(false);
 
-  const next = params.get('next') ?? '/onboarding';
+  // `next` vem da URL do e-mail e pode ser forjado: só passa caminho interno (sem open redirect).
+  const next = caminhoInternoSeguro(params.get('next')) ?? '/onboarding';
 
   useEffect(() => {
     if (jaProcessou.current) return;
@@ -53,7 +54,8 @@ function ConfirmarEmail() {
       await garantirRegistro();
       const { data } = await supabaseBrowser.auth.getSession();
       const papel = data.session?.user.app_metadata?.papel;
-      router.replace(papel ? rotaPosRegistro(papel) : destinoSemPapelAposConfirmar(next));
+      // Sem papel o registro não terminou: nunca seguir para `next` (que pode ser o painel do aluno).
+      router.replace(papel ? rotaPosRegistro(papel) : `/concluir-cadastro?next=${encodeURIComponent(next)}`);
     }
 
     async function confirmar() {

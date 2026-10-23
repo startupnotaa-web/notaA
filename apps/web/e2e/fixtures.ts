@@ -6,6 +6,7 @@
 import type { BrowserContext, Page } from '@playwright/test';
 import type {
   AlunoDaInstituicao,
+  ContextoListado,
   AnoLetivo,
   ConviteProfessor,
   DashboardResponse,
@@ -18,7 +19,13 @@ import type {
   Turma,
 } from '@notaa/contracts';
 
-export type Papel = 'admin_instituicao' | 'professor_institucional' | 'professor_independente' | 'estudante';
+export type Papel =
+  | 'admin_instituicao'
+  | 'professor_institucional'
+  | 'professor_independente'
+  | 'estudante'
+  | 'responsavel'
+  | 'admin';
 export type Tema = 'light' | 'dark';
 
 const UID = '11111111-1111-4111-8111-111111111111';
@@ -33,7 +40,7 @@ export const me = (papel: Papel): MeResponse => ({
   nome: 'Ana Ribeiro',
   email: 'ana@exemplo.org',
   tipoPerfil: papel,
-  instituicaoId: papel === 'estudante' ? null : INSTITUICAO,
+  instituicaoId: papel === 'estudante' || papel === 'responsavel' || papel === 'admin' ? null : INSTITUICAO,
   plano: { tipo: 'instituicao', status: 'ativa' },
   gamificacao: { nivel: { atual: 3, progresso: 0.6, xpNoNivel: 60, xpParaProximoNivel: 100, naoCalibrado: false }, xpTotal: 340, ofensivaDias: 5 },
   perfilCognitivo: null,
@@ -188,26 +195,132 @@ function resposta(pathname: string, metodo = 'GET'): unknown {
 
 const ehApi = (tipo: string) => tipo === 'fetch' || tipo === 'xhr';
 
+/** O roteador do Next busca a próxima tela por fetch com `RSC: 1`; isso é do servidor do app, não da API simulada. */
+const ehNavegacaoRsc = (req: { headers(): Record<string, string> }) => req.headers()['rsc'] === '1';
+
+export const IDS = { instituicao: INSTITUICAO, outraInstituicao: '22222222-2222-4222-8222-222222222299', uid: UID };
+
+/** Um só acesso: o seletor "Entrar como…" fica desligado. */
+export const contextoUnico = (papel: Papel): ContextoListado[] => [
+  { papel, instituicaoId: papel === 'professor_institucional' || papel === 'admin_instituicao' ? INSTITUICAO : null, estudanteId: null, rotulo: 'Minha conta' },
+];
+
+/**
+ * Resposta própria para um caminho da API, antes das respostas padrão. Devolver `undefined` deixa o
+ * padrão valer. O terceiro argumento traz os cabeçalhos da requisição (para provar o `x-contexto`).
+ */
+export type Substituicao = (
+  pathname: string,
+  metodo: string,
+  cabecalhos: Record<string, string>,
+  corpo: unknown,
+) => { status?: number; json?: unknown } | undefined;
+
+function sessaoDe(papel: Papel | null, metadados: Record<string, unknown> = {}) {
+  return {
+    access_token: 'cabecalho.corpo.assinatura', refresh_token: 'r', token_type: 'bearer', expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    user: {
+      id: UID, aud: 'authenticated', role: 'authenticated', email: 'ana@exemplo.org',
+      app_metadata: papel ? { papel } : {},
+      user_metadata: metadados, created_at: '2026-01-01T00:00:00Z',
+    },
+  };
+}
+
+function responder(
+  rota: import('@playwright/test').Route,
+  papel: () => Papel | null,
+  substituir?: Substituicao,
+  aoRegistrar?: () => void,
+) {
+  const req = rota.request();
+  const { pathname } = new URL(req.url());
+  let corpo: unknown = null;
+  try {
+    corpo = req.postDataJSON();
+  } catch {
+    corpo = null;
+  }
+  const s = substituir?.(pathname, req.method(), req.headers(), corpo);
+  if (s) {
+    if (s.status === 204) return rota.fulfill({ status: 204 });
+    return rota.fulfill({ status: s.status ?? 200, json: s.json ?? {} });
+  }
+  const atual = papel();
+  if (req.method() === 'POST' && (pathname === '/auth/register' || pathname === '/convite-professor/registrar')) {
+    aoRegistrar?.();
+    return rota.fulfill({ status: 201, json: { id: IDS.uid, tipoPerfil: 'estudante' } });
+  }
+  if (pathname === '/me/contextos') return rota.fulfill({ json: { contextos: atual ? contextoUnico(atual) : [] } });
+  if (pathname === '/me/contexto' && req.method() === 'POST') return rota.fulfill({ status: 204 });
+  if (pathname === '/me' && atual) return rota.fulfill({ json: me(atual) });
+  return rota.fulfill({ json: resposta(pathname, req.method()) });
+}
+
+/**
+ * Registro da conta simulado: depois de um POST /auth/register (ou /convite-professor/registrar) que a
+ * `substituir` não tenha recusado, as respostas de /auth/v1/ passam a trazer `papelApos` no token, como
+ * acontece de verdade depois de `refreshSession`. `metadados` é o `user_metadata` da conta.
+ */
+export interface OpcoesDeRegistro {
+  papelApos?: Papel;
+  metadados?: Record<string, unknown>;
+}
+
+/**
+ * Página SEM sessão para testar o formulário de login: o endpoint de senha do Supabase devolve a
+ * sessão de `papel` (a API continua simulada). `papelNoToken: null` simula um token sem papel.
+ */
+export async function simularLogin(
+  pagina: Page,
+  papel: Papel | null,
+  opcoes: { substituir?: Substituicao; tema?: Tema; senhaErrada?: boolean } & OpcoesDeRegistro = {},
+) {
+  let papelDaConta = papel;
+  await pagina.addInitScript((t) => localStorage.setItem('notaa:tema', t), opcoes.tema ?? 'light');
+  await pagina.route('**/*', (rota) => {
+    const req = rota.request();
+    if (!ehApi(req.resourceType()) || ehNavegacaoRsc(req)) return rota.continue();
+    const { pathname } = new URL(req.url());
+    if (pathname.startsWith('/auth/v1/token')) {
+      if (opcoes.senhaErrada) {
+        return rota.fulfill({ status: 400, json: { code: 'invalid_credentials', error_code: 'invalid_credentials', msg: 'Invalid login credentials' } });
+      }
+      return rota.fulfill({ json: sessaoDe(papelDaConta, opcoes.metadados) });
+    }
+    if (pathname.startsWith('/auth/v1/')) return rota.fulfill({ json: sessaoDe(papelDaConta, opcoes.metadados) });
+    return responder(rota, () => papelDaConta, opcoes.substituir, () => {
+      if (opcoes.papelApos) papelDaConta = opcoes.papelApos;
+    });
+  });
+}
+
 /**
  * Grava a sessão e o tema antes de qualquer script da página e responde a API com os dados acima.
  * Aceita o contexto inteiro (vale também para abas abertas por fora, como a do Lighthouse).
  */
-export async function simular(alvo: Page | BrowserContext, papel: Papel, tema: Tema = 'light') {
-  const sessao = {
-    access_token: 'cabecalho.corpo.assinatura', refresh_token: 'r', token_type: 'bearer', expires_in: 3600,
-    expires_at: Math.floor(Date.now() / 1000) + 3600,
-    user: { id: UID, aud: 'authenticated', role: 'authenticated', email: 'ana@exemplo.org', app_metadata: { papel }, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' },
-  };
+export async function simular(
+  alvo: Page | BrowserContext,
+  papel: Papel | null,
+  tema: Tema = 'light',
+  substituir?: Substituicao,
+  registro: OpcoesDeRegistro = {},
+) {
+  let papelDaConta = papel;
+  const sessao = sessaoDe(papel, registro.metadados);
   await alvo.addInitScript(([s, t]) => {
     localStorage.setItem('sb-localhost-auth-token', JSON.stringify(s));
     localStorage.setItem('notaa:tema', t as string);
   }, [sessao, tema] as const);
   await alvo.route('**/*', (rota) => {
     const req = rota.request();
-    if (!ehApi(req.resourceType())) return rota.continue();
+    if (!ehApi(req.resourceType()) || ehNavegacaoRsc(req)) return rota.continue();
     const { pathname } = new URL(req.url());
-    if (pathname === '/me') return rota.fulfill({ json: me(papel) });
-    return rota.fulfill({ json: resposta(pathname, req.method()) });
+    if (pathname.startsWith('/auth/v1/')) return rota.fulfill({ json: sessaoDe(papelDaConta, registro.metadados) });
+    return responder(rota, () => papelDaConta, substituir, () => {
+      if (registro.papelApos) papelDaConta = registro.papelApos;
+    });
   });
 }
 

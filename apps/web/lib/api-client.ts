@@ -1,3 +1,5 @@
+import { CABECALHO_CONTEXTO, serializarContexto } from '@notaa/contracts';
+import { contextoAtivo, EVENTO_ACESSO_RECUSADO } from './contexto-de-acesso';
 import { supabaseBrowser } from './supabase-browser';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -56,8 +58,11 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const { data } = await supabaseBrowser.auth.getSession();
   const token = data.session?.access_token;
 
+  const contexto = contextoAtivo(data.session?.user.id);
   const headers: Record<string, string> = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    // Só quando a conta tem mais de um acesso. O servidor confere o vínculo a cada requisição.
+    ...(contexto ? { [CABECALHO_CONTEXTO]: serializarContexto(contexto) } : {}),
     ...(process.env.NODE_ENV === 'development' ? { 'x-development-mode': 'true' } : {}),
   };
 
@@ -95,9 +100,12 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   if (!res.ok) {
     const error = body?.error;
-    // O erro 401 agora apenas propaga a exceção. 
-    // Deixamos a camada do Supabase Auth e o onAuthStateChange cuidarem da sessão,
-    // evitando conflitos e loops de redirecionamento.
+    // Conta suspensa ou contexto que deixou de existir: quem reage é o ContextoDeAcessoProvider
+    // (sai da sessão ou volta ao acesso padrão). O 401 apenas propaga a exceção: deixamos a camada
+    // do Supabase Auth cuidar da sessão, evitando conflitos e loops de redirecionamento.
+    if ((error?.code === 'CONTA_INATIVA' || error?.code === 'CONTEXTO_INVALIDO') && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(EVENTO_ACESSO_RECUSADO, { detail: error.code }));
+    }
     throw new ApiError(res.status, error?.code ?? 'UNKNOWN_ERROR', error?.message ?? 'Erro inesperado.');
   }
 

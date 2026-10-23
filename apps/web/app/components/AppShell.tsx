@@ -5,6 +5,7 @@ import { Chip } from '@notaa/ui';
 import { FEATURES } from '../../lib/feature-flags';
 import { useAuth } from '../../lib/auth-context';
 import { useUser } from '../../lib/user-context';
+import { SeletorDePerfil } from './SeletorDePerfil';
 import { ShellDesktop, type ItemDeNavegacao } from './ShellDesktop';
 
 const ICONE = 'h-5 w-5';
@@ -43,6 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <ShellDesktop
       itens={destinosDoAluno(isAdminInstituicao)}
       rotuloDaNavegacao="Navegação principal"
+      contexto={<SeletorDePerfil />}
       nomeDaConta={perfil?.nome}
       emailDaConta={perfil?.email}
       aoSair={() => void signOut()}

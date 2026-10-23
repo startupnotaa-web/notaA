@@ -10,6 +10,17 @@ Dois conjuntos, ambos em Chromium real:
 Rotas cobertas (as públicas incluem `/aluno`, `/professores`, `/escola`, `/faculdade`, `/privacidade` e `/termos`): `/instituicao`, `/instituicao/academico`, `/instituicao/importacao`, `/professor` (institucional
 e independente), `/dashboard` (home do aluno) e `/` (landing).
 
+## Login por perfil
+
+`login-por-perfil.spec.ts` cobre para onde cada conta vai depois de entrar (aluno, professor, coordenação,
+responsável, admin da plataforma), o parâmetro `next` (inclusive vetores de open redirect), quem já está
+logado em `/login`, o 403 de rota de outro perfil sem loop, `GET /me` falhando, o "Entrar como…" com mais de
+um acesso (a interface envia o contexto; o servidor o valida) e conta inativa. Roda no modo simulado:
+
+```bash
+pnpm --filter @notaa/web exec playwright test e2e/login-por-perfil.spec.ts
+```
+
 ## Modo simulado (padrão, sem credenciais)
 
 A sessão é gravada no `localStorage` e as chamadas `fetch` são respondidas com dados tipados pelos contratos

@@ -1,11 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Session } from '@supabase/supabase-js';
 import { supabaseBrowser } from './supabase-browser';
 import { USER_STATE_STORAGE_KEY } from './storage-keys';
-import { rotaInicialPorPapel, rotaPosRegistro } from './rota-inicial';
+import { definirContextoAtivo, esquecerContextoSalvo } from './contexto-de-acesso';
 
 interface AuthState {
   session: Session | null;
@@ -18,7 +17,6 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     // Desativa e limpa Service Workers em ambiente de desenvolvimento para evitar cache indesejado
@@ -39,37 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Falha ao recuperar sessão do Supabase:', err);
       setLoading(false); // Libera o loading para não travar a UI infinitamente.
     });
-    const { data: subscription } = supabaseBrowser.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
-      if (event === 'SIGNED_IN' && newSession?.user) {
-        // Redirecionamento dinâmico e Sincronização OAuth
-        const papel = newSession.user.app_metadata?.papel;
-        if (papel) {
-          // Destino por papel: admin de instituição e professor têm painéis
-          // próprios, e mandá-los para o hub do aluno era o que escondia esses
-          // painéis de quem é dono deles.
-          router.push(rotaInicialPorPapel(papel));
-        } else {
-          // Precisamos garantir o registro (e gerar o papel via sync-oauth ou formulário)
-          import('./post-auth').then(async ({ garantirRegistro }) => {
-            try {
-              await garantirRegistro();
-            } catch (err) {
-              console.error('Falha ao sincronizar OAuth:', err);
-              // Fallback se a API estiver fora
-            } finally {
-              // Executa independentemente de sucesso ou falha na API.
-              // Destino pelo papel do token RENOVADO: antes todo mundo ia para
-              // /onboarding (do aluno), inclusive professor e instituição.
-              const { data } = await supabaseBrowser.auth.getSession();
-              router.push(rotaPosRegistro(data.session?.user.app_metadata?.papel));
-            }
-          });
-        }
-      }
+    // O provedor só mantém a sessão. Para onde ir depois de entrar é decidido em UM lugar
+    // (lib/entrada.ts, chamado pelo login, pelo retorno do Google e pelo "já estava logado"): navegar
+    // daqui competia com essas telas e, como o SDK emite SIGNED_IN a cada vez que a aba volta a ter
+    // foco, puxava a pessoa de volta para a home no meio do que ela fazia.
+    const { data: subscription } = supabaseBrowser.auth.onAuthStateChange((_evento, novaSessao) => {
+      setSession(novaSessao);
     });
     return () => subscription.subscription.unsubscribe();
-  }, [router]);
+  }, []);
 
   async function signOut() {
     // Remove o snapshot persistido do usuário (XP/nível/perfil) — evita que a
@@ -79,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Storage indisponível — nada a limpar.
     }
+    esquecerContextoSalvo();
+    definirContextoAtivo(null);
     await supabaseBrowser.auth.signOut();
   }
 
