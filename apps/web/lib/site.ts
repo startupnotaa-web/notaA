@@ -10,19 +10,21 @@ interface DadosDaPagina {
   caminho: string;
   /** Nome do arquivo em public/og, sem extensão. */
   imagem: string;
+  /** Página que não deve aparecer nos buscadores (ex.: texto legal ainda sem dados da empresa). */
+  semIndexacao?: boolean;
 }
 
 /**
  * Metadados das páginas públicas: título, descrição, canonical, Open Graph e Twitter. Fora de produção a página
  * sai com noindex, para preview e branch não competirem com o site de verdade nos buscadores.
  */
-export function metadadosDaPagina({ titulo, descricao, caminho, imagem }: DadosDaPagina): Metadata {
+export function metadadosDaPagina({ titulo, descricao, caminho, imagem, semIndexacao = false }: DadosDaPagina): Metadata {
   const emProducao = process.env.VERCEL_ENV ? process.env.VERCEL_ENV === 'production' : process.env.NODE_ENV === 'production';
   return {
     title: titulo,
     description: descricao,
     alternates: { canonical: caminho },
-    robots: emProducao ? undefined : { index: false, follow: false },
+    robots: emProducao && !semIndexacao ? undefined : { index: false, follow: false },
     openGraph: {
       type: 'website',
       locale: 'pt_BR',

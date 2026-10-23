@@ -1,25 +1,37 @@
-import { Placeholder } from '../../_landing/componentes/Marcador';
 import { PaginaLegal } from '../../_landing/componentes/PaginaLegal';
+import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/juridico';
 import { metadadosDaPagina } from '../../../lib/site';
 
 // A CSP com nonce (middleware.ts) exige HTML gerado por requisição.
 export const dynamic = 'force-dynamic';
+
+const completa = juridicoCompleto();
 
 export const metadata = metadadosDaPagina({
   titulo: 'Termos de uso do Nota A',
   descricao: 'Termos de uso do Nota A.',
   caminho: '/termos',
   imagem: 'home',
+  semIndexacao: !completa,
 });
 
-// Rascunho: estrutura sem conteúdo jurídico inventado. Tudo que é cláusula depende do jurídico.
+// As cláusulas vêm de lib/juridico.ts (textoDasClausulas), aprovadas pelo jurídico. Sem elas a página não publica.
 export default function Termos() {
+  if (!completa) {
+    return (
+      <PaginaLegal titulo="Termos de uso">
+        <p>Esta página ainda não está disponível. Volte em breve.</p>
+      </PaginaLegal>
+    );
+  }
+
+  const d = DADOS_JURIDICOS;
   return (
-    <PaginaLegal titulo="Termos de uso" atualizacao="Rascunho, sem versão numerada">
+    <PaginaLegal titulo="Termos de uso" atualizacao={`Versão ${d.versaoTermos}`}>
       <section>
         <h2>Quem oferece o Nota A</h2>
         <p>
-          <Placeholder nota="razão social, CNPJ e endereço" />.
+          {d.razaoSocial}, CNPJ {d.cnpj}, {d.endereco}. Contato: {d.canalDeContato}.
         </p>
       </section>
       <section>
@@ -32,10 +44,7 @@ export default function Termos() {
       </section>
       <section>
         <h2>Cláusulas</h2>
-        <p>
-          Cadastro e conta, uso aceitável, planos e pagamento, propriedade intelectual, limitação de responsabilidade,
-          rescisão e foro: <Placeholder nota="redação do jurídico para cada cláusula" />.
-        </p>
+        <p>{d.textoDasClausulas}</p>
       </section>
       <section>
         <h2>Privacidade</h2>

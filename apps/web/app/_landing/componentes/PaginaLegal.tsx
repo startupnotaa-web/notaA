@@ -4,8 +4,8 @@ import { NotaASimbolo } from '@notaa/ui';
 import { FOCO } from './estilos';
 import { Rodape } from './Rodape';
 
-/** Casca das páginas de privacidade e termos: título, aviso de rascunho e texto corrido, no sistema de design padrão. */
-export function PaginaLegal({ titulo, atualizacao, children }: { titulo: string; atualizacao: string; children: ReactNode }) {
+/** Casca das páginas de privacidade e termos: título, data da versão e texto corrido, no sistema de design padrão. */
+export function PaginaLegal({ titulo, atualizacao, children }: { titulo: string; atualizacao?: string; children: ReactNode }) {
   return (
     <div data-theme="light" className="min-h-screen bg-paper font-text text-ink">
       <header className="mx-auto flex w-full max-w-landing items-center gap-6 px-5 py-5 md:px-10">
@@ -18,11 +18,7 @@ export function PaginaLegal({ titulo, atualizacao, children }: { titulo: string;
       <main id="conteudo" className="mx-auto w-full max-w-landing px-5 pb-20 pt-6 md:px-10">
         <div className="max-w-texto">
           <h1 className="m-0 font-display text-heading-1 font-semibold">{titulo}</h1>
-          <p className="mb-6 mt-2 text-body-sm text-ink-muted">{atualizacao}</p>
-          <p role="note" className="mb-10 rounded-md border border-warning bg-warning-tint px-4 py-3 text-body font-bold text-warning">
-            Rascunho: este texto ainda não passou por revisão jurídica. Os trechos entre colchetes dependem de informação que o
-            repositório não tem.
-          </p>
+          {atualizacao && <p className="mb-6 mt-2 text-body-sm text-ink-muted">{atualizacao}</p>}
           <div className="flex flex-col gap-8 text-body [&_h2]:m-0 [&_h2]:mb-2 [&_h2]:font-display [&_h2]:text-heading-3 [&_h2]:font-semibold [&_li]:mb-1 [&_p]:m-0 [&_ul]:m-0 [&_ul]:list-disc [&_ul]:pl-6">
             {children}
           </div>

@@ -1,28 +1,39 @@
 import { VERSAO_POLITICA_LEAD } from '@notaa/contracts';
-import { Placeholder } from '../../_landing/componentes/Marcador';
 import { PaginaLegal } from '../../_landing/componentes/PaginaLegal';
+import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/juridico';
 import { metadadosDaPagina } from '../../../lib/site';
 
 // A CSP com nonce (middleware.ts) exige HTML gerado por requisição.
 export const dynamic = 'force-dynamic';
+
+const completa = juridicoCompleto();
 
 export const metadata = metadadosDaPagina({
   titulo: 'Política de privacidade do Nota A',
   descricao: 'Como o Nota A trata os dados enviados nos formulários de contato, demonstração e lista de espera.',
   caminho: '/privacidade',
   imagem: 'home',
+  semIndexacao: !completa,
 });
 
-// Rascunho. O que está aqui descreve o que os formulários da landing fazem hoje (packages/contracts/src/lead.ts e
-// apps/api/src/modules/lead). O que depende de fato fora do repositório fica como placeholder visível.
+// O que está aqui descreve o que os formulários da landing fazem hoje (packages/contracts/src/lead.ts e
+// apps/api/src/modules/lead). Os dados da empresa vêm de lib/juridico.ts; sem eles a página não publica o texto.
 export default function Privacidade() {
+  if (!completa) {
+    return (
+      <PaginaLegal titulo="Política de privacidade">
+        <p>Esta página ainda não está disponível. Volte em breve.</p>
+      </PaginaLegal>
+    );
+  }
+
+  const d = DADOS_JURIDICOS;
   return (
     <PaginaLegal titulo="Política de privacidade" atualizacao={`Versão ${VERSAO_POLITICA_LEAD}`}>
       <section>
         <h2>Quem é o responsável pelos dados</h2>
         <p>
-          <Placeholder nota="razão social, CNPJ e endereço do controlador" />. Contato do encarregado de dados:{' '}
-          <Placeholder nota="nome e e-mail do encarregado (DPO)" />.
+          {d.razaoSocial}, CNPJ {d.cnpj}, {d.endereco}. Contato do encarregado de dados: {d.encarregadoNome}, {d.encarregadoEmail}.
         </p>
       </section>
 
@@ -60,9 +71,8 @@ export default function Privacidade() {
       <section>
         <h2>Onde ficam e por quanto tempo</h2>
         <p>
-          Os dados ficam em banco de dados com acesso restrito à equipe do Nota A. Prazo de guarda:{' '}
-          <Placeholder nota="prazo de retenção dos leads" />. Provedores que tratam os dados em nosso nome:{' '}
-          <Placeholder nota="lista de operadores e país de armazenamento" />.
+          Os dados ficam em banco de dados com acesso restrito à equipe do Nota A. Prazo de guarda: {d.prazoRetencaoLeads}.
+          Provedores que tratam os dados em nosso nome: {d.operadores}.
         </p>
       </section>
 
@@ -71,16 +81,13 @@ export default function Privacidade() {
         <p>
           Você pode pedir confirmação do tratamento, acesso, correção e eliminação dos seus dados, e retirar a autorização a
           qualquer momento, como prevê a Lei Geral de Proteção de Dados (Lei 13.709/2018). Canal para pedidos:{' '}
-          <Placeholder nota="e-mail ou formulário de pedidos do titular" />. Prazo de resposta:{' '}
-          <Placeholder nota="prazo de resposta" />.
+          {d.canalDosTitulares}. Prazo de resposta: {d.prazoRespostaTitulares}.
         </p>
       </section>
 
       <section>
         <h2>Menores de idade</h2>
-        <p>
-          Estes formulários são para quem tem 18 anos ou mais. <Placeholder nota="regra para menores de 18 anos nos formulários" />.
-        </p>
+        <p>{d.regraMenores}</p>
       </section>
     </PaginaLegal>
   );

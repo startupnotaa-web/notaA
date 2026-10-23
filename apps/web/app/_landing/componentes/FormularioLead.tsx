@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { cn } from '@notaa/ui';
 import { LEAD_SCHEMAS, VERSAO_POLITICA_LEAD, type LeadOrigem } from '@notaa/contracts';
+import { juridicoCompleto } from '../../../lib/juridico';
 
 export interface CampoDoLead {
   nome: string;
@@ -57,7 +58,19 @@ function urlDaApi(caminho: string): string {
  * do navegador existe para dizer o que corrigir, não para proteger. Nada é guardado no navegador, nada vai
  * para analytics e nada é registrado em console.
  */
-export function FormularioLead({ origem, campos, botao, consentimento, sucesso, estilo }: FormularioLeadProps) {
+export function FormularioLead(props: FormularioLeadProps) {
+  // Sem os dados da empresa (lib/juridico.ts) a política de privacidade não está publicada: o formulário não coleta.
+  if (!juridicoCompleto()) {
+    return (
+      <p role="status" className="m-0 font-text text-body-sm text-ink-muted">
+        Os formulários estão indisponíveis no momento.
+      </p>
+    );
+  }
+  return <FormularioLeadAtivo {...props} />;
+}
+
+function FormularioLeadAtivo({ origem, campos, botao, consentimento, sucesso, estilo }: FormularioLeadProps) {
   const base = useId();
   const [estado, setEstado] = useState<Estado>('ocioso');
   const [erros, setErros] = useState<Record<string, string>>({});
