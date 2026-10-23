@@ -6,11 +6,20 @@ import { ACESSO_STORAGE_KEY } from './storage-keys';
  * `apiFetch` precisa dele fora de qualquer componente. O servidor revalida a cada requisição: o que
  * está aqui é só o que a pessoa pediu, nunca uma permissão.
  */
-let ativo: ContextoDeAcesso | null = null;
+let ativo: ContextoDeAcesso | null | undefined;
 
-/** Contexto a enviar no cabeçalho `x-contexto`. Null quando a conta tem um acesso só. */
-export function contextoAtivo(): ContextoDeAcesso | null {
-  return ativo;
+/**
+ * Contexto a enviar no cabeçalho `x-contexto`. Null quando a conta tem um acesso só.
+ *
+ * Antes de o provedor carregar a lista (primeira pintura, recarga da página, aba nova), usa o último
+ * acesso que ESTA conta escolheu neste navegador. Sem isso, as primeiras chamadas depois de um
+ * recarregamento iam sem o cabeçalho, no acesso padrão, e as seguintes no escolhido: telas com dados
+ * de duas instituições misturados. O servidor revalida: um acesso que não existe mais volta 403
+ * CONTEXTO_INVALIDO e o provedor reage.
+ */
+export function contextoAtivo(authUid?: string): ContextoDeAcesso | null {
+  if (ativo !== undefined) return ativo;
+  return authUid ? lerContextoSalvo(authUid) : null;
 }
 
 export function definirContextoAtivo(contexto: ContextoDeAcesso | null): void {

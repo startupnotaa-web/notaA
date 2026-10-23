@@ -58,7 +58,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const { data } = await supabaseBrowser.auth.getSession();
   const token = data.session?.access_token;
 
-  const contexto = contextoAtivo();
+  const contexto = contextoAtivo(data.session?.user.id);
   const headers: Record<string, string> = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     // Só quando a conta tem mais de um acesso. O servidor confere o vínculo a cada requisição.

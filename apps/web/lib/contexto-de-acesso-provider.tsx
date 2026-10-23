@@ -37,7 +37,7 @@ const Contexto = createContext<ContextoDeAcessoState | null>(null);
  *  - CONTA_INATIVA: sai da sessão e leva ao login com o motivo.
  */
 export function ContextoDeAcessoProvider({ children }: { children: ReactNode }) {
-  const { session, signOut } = useAuth();
+  const { session, loading, signOut } = useAuth();
   const authUid = session?.user.id ?? null;
   const papel = papelConhecido(session?.user.app_metadata?.papel);
 
@@ -65,6 +65,9 @@ export function ContextoDeAcessoProvider({ children }: { children: ReactNode }) 
   }, []);
 
   useEffect(() => {
+    // Enquanto a sessão ainda está sendo lida (recarga da página) não há "sem sessão": zerar aqui apagaria o
+    // acesso escolhido antes da primeira chamada à API.
+    if (loading) return;
     if (!authUid) {
       setContextos([]);
       setAtual(null);
@@ -74,7 +77,7 @@ export function ContextoDeAcessoProvider({ children }: { children: ReactNode }) 
     // Token sem papel (cadastro por terminar): ainda não há o que listar, e o que já estava escolhido fica.
     if (!papel) return;
     void carregar(authUid);
-  }, [authUid, papel, carregar]);
+  }, [authUid, papel, loading, carregar]);
 
   useEffect(() => {
     function aoRecusar(evento: Event) {
