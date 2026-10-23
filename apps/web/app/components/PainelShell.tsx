@@ -8,7 +8,7 @@ import { useAuth } from '../../lib/auth-context';
 import { ContextoDoPainelProvider } from '../../lib/contexto-do-painel';
 import { useGuardaDePapel } from '../../lib/guarda-de-papel';
 import { useUser } from '../../lib/user-context';
-import { AcessoNegado, PerfilNaoVerificado } from './AcessoNegado';
+import { AcessoNegado, IrParaConcluirCadastro } from './AcessoNegado';
 import { SeletorDeContexto } from './SeletorDeContexto';
 import { SeletorDePerfil } from './SeletorDePerfil';
 import { ShellDesktop, type ItemDeNavegacao } from './ShellDesktop';
@@ -51,7 +51,7 @@ export function PainelShell({
   }, [guarda.estado, pathname, router]);
 
   if (guarda.estado === 'carregando' || guarda.estado === 'sem-sessao') return <TelaCarregando />;
-  if (guarda.estado === 'sem-papel') return <PerfilNaoVerificado />;
+  if (guarda.estado === 'sem-papel') return <IrParaConcluirCadastro />;
   if (guarda.estado === 'negado') return <AcessoNegado papel={guarda.papel} />;
   if (userLoading) return <TelaCarregando rotulo="Carregando o painel" />;
 

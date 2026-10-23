@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import type { Papel } from '@notaa/contracts';
-import { Button, ButtonLink, Notice } from '@notaa/ui';
+import { Button, ButtonLink } from '@notaa/ui';
 import { useAuth } from '../../lib/auth-context';
 import { homeDoPapel } from '../../lib/destino';
-import { garantirRegistro } from '../../lib/post-auth';
-import { supabaseBrowser } from '../../lib/supabase-browser';
+import { TelaCarregando } from './TelaCarregando';
 import { TelaDeEstado } from './TelaDeEstado';
 
 const PAPEL_POR_EXTENSO: Record<Papel, string> = {
@@ -47,46 +47,15 @@ export function AcessoNegado({ papel }: { papel: Papel }) {
 }
 
 /**
- * Há sessão, mas o token não diz qual é o perfil da conta (o cadastro não terminou ou a API não
- * respondeu). Não é "papel errado": tenta de novo em vez de mandar a pessoa para o painel do aluno.
+ * Há sessão, mas o token não diz qual é o perfil da conta (o cadastro não terminou). Não é "papel
+ * errado" e nunca é motivo para mostrar o painel do aluno: leva à tela "Concluir cadastro", que guarda
+ * para onde a pessoa queria ir e a devolve para lá quando o cadastro terminar.
  */
-export function PerfilNaoVerificado() {
-  const { signOut } = useAuth();
-  const [tentando, setTentando] = useState(false);
-  const [falhou, setFalhou] = useState(false);
-
-  async function tentarDeNovo() {
-    setTentando(true);
-    setFalhou(false);
-    await garantirRegistro();
-    const { data } = await supabaseBrowser.auth.refreshSession();
-    // Com papel no token novo, o AuthProvider atualiza a sessão e o guarda libera a tela sozinho.
-    if (!data.session?.user.app_metadata?.papel) setFalhou(true);
-    setTentando(false);
-  }
-
-  return (
-    <TelaDeEstado
-      titulo="Não foi possível verificar o seu perfil"
-      acoes={
-        <>
-          <Button type="button" variant="primary" loading={tentando} onClick={() => void tentarDeNovo()}>
-            {tentando ? 'Verificando' : 'Tentar de novo'}
-          </Button>
-          <Button type="button" variant="secondary" onClick={() => void signOut()}>
-            Sair da conta
-          </Button>
-        </>
-      }
-    >
-      <>
-        O Nota A não conseguiu confirmar que tipo de conta é esta. Isso costuma passar em instantes.
-        {falhou ? (
-          <Notice tone="danger" className="mt-space-4">
-            Ainda não deu. Confira a conexão e tente de novo, ou entre outra vez.
-          </Notice>
-        ) : null}
-      </>
-    </TelaDeEstado>
-  );
+export function IrParaConcluirCadastro() {
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    router.replace(`/concluir-cadastro?next=${encodeURIComponent(pathname)}`);
+  }, [router, pathname]);
+  return <TelaCarregando rotulo="Verificando o seu cadastro" />;
 }

@@ -54,7 +54,8 @@ function ConfirmarEmail() {
       await garantirRegistro();
       const { data } = await supabaseBrowser.auth.getSession();
       const papel = data.session?.user.app_metadata?.papel;
-      router.replace(papel ? rotaPosRegistro(papel) : next);
+      // Sem papel o registro não terminou: nunca seguir para `next` (que pode ser o painel do aluno).
+      router.replace(papel ? rotaPosRegistro(papel) : `/concluir-cadastro?next=${encodeURIComponent(next)}`);
     }
 
     async function confirmar() {

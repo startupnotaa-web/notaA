@@ -160,11 +160,11 @@ test.describe('falha ao carregar o perfil não vira "aluno"', () => {
     });
   }
 
-  test('token sem papel mostra "não foi possível verificar", não o painel do aluno', async ({ page }) => {
+  test('token sem papel leva a "Concluir cadastro", não ao painel do aluno', async ({ page }) => {
     await simular(page, null);
     await page.goto('/professor');
-    await expect(page.getByRole('heading', { name: 'Não foi possível verificar o seu perfil' })).toBeVisible();
-    expect(new URL(page.url()).pathname).toBe('/professor');
+    await expect(page.getByRole('heading', { name: 'Concluir cadastro' })).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe('/concluir-cadastro');
   });
 });
 
@@ -178,6 +178,7 @@ test.describe('"Entrar como…" com mais de um acesso', () => {
     cabecalhos: string[];
     posts: unknown[];
     recusar?: boolean;
+    recarregou?: boolean;
   }
 
   function comDoisAcessos(registro: Registro): Substituicao {
@@ -245,6 +246,27 @@ test.describe('"Entrar como…" com mais de um acesso', () => {
     await page.waitForURL(URL_FINAL('/professor'));
     await expect(page.getByRole('heading', { name: 'Entrar como…' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Professor · Instituto Aurora/ })).toBeVisible();
+  });
+
+  test('recarregar a página não mistura acessos: a primeira chamada já leva o acesso escolhido', async ({ page }) => {
+    const registro: Registro = { cabecalhos: [], posts: [] };
+    const semCabecalho: string[] = [];
+    await simularLogin(page, 'professor_institucional', {
+      substituir: (pathname, metodo, cabecalhos, corpo) => {
+        const r = comDoisAcessos(registro)(pathname, metodo, cabecalhos, corpo);
+        if (registro.recarregou && pathname !== '/me/contextos' && pathname !== '/me/contexto' && !cabecalhos['x-contexto']) semCabecalho.push(pathname);
+        return r;
+      },
+    });
+    await entrarPeloFormulario(page);
+    await page.getByRole('radio', { name: /Instituto Aurora/ }).click();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await page.waitForURL(URL_FINAL('/professor'));
+
+    registro.recarregou = true;
+    await page.reload();
+    await expect(page.getByRole('button', { name: /Professor · Instituto Aurora/ })).toBeVisible();
+    expect(semCabecalho).toEqual([]);
   });
 
   test('se o servidor recusar o contexto, volta ao padrão e avisa (não confia no que o navegador lembrava)', async ({ page }) => {

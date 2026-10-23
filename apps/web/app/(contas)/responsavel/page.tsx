@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button, Notice } from '@notaa/ui';
-import { AcessoNegado, PerfilNaoVerificado } from '../../components/AcessoNegado';
+import { AcessoNegado, IrParaConcluirCadastro } from '../../components/AcessoNegado';
 import { SeletorDePerfil } from '../../components/SeletorDePerfil';
 import { TelaCarregando } from '../../components/TelaCarregando';
 import { TelaDeEstado } from '../../components/TelaDeEstado';
@@ -27,7 +27,7 @@ export default function ResponsavelPage() {
   }, [guarda.estado, pathname, router]);
 
   if (guarda.estado === 'carregando' || guarda.estado === 'sem-sessao') return <TelaCarregando />;
-  if (guarda.estado === 'sem-papel') return <PerfilNaoVerificado />;
+  if (guarda.estado === 'sem-papel') return <IrParaConcluirCadastro />;
   if (guarda.estado === 'negado') return <AcessoNegado papel={guarda.papel} />;
 
   return (

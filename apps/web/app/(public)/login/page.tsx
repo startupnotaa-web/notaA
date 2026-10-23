@@ -59,8 +59,8 @@ function Entrar() {
       setEstado({ fase: 'form' });
       setErro('Sua conta está suspensa ou ainda não foi ativada. Fale com a sua instituição ou com o suporte do Nota A.');
     } else {
-      setEstado({ fase: 'form' });
-      setErro('Não foi possível confirmar o seu perfil agora. Tente entrar de novo em instantes.');
+      // Sessão sem papel: o cadastro não terminou. Nunca segue para um painel.
+      router.replace(`/concluir-cadastro${next ? `?next=${encodeURIComponent(next)}` : ''}`);
     }
   }
 

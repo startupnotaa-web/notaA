@@ -13,7 +13,7 @@ import {
   salvarContexto,
 } from './contexto-de-acesso';
 import { HOME_POR_PAPEL, papelConhecido, resolverDestino } from './destino';
-import { garantirRegistro } from './post-auth';
+import { garantirRegistro, type MotivoDaFalha } from './post-auth';
 import { supabaseBrowser } from './supabase-browser';
 
 export type Entrada =
@@ -29,8 +29,8 @@ export type Entrada =
       lembrado: ContextoDeAcesso | null;
       destino: string;
     }
-  /** O token não traz papel: o cadastro não terminou ou a API não respondeu. */
-  | { tipo: 'sem-papel' }
+  /** O token não traz papel: o cadastro não terminou. O motivo diz o que a tela "Concluir cadastro" oferece. */
+  | { tipo: 'sem-papel'; motivo: MotivoDaFalha }
   | { tipo: 'conta-inativa' };
 
 export interface OpcoesDeEntrada {
@@ -55,11 +55,11 @@ function destinoDaEntrada(papel: Papel, next: string | null, aposRegistro: boole
  * aqui, em vez de cada tela navegar por conta própria.
  */
 export async function prepararEntrada(next: string | null, opcoes: OpcoesDeEntrada = {}): Promise<Entrada> {
-  await garantirRegistro();
+  const registro = await garantirRegistro();
   const { data } = await supabaseBrowser.auth.getSession();
   const usuario = data.session?.user;
   const papel = papelConhecido(usuario?.app_metadata?.papel);
-  if (!usuario || !papel) return { tipo: 'sem-papel' };
+  if (!usuario || !papel) return { tipo: 'sem-papel', motivo: registro.ok ? 'indisponivel' : registro.motivo };
 
   const destino = destinoDaEntrada(papel, next, opcoes.aposRegistro ?? false);
 

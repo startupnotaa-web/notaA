@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { AcessoNegado, PerfilNaoVerificado } from '../components/AcessoNegado';
+import { AcessoNegado, IrParaConcluirCadastro } from '../components/AcessoNegado';
 import { AppShell } from '../components/AppShell';
 import { TelaCarregando } from '../components/TelaCarregando';
 import { Toaster } from '../components/toast';
@@ -23,7 +23,7 @@ export default function EstudanteLayout({ children }: { children: ReactNode }) {
   }, [guarda.estado, pathname, router]);
 
   if (guarda.estado === 'carregando' || guarda.estado === 'sem-sessao') return <TelaCarregando />;
-  if (guarda.estado === 'sem-papel') return <PerfilNaoVerificado />;
+  if (guarda.estado === 'sem-papel') return <IrParaConcluirCadastro />;
   if (guarda.estado === 'negado') return <AcessoNegado papel={guarda.papel} />;
 
   return (

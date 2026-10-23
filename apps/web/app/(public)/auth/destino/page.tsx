@@ -38,9 +38,7 @@ function DestinoDoRetorno() {
       .then((entrada) => {
         if (entrada.tipo === 'ir') router.replace(entrada.destino);
         else if (entrada.tipo === 'escolher') setEstado({ fase: 'escolher', entrada });
-        else if (entrada.tipo === 'sem-papel') {
-          setEstado({ fase: 'erro', mensagem: 'Não foi possível confirmar o seu perfil agora. Tente entrar de novo em instantes.' });
-        }
+        else if (entrada.tipo === 'sem-papel') router.replace(`/concluir-cadastro${next ? `?next=${encodeURIComponent(next)}` : ''}`);
         // 'conta-inativa': o provedor de acesso já tirou a pessoa da sessão e a levou ao login.
       })
       .catch(() => setEstado({ fase: 'erro', mensagem: 'Não foi possível concluir o login. Tente entrar de novo.' }));
