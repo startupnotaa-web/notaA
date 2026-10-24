@@ -40,6 +40,9 @@ export interface FormularioLeadProps {
 
 type Estado = 'ocioso' | 'enviando' | 'enviado';
 
+/** Contato enquanto os formulários estão desativados. */
+const EMAIL_DE_CONTATO = 'contato@notaa.com.br';
+
 const MSG_REDE = 'Não foi possível enviar agora. Confira sua conexão e tente de novo.';
 const MSG_LIMITE = 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e envie de novo.';
 const MSG_INVALIDO = 'Algum campo não passou na conferência. Revise as respostas e envie de novo.';
@@ -59,12 +62,19 @@ function urlDaApi(caminho: string): string {
  * para analytics e nada é registrado em console.
  */
 export function FormularioLead(props: FormularioLeadProps) {
-  // Sem os dados da empresa (lib/juridico.ts) a política de privacidade não está publicada: o formulário não coleta.
+  // Sem os dados da empresa (lib/juridico.ts) a política de privacidade não está publicada: o site não coleta nada.
+  // O contato vira um e-mail comum, que a pessoa escreve do próprio aplicativo.
   if (!juridicoCompleto()) {
+    // Dentro do painel do ambiente: as cores do texto e do link foram escolhidas para o fundo dele.
     return (
-      <p role="status" className="m-0 font-text text-body-sm text-ink-muted">
-        Os formulários estão indisponíveis no momento.
-      </p>
+      <div className={props.estilo.formulario}>
+        <p className="m-0 flex flex-wrap items-center gap-x-1 font-text text-body">
+          Escreva para{' '}
+          <a href={`mailto:${EMAIL_DE_CONTATO}`} className={cn(props.estilo.link, 'inline-flex min-h-[44px] items-center')}>
+            {EMAIL_DE_CONTATO}
+          </a>
+        </p>
+      </div>
     );
   }
   return <FormularioLeadAtivo {...props} />;

@@ -28,6 +28,10 @@ function paraGravar(dados: CriarLeadRequest): LeadParaGravar {
  *   valores da requisição.
  * - O limite de envios usa um HMAC do IP. O IP em si não é gravado nem logado.
  * - Sem LEAD_HASH_SALT o limite fica desligado (fail-open, como o limite de IA) e a API avisa no log.
+ * - Falha fechado: só grava com LEADS_HABILITADOS === 'true'. Qualquer outro valor, ou a variável ausente (o
+ *   padrão), responde 503 sem gravar e sem consumir a janela do limite. Ligue a variável apenas junto com:
+ *   apps/web/lib/juridico.ts completo (o site só coleta com os dados da empresa publicados), LEAD_HASH_SALT
+ *   definido e a migration 0018 (supabase/migrations/0018_lead_landing.sql) aplicada.
  */
 @Injectable()
 export class LeadService {
@@ -37,6 +41,13 @@ export class LeadService {
   constructor(@Inject(LEAD_REPOSITORY) private readonly repo: LeadRepositoryPort) {}
 
   async registrar(dados: CriarLeadRequest, enderecoDeRede: string | null): Promise<CriarLeadResponse> {
+    // Lido a cada chamada: desligar a variável fecha a porta sem depender de novo deploy do código.
+    if (process.env.LEADS_HABILITADOS !== 'true') {
+      throw new ServiceUnavailableException({
+        error: { code: 'LEAD_DESATIVADO', message: 'Os formulários estão indisponíveis no momento.' },
+      });
+    }
+
     // Isca preenchida: descarta sem gravar, sem contar e sem erro.
     if (dados.website) {
       this.logger.warn(`Lead descartado pela isca (origem=${dados.origem}).`);
