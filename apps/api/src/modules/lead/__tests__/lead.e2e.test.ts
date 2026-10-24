@@ -44,10 +44,12 @@ describe('POST /leads', () => {
   });
 
   afterAll(async () => {
+    delete process.env.LEADS_HABILITADOS;
     await app.close();
   });
 
   beforeEach(() => {
+    process.env.LEADS_HABILITADOS = 'true';
     repo.leads.length = 0;
     repo.falharAoRegistrar = false;
     repo.falharNoContador = false;
@@ -130,5 +132,26 @@ describe('POST /leads', () => {
     for (const dado of ['Marina', 'marina.souza', 'colegioexemplo', 'Colégio Exemplo', 'outra.pessoa', '203.0.113']) {
       expect(todo).not.toContain(dado);
     }
+  });
+
+  describe('desativado (padrão: LEADS_HABILITADOS ausente ou diferente de "true")', () => {
+    const valores: (string | undefined)[] = [undefined, '', 'false', 'TRUE', '1', 'true '];
+
+    it.each(valores)('LEADS_HABILITADOS=%j: 503, nada gravado e a janela do limite intacta', async (valor) => {
+      if (valor === undefined) delete process.env.LEADS_HABILITADOS;
+      else process.env.LEADS_HABILITADOS = valor;
+      const janela = vi.spyOn(repo, 'consumirJanela');
+      const gravar = vi.spyOn(repo, 'registrar');
+
+      for (const corpo of [demo, { ...demo, website: 'isca' }]) {
+        const res = await enviar(corpo, '203.0.113.70');
+        expect(res.status).toBe(503);
+        expect(res.body.error.message).toBe('Os formulários estão indisponíveis no momento.');
+        expect(JSON.stringify(res.body)).not.toContain(demo.email);
+      }
+      expect(repo.leads).toHaveLength(0);
+      expect(gravar).not.toHaveBeenCalled();
+      expect(janela).not.toHaveBeenCalled();
+    });
   });
 });
