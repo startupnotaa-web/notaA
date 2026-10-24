@@ -5,6 +5,12 @@
 //   NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=local NEXT_PUBLIC_API_URL=http://localhost:3001 pnpm --filter @notaa/web build
 //   pnpm --filter @notaa/web exec playwright test e2e/landing.spec.ts
 import { expect, test, type Page } from '@playwright/test';
+import { juridicoCompleto } from '../lib/juridico';
+
+// Com os dados da empresa vazios (lib/juridico.ts) o site não coleta nada: os formulários dão lugar ao e-mail de
+// contato e /privacidade e /termos saem sem o texto. Cada estado tem os seus testes. Contra E2E_BASE_URL vale o
+// estado do código local, então use um ambiente com o mesmo lib/juridico.ts.
+const JURIDICO_COMPLETO = juridicoCompleto();
 
 const ROTAS = [
   { rota: '/', titulo: /Nota A: um ambiente para cada papel/, h1: /Um só caminho/, canonical: '/', og: 'home' },
@@ -67,8 +73,12 @@ for (const { rota, titulo, h1, canonical, og } of ROTAS) {
 
 test('sitemap e robots cobrem as páginas públicas', async ({ request }) => {
   const sitemap = await (await request.get('/sitemap.xml')).text();
-  for (const caminho of ['/aluno', '/professores', '/escola', '/faculdade', '/privacidade', '/termos']) {
+  for (const caminho of ['/aluno', '/professores', '/escola', '/faculdade']) {
     expect(sitemap).toContain(`${caminho}</loc>`);
+  }
+  for (const caminho of ['/privacidade', '/termos']) {
+    if (JURIDICO_COMPLETO) expect(sitemap).toContain(`${caminho}</loc>`);
+    else expect(sitemap).not.toContain(`${caminho}</loc>`);
   }
   expect(sitemap).not.toContain('/dashboard');
   const robots = await (await request.get('/robots.txt')).text();
@@ -161,7 +171,39 @@ test.describe('3D: carga e fallbacks', () => {
   });
 });
 
+test.describe('formulários de lead desativados (dados da empresa vazios)', () => {
+  test.skip(JURIDICO_COMPLETO, 'só vale com lib/juridico.ts incompleto');
+
+  test('home, escola e faculdade: sem formulário, só o e-mail de contato, e nada é enviado', async ({ page }) => {
+    let enviou = false;
+    await page.route('**/leads', (r) => ((enviou = true), r.abort()));
+    for (const rota of ['/', '/escola', '/faculdade']) {
+      await page.goto(rota);
+      await expect(page.getByText('Os formulários estão indisponíveis')).toHaveCount(0);
+      await expect(page.locator('form')).toHaveCount(0);
+      await expect(page.locator('input[name="website"], input[name="consentimento"]')).toHaveCount(0);
+      const contato = page.getByRole('link', { name: 'contato@notaa.com.br' });
+      await expect(contato.first()).toHaveAttribute('href', 'mailto:contato@notaa.com.br');
+      await expect(page.getByText(/Escreva para\s+contato@notaa\.com\.br/).first()).toBeVisible();
+    }
+    expect(enviou).toBe(false);
+  });
+
+  test('/privacidade e /termos: 200, noindex e sem o texto legal', async ({ page }) => {
+    for (const rota of ['/privacidade', '/termos']) {
+      const r = await page.goto(rota);
+      expect(r?.status()).toBe(200);
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+      await expect(page.getByText('Esta página ainda não está disponível.')).toBeVisible();
+      await expect(page.locator('main h2')).toHaveCount(0);
+      await expect(page.getByText(/CNPJ|LGPD|Lei Geral de Proteção/)).toHaveCount(0);
+    }
+  });
+});
+
 test.describe('formulários de lead', () => {
+  test.skip(!JURIDICO_COMPLETO, 'os formulários só existem com lib/juridico.ts completo');
+
   test('home: erros por campo, foco no primeiro, e nada é enviado', async ({ page }) => {
     let enviou = false;
     await page.route('**/leads', (r) => ((enviou = true), r.fulfill({ status: 202, json: { ok: true } })));
@@ -237,7 +279,7 @@ test.describe('formulários de lead', () => {
     }
     const r = await page.goto('/privacidade');
     expect(r?.status()).toBe(200);
-    await expect(page.getByText(/ainda não passou por revisão jurídica/)).toBeVisible();
+    await expect(page.locator('main h2').first()).toBeVisible();
   });
 });
 
