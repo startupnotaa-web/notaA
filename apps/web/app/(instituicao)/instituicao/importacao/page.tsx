@@ -9,7 +9,7 @@ import {
   type MapeamentoColunas,
   type TipoImportacao,
 } from '@notaa/contracts';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SectionHeader, Stepper } from '@notaa/ui';
+import { Button, Notice, PageHeader, Panel, ProgressTrail } from '@notaa/ui';
 import { ApiError, apiDownload, apiFetch, enviarPlanilha } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
 import { PassoArquivo, PassoMapeamento, PassoPrevia, PassoResultado } from './passos';
@@ -109,25 +109,27 @@ export default function ImportacaoPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 lg:px-8">
-      <SectionHeader
-        as="h1"
+    <div className="flex flex-col gap-space-6 md:gap-space-7">
+      <PageHeader
         title="Importação e exportação"
         description="Traga o cadastro de alunos, responsáveis e disciplinas de uma planilha. Reimportar a mesma planilha não duplica ninguém."
       />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="min-w-0 space-y-6">
-          <Stepper passos={PASSOS} atual={passo} aria-label="Etapas da importação" />
-          <Card>
-            <CardContent className="space-y-6 pt-6">
-              <h2 ref={titulo} tabIndex={-1} className="text-xl font-bold text-text focus:outline-none">
+      <div className="grid gap-space-7 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="flex min-w-0 flex-col gap-space-6">
+          <ProgressTrail
+            total={PASSOS.length}
+            done={passo}
+            label="Etapas da importação"
+            caption={`Passo ${passo + 1} de ${PASSOS.length}`}
+          />
+          <Panel>
+            <div className="flex flex-col gap-space-6">
+              <h2 ref={titulo} tabIndex={-1} className="font-display text-heading-3 text-ink focus:outline-none">
                 {passo + 1}. {PASSOS[passo]}
               </h2>
               {erro ? (
-                <p role="alert" className="rounded-md border border-error p-3 text-sm text-error">
-                  {erro}
-                </p>
+                <Notice tone="danger">{erro}</Notice>
               ) : null}
               {passo === 0 ? (
                 <PassoArquivo
@@ -164,26 +166,24 @@ export default function ImportacaoPage() {
                 />
               ) : null}
               {passo === 3 && importacaoId ? <PassoResultado importacaoId={importacaoId} onNova={recomecar} /> : null}
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
         </div>
 
-        <Card className="self-start">
-          <CardHeader>
-            <CardTitle>Exportar</CardTitle>
-            <CardDescription>
-              CSV no mesmo formato do modelo, pronto para editar e importar de volta. Só a gestão exporta.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="secondary" fullWidth onClick={() => void exportar('alunos')}>
+        <Panel
+          title="Exportar"
+          description="CSV no mesmo formato do modelo, pronto para editar e importar de volta. Só a gestão exporta."
+          className="self-start"
+        >
+          <div className="flex flex-col gap-space-3">
+            <Button variant="secondary" className="w-full" onClick={() => void exportar('alunos')}>
               Alunos e responsáveis
             </Button>
-            <Button variant="secondary" fullWidth onClick={() => void exportar('disciplinas')}>
+            <Button variant="secondary" className="w-full" onClick={() => void exportar('disciplinas')}>
               Disciplinas
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       </div>
     </div>
   );

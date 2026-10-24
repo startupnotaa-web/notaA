@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/ui';
+import { Button, Carregando, Chip, EmptyState, Notice, Panel, Section, SkeletonLinhas, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
@@ -50,124 +50,92 @@ export function GestaoDeAnosLetivos() {
   }
 
   return (
-    <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <form
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              void mutar(async () => {
-                await apiFetch<AnoLetivo>('/ano-letivo', {
-                  method: 'POST',
-                  body: JSON.stringify({
-                    rotulo: rotulo.trim(),
-                    dataInicio: dataInicio || null,
-                    dataFim: dataFim || null,
-                  }),
-                });
-                setRotulo('');
-                setDataInicio('');
-                setDataFim('');
-              }, 'Não foi possível criar o ano letivo.');
-            }}
-            className="space-y-3"
-          >
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1">
-                <Label htmlFor="rotulo-ano">Ano letivo</Label>
-                <Input
-                  id="rotulo-ano"
-                  value={rotulo}
-                  onChange={(ev) => setRotulo(ev.target.value)}
-                  placeholder="2026"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="inicio-ano">Início</Label>
-                <Input
-                  id="inicio-ano"
-                  type="date"
-                  value={dataInicio}
-                  onChange={(ev) => setDataInicio(ev.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="fim-ano">Fim</Label>
-                <Input
-                  id="fim-ano"
-                  type="date"
-                  value={dataFim}
-                  onChange={(ev) => setDataFim(ev.target.value)}
-                />
-              </div>
-            </div>
-            <Button type="submit" disabled={enviando || rotulo.trim().length < 2}>
+    <div className="flex flex-col gap-space-6 md:gap-space-7">
+      <Panel title="Criar ano letivo">
+        <form
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            void mutar(async () => {
+              await apiFetch<AnoLetivo>('/ano-letivo', {
+                method: 'POST',
+                body: JSON.stringify({
+                  rotulo: rotulo.trim(),
+                  dataInicio: dataInicio || null,
+                  dataFim: dataFim || null,
+                }),
+              });
+              setRotulo('');
+              setDataInicio('');
+              setDataFim('');
+            }, 'Não foi possível criar o ano letivo.');
+          }}
+          className="flex flex-col gap-space-5"
+        >
+          <div className="grid gap-space-5 sm:grid-cols-3">
+            <TextField label="Ano letivo" id="rotulo-ano" value={rotulo} onChange={(ev) => setRotulo(ev.target.value)} placeholder="2026" required />
+            <TextField label="Início" id="inicio-ano" type="date" value={dataInicio} onChange={(ev) => setDataInicio(ev.target.value)} />
+            <TextField label="Fim" id="fim-ano" type="date" value={dataFim} onChange={(ev) => setDataFim(ev.target.value)} />
+          </div>
+          <div>
+            <Button type="submit" loading={enviando} disabled={rotulo.trim().length < 2}>
               Criar ano letivo
             </Button>
-          </form>
-        </CardHeader>
-      </Card>
+          </div>
+        </form>
+      </Panel>
 
-      {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      )}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
-      {anos === null ? (
-        <Skeleton className="h-24 w-full rounded-2xl" />
-      ) : anos.length === 0 ? (
-        <p className="text-sm text-text-muted">
-          Nenhum ano letivo. Crie um para poder criar turmas.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {anos.map((a) => (
-            <li key={a.id}>
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-text">{a.rotulo}</p>
-                        {a.arquivado && <Badge variant="neutral">Arquivado</Badge>}
-                      </div>
-                      <p className="text-sm text-text-muted">
-                        {a.dataInicio && a.dataFim
-                          ? `${new Date(a.dataInicio).toLocaleDateString('pt-BR')} a ${new Date(a.dataFim).toLocaleDateString('pt-BR')}`
-                          : 'Datas não definidas'}
-                      </p>
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={enviando}
-                      onClick={() =>
-                        void mutar(
-                          () =>
-                            apiFetch<AnoLetivo>(`/ano-letivo/${a.id}`, {
-                              method: 'PATCH',
-                              body: JSON.stringify({ arquivado: !a.arquivado }),
-                            }),
-                          'Não foi possível alterar o ano letivo.',
-                        )
-                      }
-                    >
-                      {a.arquivado ? 'Reabrir' : 'Arquivar'}
-                    </Button>
+      <Section title="Anos letivos">
+        {anos === null ? (
+          <Carregando rotulo="Carregando os anos letivos">
+            <SkeletonLinhas linhas={2} />
+          </Carregando>
+        ) : anos.length === 0 ? (
+          <EmptyState title="Nenhum ano letivo">Crie um ano letivo acima para poder criar turmas.</EmptyState>
+        ) : (
+          <ul className="m-0 flex list-none flex-col p-0">
+            {anos.map((a) => (
+              <li
+                key={a.id}
+                className="flex flex-wrap items-center justify-between gap-space-4 border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0"
+              >
+                <div className="flex flex-col gap-space-1">
+                  <div className="flex items-center gap-space-2">
+                    <p className="m-0 text-body font-bold text-ink">{a.rotulo}</p>
+                    {a.arquivado && <Chip tone="neutral">Arquivado</Chip>}
                   </div>
-                </CardHeader>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <p className="text-xs text-text-muted">
-        Ao arquivar um ano, as turmas dele ficam somente leitura com o histórico preservado. Os alunos
-        não são migrados: no ano novo, cada um entra com o código da turma nova.
-      </p>
+                  <p className="m-0 text-body-sm text-ink-muted">
+                    {a.dataInicio && a.dataFim
+                      ? `${new Date(a.dataInicio).toLocaleDateString('pt-BR')} a ${new Date(a.dataFim).toLocaleDateString('pt-BR')}`
+                      : 'Datas não definidas'}
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  disabled={enviando}
+                  onClick={() =>
+                    void mutar(
+                      () =>
+                        apiFetch<AnoLetivo>(`/ano-letivo/${a.id}`, {
+                          method: 'PATCH',
+                          body: JSON.stringify({ arquivado: !a.arquivado }),
+                        }),
+                      'Não foi possível alterar o ano letivo.',
+                    )
+                  }
+                >
+                  {a.arquivado ? 'Reabrir' : 'Arquivar'}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="m-0 max-w-texto text-caption text-ink-muted">
+          Ao arquivar um ano, as turmas dele ficam somente leitura com o histórico preservado. Os alunos não são migrados:
+          no ano novo, cada um entra com o código da turma nova.
+        </p>
+      </Section>
     </div>
   );
 }

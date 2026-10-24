@@ -1,17 +1,100 @@
-// @notaa/ui — biblioteca de primitivos do design system (docs/07-design-system.md).
+// @notaa/ui — biblioteca de componentes do design system Nota A (docs/07-design-system.md).
 //
-// Tokens CSS (docs/07) vivem em ./tokens/index.css — importar uma única vez na
-// raiz do app (apps/web), nunca redefinir tokens em componentes. Os componentes
-// abaixo consomem SOMENTE classes Tailwind mapeadas para esses tokens.
-export const TOKENS_CSS_PATH = './tokens/index.css';
+// Os tokens vivem em tokens/tokens.json e são gerados em ./tokens/tokens.css
+// (pnpm --filter @notaa/ui tokens). O app importa tokens.css e base.css uma única
+// vez na raiz e usa tailwind.preset.js; nunca redefina tokens em componentes.
+// Os componentes consomem SOMENTE classes Tailwind mapeadas para esses tokens.
+export { corDoToken } from './tokens/cores';
+export type { Tema } from './tokens/cores';
 
 // Util de classes (estilo clsx, sem dependência externa).
 export { cn } from './lib/cn';
 export type { ClassValue } from './lib/cn';
 
-// Primitivos.
-export { Button } from './components/Button';
+// Componentes do Nota A (espelham o bundle do handoff; props de index.d.ts).
+export { Button, classesDoBotao } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
+export { ButtonLink } from './components/ButtonLink';
+export type { ButtonLinkProps } from './components/ButtonLink';
+export { TextField } from './components/TextField';
+export type { TextFieldProps } from './components/TextField';
+export { TextArea } from './components/TextArea';
+export type { TextAreaProps } from './components/TextArea';
+export { Select } from './components/Select';
+export type { SelectProps } from './components/Select';
+export { Chip } from './components/Chip';
+export type { ChipProps, Tone } from './components/Chip';
+export { ChoiceChip } from './components/ChoiceChip';
+export type { ChoiceChipProps } from './components/ChoiceChip';
+export { Tabs, propsDoPainel } from './components/Tabs';
+export type { TabsProps } from './components/Tabs';
+export { SideNav } from './components/SideNav';
+export type { SideNavProps, SideNavItem } from './components/SideNav';
+export { BottomNav } from './components/BottomNav';
+export type { BottomNavProps, BottomNavItem } from './components/BottomNav';
+export { GradeGrid } from './components/GradeGrid';
+export type { GradeGridProps } from './components/GradeGrid';
+export { ProgressTrail } from './components/ProgressTrail';
+export type { ProgressTrailProps } from './components/ProgressTrail';
+export { Notice } from './components/Notice';
+export type { NoticeProps, StatusTone } from './components/Notice';
+export { EmptyState } from './components/EmptyState';
+export type { EmptyStateProps } from './components/EmptyState';
+export { Aurora } from './components/Aurora';
+export type { AuroraProps } from './components/Aurora';
+export { NotaASimbolo } from './components/NotaASimbolo';
+export type { NotaASimboloProps } from './components/NotaASimbolo';
+export { Dialog } from './components/Dialog';
+export type { DialogProps } from './components/Dialog';
+export { Toaster, toast, dismiss } from './components/Toast';
+export type { ToastVariant } from './components/Toast';
+export { Menu } from './components/Menu';
+export type { MenuProps, MenuItem } from './components/Menu';
+
+// Estrutura de página leve: seções separadas por espaço e linha fina; painel só para formulário ou tabela.
+export { Section } from './components/Section';
+export type { SectionProps } from './components/Section';
+export { Panel } from './components/Panel';
+export type { PanelProps } from './components/Panel';
+export { PageHeader } from './components/PageHeader';
+export type { PageHeaderProps } from './components/PageHeader';
+export { ActionRow } from './components/ActionRow';
+export type { ActionRowProps } from './components/ActionRow';
+export { SummaryStrip } from './components/SummaryStrip';
+export type { SummaryStripProps, SummaryItem } from './components/SummaryStrip';
+export { Inset } from './components/Inset';
+export type { InsetProps } from './components/Inset';
+export { ThemeSwitch } from './components/ThemeSwitch';
+export type { ThemeSwitchProps, PreferenciaDeTema } from './components/ThemeSwitch';
+
+// Estrutura de aplicativo para computador (a partir de 1.024px): moldura de altura da tela, barra superior com
+// busca e Ctrl/Cmd+K, grade de 12 colunas, zonas, master-detail, painel lateral e tabela densa.
+export { AppFrame } from './components/AppFrame';
+export type { AppFrameProps } from './components/AppFrame';
+export { TopBar } from './components/TopBar';
+export type { TopBarProps } from './components/TopBar';
+export { CommandPalette } from './components/CommandPalette';
+export type { CommandPaletteProps, ComandoItem } from './components/CommandPalette';
+export { ShortcutsDialog } from './components/ShortcutsDialog';
+export type { ShortcutsDialogProps, GrupoDeAtalhos } from './components/ShortcutsDialog';
+export { SidePanel } from './components/SidePanel';
+export type { SidePanelProps } from './components/SidePanel';
+export { Grade, Col } from './components/Grade';
+export type { ColProps } from './components/Grade';
+export { Zonas } from './components/Zonas';
+export type { ZonasProps } from './components/Zonas';
+export { MasterDetail } from './components/MasterDetail';
+export type { MasterDetailProps } from './components/MasterDetail';
+export { DataTable } from './components/DataTable';
+export type { DataTableProps, ColunaDaTabela, Densidade } from './components/DataTable';
+export { Breadcrumbs } from './components/Breadcrumbs';
+export type { BreadcrumbsProps, BreadcrumbItem } from './components/Breadcrumbs';
+export { KpiRow } from './components/KpiRow';
+export type { KpiRowProps, KpiItem } from './components/KpiRow';
+export { useAtalhos, teclaModificadora } from './lib/atalhos';
+export type { Atalho } from './lib/atalhos';
+
+// Primitivos anteriores, ainda em uso nas telas de aluno e família.
 
 export {
   Card,
@@ -22,9 +105,6 @@ export {
   CardFooter,
 } from './components/Card';
 export type { CardProps } from './components/Card';
-
-export { Badge } from './components/Badge';
-export type { BadgeProps, BadgeVariant } from './components/Badge';
 
 export { Progress } from './components/Progress';
 export type { ProgressProps } from './components/Progress';
@@ -37,9 +117,6 @@ export { Label } from './components/Label';
 export { Switch } from './components/Switch';
 export type { SwitchProps } from './components/Switch';
 
-export { Chip } from './components/Chip';
-export type { ChipProps } from './components/Chip';
-
 export { OptionCard } from './components/OptionCard';
 export type { OptionCardProps, OptionCardState } from './components/OptionCard';
 
@@ -49,10 +126,7 @@ export type { StatProps } from './components/Stat';
 export { SectionHeader } from './components/SectionHeader';
 export type { SectionHeaderProps } from './components/SectionHeader';
 
-export { Skeleton } from './components/Skeleton';
-
-export { Select } from './components/Select';
-export type { SelectProps } from './components/Select';
+export { Skeleton, SkeletonText, SkeletonLinhas, Carregando } from './components/Skeleton';
 
 export { Stepper } from './components/Stepper';
 export type { StepperProps } from './components/Stepper';

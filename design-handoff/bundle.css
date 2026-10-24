@@ -1,0 +1,121 @@
+@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Sora:wght@500;600&display=swap");
+
+/* Base — the frame sets data-theme; tokens come from tokens.css */
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-text); font-size: 16px; line-height: 26px; -webkit-font-smoothing: antialiased; }
+.na-num { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+.na-stack { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); }
+.na-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-5); }
+:where(.na-btn, .na-field input, .na-field select, .na-tab, .na-nav-item, .na-cell-input):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Button */
+.na-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); border-radius: var(--radius-md); border: 1px solid transparent; font: 700 14px/20px var(--font-text); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.na-btn[disabled] { cursor: not-allowed; opacity: .5; }
+.na-btn-primary { background: var(--primary); color: var(--on-primary); }
+.na-btn-primary:hover:not([disabled]) { background: var(--primary-hover); }
+.na-btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+.na-btn-secondary:hover:not([disabled]) { background: var(--surface-sunken); }
+.na-btn-quiet { background: transparent; color: var(--primary); }
+.na-btn-quiet:hover:not([disabled]) { background: var(--violet-tint); }
+.na-btn-danger { background: var(--surface); color: var(--danger); border-color: var(--danger); }
+.na-btn-danger:hover:not([disabled]) { background: var(--danger-tint); }
+.na-btn-sm { min-height: 36px; padding: 0 var(--space-4); }
+.na-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: na-spin 700ms linear infinite; }
+@keyframes na-spin { to { transform: rotate(360deg); } }
+
+/* Field */
+.na-field { display: flex; flex-direction: column; gap: var(--space-2); max-width: 360px; }
+.na-field-label { font: 700 14px/20px var(--font-text); color: var(--ink); }
+.na-field input, .na-field select { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 400 16px/24px var(--font-text); transition: border-color var(--duration-fast) var(--ease-out); }
+.na-field select { appearance: none; padding-right: 40px; background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%), linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.na-field input:disabled, .na-field select:disabled { background: var(--surface-sunken); color: var(--ink-muted); }
+.na-field-hint { font: 400 14px/22px var(--font-text); color: var(--ink-muted); }
+.na-field-error input, .na-field-error select { border-color: var(--danger); border-width: 2px; }
+.na-field-error .na-field-hint { color: var(--danger); }
+
+/* Chip */
+.na-chip { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 28px; padding: 0 var(--space-3); border-radius: var(--radius-pill); font: 700 13px/18px var(--font-text); white-space: nowrap; }
+.na-chip svg { width: 14px; height: 14px; flex: none; }
+.na-chip-neutral { background: var(--surface-sunken); color: var(--ink); }
+.na-chip-brand { background: var(--violet-tint); color: var(--primary); }
+.na-chip-info { background: var(--cyan-tint); color: var(--info); }
+.na-chip-success { background: var(--success-tint); color: var(--success); }
+.na-chip-warning { background: var(--warning-tint); color: var(--warning); }
+.na-chip-danger { background: var(--danger-tint); color: var(--danger); }
+
+/* Tabs */
+.na-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--line); }
+.na-tab { position: relative; padding: var(--space-3) var(--space-4); border: 0; background: none; color: var(--ink-muted); font: 700 14px/20px var(--font-text); cursor: pointer; border-radius: var(--radius-sm) var(--radius-sm) 0 0; transition: color var(--duration-fast) var(--ease-out); }
+.na-tab:hover { color: var(--ink); }
+.na-tab[aria-selected="true"] { color: var(--primary); }
+.na-tab[aria-selected="true"]::after { content: ""; position: absolute; left: var(--space-4); right: var(--space-4); bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary); }
+.na-tab-count { margin-left: var(--space-2); padding: 0 6px; border-radius: var(--radius-pill); background: var(--surface-sunken); color: var(--ink-muted); font: 400 12.5px/18px var(--font-text); }
+
+/* SideNav */
+.na-nav { display: flex; flex-direction: column; gap: var(--space-1); width: 248px; padding: var(--space-5) var(--space-3); background: var(--surface); border-right: 1px solid var(--line); box-sizing: border-box; }
+.na-nav-brand { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-3) var(--space-5); font: 600 17px/24px var(--font-display); color: var(--ink); }
+.na-nav-mark { height: 24px; width: auto; flex: none; }
+.na-nav-group { padding: var(--space-4) var(--space-3) var(--space-2); font: 400 12.5px/18px var(--font-text); color: var(--ink-muted); }
+.na-nav-item { display: flex; align-items: center; gap: var(--space-3); min-height: 40px; padding: 0 var(--space-3); border-radius: var(--radius-sm); color: var(--ink); text-decoration: none; font: 700 14px/20px var(--font-text); transition: background-color var(--duration-fast) var(--ease-out); }
+.na-nav-item:hover { background: var(--surface-sunken); }
+.na-nav-item[aria-current="page"] { background: var(--violet-tint); color: var(--primary); }
+.na-nav-badge { margin-left: auto; min-width: 20px; padding: 0 6px; border-radius: var(--radius-pill); background: var(--warning-tint); color: var(--warning); font: 700 12.5px/20px var(--font-text); text-align: center; }
+
+/* GradeGrid */
+.na-grid-wrap { overflow: auto; max-width: 100%; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.na-grid { border-collapse: separate; border-spacing: 0; min-width: 100%; font: 400 14px/22px var(--font-text); }
+.na-grid thead th { position: sticky; top: 0; z-index: 1; padding: var(--space-3) var(--space-4); background: var(--surface-sunken); color: var(--ink-muted); font-weight: 700; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.na-grid thead th small { display: block; font-weight: 400; font-size: 12.5px; line-height: 18px; }
+.na-grid thead th:first-child { left: 0; z-index: 3; text-align: left; }
+.na-grid tbody th { position: sticky; left: 0; z-index: 2; padding: var(--space-3) var(--space-4); background: var(--surface); color: var(--ink); font-weight: 700; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.na-grid td { padding: var(--space-1) var(--space-2); border-bottom: 1px solid var(--line); color: var(--ink); text-align: right; white-space: nowrap; }
+.na-grid tr:last-child td, .na-grid tr:last-child th { border-bottom: 0; }
+.na-grid caption { caption-side: bottom; padding: var(--space-3) var(--space-4); text-align: left; font: 400 14px/22px var(--font-text); color: var(--ink-muted); border-top: 1px solid var(--line); }
+.na-avg-note { display: block; color: var(--danger); font: 400 12.5px/18px var(--font-text); }
+.na-grid tbody tr:hover td { background: var(--paper); }
+.na-cell-input { width: 64px; padding: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink); text-align: right; font: 600 15px/20px var(--font-display); font-variant-numeric: tabular-nums; }
+.na-cell-input:hover { border-color: var(--line); }
+.na-cell-input[aria-invalid="true"] { border-color: var(--danger); border-width: 2px; background: var(--danger-tint); }
+.na-grid .na-avg { padding: var(--space-3) var(--space-4); font: 600 15px/20px var(--font-display); font-variant-numeric: tabular-nums; }
+.na-grid .na-avg-low { color: var(--danger); }
+
+/* ProgressTrail — the signature: diamonds from the logo's mortarboard */
+.na-trail { display: flex; align-items: center; gap: var(--space-2); }
+.na-trail-step { position: relative; width: 14px; height: 14px; transform: rotate(45deg); border-radius: 3px; background: var(--surface-sunken); border: 1px solid var(--line-strong); box-sizing: border-box; transition: background-color var(--duration-slow) var(--ease-out), border-color var(--duration-slow) var(--ease-out); }
+.na-trail-done { border-color: transparent; background: linear-gradient(135deg, var(--brand-cyan), var(--brand-violet) 60%, var(--brand-magenta)); }
+.na-trail-current { border: 2px solid var(--primary); background: var(--violet-tint); }
+.na-trail-link { width: 16px; height: 2px; border-radius: 1px; background: var(--line); }
+.na-trail-link-done { background: var(--brand-violet); }
+.na-trail-label { margin-left: var(--space-3); font: 400 14px/22px var(--font-text); color: var(--ink-muted); }
+.na-trail-label strong { color: var(--ink); }
+
+/* Notice */
+.na-notice { display: flex; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-md); font: 400 14px/22px var(--font-text); color: var(--ink); max-width: 640px; }
+.na-notice svg { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.na-notice-title { display: block; font-weight: 700; }
+.na-notice-info { background: var(--cyan-tint); } .na-notice-info svg { color: var(--info); }
+.na-notice-success { background: var(--success-tint); } .na-notice-success svg { color: var(--success); }
+.na-notice-warning { background: var(--warning-tint); } .na-notice-warning svg { color: var(--warning); }
+.na-notice-danger { background: var(--danger-tint); } .na-notice-danger svg { color: var(--danger); }
+.na-notice-action { margin-top: var(--space-2); }
+
+/* EmptyState */
+.na-empty { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); max-width: 420px; padding: var(--space-6); }
+.na-empty-art { width: 56px; height: 56px; }
+.na-empty-title { margin: 0; font: 600 19px/26px var(--font-display); color: var(--ink); }
+.na-empty-text { margin: 0; font: 400 16px/26px var(--font-text); color: var(--ink-muted); }
+.na-empty-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); }
+
+/* Aurora — the fluid background, only behind the landing hero and the student home */
+.na-aurora { position: relative; overflow: hidden; isolation: isolate; background: var(--paper); }
+.na-aurora::before, .na-aurora::after { content: ""; position: absolute; z-index: -1; width: 70%; aspect-ratio: 1; border-radius: 50%; filter: blur(72px); opacity: .22; animation: na-drift 38s var(--ease-in-out) infinite alternate; }
+.na-aurora::before { top: -35%; left: -15%; background: radial-gradient(circle, var(--brand-cyan), transparent 65%); }
+.na-aurora::after { bottom: -45%; right: -20%; background: radial-gradient(circle, var(--brand-magenta), transparent 65%); animation-duration: 46s; animation-direction: alternate-reverse; }
+.na-aurora-veil { position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 50% at 50% 40%, var(--brand-violet), transparent 70%); opacity: .12; animation: na-breathe 24s var(--ease-in-out) infinite alternate; }
+[data-theme="dark"] .na-aurora::before, [data-theme="dark"] .na-aurora::after { opacity: .3; }
+@keyframes na-drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(12%, 10%) scale(1.15); } }
+@keyframes na-breathe { from { transform: scale(1); } to { transform: scale(1.2); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .na-aurora::before, .na-aurora::after, .na-aurora-veil, .na-spin { animation: none; }
+  .na-btn, .na-tab, .na-nav-item, .na-trail-step, .na-field input { transition: none; }
+}

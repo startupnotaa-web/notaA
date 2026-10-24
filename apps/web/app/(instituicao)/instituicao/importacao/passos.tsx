@@ -9,14 +9,14 @@ import type {
   PreviaResponse,
   TipoImportacao,
 } from '@notaa/contracts';
-import { Badge, Button, FileDrop, Label, OptionCard, Progress, Select, Skeleton, Stat, Table, cn } from '@notaa/ui';
+import { Button, Carregando, Chip, FileDrop, Notice, OptionCard, Progress, Select, SkeletonLinhas, SummaryStrip, Table, Tabs } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 
-const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'error' }> = {
+const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'danger' }> = {
   criar: { rotulo: 'Criar', variante: 'success' },
   atualizar: { rotulo: 'Atualizar', variante: 'info' },
   sem_alteracao: { rotulo: 'Sem alteração', variante: 'neutral' },
-  recusar: { rotulo: 'Recusar', variante: 'error' },
+  recusar: { rotulo: 'Recusar', variante: 'danger' },
 };
 
 // ─── Passo 1: tipo e arquivo ─────────────────────────────────────────────────
@@ -55,11 +55,11 @@ export function PassoArquivo({
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-2 p-4">
-        <p className="flex-1 text-sm text-text">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-sunken p-4">
+        <p className="flex-1 text-sm text-ink">
           Comece pelo modelo: ele já vem com as colunas certas e uma linha de exemplo.
         </p>
-        <Button variant="secondary" size="sm" onClick={onBaixarModelo}>
+        <Button variant="secondary" onClick={onBaixarModelo}>
           Baixar modelo (.csv)
         </Button>
       </div>
@@ -106,7 +106,7 @@ export function PassoMapeamento({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-text-muted">
+      <p className="text-sm text-ink-muted">
         Recebemos {recebido.totalLinhas.toLocaleString('pt-BR')} linhas ({recebido.formato.toUpperCase()}). Diga em que
         coluna da sua planilha está cada informação. Já sugerimos pelo nome das colunas.
       </p>
@@ -126,12 +126,12 @@ export function PassoMapeamento({
             return (
               <tr key={c.campo}>
                 <td className="w-1/2">
-                  <Label htmlFor={`map-${c.campo}`} className="flex items-center gap-2">
+                  <p className="flex items-center gap-2 font-bold">
                     {c.rotulo}
-                    {c.obrigatorio ? <Badge variant="warning">Obrigatório</Badge> : null}
-                  </Label>
+                    {c.obrigatorio ? <Chip tone="warning">Obrigatório</Chip> : null}
+                  </p>
                   {c.descricao ? (
-                    <p id={idDica} className="mt-1 text-xs text-text-muted">
+                    <p id={idDica} className="mt-1 text-caption text-ink-muted">
                       {c.descricao}
                     </p>
                   ) : null}
@@ -139,20 +139,18 @@ export function PassoMapeamento({
                 <td>
                   <Select
                     id={`map-${c.campo}`}
+                    label="Coluna da planilha"
                     value={valor === null ? '' : String(valor)}
-                    error={erro}
+                    error={erro ? (valor === null ? 'Escolha a coluna deste campo.' : 'Esta coluna já está em outro campo.') : undefined}
                     aria-describedby={c.descricao ? idDica : undefined}
                     onChange={(e) =>
                       setMapeamento({ ...mapeamento, [c.campo]: e.target.value === '' ? null : Number(e.target.value) })
                     }
-                  >
-                    <option value="">Não importar</option>
-                    {recebido.cabecalhos.map((h, i) => (
-                      <option key={i} value={i}>
-                        {h || `Coluna ${i + 1} (sem nome)`}
-                      </option>
-                    ))}
-                  </Select>
+                    options={[
+                      { value: '', label: 'Não importar' },
+                      ...recebido.cabecalhos.map((h, i) => ({ value: String(i), label: h || `Coluna ${i + 1} (sem nome)` })),
+                    ]}
+                  />
                 </td>
               </tr>
             );
@@ -161,12 +159,14 @@ export function PassoMapeamento({
       </Table>
 
       {faltando.length || repetidas.size ? (
-        <ul role="alert" className="space-y-1 text-sm text-error">
-          {faltando.map((c) => (
-            <li key={c.campo}>Escolha a coluna de “{c.rotulo}”.</li>
-          ))}
-          {repetidas.size ? <li>Há dois campos apontando para a mesma coluna.</li> : null}
-        </ul>
+        <Notice tone="danger" title="Falta ajustar o mapeamento">
+          <ul className="m-0 list-disc space-y-1 pl-5">
+            {faltando.map((c) => (
+              <li key={c.campo}>Escolha a coluna de “{c.rotulo}”.</li>
+            ))}
+            {repetidas.size ? <li>Há dois campos apontando para a mesma coluna.</li> : null}
+          </ul>
+        </Notice>
       ) : null}
 
       <div className="flex flex-wrap justify-between gap-3">
@@ -221,9 +221,7 @@ export function PassoPrevia({
   if (erro) {
     return (
       <div className="space-y-4">
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
         <Button variant="secondary" onClick={onVoltar}>
           Voltar às colunas
         </Button>
@@ -238,34 +236,29 @@ export function PassoPrevia({
 
   return (
     <div className="space-y-6">
-      <div role="group" aria-label="Filtrar linhas por resultado" className="grid gap-3 sm:grid-cols-4">
-        {(Object.keys(ACOES) as AcaoLinha[]).map((acao) => (
-          <button
-            key={acao}
-            type="button"
-            aria-pressed={filtro === acao}
-            onClick={() => {
-              setFiltro(filtro === acao ? null : acao);
-              setPagina(1);
-            }}
-            className={cn(
-              'min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-base',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-              filtro === acao ? 'border-brand-secondary bg-surface-2' : 'border-border bg-surface hover:bg-surface-2',
-            )}
-          >
-            <span className="block text-2xl font-bold text-text">
-              {resumo ? resumo[acao].toLocaleString('pt-BR') : '…'}
-            </span>
-            <span className="text-sm text-text-muted">{ACOES[acao].rotulo}</span>
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Filtrar linhas por resultado"
+        value={filtro ?? 'todas'}
+        onChange={(id) => {
+          setFiltro(id === 'todas' ? null : (id as AcaoLinha));
+          setPagina(1);
+        }}
+        tabs={[
+          {
+            id: 'todas',
+            label: 'Todas',
+            count: resumo ? (Object.keys(ACOES) as AcaoLinha[]).reduce((soma, acao) => soma + resumo[acao], 0) : undefined,
+          },
+          ...(Object.keys(ACOES) as AcaoLinha[]).map((acao) => ({ id: acao, label: ACOES[acao].rotulo, count: resumo ? resumo[acao] : undefined })),
+        ]}
+      />
 
       {previa === null ? (
-        <Skeleton className="h-64 w-full" />
+        <Carregando rotulo="Montando a prévia">
+          <SkeletonLinhas linhas={6} />
+        </Carregando>
       ) : previa.linhas.length === 0 ? (
-        <p className="text-sm text-text-muted">Nenhuma linha neste filtro.</p>
+        <p className="text-sm text-ink-muted">Nenhuma linha neste filtro.</p>
       ) : (
         <Table caption={filtro ? `Linhas: ${ACOES[filtro].rotulo}` : 'Todas as linhas da planilha'}>
           <thead>
@@ -281,12 +274,12 @@ export function PassoPrevia({
             {previa.linhas.map((l) => (
               <tr key={l.linha}>
                 <td className="tabular-nums">{l.linha}</td>
-                <td className="font-mono text-xs">{l.chave ?? '—'}</td>
+                <td className="font-mono text-caption">{l.chave ?? '—'}</td>
                 <td>{l.nome ?? '—'}</td>
                 <td>
-                  <Badge variant={ACOES[l.acao].variante}>{ACOES[l.acao].rotulo}</Badge>
+                  <Chip tone={ACOES[l.acao].variante}>{ACOES[l.acao].rotulo}</Chip>
                 </td>
-                <td className={l.acao === 'recusar' ? 'text-error' : 'text-text-muted'}>
+                <td className={l.acao === 'recusar' ? 'text-danger' : 'text-ink-muted'}>
                   {l.motivos.length ? l.motivos.join(' ') : '—'}
                 </td>
               </tr>
@@ -297,25 +290,25 @@ export function PassoPrevia({
 
       {paginas > 1 ? (
         <nav aria-label="Páginas da prévia" className="flex items-center justify-center gap-3 text-sm">
-          <Button variant="ghost" size="sm" onClick={() => setPagina(pagina - 1)} disabled={pagina === 1}>
+          <Button variant="quiet" onClick={() => setPagina(pagina - 1)} disabled={pagina === 1}>
             Anterior
           </Button>
           <span aria-live="polite">
             Página {pagina} de {paginas}
           </span>
-          <Button variant="ghost" size="sm" onClick={() => setPagina(pagina + 1)} disabled={pagina === paginas}>
+          <Button variant="quiet" onClick={() => setPagina(pagina + 1)} disabled={pagina === paginas}>
             Próxima
           </Button>
         </nav>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <Button variant="secondary" onClick={onVoltar}>
           Voltar às colunas
         </Button>
         <div className="flex flex-wrap items-center gap-3">
           {resumo ? (
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-muted">
               {mudancas === 0
                 ? 'Nada a gravar: a planilha não traz novidade.'
                 : `${resumo.criar} a criar e ${resumo.atualizar} a atualizar. ${resumo.recusar} recusada(s) fica(m) de fora.`}
@@ -355,7 +348,13 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
     };
   }, [importacaoId]);
 
-  if (!imp) return <Skeleton className="h-32 w-full" />;
+  if (!imp) {
+    return (
+      <Carregando rotulo="Carregando o resultado">
+        <SkeletonLinhas linhas={3} />
+      </Carregando>
+    );
+  }
   const emAndamento = imp.status === 'pendente' || imp.status === 'processando';
   const r = imp.relatorio;
 
@@ -364,7 +363,7 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
       <div aria-live="polite" className="space-y-3">
         {emAndamento ? (
           <>
-            <p className="text-sm text-text">
+            <p className="text-sm text-ink">
               {imp.status === 'pendente' ? 'Na fila, aguardando o processamento…' : 'Gravando…'}
             </p>
             <Progress
@@ -374,24 +373,27 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
             />
           </>
         ) : imp.status === 'falhou' ? (
-          <p role="alert" className="rounded-md border border-error p-3 text-sm text-error">
-            A importação falhou: {imp.erro ?? 'erro desconhecido'}
-          </p>
+          <Notice tone="danger" title="A importação falhou">
+            {imp.erro ?? 'Erro desconhecido.'}
+          </Notice>
         ) : (
-          <p className="text-sm font-semibold text-success">Importação concluída.</p>
+          <Notice tone="success">Importação concluída.</Notice>
         )}
       </div>
 
       {r ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Stat label="Criados" value={r.criados.toLocaleString('pt-BR')} />
-            <Stat label="Atualizados" value={r.atualizados.toLocaleString('pt-BR')} />
-            <Stat label="Sem alteração" value={r.semAlteracao.toLocaleString('pt-BR')} />
-            <Stat label="Recusados" value={r.recusados.toLocaleString('pt-BR')} />
-          </div>
+          <SummaryStrip
+            aria-label="Resumo da importação"
+            items={[
+              { id: 'criados', label: 'Criados', value: r.criados.toLocaleString('pt-BR') },
+              { id: 'atualizados', label: 'Atualizados', value: r.atualizados.toLocaleString('pt-BR') },
+              { id: 'sem', label: 'Sem alteração', value: r.semAlteracao.toLocaleString('pt-BR') },
+              { id: 'recusados', label: 'Recusados', value: r.recusados.toLocaleString('pt-BR') },
+            ]}
+          />
           {r.responsaveisVinculados > 0 ? (
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-muted">
               {r.responsaveisVinculados.toLocaleString('pt-BR')} responsável(is) vinculado(s) a alunos.
             </p>
           ) : null}
@@ -408,8 +410,8 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
                 {r.recusas.slice(0, 200).map((l) => (
                   <tr key={l.linha}>
                     <td className="tabular-nums">{l.linha}</td>
-                    <td className="font-mono text-xs">{l.chave ?? '—'}</td>
-                    <td className="text-error">{l.motivos.join(' ')}</td>
+                    <td className="font-mono text-caption">{l.chave ?? '—'}</td>
+                    <td className="text-danger">{l.motivos.join(' ')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -419,7 +421,7 @@ export function PassoResultado({ importacaoId, onNova }: { importacaoId: string;
       ) : null}
 
       {!emAndamento ? (
-        <div className="flex justify-end">
+        <div>
           <Button onClick={onNova}>Nova importação</Button>
         </div>
       ) : null}

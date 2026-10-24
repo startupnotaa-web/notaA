@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { MinhaTurma, PreviaConvite } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Input, Label, SectionHeader, Skeleton } from '@notaa/ui';
+import { Button, Chip, Inset, Notice, Panel, Section, Skeleton, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
@@ -23,12 +23,12 @@ type Etapa =
   | { fase: 'confirmar'; previa: PreviaConvite }
   | { fase: 'enviado'; turma: MinhaTurma };
 
-const ROTULO_STATUS: Record<MinhaTurma['status'], { texto: string; variante: 'brand' | 'neutral' }> =
+const ROTULO_STATUS: Record<MinhaTurma['status'], { texto: string; tom: 'brand' | 'neutral' }> =
   {
-    ativa: { texto: 'Ativa', variante: 'brand' },
-    pendente: { texto: 'Aguardando aprovação', variante: 'neutral' },
-    recusada: { texto: 'Recusada', variante: 'neutral' },
-    removida: { texto: 'Removida', variante: 'neutral' },
+    ativa: { texto: 'Ativa', tom: 'brand' },
+    pendente: { texto: 'Aguardando aprovação', tom: 'neutral' },
+    recusada: { texto: 'Recusada', tom: 'neutral' },
+    removida: { texto: 'Removida', tom: 'neutral' },
   };
 
 function nomeDoDono(turma: Pick<MinhaTurma, 'dono'>): string {
@@ -101,126 +101,108 @@ export function MinhasTurmas() {
   }
 
   return (
-    <section className="space-y-4">
-      <SectionHeader title="Minhas" accent="Turmas" as="h2" />
-
+    <Section title="Minhas turmas" divided>
       {turmas === null ? (
-        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full" />
       ) : turmas.length > 0 ? (
-        <ul className="space-y-2">
+        <ul className="m-0 flex list-none flex-col p-0">
           {turmas.map((t) => {
             const rotulo = ROTULO_STATUS[t.status];
             return (
-              <li key={t.turmaId}>
-                <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="space-y-1">
-                        <p className="font-bold text-text">{t.turmaNome}</p>
-                        <p className="text-sm text-text-muted">
-                          {nomeDoDono(t)} · {t.anoLetivoRotulo}
-                        </p>
-                      </div>
-                      <Badge variant={rotulo.variante}>{rotulo.texto}</Badge>
-                    </div>
-                    {t.status === 'pendente' && (
-                      <p className="mt-3 text-xs text-text-muted">
-                        Enquanto não for aprovada, a turma não vê nenhum dado seu.
-                      </p>
-                    )}
-                  </CardHeader>
-                </Card>
+              <li key={t.turmaId} className="flex flex-col gap-space-2 border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0">
+                <div className="flex flex-wrap items-center justify-between gap-space-3">
+                  <div className="flex flex-col gap-space-1">
+                    <p className="m-0 text-body font-bold text-ink">{t.turmaNome}</p>
+                    <p className="m-0 text-body-sm text-ink-muted">
+                      {nomeDoDono(t)} · {t.anoLetivoRotulo}
+                    </p>
+                  </div>
+                  <Chip tone={rotulo.tom}>{rotulo.texto}</Chip>
+                </div>
+                {t.status === 'pendente' && (
+                  <p className="m-0 text-caption text-ink-muted">Enquanto não for aprovada, a turma não vê nenhum dado seu.</p>
+                )}
               </li>
             );
           })}
         </ul>
       ) : (
-        <p className="text-sm text-text-muted">
-          Você ainda não está em nenhuma turma. Isso é opcional: a plataforma funciona igual sem
-          turma.
+        <p className="m-0 max-w-texto text-body text-ink-muted">
+          Você ainda não está em nenhuma turma. Isso é opcional: a plataforma funciona igual sem turma.
         </p>
       )}
 
-      <Card>
-        <CardHeader>
-          {etapa.fase === 'codigo' && (
-            <form onSubmit={buscarPrevia} className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="codigo-turma">Entrar em uma turma</Label>
-                <Input
-                  id="codigo-turma"
-                  value={codigo}
-                  onChange={(ev) => setCodigo(ev.target.value)}
-                  placeholder="Código de convite"
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="uppercase"
-                  required
-                />
-                <p className="text-xs text-text-muted">
-                  Peça o código ao seu professor ou à sua instituição.
-                </p>
-              </div>
-              <Button type="submit" disabled={carregando || codigo.trim().length < 4}>
-                {carregando ? 'Verificando…' : 'Verificar código'}
+      <Panel>
+        {etapa.fase === 'codigo' && (
+          <form onSubmit={buscarPrevia} className="flex flex-col gap-space-5">
+            <TextField
+              label="Entrar em uma turma"
+              value={codigo}
+              onChange={(ev) => setCodigo(ev.target.value)}
+              placeholder="Código de convite"
+              hint="Peça o código ao seu professor ou à sua instituição."
+              autoComplete="off"
+              spellCheck={false}
+              className="[&_input]:uppercase"
+              required
+            />
+            <div>
+              <Button type="submit" loading={carregando} disabled={codigo.trim().length < 4}>
+                {carregando ? 'Verificando' : 'Verificar código'}
               </Button>
-            </form>
-          )}
-
-          {etapa.fase === 'confirmar' && (
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
-                  Confirme antes de entrar
-                </p>
-                <p className="text-xl font-extrabold text-text">{etapa.previa.turmaNome}</p>
-                <p className="text-sm text-text-muted">
-                  {nomeDoDono(etapa.previa)} · Ano letivo {etapa.previa.anoLetivoRotulo}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border bg-surface-2 p-3">
-                <p className="text-sm text-text">
-                  Ao entrar, você autoriza {nomeDoDono(etapa.previa)} a acompanhar seu rendimento e
-                  seu histórico de estudos.
-                </p>
-                <p className="mt-2 text-xs text-text-muted">
-                  Só o que você produzir depois da aprovação fica visível. Suas conversas com o tutor
-                  não são compartilhadas.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="cta" onClick={confirmarEntrada} disabled={carregando}>
-                  {carregando ? 'Enviando…' : 'Autorizo e quero entrar'}
-                </Button>
-                <Button variant="secondary" onClick={recomecar} disabled={carregando}>
-                  Cancelar
-                </Button>
-              </div>
             </div>
-          )}
+          </form>
+        )}
 
-          {etapa.fase === 'enviado' && (
-            <div className="space-y-3">
-              <p className="font-bold text-text">Solicitação enviada</p>
-              <p className="text-sm text-text-muted">
-                Um professor de {etapa.turma.turmaNome} precisa aprovar sua entrada. Até lá, a turma
-                não vê nenhum dado seu.
+        {etapa.fase === 'confirmar' && (
+          <div className="flex flex-col gap-space-5">
+            <div className="flex flex-col gap-space-1">
+              <p className="m-0 text-label text-primary">Confirme antes de entrar</p>
+              <p className="m-0 font-display text-heading-2 text-ink">{etapa.previa.turmaNome}</p>
+              <p className="m-0 text-body-sm text-ink-muted">
+                {nomeDoDono(etapa.previa)} · Ano letivo {etapa.previa.anoLetivoRotulo}
               </p>
+            </div>
+
+            <Inset className="flex flex-col gap-space-2">
+              <p className="m-0 text-body-sm text-ink">
+                Ao entrar, você autoriza {nomeDoDono(etapa.previa)} a acompanhar seu rendimento e seu histórico de estudos.
+              </p>
+              <p className="m-0 text-caption text-ink-muted">
+                Só o que você produzir depois da aprovação fica visível. Suas conversas com o tutor não são compartilhadas.
+              </p>
+            </Inset>
+
+            <div className="flex flex-wrap gap-space-3">
+              <Button variant="primary" onClick={confirmarEntrada} loading={carregando}>
+                {carregando ? 'Enviando' : 'Autorizo e quero entrar'}
+              </Button>
+              <Button variant="secondary" onClick={recomecar} disabled={carregando}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {etapa.fase === 'enviado' && (
+          <div className="flex flex-col gap-space-4">
+            <Notice tone="success" title="Solicitação enviada">
+              Um professor de {etapa.turma.turmaNome} precisa aprovar sua entrada. Até lá, a turma não vê nenhum dado seu.
+            </Notice>
+            <div>
               <Button variant="secondary" onClick={recomecar}>
                 Entrar em outra turma
               </Button>
             </div>
-          )}
+          </div>
+        )}
 
-          {erro && (
-            <p role="alert" className="mt-3 text-sm text-error">
-              {erro}
-            </p>
-          )}
-        </CardHeader>
-      </Card>
-    </section>
+        {erro && (
+          <div className="mt-space-4">
+            <Notice tone="danger">{erro}</Notice>
+          </div>
+        )}
+      </Panel>
+    </Section>
   );
 }

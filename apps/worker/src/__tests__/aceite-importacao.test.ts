@@ -1,4 +1,5 @@
 import { ImportacaoRepositoryDb, eq, importacao, type Database } from '@notaa/db';
+import { PII_EMAIL, PII_TELEFONE, acharPiiNoAuditLog } from '@notaa/db/src/testing/audit-sem-pii';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import {
   cabecalhoDoModelo,
@@ -73,9 +74,9 @@ function linhasDaPlanilha(): (string | null)[][] {
 
 let xlsx: Uint8Array;
 
-async function novaImportacao(path: string): Promise<string> {
-  armazenadas.set(path, xlsx);
-  const planilha = await lerPlanilha(xlsx, detectarFormato(xlsx, 'alunos.xlsx'));
+async function novaImportacao(path: string, bytes: Uint8Array = xlsx): Promise<string> {
+  armazenadas.set(path, bytes);
+  const planilha = await lerPlanilha(bytes, detectarFormato(bytes, 'alunos.xlsx'));
   const [criada] = await db
     .insert(importacao)
     .values({
@@ -178,11 +179,19 @@ describe('aceite: importação de 300 alunos', () => {
     expect(await contar('aluno_instituicao', OUTRA_INST)).toBe(0);
   });
 
-  it('casa o responsável com a conta existente pelo e-mail', async () => {
-    const { rows } = await banco.pg.query<{ usuario_id: string | null }>(
-      `SELECT usuario_id FROM responsavel_aluno WHERE email = 'resp100@exemplo.test'`,
+  it('grava o responsável só como contato: nenhuma conta é ligada, nem a que tem o mesmo e-mail', async () => {
+    // Existe uma conta de responsável com o e-mail resp100@exemplo.test (semente).
+    // Casar por e-mail daria a quem a controla leitura do cadastro de um menor.
+    const { rows } = await banco.pg.query<{ n: number; ligados: number }>(
+      `SELECT count(*)::int AS n, count(usuario_id)::int AS ligados FROM responsavel_aluno WHERE instituicao_id = $1`,
+      [INST],
     );
-    expect(rows).toEqual([{ usuario_id: CONTA_RESPONSAVEL }]);
+    expect(rows[0]).toEqual({ n: 280, ligados: 0 });
+    const { rows: conta } = await banco.pg.query(
+      `SELECT 1 FROM responsavel_aluno WHERE email = 'resp100@exemplo.test' AND usuario_id = $1`,
+      [CONTA_RESPONSAVEL],
+    );
+    expect(conta).toHaveLength(0);
   });
 
   it('audita a importação e cada vínculo de responsável', async () => {
@@ -243,5 +252,99 @@ describe('fila', () => {
     const final = await confirmarEProcessar(id);
     expect(final.status).toBe('falhou');
     expect(final.erro).toBe('A planilha não está mais disponível. Envie de novo.');
+  });
+});
+
+describe('mesma matrícula em duas instituições', () => {
+  const MATRICULA_COMUM = '20260100'; // já existe na A, importada acima
+  const SO_DA_B = 'B-0001';
+
+  beforeAll(async () => {
+    await banco.pg.exec(`
+      INSERT INTO aluno_instituicao (instituicao_id, matricula, nome, email) VALUES
+        ('${OUTRA_INST}', '${MATRICULA_COMUM}', 'Aluno da B', 'aluno@b.test'),
+        ('${OUTRA_INST}', '${SO_DA_B}', 'Só da B', NULL);
+    `);
+  });
+
+  const daB = async () =>
+    (
+      await banco.pg.query(
+        `SELECT matricula, nome, email, turma_id, atualizado_em FROM aluno_instituicao
+          WHERE instituicao_id = $1 ORDER BY matricula`,
+        [OUTRA_INST],
+      )
+    ).rows;
+
+  it('importar na A atualiza só a linha da A e deixa a da B como estava', async () => {
+    const antes = await daB();
+    const planilha = await gerarXlsx(cabecalhoDoModelo('alunos'), [
+      [MATRICULA_COMUM, 'Nome corrigido na A', '05/03/2010', null, '1º ano A', null, null, null, null, null, null, null, null],
+      [SO_DA_B, 'Aluna nova na A', '05/03/2010', null, '1º ano B', null, null, null, null, null, null, null, null],
+    ]);
+    const id = await novaImportacao(`${INST}/comum.xlsx`, planilha);
+    const { plano } = await previa(id);
+    expect(plano.resumo).toMatchObject({ atualizar: 1, criar: 1, recusar: 0 });
+
+    const final = await confirmarEProcessar(id);
+    expect(final.status).toBe('concluida');
+
+    const naA = await banco.pg.query<{ matricula: string; nome: string }>(
+      `SELECT matricula, nome FROM aluno_instituicao WHERE instituicao_id = $1 AND matricula = ANY($2)`,
+      [INST, [MATRICULA_COMUM, SO_DA_B]],
+    );
+    expect(Object.fromEntries(naA.rows.map((r) => [r.matricula, r.nome]))).toEqual({
+      [MATRICULA_COMUM]: 'Nome corrigido na A',
+      [SO_DA_B]: 'Aluna nova na A',
+    });
+    expect(await daB()).toEqual(antes);
+  });
+});
+
+// Auditoria sem dado pessoal: o audit_log é imutável, então o que entra nele não
+// sai mais. Só ids, nomes de campo e tipo de evento.
+describe('audit_log sem dado pessoal', () => {
+  async function dadosDaAuditoria() {
+    const { rows } = await banco.pg.query<{ acao: string; dados: Record<string, unknown> }>(
+      `SELECT acao, dados FROM audit_log WHERE acao NOT LIKE 'audit_log.%'`,
+    );
+    return rows;
+  }
+
+  it('as expressões de e-mail e telefone pegam o que devem e deixam os UUIDs em paz', () => {
+    for (const ruim of ['mae@x.test', '(11) 99999-0000', '11999990000', '11 99999-0000', '1199990000']) {
+      expect(`{"v":"${ruim}"}`, ruim).toMatch(ruim.includes('@') ? PII_EMAIL : PII_TELEFONE);
+    }
+    expect('{"id":"48f24410-f8d5-4ab5-8123-456789012345"}').not.toMatch(PII_TELEFONE);
+  });
+
+  it('o vínculo de 280 responsáveis grava só o id do contato', async () => {
+    const vinculos = (await dadosDaAuditoria()).filter((r) => r.acao === 'responsavel.vinculado');
+    expect(vinculos.length).toBeGreaterThanOrEqual(280);
+    for (const v of vinculos) {
+      expect(Object.keys(v.dados).sort()).toEqual(['importacaoId', 'responsavelAlunoId']);
+    }
+  });
+
+  it('a atualização de um responsável grava só os nomes dos campos que mudaram', async () => {
+    const planilha = await gerarXlsx(cabecalhoDoModelo('alunos'), [
+      // mesma matrícula e mesmo e-mail de responsável da linha 100, outro nome e outro telefone
+      ['20260100', 'Nome corrigido na A', '05/03/2010', null, '1º ano A', 'Maria Nova', 'resp100@exemplo.test', '(11) 98888-7777', 'mãe', null, null, null, null],
+    ]);
+    const id = await novaImportacao(`${INST}/atualiza-resp.xlsx`, planilha);
+    const final = await confirmarEProcessar(id);
+    expect(final.status).toBe('concluida');
+
+    const atualizados = (await dadosDaAuditoria()).filter((r) => r.acao === 'responsavel.atualizado');
+    expect(atualizados).toHaveLength(1);
+    expect(atualizados[0]!.dados).toEqual({
+      importacaoId: id,
+      responsavelAlunoId: expect.any(String),
+      campos: ['nome', 'telefone'],
+    });
+  });
+
+  it('nenhuma linha do audit_log tem e-mail, telefone ou as chaves de dado pessoal', async () => {
+    expect(await acharPiiNoAuditLog(banco.pg)).toEqual([]);
   });
 });

@@ -1,4 +1,5 @@
 import type { RegraAvaliativa } from '@notaa/contracts';
+import { acharPiiNoAuditLog } from '@notaa/db/src/testing/audit-sem-pii';
 import { criarBancoDeTeste, type BancoDeTeste } from '@notaa/db/src/testing/banco-de-teste';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { EscopoService } from '../../escopo/escopo.service';
@@ -17,6 +18,7 @@ const GESTOR_B = '11111111-0000-4000-8000-000000000003';
 const PROF_A = '11111111-0000-4000-8000-000000000004';
 const TURMA_A = '000000a1-0000-4000-8000-000000000000';
 const TURMA_B = '000000b1-0000-4000-8000-000000000000';
+const MOTIVO = 'Ajuste combinado com o conselho pedagógico.';
 
 function regra(overrides: Partial<RegraAvaliativa> = {}): RegraAvaliativa {
   return {
@@ -26,7 +28,7 @@ function regra(overrides: Partial<RegraAvaliativa> = {}): RegraAvaliativa {
     mediaFinal: { pesosPorPeriodo: [2, 2, 3, 3] },
     arredondamento: { tipo: 'normal', casas: 1 },
     recuperacao: { paralela: null, final: null },
-    aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75 },
+    aprovacao: { mediaMinima: 6, frequenciaMinima: 0.75, abonaFaltaJustificada: false },
     conselhoDeClasse: { habilitado: false, margemMaxima: null },
     ...overrides,
   };
@@ -64,13 +66,15 @@ describe('regra avaliativa versionada', () => {
     const primeira = await servico.criarRegra(GESTOR_A, 'admin_instituicao', {
       anoLetivoId: ANO,
       regra: regra(),
+      justificativa: MOTIVO,
     });
     v1 = primeira.id;
     const { rows: antes } = await banco.pg.query('SELECT * FROM regra_avaliativa WHERE id = $1', [v1]);
 
     const segunda = await servico.criarRegra(COORD_A, 'admin_instituicao', {
       anoLetivoId: ANO,
-      regra: regra({ aprovacao: { mediaMinima: 7, frequenciaMinima: 0.8 } }),
+      regra: regra({ aprovacao: { mediaMinima: 7, frequenciaMinima: 0.8, abonaFaltaJustificada: false } }),
+      justificativa: MOTIVO,
     });
     expect([primeira.versao, segunda.versao]).toEqual([1, 2]);
 
@@ -84,7 +88,7 @@ describe('regra avaliativa versionada', () => {
   });
 
   it('não ativa enquanto os períodos não batem com o regime', async () => {
-    await expect(servico.ativarRegra(GESTOR_A, 'admin_instituicao', v1)).rejects.toMatchObject({
+    await expect(servico.ativarRegra(GESTOR_A, 'admin_instituicao', v1, { justificativa: MOTIVO })).rejects.toMatchObject({
       response: { error: { code: 'PERIODOS_NAO_CONFEREM' } },
     });
   });
@@ -105,14 +109,14 @@ describe('regra avaliativa versionada', () => {
         dataFim: dataFim!,
       });
     }
-    const ativa = await servico.ativarRegra(GESTOR_A, 'admin_instituicao', v1);
+    const ativa = await servico.ativarRegra(GESTOR_A, 'admin_instituicao', v1, { justificativa: MOTIVO });
     expect(ativa).toMatchObject({ versao: 1, ativa: true });
     expect((await servico.regraAtiva(PROF_A, ANO))?.versao).toBe(1);
   });
 
   it('grava na auditoria a criação e a ativação', async () => {
     const { rows } = await banco.pg.query<{ acao: string }>(
-      `SELECT acao FROM audit_log WHERE instituicao_id = $1 ORDER BY criado_em, acao`,
+      `SELECT acao FROM audit_log WHERE instituicao_id = $1 AND entidade = 'regra_avaliativa' ORDER BY criado_em, acao`,
       [INST_A],
     );
     expect(rows.map((r) => r.acao)).toEqual(['regra.criada', 'regra.criada', 'regra.ativada']);
@@ -121,7 +125,7 @@ describe('regra avaliativa versionada', () => {
   it('outra instituição não vê nem ativa a regra', async () => {
     expect(await servico.listarRegras(GESTOR_B, ANO)).toEqual([]);
     expect(await servico.regraAtiva(GESTOR_B, ANO)).toBeNull();
-    await expect(servico.ativarRegra(GESTOR_B, 'admin_instituicao', v1)).rejects.toMatchObject({
+    await expect(servico.ativarRegra(GESTOR_B, 'admin_instituicao', v1, { justificativa: MOTIVO })).rejects.toMatchObject({
       response: { error: { code: 'NAO_ENCONTRADO' } },
     });
   });
@@ -175,5 +179,13 @@ describe('simulação', () => {
     expect(resultados[0]).toMatchObject({ mediaFinal: 6.7, situacao: 'aprovado' });
     const { rows: depois } = await banco.pg.query('SELECT count(*) FROM regra_avaliativa');
     expect(depois).toEqual(antes);
+  });
+});
+
+describe('privacidade da auditoria', () => {
+  it('nada do que o serviço acadêmico audita identifica uma pessoa', async () => {
+    const { rows } = await banco.pg.query('SELECT 1 FROM audit_log');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(await acharPiiNoAuditLog(banco.pg)).toEqual([]);
   });
 });

@@ -14,9 +14,9 @@ export const Stat = React.forwardRef<HTMLDivElement, StatProps>(function Stat(
 ) {
   return (
     <div ref={ref} className={cn('flex flex-col gap-1', className)} {...props}>
-      <span className="text-sm font-medium text-text-muted">{label}</span>
-      <span className="text-2xl font-bold leading-tight text-text">{value}</span>
-      {hint ? <span className="text-xs text-text-muted">{hint}</span> : null}
+      <span className="text-label text-ink-muted">{label}</span>
+      <span className="font-display text-figure tabular-nums text-ink">{value}</span>
+      {hint ? <span className="text-caption text-ink-muted">{hint}</span> : null}
     </div>
   );
 });

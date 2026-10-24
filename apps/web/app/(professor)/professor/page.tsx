@@ -2,12 +2,27 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AlunoDaTurma, IndicadorDeTurma, SolicitacaoPendente } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Skeleton, cn } from '@notaa/ui';
+import {
+  ActionRow,
+  Button,
+  Carregando,
+  Chip,
+  EmptyState,
+  Notice,
+  PageHeader,
+  Section,
+  Skeleton,
+  SkeletonLinhas,
+  SummaryStrip,
+  Table,
+  Tabs,
+  propsDoPainel,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 import { useUser } from '../../../lib/user-context';
 import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
 import { GestaoDeTurmas } from '../../components/painel/GestaoDeTurmas';
-import { RiskBadge } from './components/RiskBadge';
+import { SituacaoDoAluno } from './components/SituacaoDoAluno';
 import { VisaoDoAluno } from './components/VisaoDoAluno';
 
 /**
@@ -54,9 +69,9 @@ export default function ProfessorPainelPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-6">
-        <Skeleton className="h-40 w-full rounded-2xl" />
-      </div>
+      <Carregando rotulo="Carregando o painel">
+        <Skeleton className="h-40 w-full" />
+      </Carregando>
     );
   }
 
@@ -73,36 +88,22 @@ export default function ProfessorPainelPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
-      <div
-        role="tablist"
-        aria-label="Seções do painel"
-        className="flex gap-1 overflow-x-auto border-b border-border"
-      >
-        {ABAS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            role="tab"
-            aria-selected={aba === a.id}
-            onClick={() => setAba(a.id)}
-            className={cn(
-              'whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors',
-              aba === a.id
-                ? 'border-brand-primary text-brand-primary'
-                : 'border-transparent text-text-muted hover:text-text',
-            )}
-          >
-            {a.rotulo}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col gap-space-6">
+      <Tabs
+        label="Seções do painel"
+        idBase="professor"
+        tabs={ABAS.map((a) => ({ id: a.id, label: a.rotulo }))}
+        value={aba}
+        onChange={(id) => setAba(id as typeof aba)}
+      />
 
-      {aba === 'turmas' && <TurmasQueLeciono ehIndependente />}
-      {/* Professor independente não administra quadro de professores: ele já é o
+      <div {...propsDoPainel('professor', aba)} className="flex flex-col gap-space-6">
+        {aba === 'turmas' && <TurmasQueLeciono ehIndependente />}
+        {/* Professor independente não administra quadro de professores: ele já é o
           professor das turmas dele, e a API recusaria esses controles. */}
-      {aba === 'gestao' && <GestaoDeTurmas podeGerenciarProfessores={false} />}
-      {aba === 'anos' && <GestaoDeAnosLetivos />}
+        {aba === 'gestao' && <GestaoDeTurmas podeGerenciarProfessores={false} />}
+        {aba === 'anos' && <GestaoDeAnosLetivos />}
+      </div>
     </div>
   );
 }
@@ -138,82 +139,64 @@ function TurmasQueLeciono({ ehIndependente }: { ehIndependente: boolean }) {
   }
 
   return (
-    <div className={cn('space-y-6', !ehIndependente && 'mx-auto w-full max-w-5xl px-4 py-6')}>
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-text">Suas turmas</h1>
-        <p className="text-sm text-text-muted">
-          Você vê apenas as turmas em que leciona, e apenas o que cada aluno gerou depois de entrar
-          nelas.
-        </p>
-      </header>
+    <div className="flex flex-col gap-space-6 md:gap-space-7">
+      <PageHeader
+        title="Suas turmas"
+        description="Você vê apenas as turmas em que leciona, e apenas o que cada aluno gerou depois de entrar nelas."
+      />
 
-      {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      )}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
       {turmas === null ? (
-        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Carregando rotulo="Carregando as suas turmas">
+          <SkeletonLinhas linhas={3} />
+        </Carregando>
       ) : turmas.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <p className="text-sm text-text-muted">
-              {ehIndependente
-                ? 'Você ainda não tem turmas. Crie a primeira na aba "Gerenciar turmas" — antes disso, é preciso ter um ano letivo.'
-                : 'Você ainda não está vinculado a nenhuma turma. A instituição é que cria as turmas e vincula você a elas.'}
-            </p>
-          </CardHeader>
-        </Card>
+        <EmptyState title="Nenhuma turma por aqui">
+          {ehIndependente
+            ? 'Crie a primeira na aba "Gerenciar turmas". Antes disso, é preciso ter um ano letivo.'
+            : 'A instituição é que cria as turmas e vincula você a elas.'}
+        </EmptyState>
       ) : (
         <>
           <Alertas turmas={turmas} />
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {turmas.map((t) => (
-              <li key={t.turmaId}>
-                <Card>
-                  <CardHeader>
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-bold text-text">{t.nome}</p>
-                        <Badge variant="neutral">{t.anoLetivoRotulo}</Badge>
-                      </div>
-                      <dl className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <dt className="text-text-muted">Alunos</dt>
-                          <dd className="font-semibold text-text">{t.alunosAtivos}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-text-muted">Média XP</dt>
-                          <dd className="font-semibold text-text">
-                            {t.mediaXp.toLocaleString('pt-BR')}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-text-muted">Sem acesso (7d)</dt>
-                          <dd className="font-semibold text-text">{t.alunosSemAcesso7d}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-text-muted">Pendentes</dt>
-                          <dd className="font-semibold text-text">{t.solicitacoesPendentes}</dd>
-                        </div>
-                      </dl>
-                      {t.areaMaisFragil && (
-                        <p className="text-xs text-text-muted">
-                          Área mais frágil:{' '}
-                          {ROTULO_AREA[t.areaMaisFragil.area] ?? t.areaMaisFragil.area} ·{' '}
-                          {porcentagem(t.areaMaisFragil.mediaAcertos)} de acerto
-                        </p>
-                      )}
-                      <Button variant="secondary" size="sm" onClick={() => setTurmaAberta(t)}>
-                        Abrir turma
-                      </Button>
+          <Section title="Turmas em que você leciona">
+            <ul className="m-0 flex list-none flex-col p-0">
+              {turmas.map((t) => (
+                <li
+                  key={t.turmaId}
+                  className="flex flex-col gap-space-4 border-b border-line py-space-5 first:pt-0 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-space-3">
+                    <div className="flex items-center gap-space-3">
+                      <p className="m-0 font-display text-heading-3 text-ink">{t.nome}</p>
+                      <Chip tone="neutral">{t.anoLetivoRotulo}</Chip>
                     </div>
-                  </CardHeader>
-                </Card>
-              </li>
-            ))}
-          </ul>
+                    <Button variant="secondary" onClick={() => setTurmaAberta(t)}>
+                      Abrir turma
+                      <span className="sr-only"> {t.nome}</span>
+                    </Button>
+                  </div>
+                  <SummaryStrip
+                    aria-label={`Indicadores de ${t.nome}`}
+                    items={[
+                      { id: 'alunos', label: 'Alunos', value: String(t.alunosAtivos) },
+                      { id: 'xp', label: 'Média XP', value: t.mediaXp.toLocaleString('pt-BR') },
+                      { id: 'sem', label: 'Sem acesso (7d)', value: String(t.alunosSemAcesso7d) },
+                      { id: 'pend', label: 'Pendentes', value: String(t.solicitacoesPendentes) },
+                    ]}
+                  />
+                  {t.areaMaisFragil && (
+                    <p className="m-0 text-caption text-ink-muted">
+                      Área mais frágil:{' '}
+                      {ROTULO_AREA[t.areaMaisFragil.area] ?? t.areaMaisFragil.area} ·{' '}
+                      {porcentagem(t.areaMaisFragil.mediaAcertos)} de acerto
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Section>
         </>
       )}
     </div>
@@ -228,36 +211,31 @@ function Alertas({ turmas }: { turmas: readonly IndicadorDeTurma[] }) {
   if (pendentes.length === 0 && semAcesso.length === 0) return null;
 
   return (
-    <Card className="border-brand-primary/20 bg-brand-primary/5">
-      <CardHeader>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">
-          Precisa de você
-        </p>
-        <ul className="mt-2 space-y-1 text-sm text-text">
-          {pendentes.map((t) => (
-            <li key={`p-${t.turmaId}`}>
-              {t.solicitacoesPendentes} aluno(s) aguardando aprovação em {t.nome}.
-            </li>
-          ))}
-          {semAcesso.map((t) => (
-            <li key={`s-${t.turmaId}`}>
-              {t.alunosSemAcesso7d} aluno(s) de {t.nome} sem acesso há 7 dias.
-            </li>
-          ))}
-        </ul>
-      </CardHeader>
-    </Card>
+    <Section title="Precisa de você">
+      <ul className="m-0 flex list-none flex-col p-0">
+        {pendentes.map((t) => (
+          <ActionRow
+            key={`p-${t.turmaId}`}
+            status={<Chip tone="brand">Pendente</Chip>}
+            title={`${t.solicitacoesPendentes} ${t.solicitacoesPendentes === 1 ? 'aluno aguardando' : 'alunos aguardando'} aprovação`}
+            description={t.nome}
+          />
+        ))}
+        {semAcesso.map((t) => (
+          <ActionRow
+            key={`s-${t.turmaId}`}
+            status={<Chip tone="warning">Atenção</Chip>}
+            title={`${t.alunosSemAcesso7d} ${t.alunosSemAcesso7d === 1 ? 'aluno sem acesso' : 'alunos sem acesso'} há 7 dias`}
+            description={t.nome}
+          />
+        ))}
+      </ul>
+    </Section>
   );
 }
 
 /** Nível 2: a turma por dentro. */
-function VisaoDaTurma({
-  turma,
-  onVoltar,
-}: {
-  turma: IndicadorDeTurma;
-  onVoltar: () => void;
-}) {
+function VisaoDaTurma({ turma, onVoltar }: { turma: IndicadorDeTurma; onVoltar: () => void }) {
   const [alunos, setAlunos] = useState<AlunoDaTurma[] | null>(null);
   const [pendentes, setPendentes] = useState<SolicitacaoPendente[] | null>(null);
   const [selecionados, setSelecionados] = useState<string[]>([]);
@@ -307,7 +285,7 @@ function VisaoDaTurma({
 
   if (alunoAberto) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-6">
+      <div>
         <VisaoDoAluno
           turmaId={turma.turmaId}
           estudanteId={alunoAberto}
@@ -318,155 +296,144 @@ function VisaoDaTurma({
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-text">{turma.nome}</h1>
-          <p className="text-sm text-text-muted">Ano letivo {turma.anoLetivoRotulo}</p>
-        </div>
-        <Button variant="secondary" size="sm" onClick={onVoltar}>
-          Voltar
-        </Button>
-      </div>
+    <div className="flex flex-col gap-space-6 md:gap-space-7">
+      <PageHeader
+        title={turma.nome}
+        description={`Ano letivo ${turma.anoLetivoRotulo}`}
+        actions={
+          <Button variant="secondary" onClick={onVoltar}>
+            Voltar
+          </Button>
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-4">
-        {[
-          { rotulo: 'Alunos', valor: String(turma.alunosAtivos) },
-          { rotulo: 'Média XP', valor: turma.mediaXp.toLocaleString('pt-BR') },
-          { rotulo: 'Sem acesso (7d)', valor: String(turma.alunosSemAcesso7d) },
-          { rotulo: 'Pendentes', valor: String(turma.solicitacoesPendentes) },
-        ].map((i) => (
-          <Card key={i.rotulo}>
-            <CardHeader>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
-                {i.rotulo}
-              </p>
-              <p className="mt-1 text-2xl font-extrabold text-text">{i.valor}</p>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      <SummaryStrip
+        aria-label="Indicadores da turma"
+        items={[
+          { id: 'alunos', label: 'Alunos', value: String(turma.alunosAtivos) },
+          { id: 'xp', label: 'Média XP', value: turma.mediaXp.toLocaleString('pt-BR') },
+          { id: 'sem', label: 'Sem acesso (7d)', value: String(turma.alunosSemAcesso7d) },
+          { id: 'pend', label: 'Pendentes', value: String(turma.solicitacoesPendentes) },
+        ]}
+      />
 
-      {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      )}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Entradas pendentes</h2>
+      <Section title="Entradas pendentes">
         {pendentes === null ? (
-          <Skeleton className="h-16 w-full rounded-lg" />
+          <Carregando rotulo="Carregando as solicitações">
+            <SkeletonLinhas linhas={2} />
+          </Carregando>
         ) : pendentes.length === 0 ? (
-          <p className="text-sm text-text-muted">Nenhuma solicitação aguardando.</p>
+          <p className="m-0 text-body text-ink-muted">Nenhuma solicitação aguardando.</p>
         ) : (
-          <Card>
-            <CardHeader>
-              <ul className="space-y-1">
-                {pendentes.map((s) => (
-                  <li key={s.estudanteId}>
-                    <label className="flex items-center gap-2 text-sm text-text">
-                      <input
-                        type="checkbox"
-                        checked={selecionados.includes(s.estudanteId)}
-                        onChange={(ev) =>
-                          setSelecionados((atual) =>
-                            ev.target.checked
-                              ? [...atual, s.estudanteId]
-                              : atual.filter((id) => id !== s.estudanteId),
-                          )
-                        }
-                      />
-                      <span>{s.nome ?? 'Sem nome'}</span>
-                      <span className="text-xs text-text-muted">
-                        {new Date(s.solicitadoEm).toLocaleDateString('pt-BR')}
-                      </span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs text-text-muted">
-                A partir da aprovação você passa a ver o rendimento do aluno. Nada anterior a ela fica
-                visível.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  disabled={enviando || selecionados.length === 0}
-                  onClick={() => void decidir('aprovar')}
-                >
-                  Aprovar {selecionados.length > 0 && `(${selecionados.length})`}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={enviando || selecionados.length === 0}
-                  onClick={() => void decidir('recusar')}
-                >
-                  Recusar
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
+          <>
+            <ul className="m-0 flex list-none flex-col p-0">
+              {pendentes.map((s) => (
+                <li key={s.estudanteId}>
+                  <label className="flex min-h-[44px] items-center gap-space-3 text-body text-ink">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 accent-primary"
+                      checked={selecionados.includes(s.estudanteId)}
+                      onChange={(ev) =>
+                        setSelecionados((atual) =>
+                          ev.target.checked
+                            ? [...atual, s.estudanteId]
+                            : atual.filter((id) => id !== s.estudanteId),
+                        )
+                      }
+                    />
+                    <span>{s.nome ?? 'Sem nome'}</span>
+                    <span className="text-caption text-ink-muted">
+                      {new Date(s.solicitadoEm).toLocaleDateString('pt-BR')}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <p className="m-0 max-w-texto text-caption text-ink-muted">
+              A partir da aprovação você passa a ver o rendimento do aluno. Nada anterior a ela fica
+              visível.
+            </p>
+            <div className="flex flex-wrap gap-space-3">
+              <Button
+                disabled={selecionados.length === 0}
+                loading={enviando}
+                onClick={() => void decidir('aprovar')}
+              >
+                Aprovar {selecionados.length > 0 && `(${selecionados.length})`}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={enviando || selecionados.length === 0}
+                onClick={() => void decidir('recusar')}
+              >
+                Recusar
+              </Button>
+            </div>
+          </>
         )}
-      </section>
+      </Section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold text-text">Seus alunos</h2>
+      <Section title="Seus alunos" divided>
         {alunos === null ? (
-          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Carregando rotulo="Carregando os alunos">
+            <SkeletonLinhas linhas={5} />
+          </Carregando>
         ) : alunos.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            Nenhum aluno aprovado ainda. Alunos aparecem depois de entrarem com o código e você
-            aprovar.
-          </p>
+          <EmptyState title="Nenhum aluno aprovado ainda">
+            Alunos aparecem depois de entrarem com o código e você aprovar.
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[38rem] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-text-muted">
-                  <th className="px-3 py-2 font-semibold">Aluno</th>
-                  <th className="px-3 py-2 font-semibold">Situação</th>
-                  <th className="px-3 py-2 font-semibold">Último acesso</th>
-                  <th className="px-3 py-2 font-semibold">Ofensiva</th>
-                  <th className="px-3 py-2 font-semibold">XP</th>
-                  <th className="px-3 py-2" />
+          <Table caption="Alunos da turma" captionOculta className="min-w-[38rem]">
+            <thead>
+              <tr>
+                <th scope="col">Aluno</th>
+                <th scope="col">Situação</th>
+                <th scope="col">Último acesso</th>
+                <th scope="col" className="text-right">
+                  Ofensiva
+                </th>
+                <th scope="col" className="text-right">
+                  XP
+                </th>
+                <th scope="col">
+                  <span className="sr-only">Ações</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {alunos.map((a) => (
+                <tr key={a.estudanteId}>
+                  <th scope="row" className="text-left font-bold text-ink">
+                    {a.nome ?? 'Sem nome'}
+                  </th>
+                  <td>
+                    <SituacaoDoAluno risco={a.risco} />
+                  </td>
+                  <td className="text-ink-muted">
+                    {a.ultimoAcessoEm
+                      ? new Date(a.ultimoAcessoEm).toLocaleDateString('pt-BR')
+                      : 'Nunca'}
+                  </td>
+                  <td className="tabular text-right">{a.streak}</td>
+                  <td className="tabular text-right">{a.xpTotal.toLocaleString('pt-BR')}</td>
+                  <td className="text-right">
+                    <Button variant="quiet" onClick={() => setAlunoAberto(a.estudanteId)}>
+                      Abrir<span className="sr-only"> {a.nome ?? 'aluno'}</span>
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {alunos.map((a) => (
-                  <tr key={a.estudanteId} className="border-b border-border/50">
-                    <td className="px-3 py-2 font-semibold text-text">{a.nome ?? 'Sem nome'}</td>
-                    <td className="px-3 py-2">
-                      <RiskBadge risco={a.risco} />
-                    </td>
-                    <td className="px-3 py-2 text-text-muted">
-                      {a.ultimoAcessoEm
-                        ? new Date(a.ultimoAcessoEm).toLocaleDateString('pt-BR')
-                        : 'Nunca'}
-                    </td>
-                    <td className="px-3 py-2 text-text">{a.streak}</td>
-                    <td className="px-3 py-2 text-text">{a.xpTotal.toLocaleString('pt-BR')}</td>
-                    <td className="px-3 py-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setAlunoAberto(a.estudanteId)}
-                      >
-                        Abrir
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </Table>
         )}
-        <p className="text-xs text-text-muted">
+        <p className="m-0 max-w-texto text-caption text-ink-muted">
           A situação considera engajamento, não nota. Cada aluno aparece a partir da data em que a
           entrada dele nesta turma foi aprovada.
         </p>
-      </section>
+      </Section>
     </div>
   );
 }

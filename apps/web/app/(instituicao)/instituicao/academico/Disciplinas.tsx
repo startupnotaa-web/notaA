@@ -1,20 +1,25 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { AreaEnem, Disciplina, ProfessorDaTurma, Turma, TurmaDisciplina } from '@notaa/contracts';
+import type {
+  AreaEnem,
+  Disciplina,
+  ProfessorDaTurma,
+  Turma,
+  TurmaDisciplina,
+} from '@notaa/contracts';
 import {
-  Badge,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
+  Carregando,
+  Chip,
+  EmptyState,
+  Notice,
+  Panel,
+  Section,
   Select,
-  Skeleton,
+  SkeletonLinhas,
   Table,
+  TextField,
 } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { toast } from '../../../components/toast';
@@ -26,7 +31,8 @@ const AREAS: { valor: AreaEnem; rotulo: string }[] = [
   { valor: 'matematica', rotulo: 'Matemática' },
   { valor: 'redacao', rotulo: 'Redação' },
 ];
-const rotuloArea = (a: AreaEnem | null) => AREAS.find((x) => x.valor === a)?.rotulo ?? 'Sem área do ENEM';
+const rotuloArea = (a: AreaEnem | null) =>
+  AREAS.find((x) => x.valor === a)?.rotulo ?? 'Sem área do ENEM';
 
 function mensagem(e: unknown, padrao: string): string {
   return e instanceof ApiError ? e.message : padrao;
@@ -63,7 +69,11 @@ export function Disciplinas() {
     try {
       await apiFetch<Disciplina>('/academico/disciplinas', {
         method: 'POST',
-        body: JSON.stringify({ nome: nome.trim(), codigo: codigo.trim() || null, areaEnem: area || null }),
+        body: JSON.stringify({
+          nome: nome.trim(),
+          codigo: codigo.trim() || null,
+          areaEnem: area || null,
+        }),
       });
       setNome('');
       setCodigo('');
@@ -90,16 +100,18 @@ export function Disciplinas() {
   }
 
   return (
-    <div className="space-y-10">
-      <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-        <div className="space-y-3">
-          <h2 className="text-lg font-bold text-text">Disciplinas</h2>
+    <div className="flex flex-col gap-space-7">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-space-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-space-7">
+        <Section title="Disciplinas" className="min-w-0">
           {disciplinas === null ? (
-            <Skeleton className="h-40 w-full" />
+            <Carregando rotulo="Carregando as disciplinas">
+              <SkeletonLinhas linhas={4} />
+            </Carregando>
           ) : disciplinas.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-6 text-sm text-text-muted">
-              Nenhuma disciplina ainda. Crie ao lado ou importe uma planilha em “Importação e exportação”.
-            </p>
+            <EmptyState title="Nenhuma disciplina ainda">
+              Crie ao lado ou importe a planilha que a instituição já usa, em “Importação e
+              exportação”.
+            </EmptyState>
           ) : (
             <Table caption="Disciplinas da instituição" captionOculta>
               <thead>
@@ -116,12 +128,18 @@ export function Disciplinas() {
               <tbody>
                 {disciplinas.map((d) => (
                   <tr key={d.id}>
-                    <td className="font-medium text-text">{d.nome}</td>
+                    <td className="font-medium text-ink">{d.nome}</td>
                     <td>{d.codigo ?? '—'}</td>
                     <td>{rotuloArea(d.areaEnem)}</td>
-                    <td>{d.arquivada ? <Badge variant="neutral">Arquivada</Badge> : <Badge variant="success">Ativa</Badge>}</td>
+                    <td>
+                      {d.arquivada ? (
+                        <Chip tone="neutral">Arquivada</Chip>
+                      ) : (
+                        <Chip tone="success">Ativa</Chip>
+                      )}
+                    </td>
                     <td className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => void alternarArquivo(d)}>
+                      <Button variant="quiet" onClick={() => void alternarArquivo(d)}>
                         {d.arquivada ? 'Desarquivar' : 'Arquivar'}
                         <span className="sr-only"> {d.nome}</span>
                       </Button>
@@ -131,53 +149,56 @@ export function Disciplinas() {
               </tbody>
             </Table>
           )}
-        </div>
+        </Section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Nova disciplina</CardTitle>
-            <CardDescription>Disciplina não é apagada: arquive quando sair da grade.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void criar();
-              }}
+        <Panel
+          title="Nova disciplina"
+          description="Disciplina não é apagada: arquive quando sair da grade."
+          className="self-start"
+        >
+          <form
+            className="flex flex-col gap-space-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void criar();
+            }}
+          >
+            <fieldset
+              disabled={enviando}
+              className="m-0 flex min-w-0 flex-col gap-space-5 border-0 p-0"
             >
-              <fieldset disabled={enviando} className="space-y-4">
-                <div className="space-y-1">
-                  <Label htmlFor="disciplina-nome">Nome</Label>
-                  <Input id="disciplina-nome" value={nome} onChange={(e) => setNome(e.target.value)} required minLength={2} maxLength={80} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="disciplina-codigo">Código (opcional)</Label>
-                  <Input id="disciplina-codigo" value={codigo} onChange={(e) => setCodigo(e.target.value)} maxLength={20} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="disciplina-area">Área do ENEM</Label>
-                  <Select id="disciplina-area" value={area} onChange={(e) => setArea(e.target.value as AreaEnem | '')}>
-                    <option value="">Sem área do ENEM</option>
-                    {AREAS.map((a) => (
-                      <option key={a.valor} value={a.valor}>
-                        {a.rotulo}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                {erro ? (
-                  <p role="alert" className="text-sm text-error">
-                    {erro}
-                  </p>
-                ) : null}
-                <Button type="submit" fullWidth>
-                  {enviando ? 'Salvando…' : 'Criar disciplina'}
-                </Button>
-              </fieldset>
-            </form>
-          </CardContent>
-        </Card>
+              <TextField
+                label="Nome"
+                id="disciplina-nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+                minLength={2}
+                maxLength={80}
+              />
+              <TextField
+                label="Código (opcional)"
+                id="disciplina-codigo"
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                maxLength={20}
+              />
+              <Select
+                label="Área do ENEM"
+                value={area}
+                onChange={(e) => setArea(e.target.value as AreaEnem | '')}
+                options={[
+                  { value: '', label: 'Sem área do ENEM' },
+                  ...AREAS.map((a) => ({ value: a.valor, label: a.rotulo })),
+                ]}
+              />
+              {erro ? <Notice tone="danger">{erro}</Notice> : null}
+              <Button type="submit" className="w-full" loading={enviando}>
+                {enviando ? 'Salvando' : 'Criar disciplina'}
+              </Button>
+            </fieldset>
+          </form>
+        </Panel>
       </div>
 
       <AtribuicaoPorTurma disciplinas={(disciplinas ?? []).filter((d) => !d.arquivada)} />
@@ -226,10 +247,13 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
   async function atribuir(disciplinaId: string, professorId: string | null) {
     try {
       setAtribuicoes(
-        await apiFetch<TurmaDisciplina[]>(`/academico/turmas/${turmaId}/disciplinas/${disciplinaId}`, {
-          method: 'PUT',
-          body: JSON.stringify({ professorId }),
-        }),
+        await apiFetch<TurmaDisciplina[]>(
+          `/academico/turmas/${turmaId}/disciplinas/${disciplinaId}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify({ professorId }),
+          },
+        ),
       );
     } catch (e) {
       toast(mensagem(e, 'Não foi possível salvar a atribuição.'), { variant: 'error' });
@@ -238,48 +262,49 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
 
   async function retirar(disciplinaId: string) {
     try {
-      await apiFetch<void>(`/academico/turmas/${turmaId}/disciplinas/${disciplinaId}`, { method: 'DELETE' });
+      await apiFetch<void>(`/academico/turmas/${turmaId}/disciplinas/${disciplinaId}`, {
+        method: 'DELETE',
+      });
       await carregarTurma(turmaId);
     } catch (e) {
       toast(mensagem(e, 'Não foi possível retirar a disciplina.'), { variant: 'error' });
     }
   }
 
-  const disponiveis = disciplinas.filter((d) => !atribuicoes?.some((a) => a.disciplina.id === d.id));
+  const disponiveis = disciplinas.filter(
+    (d) => !atribuicoes?.some((a) => a.disciplina.id === d.id),
+  );
 
   return (
-    <section aria-labelledby="titulo-atribuicao" className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 id="titulo-atribuicao" className="text-lg font-bold text-text">
-            Disciplinas por turma
-          </h2>
-          <p className="text-sm text-text-muted">
-            Só aparecem professores já vinculados à turma. Vincule na aba Turmas do painel.
-          </p>
-        </div>
-        {turmas && turmas.length > 0 ? (
-          <div className="w-64 space-y-1">
-            <Label htmlFor="atribuicao-turma">Turma</Label>
-            <Select id="atribuicao-turma" value={turmaId} onChange={(e) => setTurmaId(e.target.value)}>
-              {turmas.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nome} ({t.anoLetivo.rotulo})
-                </option>
-              ))}
-            </Select>
-          </div>
-        ) : null}
-      </div>
-
+    <Section
+      title="Disciplinas por turma"
+      description="Só aparecem professores já vinculados à turma. Vincule na aba Turmas do painel."
+      divided
+      action={
+        turmas && turmas.length > 0 ? (
+          <Select
+            label="Turma"
+            className="w-64"
+            value={turmaId}
+            onChange={(e) => setTurmaId(e.target.value)}
+            options={turmas.map((t) => ({
+              value: t.id,
+              label: `${t.nome} (${t.anoLetivo.rotulo})`,
+            }))}
+          />
+        ) : null
+      }
+    >
       {turmas === null ? (
-        <Skeleton className="h-32 w-full" />
+        <Carregando rotulo="Carregando as turmas">
+          <SkeletonLinhas linhas={3} />
+        </Carregando>
       ) : turmas.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-sm text-text-muted">
-          Nenhuma turma ativa. Crie turmas na aba Turmas do painel.
-        </p>
+        <EmptyState title="Nenhuma turma ativa">Crie turmas na aba Turmas do painel.</EmptyState>
       ) : atribuicoes === null ? (
-        <Skeleton className="h-32 w-full" />
+        <Carregando rotulo="Carregando as disciplinas da turma">
+          <SkeletonLinhas linhas={3} />
+        </Carregando>
       ) : (
         <>
           {atribuicoes.length > 0 ? (
@@ -296,27 +321,25 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
               <tbody>
                 {atribuicoes.map((a) => (
                   <tr key={a.disciplina.id}>
-                    <td className="font-medium text-text">{a.disciplina.nome}</td>
+                    <td className="font-medium text-ink">{a.disciplina.nome}</td>
                     <td>
-                      <Label htmlFor={`prof-${a.disciplina.id}`} className="sr-only">
-                        Professor de {a.disciplina.nome}
-                      </Label>
                       <Select
-                        id={`prof-${a.disciplina.id}`}
+                        label={`Professor de ${a.disciplina.nome}`}
+                        labelOculto
                         value={a.professor?.id ?? ''}
                         onChange={(e) => void atribuir(a.disciplina.id, e.target.value || null)}
                         className="max-w-xs"
-                      >
-                        <option value="">Sem professor</option>
-                        {professores.map((p) => (
-                          <option key={p.professorId} value={p.professorId}>
-                            {p.nome ?? p.email}
-                          </option>
-                        ))}
-                      </Select>
+                        options={[
+                          { value: '', label: 'Sem professor' },
+                          ...professores.map((p) => ({
+                            value: p.professorId,
+                            label: p.nome ?? p.email,
+                          })),
+                        ]}
+                      />
                     </td>
                     <td className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => void retirar(a.disciplina.id)}>
+                      <Button variant="quiet" onClick={() => void retirar(a.disciplina.id)}>
                         Retirar<span className="sr-only"> {a.disciplina.nome} da turma</span>
                       </Button>
                     </td>
@@ -325,37 +348,36 @@ function AtribuicaoPorTurma({ disciplinas }: { disciplinas: Disciplina[] }) {
               </tbody>
             </Table>
           ) : (
-            <p className="text-sm text-text-muted">Esta turma ainda não tem disciplinas.</p>
+            <p className="m-0 text-body-sm text-ink-muted">Esta turma ainda não tem disciplinas.</p>
           )}
           <form
-            className="flex flex-wrap items-end gap-3"
+            className="flex flex-wrap items-end gap-space-3"
             onSubmit={(e) => {
               e.preventDefault();
-              if (novaDisciplina) void atribuir(novaDisciplina, null).then(() => setNovaDisciplina(''));
+              if (novaDisciplina)
+                void atribuir(novaDisciplina, null).then(() => setNovaDisciplina(''));
             }}
           >
-            <div className="w-72 space-y-1">
-              <Label htmlFor="atribuicao-disciplina">Adicionar disciplina à turma</Label>
-              <Select
-                id="atribuicao-disciplina"
-                value={novaDisciplina}
-                onChange={(e) => setNovaDisciplina(e.target.value)}
-                disabled={disponiveis.length === 0}
-              >
-                <option value="">{disponiveis.length ? 'Escolha a disciplina' : 'Todas já estão na turma'}</option>
-                {disponiveis.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.nome}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <Select
+              label="Adicionar disciplina à turma"
+              className="w-72"
+              value={novaDisciplina}
+              onChange={(e) => setNovaDisciplina(e.target.value)}
+              disabled={disponiveis.length === 0}
+              options={[
+                {
+                  value: '',
+                  label: disponiveis.length ? 'Escolha a disciplina' : 'Todas já estão na turma',
+                },
+                ...disponiveis.map((d) => ({ value: d.id, label: d.nome })),
+              ]}
+            />
             <Button type="submit" variant="secondary" disabled={!novaDisciplina}>
               Adicionar
             </Button>
           </form>
         </>
       )}
-    </section>
+    </Section>
   );
 }

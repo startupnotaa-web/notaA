@@ -31,8 +31,8 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function 
       className={cn(
         // Alvo de toque >= 44px garantido por min-h/min-w; o trilho é menor (centralizado).
         'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2',
-        'transition-colors duration-base',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'transition-colors duration-base ease-out',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'disabled:opacity-50 disabled:pointer-events-none',
         className,
       )}
@@ -41,14 +41,14 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function 
       <span
         aria-hidden="true"
         className={cn(
-          'relative inline-block h-6 w-11 rounded-full transition-colors duration-base',
-          checked ? 'bg-brand-secondary' : 'bg-surface-2',
+          'relative inline-block h-6 w-11 rounded-full transition-colors duration-base ease-out',
+          checked ? 'bg-primary' : 'border border-line-strong bg-surface-sunken',
         )}
       >
         <span
           className={cn(
-            'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-base',
-            checked && 'translate-x-5',
+            'absolute top-0.5 left-0.5 h-5 w-5 rounded-full transition-transform duration-base ease-out',
+            checked ? 'translate-x-5 bg-primary-on' : 'bg-ink-muted',
           )}
         />
       </span>

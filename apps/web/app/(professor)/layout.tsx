@@ -1,8 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { PainelShell } from '../components/PainelShell';
+import { GraduationCap } from 'lucide-react';
+import { PainelShell, type ItemDeNavegacao } from '../components/PainelShell';
+import { papeisDaRota } from '../../lib/destino';
 import { UserProvider } from '../../lib/user-context';
+
+const NAVEGACAO: ItemDeNavegacao[] = [{ href: '/professor', rotulo: 'Minhas turmas', icone: <GraduationCap className="h-5 w-5" /> }];
 
 // Antes este grupo não tinha layout nenhum: a tela do professor renderizava sem
 // guarda de sessão, e qualquer pessoa que abrisse a URL via a casca dela. Os
@@ -12,7 +16,8 @@ export default function ProfessorLayout({ children }: { children: ReactNode }) {
     <UserProvider>
       <PainelShell
         titulo="Painel do professor"
-        papeisPermitidos={['professor_institucional', 'professor_independente', 'admin']}
+        papeisPermitidos={papeisDaRota('/professor')}
+        navegacao={NAVEGACAO}
       >
         {children}
       </PainelShell>

@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
-import { Card, CardDescription, CardHeader, CardTitle, Label, SectionHeader, Select, Skeleton, cn } from '@notaa/ui';
+import {
+  Carregando,
+  EmptyState,
+  Notice,
+  PageHeader,
+  Select,
+  Skeleton,
+  Tabs,
+  propsDoPainel,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../lib/api-client';
 import { GestaoDeAnosLetivos } from '../../../components/painel/GestaoDeAnosLetivos';
 import { Disciplinas } from './Disciplinas';
@@ -52,84 +61,48 @@ export default function ConfiguracaoAcademicaPage() {
   const precisaDeAno = secao === 'periodos' || secao === 'regra';
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 lg:px-8">
-      <SectionHeader
-        as="h1"
+    <div className="flex flex-col gap-space-6">
+      <PageHeader
         title="Configuração acadêmica"
         description="Defina o calendário avaliativo, as disciplinas e como as notas viram média e situação final."
-        action={
+        actions={
           anos && anos.length > 0 ? (
-            <div className="w-56 space-y-1">
-              <Label htmlFor="ano-letivo-config">Ano letivo</Label>
-              <Select id="ano-letivo-config" value={anoLetivoId} onChange={(e) => setAnoLetivoId(e.target.value)}>
-                {anos.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.rotulo}
-                    {a.arquivado ? ' (arquivado)' : ''}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <Select
+              label="Ano letivo"
+              className="w-56"
+              value={anoLetivoId}
+              onChange={(e) => setAnoLetivoId(e.target.value)}
+              options={anos.map((a) => ({
+                value: a.id,
+                label: `${a.rotulo}${a.arquivado ? ' (arquivado)' : ''}`,
+              }))}
+            />
           ) : null
         }
       />
 
-      {erro ? (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      ) : null}
+      {erro ? <Notice tone="danger">{erro}</Notice> : null}
 
-      <div role="tablist" aria-label="Seções da configuração acadêmica" className="flex gap-1 overflow-x-auto border-b border-border">
-        {SECOES.map((s) => (
-          <button
-            key={s.id}
-            id={`aba-${s.id}`}
-            type="button"
-            role="tab"
-            aria-selected={secao === s.id}
-            aria-controls={secao === s.id ? `painel-${s.id}` : undefined}
-            tabIndex={secao === s.id ? 0 : -1}
-            onClick={() => setSecao(s.id)}
-            onKeyDown={(e) => {
-              // Padrão ARIA de abas: setas trocam de aba, Tab sai da lista.
-              const i = SECOES.findIndex((x) => x.id === secao);
-              const destino =
-                e.key === 'ArrowRight' ? (i + 1) % SECOES.length
-                : e.key === 'ArrowLeft' ? (i - 1 + SECOES.length) % SECOES.length
-                : e.key === 'Home' ? 0
-                : e.key === 'End' ? SECOES.length - 1
-                : null;
-              if (destino === null) return;
-              e.preventDefault();
-              setSecao(SECOES[destino]!.id);
-              document.getElementById(`aba-${SECOES[destino]!.id}`)?.focus();
-            }}
-            className={cn(
-              'min-h-[44px] whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-              secao === s.id ? 'border-brand-primary text-brand-primary' : 'border-transparent text-text-muted hover:text-text',
-            )}
-          >
-            {s.rotulo}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções da configuração acadêmica"
+        idBase="config"
+        tabs={SECOES.map((s) => ({ id: s.id, label: s.rotulo }))}
+        value={secao}
+        onChange={(id) => setSecao(id as Secao)}
+      />
 
-      <section id={`painel-${secao}`} role="tabpanel" aria-labelledby={`aba-${secao}`}>
+      <section {...propsDoPainel('config', secao)}>
         {anos === null ? (
-          <Skeleton className="h-48 w-full" />
+          <Carregando rotulo="Carregando a configuração acadêmica">
+            <Skeleton className="h-48 w-full" />
+          </Carregando>
         ) : secao === 'ano' ? (
           <GestaoDeAnosLetivos />
         ) : precisaDeAno && !anoSelecionado ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Crie um ano letivo primeiro</CardTitle>
-              <CardDescription>
-                Períodos e regra avaliativa pertencem a um ano letivo. Cadastre o ano na aba “Ano letivo”.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <EmptyState title="Crie um ano letivo primeiro">
+            Períodos e regra avaliativa pertencem a um ano letivo. Cadastre o ano na aba “Ano
+            letivo”.
+          </EmptyState>
         ) : secao === 'periodos' && anoSelecionado ? (
           <Periodos anoLetivo={anoSelecionado} />
         ) : secao === 'disciplinas' ? (

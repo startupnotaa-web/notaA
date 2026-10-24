@@ -72,7 +72,9 @@ export class EscopoService {
    * Instituição e função (gestor | coordenação) do admin de instituição. A
    * função não está no JWT de propósito (perfis-decisoes.md, 2026-10-16): mudar
    * o enum de papel quebra deploys antigos da API, então ela é lida aqui.
-   * Admin sem função gravada é gestor — é o que ele era antes da coluna existir.
+   * Admin sem função gravada é COORDENAÇÃO, a função de menor privilégio: gestor
+   * só existe quando gravado de propósito (quem cria a instituição no cadastro e
+   * os admins que já existiam quando a coluna nasceu, na migração 0015).
    */
   async funcaoNaInstituicao(
     usuarioId: string,
@@ -90,7 +92,7 @@ export class EscopoService {
     if (!linha || linha.tipoPerfil !== 'admin_instituicao' || !linha.instituicaoId) {
       proibido('Sua conta não administra nenhuma instituição.');
     }
-    return { instituicaoId: linha.instituicaoId, funcao: linha.funcao ?? 'gestor' };
+    return { instituicaoId: linha.instituicaoId, funcao: linha.funcao ?? 'coordenacao' };
   }
 
   /** Como `funcaoNaInstituicao`, mas recusa a coordenação. */

@@ -30,7 +30,7 @@ Ver [`docs/09-estrutura-repositorio.md`](docs/09-estrutura-repositorio.md) para 
 ## Próximos passos (Fase 0)
 
 1. ~~Bootstrap do monorepo~~ ✅
-2. Design tokens + extração dos assets de marca (`2.png` → `apps/web/public/brand/`)
+2. Design tokens + ícones da marca gerados do símbolo vetorial (`apps/web/public/brand/`)
 3. Esquema de dados (Drizzle, 37 tabelas) + Supabase/RLS
 4. Contracts (Zod) + ports
 5. Auth + RBAC

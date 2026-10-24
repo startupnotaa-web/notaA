@@ -13,7 +13,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:cores": "node scripts/verificar-cores.mjs"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

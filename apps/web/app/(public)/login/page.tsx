@@ -1,112 +1,180 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Button, Card, Input, Label } from '@notaa/ui';
-import { garantirRegistro } from '../../../lib/post-auth';
-import { rotaInicialPorPapel } from '../../../lib/rota-inicial';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { AuthError } from '@supabase/supabase-js';
+import { semRotulo, type ContextoListado } from '@notaa/contracts';
+import { Button, Notice, Panel, TextField } from '@notaa/ui';
+import { AuthPagina, IconeGoogle, SeparadorOu } from '../../components/auth';
+import { EscolherContexto } from '../../components/EscolherContexto';
+import { TelaCarregando } from '../../components/TelaCarregando';
+import { useAuth } from '../../../lib/auth-context';
+import { caminhoInternoSeguro } from '../../../lib/destino';
+import { confirmarContexto, prepararEntrada, type Entrada } from '../../../lib/entrada';
 import { supabaseBrowser } from '../../../lib/supabase-browser';
 
-export default function LoginPage() {
+/** Texto de erro de login: diz o que fazer e não repassa a mensagem crua do Supabase. */
+function mensagemDeLogin(error: AuthError): string {
+  if (error.code === 'email_not_confirmed' || /not confirmed/i.test(error.message)) {
+    return 'Confirme o seu e-mail antes de entrar. O link está na sua caixa de entrada.';
+  }
+  if (error.status === 429 || error.code === 'over_request_rate_limit') {
+    return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
+  }
+  if (error.status === 0 || /fetch|network/i.test(error.message)) {
+    return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+  }
+  return 'E-mail ou senha incorretos. Confira os dados e tente de novo.';
+}
+
+type Fase = { fase: 'form' } | { fase: 'verificando' } | { fase: 'escolher'; entrada: Extract<Entrada, { tipo: 'escolher' }> };
+
+function Entrar() {
   const router = useRouter();
+  const params = useSearchParams();
+  const { session, loading: authLoading } = useAuth();
+  // `next` só vale se for caminho interno e se o perfil tiver permissão (resolverDestino confere).
+  // Aqui só se descarta o que nem é caminho, para o botão do Google não carregar lixo.
+  const next = caminhoInternoSeguro(params.get('next'));
+  const motivo = params.get('motivo');
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(
+    motivo === 'conta-inativa' ? 'Sua conta está suspensa ou ainda não foi ativada. Fale com a sua instituição ou com o suporte do Nota A.' : null,
+  );
   const [carregando, setCarregando] = useState(false);
+  const [estado, setEstado] = useState<Fase>({ fase: 'form' });
+  // Quem está no meio do envio do formulário cuida da própria navegação; o "já estava logado" espera.
+  const emEntrada = useRef(false);
+  const jaChecou = useRef(false);
+
+  function aplicar(entrada: Entrada) {
+    if (entrada.tipo === 'ir') {
+      router.replace(entrada.destino);
+    } else if (entrada.tipo === 'escolher') {
+      setEstado({ fase: 'escolher', entrada });
+    } else if (entrada.tipo === 'conta-inativa') {
+      setEstado({ fase: 'form' });
+      setErro('Sua conta está suspensa ou ainda não foi ativada. Fale com a sua instituição ou com o suporte do Nota A.');
+    } else {
+      // Sessão sem papel: o cadastro não terminou. Nunca segue para um painel.
+      router.replace(`/concluir-cadastro${next ? `?next=${encodeURIComponent(next)}` : ''}`);
+    }
+  }
+
+  // Quem já está logado e abre /login vai direto para a home do perfil (ou para o último acesso).
+  useEffect(() => {
+    if (authLoading || !session || emEntrada.current || jaChecou.current || motivo === 'conta-inativa') return;
+    jaChecou.current = true;
+    setEstado({ fase: 'verificando' });
+    void prepararEntrada(next, { usarUltimo: true })
+      .then(aplicar)
+      .catch(() => {
+        setEstado({ fase: 'form' });
+      });
+  }, [authLoading, session]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
     setCarregando(true);
+    emEntrada.current = true;
 
     try {
       const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password: senha });
-      if (error) throw error;
-
-      await garantirRegistro();
-      // Lê o papel DEPOIS do garantirRegistro, que é quem o escreve no token na
-      // primeira entrada. Sem isso, um professor recém-confirmado cairia no hub
-      // do aluno nesta sessão.
-      const { data } = await supabaseBrowser.auth.getSession();
-      router.push(rotaInicialPorPapel(data.session?.user.app_metadata?.papel));
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não foi possível entrar.');
+      if (error) {
+        setErro(mensagemDeLogin(error));
+        emEntrada.current = false;
+        return;
+      }
+      aplicar(await prepararEntrada(next));
+    } catch {
+      setErro('Não foi possível entrar agora. Verifique a conexão e tente de novo.');
+      emEntrada.current = false;
     } finally {
       setCarregando(false);
     }
   }
 
+  async function entrarComGoogle() {
+    setErro(null);
+    setCarregando(true);
+    const alvo = new URL('/auth/destino', window.location.origin);
+    if (next) alvo.searchParams.set('next', next);
+    const { error } = await supabaseBrowser.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: alvo.toString() },
+    });
+    if (error) {
+      setErro('Não foi possível abrir o login com o Google. Tente de novo.');
+      setCarregando(false);
+    }
+  }
+
+  if (estado.fase === 'verificando' || (authLoading && !!session)) return <TelaCarregando rotulo="Entrando" />;
+
+  if (estado.fase === 'escolher') {
+    const { entrada } = estado;
+    return (
+      <EscolherContexto
+        contextos={entrada.contextos}
+        lembrado={entrada.lembrado}
+        aoEscolher={async (c: ContextoListado) => {
+          await confirmarContexto(entrada.authUid, semRotulo(c), entrada.contextos);
+          router.replace(entrada.destino);
+        }}
+      />
+    );
+  }
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-8">
-      <h1 className="text-2xl font-bold">Entrar no Nota A</h1>
+    <AuthPagina titulo="Entrar no Nota A">
+      <Panel>
+        <form onSubmit={onSubmit} className="flex flex-col gap-space-5">
+          <TextField label="E-mail" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <TextField
+            label="Senha"
+            type="password"
+            autoComplete="current-password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
 
-      <Card className="p-6">
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="senha">Senha</Label>
-            <Input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-            />
-          </div>
+          {erro && <Notice tone="danger">{erro}</Notice>}
 
-          {erro && (
-            <p role="alert" className="text-sm text-error">
-              {erro}
-            </p>
-          )}
-
-          <Button type="submit" variant="cta" size="lg" fullWidth disabled={carregando}>
-            {carregando ? 'Entrando...' : 'Entrar'}
+          <Button type="submit" variant="primary" className="w-full" loading={carregando}>
+            {carregando ? 'Entrando' : 'Entrar'}
           </Button>
         </form>
 
-        <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-text-muted uppercase tracking-wider">ou continue com</span>
-          <div className="h-px flex-1 bg-border" />
+        <div className="my-space-5">
+          <SeparadorOu />
         </div>
 
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-          fullWidth
-          disabled={carregando}
-          onClick={async () => {
-            setErro(null);
-            setCarregando(true);
-            const { error } = await supabaseBrowser.auth.signInWithOAuth({
-              provider: 'google',
-              options: { redirectTo: `${window.location.origin}/onboarding` },
-            });
-            if (error) {
-              setErro('Erro ao redirecionar para o Google.');
-              setCarregando(false);
-            }
-          }}
-        >
-          <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" fill="currentColor">
-            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" />
-          </svg>
+        <Button type="button" variant="secondary" className="w-full" disabled={carregando} onClick={() => void entrarComGoogle()}>
+          <IconeGoogle />
           Google
         </Button>
-      </Card>
+      </Panel>
 
-      <p className="text-center text-sm text-text-muted">
+      <p className="m-0 text-body-sm text-ink-muted">
         Ainda não tem conta?{' '}
-        <Link href="/cadastro" className="text-brand-primary underline">
+        <Link href="/cadastro" className="font-bold text-primary underline">
           Criar conta
         </Link>
       </p>
-    </main>
+    </AuthPagina>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams exige um boundary de Suspense em páginas do App Router.
+  return (
+    <Suspense fallback={<TelaCarregando />}>
+      <Entrar />
+    </Suspense>
   );
 }

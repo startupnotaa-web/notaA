@@ -32,16 +32,18 @@ export interface ContextoAlunos {
   turmasPorNome: Map<string, string[]>;
   /** Cadastros existentes, pela matrícula exata. */
   alunosPorMatricula: Map<string, AlunoExistente>;
-  /** Contas de responsável, pelo e-mail em minúsculas. É o "casar por e-mail". */
-  contasResponsavelPorEmail: Map<string, string>;
 }
 
+/**
+ * Responsável como CONTATO da secretaria. Nunca carrega uma conta: ligar o
+ * responsável a um usuário é por convite aceito e consentimento (migração 0016),
+ * não por coincidência de e-mail na planilha.
+ */
 export interface ResponsavelPlanejado {
   nome: string;
   email: string;
   telefone: string | null;
   parentesco: string | null;
-  usuarioId: string | null;
 }
 
 export interface DadosAluno {
@@ -137,7 +139,6 @@ function lerLinha(
       email: rEmail,
       telefone: opcional(rTelefone),
       parentesco: opcional(rParentesco),
-      usuarioId: contexto.contasResponsavelPorEmail.get(rEmail) ?? null,
     });
   }
 
@@ -237,13 +238,11 @@ export function planejarAlunos(
         // Célula em branco não apaga telefone nem parentesco já cadastrados.
         telefone: r.telefone ?? atual.telefone,
         parentesco: r.parentesco ?? atual.parentesco,
-        usuarioId: r.usuarioId ?? atual.usuarioId,
       };
       if (
         depois.nome !== atual.nome ||
         depois.telefone !== atual.telefone ||
-        depois.parentesco !== atual.parentesco ||
-        depois.usuarioId !== atual.usuarioId
+        depois.parentesco !== atual.parentesco
       ) {
         responsaveisAlterados.push({ id: atual.id, antes: atual, depois });
         motivos.push(`Atualiza o responsável ${r.email}.`);
@@ -269,19 +268,4 @@ export function planejarAlunos(
   });
 
   return { resumo, itens };
-}
-
-/**
- * E-mails de responsável que aparecem na planilha, em minúsculas. Servem para
- * buscar só as contas de responsável que interessam, em vez de todas.
- */
-export function emailsDeResponsaveis(planilha: Planilha, mapeamento: MapeamentoColunas): string[] {
-  const emails = new Set<string>();
-  for (const l of planilha.linhas) {
-    for (const campo of ['responsavel1_email', 'responsavel2_email']) {
-      const email = celula(l.celulas, mapeamento, campo).toLowerCase();
-      if (email && emailValido(email)) emails.add(email);
-    }
-  }
-  return [...emails];
 }

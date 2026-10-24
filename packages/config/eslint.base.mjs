@@ -17,7 +17,12 @@ export const baseConfig = [
     // Arquivos de configuração (next.config.mjs etc.) e scripts de build rodam
     // no Node, fora do bundle: `process` e `console` existem ali.
     files: ['**/*.config.{js,mjs,cjs}', '**/scripts/**/*.{js,mjs,cjs}'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+    languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly' } },
+  },
+  {
+    // Preset do Tailwind é CommonJS (tailwind.config o carrega com require).
+    files: ['**/*.preset.js'],
+    languageOptions: { sourceType: 'commonjs', globals: { module: 'writable' } },
   },
   {
     // "**/" no início é necessário: cada app/package roda `eslint .` com cwd

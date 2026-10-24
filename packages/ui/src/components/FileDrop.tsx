@@ -45,9 +45,9 @@ export function FileDrop({
         if (f && !disabled) onArquivo(f);
       }}
       className={cn(
-        'relative rounded-lg border-2 border-dashed p-6 text-center transition-colors duration-base',
-        'focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2 focus-within:ring-offset-bg',
-        arrastando ? 'border-brand-secondary bg-surface-2' : 'border-border bg-surface',
+        'relative rounded-lg border border-dashed p-space-6 text-center transition-colors duration-base ease-out',
+        'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
+        arrastando ? 'border-primary bg-violet-tint' : 'border-line-strong bg-surface',
         disabled && 'opacity-50',
         className,
       )}
@@ -66,17 +66,17 @@ export function FileDrop({
         }}
       />
       <label htmlFor={id} className={cn('flex flex-col items-center gap-2', !disabled && 'cursor-pointer')}>
-        <span className="text-base font-semibold text-text">{rotulo}</span>
+        <span className="text-body font-bold text-ink">{rotulo}</span>
         {arquivo ? (
-          <span className="text-sm text-text">
+          <span className="text-sm text-ink">
             Selecionado: <strong>{arquivo.name}</strong>
           </span>
         ) : (
-          <span className="text-sm text-text-muted">Clique para escolher ou arraste o arquivo para cá.</span>
+          <span className="text-sm text-ink-muted">Clique para escolher ou arraste o arquivo para cá.</span>
         )}
       </label>
       {descricao ? (
-        <p id={descricaoId} className="mt-2 text-sm text-text-muted">
+        <p id={descricaoId} className="mt-2 text-sm text-ink-muted">
           {descricao}
         </p>
       ) : null}

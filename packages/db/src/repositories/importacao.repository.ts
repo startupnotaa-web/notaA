@@ -1,7 +1,6 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AreaEnem, MapeamentoColunas, TipoImportacao } from '@notaa/contracts';
 import {
-  emailsDeResponsaveis,
   normalizarTexto,
   planejarAlunos,
   planejarDisciplinas,
@@ -21,7 +20,6 @@ import {
   disciplina,
   responsavelAluno,
   turma,
-  usuario,
 } from '../schema';
 import { registrarAuditoria, type EntradaAuditoria } from './auditoria.repository';
 
@@ -42,14 +40,6 @@ export interface ResultadoAplicacao {
 export type PlanoPorTipo =
   | { tipo: 'alunos'; plano: PlanoImportacao<ItemPlanoAlunos> }
   | { tipo: 'disciplinas'; plano: PlanoImportacao<ItemPlanoDisciplinas> };
-
-const LOTE_CONSULTA = 1000;
-
-function emLotes<T>(lista: T[], tamanho: number): T[][] {
-  const lotes: T[][] = [];
-  for (let i = 0; i < lista.length; i += tamanho) lotes.push(lista.slice(i, i + tamanho));
-  return lotes;
-}
 
 /**
  * Lado de banco da importação: carrega o que já existe (para o plano decidir
@@ -72,14 +62,14 @@ export class ImportacaoRepositoryDb {
     mapeamento: MapeamentoColunas,
   ): Promise<PlanoPorTipo> {
     if (tipo === 'alunos') {
-      const contexto = await this.contextoAlunos(instituicaoId, emailsDeResponsaveis(planilha, mapeamento));
+      const contexto = await this.contextoAlunos(instituicaoId);
       return { tipo, plano: planejarAlunos(planilha, mapeamento, contexto) };
     }
     const contexto = await this.contextoDisciplinas(instituicaoId);
     return { tipo, plano: planejarDisciplinas(planilha, mapeamento, contexto) };
   }
 
-  async contextoAlunos(instituicaoId: string, emailsResponsaveis: string[]): Promise<ContextoAlunos> {
+  async contextoAlunos(instituicaoId: string): Promise<ContextoAlunos> {
     // Turma ativa = não arquivada, de ano letivo que a instituição não arquivou.
     const turmas = await this.db
       .select({ id: turma.id, nome: turma.nome })
@@ -146,19 +136,7 @@ export class ImportacaoRepositoryDb {
       ]),
     );
 
-    // "Responsável casado por e-mail": a conta de responsável com aquele
-    // e-mail, se existir. Só papel responsável — e-mail de professor ou de
-    // aluno não vira vínculo de responsável.
-    const contasResponsavelPorEmail = new Map<string, string>();
-    for (const lote of emLotes(emailsResponsaveis, LOTE_CONSULTA)) {
-      const contas = await this.db
-        .select({ id: usuario.id, email: usuario.email })
-        .from(usuario)
-        .where(and(eq(usuario.tipoPerfil, 'responsavel'), inArray(usuario.email, lote)));
-      for (const c of contas) contasResponsavelPorEmail.set(c.email.toLowerCase(), c.id);
-    }
-
-    return { turmasPorNome, alunosPorMatricula, contasResponsavelPorEmail };
+    return { turmasPorNome, alunosPorMatricula };
   }
 
   /**
@@ -173,12 +151,14 @@ export class ImportacaoRepositoryDb {
     return this.db.transaction(async (tx) => {
       const resultado: ResultadoAplicacao = { criados: 0, atualizados: 0, responsaveisVinculados: 0 };
       const auditoria: EntradaAuditoria[] = [];
+      // Só ids e nomes de campo: o audit_log é imutável, então nada que
+      // identifique uma pessoa (e-mail, telefone, nome, matrícula, registro
+      // anterior) entra aqui.
       const auditarVinculo = (
         alunoId: string,
-        matricula: string,
-        r: ResponsavelPlanejado,
+        responsavelAlunoId: string,
         acao: 'responsavel.vinculado' | 'responsavel.atualizado',
-        antes?: unknown,
+        campos?: string[],
       ) =>
         auditoria.push({
           instituicaoId: autor.instituicaoId,
@@ -187,7 +167,11 @@ export class ImportacaoRepositoryDb {
           acao,
           entidade: 'aluno_instituicao',
           entidadeId: alunoId,
-          dados: { importacaoId: autor.importacaoId, matricula, email: r.email, usuarioId: r.usuarioId, ...(antes ? { antes } : {}) },
+          dados: {
+            importacaoId: autor.importacaoId,
+            responsavelAlunoId,
+            ...(campos ? { campos } : {}),
+          },
         });
 
       for (const item of itens) {
@@ -207,7 +191,7 @@ export class ImportacaoRepositoryDb {
             autor.instituicaoId,
             criado.id,
             item.responsaveisNovos,
-            (r) => auditarVinculo(criado.id, dados.matricula, r, 'responsavel.vinculado'),
+            (responsavelId) => auditarVinculo(criado.id, responsavelId, 'responsavel.vinculado'),
           );
         } else if (acao === 'atualizar' && item.existenteId) {
           const alunoId = item.existenteId;
@@ -224,7 +208,7 @@ export class ImportacaoRepositoryDb {
             autor.instituicaoId,
             alunoId,
             item.responsaveisNovos,
-            (r) => auditarVinculo(alunoId, dados.matricula, r, 'responsavel.vinculado'),
+            (responsavelId) => auditarVinculo(alunoId, responsavelId, 'responsavel.vinculado'),
           );
           for (const { id, antes, depois } of item.responsaveisAlterados) {
             await tx
@@ -233,11 +217,11 @@ export class ImportacaoRepositoryDb {
                 nome: depois.nome,
                 telefone: depois.telefone,
                 parentesco: depois.parentesco,
-                usuarioId: depois.usuarioId,
                 atualizadoEm: new Date(),
               })
               .where(and(eq(responsavelAluno.id, id), eq(responsavelAluno.instituicaoId, autor.instituicaoId)));
-            auditarVinculo(alunoId, dados.matricula, depois, 'responsavel.atualizado', antes);
+            const campos = (['nome', 'telefone', 'parentesco'] as const).filter((c) => antes[c] !== depois[c]);
+            auditarVinculo(alunoId, id, 'responsavel.atualizado', campos);
           }
           resultado.atualizados++;
         }
@@ -252,7 +236,7 @@ export class ImportacaoRepositoryDb {
     instituicaoId: string,
     alunoId: string,
     responsaveis: ResponsavelPlanejado[],
-    auditar: (r: ResponsavelPlanejado) => void,
+    auditar: (responsavelAlunoId: string) => void,
   ): Promise<number> {
     if (responsaveis.length === 0) return 0;
     const inseridos = await tx
@@ -265,14 +249,11 @@ export class ImportacaoRepositoryDb {
           email: r.email,
           telefone: r.telefone,
           parentesco: r.parentesco,
-          usuarioId: r.usuarioId,
         })),
       )
       .onConflictDoNothing({ target: [responsavelAluno.alunoInstituicaoId, responsavelAluno.email] })
-      .returning({ email: responsavelAluno.email });
-    for (const r of responsaveis) {
-      if (inseridos.some((i) => i.email.toLowerCase() === r.email)) auditar(r);
-    }
+      .returning({ id: responsavelAluno.id });
+    for (const { id } of inseridos) auditar(id);
     return inseridos.length;
   }
 

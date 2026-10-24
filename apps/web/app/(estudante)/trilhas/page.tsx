@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Lightbulb } from 'lucide-react';
 import type { StudyTrailResponse } from '@notaa/contracts';
 import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Button } from '@notaa/ui';
+import { Button, Carregando, EmptyState, Inset, Notice, PageHeader, Section, Skeleton } from '@notaa/ui';
+import { Pagina } from '../../components/Pagina';
 
 export default function TrilhasPage() {
   const [trilha, setTrilha] = useState<StudyTrailResponse | null>(null);
@@ -22,7 +24,7 @@ export default function TrilhasPage() {
       setTrilha(data);
     } catch (e) {
       console.error(e);
-      setError(e instanceof ApiError ? e.message : 'Erro ao gerar trilha de estudos.');
+      setError(e instanceof ApiError ? e.message : 'Não foi possível gerar a trilha de estudos.');
     } finally {
       setLoading(false);
     }
@@ -31,53 +33,76 @@ export default function TrilhasPage() {
   // AppShell (TopBar + BottomNav) já vem do layout do grupo (estudante) —
   // renderizar aqui de novo duplicava a barra superior nesta rota.
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold text-text">Sua Trilha de Estudos</h1>
-      <p className="mb-8 text-text-muted">
-        Uma rota personalizada gerada pela IA, focada nos conceitos que você mais precisa revisar.
-      </p>
+    <Pagina>
+      <PageHeader
+        title="Sua trilha de estudos"
+        description="Uma rota gerada pela IA, focada nos conceitos que você mais precisa revisar."
+      />
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
-          <p className="mt-4 text-sm text-text-muted">Analisando seus resultados recentes...</p>
-        </div>
+        <Carregando rotulo="Analisando seus resultados recentes" className="flex flex-col gap-space-5">
+          <Skeleton className="h-8 w-1/2" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </Carregando>
       ) : error ? (
-        <div className="rounded-lg border border-error/50 bg-error/10 p-6 text-center">
-          <p className="text-error mb-4">{error}</p>
-          <Button variant="primary" onClick={carregarTrilha}>
-            Tentar Novamente
-          </Button>
-        </div>
+        <Notice
+          tone="danger"
+          title="Não foi possível gerar a trilha"
+          action={
+            <Button variant="secondary" onClick={carregarTrilha}>
+              Tentar de novo
+            </Button>
+          }
+        >
+          {error}
+        </Notice>
       ) : trilha ? (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-brand/20 bg-brand/5 p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-brand">{trilha.titulo}</h2>
-            <p className="mt-2 text-text-muted">{trilha.descricao}</p>
-          </div>
-
-          <div className="relative space-y-6 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-brand before:to-border">
+        <Section title={trilha.titulo} description={trilha.descricao}>
+          <ol className="m-0 flex list-none flex-col p-0">
             {trilha.passos.map((passo, index) => (
-              <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-4 border-surface bg-brand text-surface shadow md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                  <span className="font-bold">{index + 1}</span>
+              <li key={index} className="flex gap-space-4">
+                <div className="flex flex-col items-center">
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-pill bg-violet-tint font-display text-label tabular-nums text-primary"
+                  >
+                    {index + 1}
+                  </span>
+                  {index < trilha.passos.length - 1 ? <span aria-hidden="true" className="w-px flex-1 bg-line" /> : null}
                 </div>
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] rounded-xl border border-border bg-surface p-4 shadow-sm transition-all hover:border-brand/50">
-                  <h3 className="mb-1 font-bold text-text">{passo.titulo}</h3>
-                  <p className="text-sm text-text-muted">{passo.descricao}</p>
+                <div className="flex min-w-0 flex-1 flex-col gap-space-2 pb-space-6">
+                  <h3 className="m-0 pt-1 font-display text-heading-3 text-ink">
+                    <span className="sr-only">Passo {index + 1}: </span>
+                    {passo.titulo}
+                  </h3>
+                  <p className="m-0 max-w-texto text-body text-ink-muted">{passo.descricao}</p>
                   {passo.dica && (
-                    <div className="mt-3 rounded-md bg-brand/10 p-2 text-xs text-brand">
-                      💡 <strong>Dica:</strong> {passo.dica}
-                    </div>
+                    <Inset className="flex items-start gap-space-3 text-body-sm text-ink">
+                      <Lightbulb aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-primary" />
+                      <span>
+                        <strong>Dica:</strong> {passo.dica}
+                      </span>
+                    </Inset>
                   )}
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
-        </div>
+          </ol>
+        </Section>
       ) : (
-        <p className="text-text-muted">Nenhuma trilha encontrada.</p>
+        <EmptyState
+          title="Nenhuma trilha ainda"
+          actions={
+            <Button variant="primary" onClick={carregarTrilha}>
+              Gerar trilha
+            </Button>
+          }
+        >
+          Gere uma trilha para ver, passo a passo, o que revisar primeiro.
+        </EmptyState>
       )}
-    </div>
+    </Pagina>
   );
 }

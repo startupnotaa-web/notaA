@@ -37,6 +37,10 @@ async function main(): Promise<void> {
 
   const arquivos: ArquivosDoWorker = {
     async baixar(path) {
+      // Tamanho do objeto, consultado antes: acima do limite não se baixa.
+      const info = await storage.info(path);
+      if (info.error || typeof info.data?.size !== 'number') return null;
+      if (info.data.size > LIMITE_IMPORTACAO_BYTES) return null;
       const { data, error } = await storage.download(path);
       if (error || !data) return null;
       if (data.size > LIMITE_IMPORTACAO_BYTES) return null;

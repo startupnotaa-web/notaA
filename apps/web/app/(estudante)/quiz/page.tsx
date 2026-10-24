@@ -6,18 +6,21 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { AreaConhecimento, ItemPublico, SubmitAnswerResponse } from '@notaa/contracts';
 import { QUIZ_TOTAL_QUESTOES } from '@notaa/contracts';
-import { Badge, Button, Card, OptionCard, Progress, cn } from '@notaa/ui';
+import { Brain, Calculator, FlaskConical, Globe, Palette, PiggyBank, BookOpen, type LucideIcon } from 'lucide-react';
+import { Button, ButtonLink, Chip, Notice, OptionCard, PageHeader, Progress } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Atalho, AtalhoLista } from '../../components/Atalho';
+import { Pagina } from '../../components/Pagina';
 import { toast } from '../../components/toast';
 
-const AREAS: { valor: AreaConhecimento; label: string; icon?: string; colorClass?: string }[] = [
-  { valor: 'matematica', label: 'Matemática', icon: '📐', colorClass: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' },
-  { valor: 'linguagens', label: 'Linguagens', icon: '📚', colorClass: 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' },
-  { valor: 'humanas', label: 'Humanas', icon: '🌍', colorClass: 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' },
-  { valor: 'natureza', label: 'Natureza', icon: '🔬', colorClass: 'bg-green-500/10 text-green-500 hover:bg-green-500/20' },
-  { valor: 'fin', label: 'Educação Financeira', icon: '💰', colorClass: 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/30' },
-  { valor: 'soc', label: 'Socioemocional', icon: '🧠', colorClass: 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-purple-500/30' },
-  { valor: 'art', label: 'Artes', icon: '🎨', colorClass: 'bg-pink-500/10 text-pink-500 hover:bg-pink-500/20 border-pink-500/30' },
+const AREAS: { valor: AreaConhecimento; label: string; descricao: string; Icone: LucideIcon }[] = [
+  { valor: 'matematica', label: 'Matemática', descricao: 'Álgebra, geometria, estatística e funções.', Icone: Calculator },
+  { valor: 'linguagens', label: 'Linguagens', descricao: 'Interpretação de texto, gramática e literatura.', Icone: BookOpen },
+  { valor: 'humanas', label: 'Humanas', descricao: 'História, geografia, filosofia e sociologia.', Icone: Globe },
+  { valor: 'natureza', label: 'Natureza', descricao: 'Física, química e biologia.', Icone: FlaskConical },
+  { valor: 'fin', label: 'Educação financeira', descricao: 'Juros, orçamento e decisões de consumo.', Icone: PiggyBank },
+  { valor: 'soc', label: 'Socioemocional', descricao: 'Foco, organização e relações.', Icone: Brain },
+  { valor: 'art', label: 'Artes', descricao: 'Movimentos, linguagens e cultura.', Icone: Palette },
 ];
 
 type Resultado = SubmitAnswerResponse | null;
@@ -34,7 +37,6 @@ export default function QuizPage() {
   const [done, setDone] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const [confete, setConfete] = useState(false);
 
   async function iniciar(areaEscolhida: AreaConhecimento) {
     setErro(null);
@@ -53,7 +55,7 @@ export default function QuizPage() {
       if (e instanceof ApiError && e.status === 401) {
         // Redirecionamento já está em andamento pelo interceptor
       } else {
-        toast('A IA encontrou uma instabilidade ao gerar sua questão inédita. Tente novamente.', { variant: 'error' });
+        toast('Não foi possível gerar a questão agora. Tente de novo.', { variant: 'error' });
         setErro(e instanceof ApiError ? e.message : 'Não foi possível gerar uma questão pela IA.');
       }
     } finally {
@@ -75,11 +77,9 @@ export default function QuizPage() {
       setResultado(res);
       setRespondidas((n) => n + 1);
       if (res.acerto) setAcertos((n) => n + 1);
-      // Recompensa: animação + toast comemorativo quando o aluno sobe de nível (E9).
+      // Recompensa: aviso quando o aluno sobe de nível (E9).
       if (res.gamificacao.subiuDeNivel) {
-        setConfete(true);
-        toast(`🎉 Você subiu para o nível ${res.gamificacao.nivel}!`, { variant: 'success' });
-        setTimeout(() => setConfete(false), 2200);
+        toast(`Você subiu para o nível ${res.gamificacao.nivel}!`, { variant: 'success' });
       }
     } catch (e) {
       console.error('[QUIZ_IA_DIAGNOSTICO] etapa=responder', e);
@@ -108,73 +108,73 @@ export default function QuizPage() {
 
   if (!area) {
     return (
-      <div className="mx-auto w-full max-w-2xl space-y-4 p-4">
-        <h1 className="text-xl font-bold">Escolha uma área para começar</h1>
-        {erro && <p role="alert" className="text-sm text-error">{erro}</p>}
-        <div className="grid gap-3 sm:grid-cols-2">
-          {AREAS.map((a) => (
-            <Button 
-              key={a.valor} 
-              variant="secondary" 
-              size="lg" 
-              className={cn("flex flex-col items-center gap-2 h-auto py-6 border transition-all", a.colorClass)}
-              disabled={carregando} 
-              onClick={() => iniciar(a.valor)}
-            >
-              <span className="text-3xl" aria-hidden="true">{a.icon}</span>
-              <span className="font-semibold">{a.label}</span>
-            </Button>
+      <Pagina largura="estreita">
+        <PageHeader title="Escolha uma área para começar" description="O quiz se adapta às suas respostas, questão a questão." />
+        {erro && <Notice tone="danger">{erro}</Notice>}
+        <AtalhoLista>
+          {AREAS.map(({ valor, label, descricao, Icone }) => (
+            <Atalho
+              key={valor}
+              icone={<Icone className="h-5 w-5" />}
+              titulo={label}
+              descricao={descricao}
+              disabled={carregando}
+              onSelecionar={() => iniciar(valor)}
+            />
           ))}
-        </div>
-      </div>
+        </AtalhoLista>
+        {carregando && (
+          <p role="status" className="m-0 text-body-sm text-ink-muted">
+            Preparando sua primeira questão…
+          </p>
+        )}
+      </Pagina>
     );
   }
 
   if (done) {
     return (
-      <div className="mx-auto w-full max-w-2xl space-y-4 p-4">
-        <Card variant="highlight" className="space-y-3 p-6 text-center">
-          <h1 className="text-2xl font-bold">Quiz concluído</h1>
-          <p className="text-text-muted">
-            Você acertou <strong className="text-text">{acertos}</strong> de {respondidas}. Usamos isso para
-            ajustar a experiência de estudo. As questões desta sessão foram geradas pela IA e ainda não compõem uma nota oficial calibrada.
-          </p>
-          <div className="pt-2">
-            <Button asChild variant="cta" size="lg">
-              <Link href="/dashboard">Ver no painel</Link>
-            </Button>
-          </div>
-        </Card>
-      </div>
+      <Pagina largura="estreita">
+        <PageHeader
+          title="Quiz concluído"
+          description={
+            <>
+              Você acertou <strong className="text-ink">{acertos}</strong> de {respondidas}. Usamos isso para ajustar a sua
+              experiência de estudo. As questões desta sessão foram geradas pela IA e ainda não compõem uma nota oficial
+              calibrada.
+            </>
+          }
+        />
+        <div>
+          <ButtonLink as={Link} href="/dashboard" variant="primary">
+            Ver no painel
+          </ButtonLink>
+        </div>
+      </Pagina>
     );
   }
 
   if (!questao) return null;
 
   const acertou = resultado?.acerto ?? false;
+  const rotuloArea = AREAS.find((a) => a.valor === questao.area)?.label ?? questao.area;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5 p-4">
-      {confete && <Confetti />}
-      <div className="space-y-2">
+    <Pagina largura="estreita">
+      <div className="flex flex-col gap-space-3">
         <div className="flex items-center justify-between">
-          <Badge variant="info">{questao.area}</Badge>
-          <span className="text-sm text-text-muted">
+          <Chip tone="info">{rotuloArea}</Chip>
+          <span className="text-body-sm tabular-nums text-ink-muted">
             Questão {questao.numero} de {QUIZ_TOTAL_QUESTOES}
           </span>
         </div>
-        <Progress
-          value={respondidas}
-          max={QUIZ_TOTAL_QUESTOES}
-          gradient
-          aria-label="Progresso do quiz"
-        />
-        <p className="text-xs text-text-muted">Questão inédita gerada por IA para esta sessão.</p>
+        <Progress value={respondidas} max={QUIZ_TOTAL_QUESTOES} aria-label="Progresso do quiz" />
+        <p className="m-0 text-caption text-ink-muted">Questão inédita gerada por IA para esta sessão.</p>
       </div>
 
-      <h1 className="max-w-[70ch] text-lg font-semibold leading-relaxed">{questao.enunciado}</h1>
+      <h1 className="m-0 max-w-texto text-body font-bold">{questao.enunciado}</h1>
 
-      <div role="radiogroup" aria-label="Alternativas" className="space-y-2">
+      <div role="radiogroup" aria-label="Alternativas" className="flex flex-col gap-space-3">
         {questao.alternativas.map((a) => {
           // Depois de responder, a correta fica verde SEMPRE — inclusive quando o
           // aluno errou, que é quando ele mais precisa ver qual era. A escolha
@@ -200,78 +200,31 @@ export default function QuizPage() {
         })}
       </div>
 
-      {erro && <p role="alert" className="text-sm text-error">{erro}</p>}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
       {resultado && (
-        <Card
-          className={cn(
-            'space-y-2 p-4 transition-shadow',
-            resultado.gamificacao.subiuDeNivel &&
-              'border-brand-primary/60 shadow-[0_0_24px_rgba(38,153,233,0.45)]',
+        <Notice tone={acertou ? 'success' : 'warning'} title={acertou ? 'Você acertou' : 'Quase lá'}>
+          +{resultado.xpGanho} XP · {resultado.gamificacao.xpTotal} XP no total · nível {resultado.gamificacao.nivel} · θ
+          atual {resultado.theta.toFixed(2)}
+          {resultado.gamificacao.subiuDeNivel && (
+            <span className="mt-2 block">
+              <Chip tone="brand">Subiu para o nível {resultado.gamificacao.nivel}</Chip>
+            </span>
           )}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={acertou ? 'success' : 'warning'} icon={<span aria-hidden="true">{acertou ? '✓' : '↻'}</span>}>
-              {acertou ? 'Você acertou' : 'Quase lá'}
-            </Badge>
-            {resultado.gamificacao.subiuDeNivel && (
-              <Badge variant="brand" icon={<span aria-hidden="true">⭐</span>}>
-                Subiu para o nível {resultado.gamificacao.nivel}!
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-text-muted">
-            +{resultado.xpGanho} XP · {resultado.gamificacao.xpTotal} XP total · Nível{' '}
-            {resultado.gamificacao.nivel} · θ atual: {resultado.theta.toFixed(2)}
-          </p>
-        </Card>
+        </Notice>
       )}
 
-      <div className="flex justify-end gap-3">
+      <div className="flex gap-space-3">
         {!resultado ? (
-          <Button variant="primary" onClick={responder} disabled={picked == null || carregando}>
-            {carregando ? 'Enviando...' : 'Responder'}
+          <Button variant="primary" onClick={responder} disabled={picked == null} loading={carregando}>
+            {carregando ? 'Enviando' : 'Responder'}
           </Button>
         ) : (
-          <Button variant="cta" onClick={proxima} disabled={carregando}>
+          <Button variant="primary" onClick={proxima} disabled={carregando}>
             {resultado.proximaQuestao ? 'Próxima questão' : 'Finalizar'}
           </Button>
         )}
       </div>
-    </div>
-  );
-}
-
-// Explosão de confete CSS-only (sem dependência) — disparada no level-up (E9).
-const CONFETE_CORES = ['#2699E9', '#7B4FE0', '#D500F9', '#22c55e', '#f59e0b'];
-function Confetti() {
-  const pedacos = Array.from({ length: 70 }, (_, i) => ({
-    left: Math.random() * 100,
-    delay: Math.random() * 0.4,
-    dur: 1.2 + Math.random() * 0.9,
-    cor: CONFETE_CORES[i % CONFETE_CORES.length]!,
-    w: 6 + Math.random() * 6,
-    rot: Math.random() * 360,
-  }));
-  return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
-      <style>{`@keyframes notaaConfetti{0%{transform:translateY(-12vh) rotate(0);opacity:1}100%{transform:translateY(112vh) rotate(720deg);opacity:.85}}`}</style>
-      {pedacos.map((p, i) => (
-        <span
-          key={i}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: `${p.left}%`,
-            width: `${p.w}px`,
-            height: `${p.w * 0.4}px`,
-            background: p.cor,
-            borderRadius: 1,
-            transform: `rotate(${p.rot}deg)`,
-            animation: `notaaConfetti ${p.dur}s ease-in ${p.delay}s forwards`,
-          }}
-        />
-      ))}
-    </div>
+    </Pagina>
   );
 }

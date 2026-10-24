@@ -1,0 +1,100 @@
+/**
+ * Base do Nota A: o que não é token, mas todo componente assume.
+ * Importar depois de tokens.css, uma única vez, na raiz do app.
+ */
+
+html,
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 26px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco de teclado: contorno sólido de 2px com 2px de folga, 3:1 sobre todas as superfícies. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Números de nota, média e percentual: Sora com algarismos tabulares, alinhados à direita. */
+.tabular {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Movimento responde, não enfeita. Quem pede menos movimento (SO) ou desliga a
+ * animação no app ([data-anim='off']) fica sem transições e sem a aurora.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-anim='off'] *,
+[data-anim='off'] *::before,
+[data-anim='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Aurora: deriva e respira devagar. Quem usa é o componente Aurora (components/Aurora.tsx). */
+@keyframes na-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(12%, 10%) scale(1.15);
+  }
+}
+
+@keyframes na-breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.2);
+  }
+}
+
+/* Entradas do que flutua (Dialog, Menu, Toast). A duração e o easing vêm dos tokens, no componente. */
+@keyframes na-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes na-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Painel lateral (SidePanel): entra pela direita em 240ms; a duração e o easing vêm dos tokens, no componente. */
+@keyframes na-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

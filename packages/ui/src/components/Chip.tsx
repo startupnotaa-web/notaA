@@ -1,38 +1,39 @@
-'use client';
-// docs/07 §7 — Chip (tag selecionável). selected -> anel/borda da marca.
-// aria-pressed para estado; alvo >= 44px. Para interesses/áreas no onboarding.
 import * as React from 'react';
 import { cn } from '../lib/cn';
+import { StatusIcon, type StatusIconTone } from './StatusIcon';
 
-export interface ChipProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'aria-pressed'> {
-  selected?: boolean;
-  /** Ícone opcional à esquerda. */
-  icon?: React.ReactNode;
+export type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'danger';
+
+export interface ChipProps {
+  tone?: Tone;
+  children: React.ReactNode;
+  className?: string;
 }
 
-export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(function Chip(
-  { selected = false, icon, className, children, ...props },
-  ref,
-) {
+const tons: Record<Tone, string> = {
+  neutral: 'bg-surface-sunken text-ink',
+  brand: 'bg-violet-tint text-primary',
+  info: 'bg-cyan-tint text-info',
+  success: 'bg-success-tint text-success',
+  warning: 'bg-warning-tint text-warning',
+  danger: 'bg-danger-tint text-danger',
+};
+
+const comIcone = (tone: Tone): tone is StatusIconTone =>
+  tone === 'info' || tone === 'success' || tone === 'warning' || tone === 'danger';
+
+/** Etiqueta de status. Os tons de status levam ícone; a palavra do filho sempre diz o estado. */
+export function Chip({ tone = 'neutral', children, className }: ChipProps) {
   return (
-    <button
-      ref={ref}
-      type="button"
-      aria-pressed={selected}
+    <span
       className={cn(
-        'inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-medium',
-        'transition-colors duration-base',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
-        'disabled:opacity-50 disabled:pointer-events-none',
-        selected
-          ? 'border-brand-secondary bg-surface-2 text-text ring-2 ring-brand-secondary'
-          : 'border-border bg-surface text-text-muted hover:bg-surface-2',
+        'inline-flex min-h-[28px] items-center gap-1 whitespace-nowrap rounded-pill px-3 font-text text-[13px] font-bold leading-[18px]',
+        tons[tone],
         className,
       )}
-      {...props}
     >
-      {icon ? <span aria-hidden="true" className="inline-flex shrink-0">{icon}</span> : null}
+      {comIcone(tone) ? <StatusIcon tone={tone} className="h-3.5 w-3.5 flex-none" /> : null}
       {children}
-    </button>
+    </span>
   );
-});
+}

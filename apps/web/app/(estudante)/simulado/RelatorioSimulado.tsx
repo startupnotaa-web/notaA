@@ -4,8 +4,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ChevronDown, CircleCheck, Clock, Flame, Target, TrendingUp } from 'lucide-react';
 import type { SimuladoRecorte, SimuladoRelatorio } from '@notaa/contracts';
-import { Badge, Button, Card, OptionCard, Progress, Stat, cn } from '@notaa/ui';
+import { Button, ButtonLink, Chip, Notice, OptionCard, PageHeader, Progress, Section, SummaryStrip, cn } from '@notaa/ui';
+import { Pagina } from '../../components/Pagina';
 import { formatarDuracao, rotuloArea, rotuloDificuldade } from './labels';
 
 /** Um comentário por faixa — o número sozinho não diz ao aluno o que fazer. */
@@ -24,12 +26,12 @@ function BarraRecorte({
   rotular: (chave: string) => string;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-space-4">
       {recortes.map((r) => (
-        <div key={r.chave} className="space-y-1">
-          <div className="flex items-baseline justify-between gap-2 text-sm">
-            <span className="font-medium">{rotular(r.chave)}</span>
-            <span className="text-text-muted">
+        <div key={r.chave} className="flex flex-col gap-space-2">
+          <div className="flex items-baseline justify-between gap-2 text-body-sm">
+            <span className="font-bold text-ink">{rotular(r.chave)}</span>
+            <span className="tabular-nums text-ink-muted">
               {r.acertos}/{r.total} · {r.percentual}%
             </span>
           </div>
@@ -61,140 +63,131 @@ export function RelatorioSimulado({
     .sort((a, b) => a.percentual - b.percentual);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-      <Card variant="highlight" className="space-y-5 p-6 text-center">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold">Simulado concluído</h1>
-          <p className="text-text-muted">{leituraDoDesempenho(relatorio.percentual)}</p>
-        </div>
+    <Pagina>
+      <PageHeader title="Simulado concluído" description={leituraDoDesempenho(relatorio.percentual)} />
 
-        <div className="flex items-end justify-center gap-2">
-          <span className="text-6xl font-black text-brand-primary">{relatorio.acertos}</span>
-          <span className="pb-2 text-2xl font-semibold text-text-muted">/ {relatorio.total}</span>
-        </div>
-        <Progress value={relatorio.acertos} max={relatorio.total} gradient aria-label="Acertos" />
+      <SummaryStrip
+        aria-label="Resultado do simulado"
+        items={[
+          {
+            id: 'acertos',
+            label: 'Acertos',
+            value: `${relatorio.acertos}/${relatorio.total}`,
+            hint: `${relatorio.emBranco} em branco`,
+          },
+          { id: 'aproveitamento', label: 'Aproveitamento', value: `${relatorio.percentual}%` },
+          {
+            id: 'tempo',
+            label: 'Tempo',
+            value: formatarDuracao(relatorio.duracaoSegundos),
+            hint: relatorio.expirado ? 'Tempo esgotado' : undefined,
+          },
+          {
+            id: 'xp',
+            label: 'XP',
+            value: relatorio.xpGanho > 0 ? `+${relatorio.xpGanho}` : '0',
+            hint: relatorio.modo === 'cronometrado' ? `${relatorio.limiteMinutos} min` : 'Modo livre',
+          },
+        ]}
+      />
 
-        <div className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
-          <Stat label="Aproveitamento" value={`${relatorio.percentual}%`} />
-          <Stat label="Em branco" value={relatorio.emBranco} />
-          <Stat
-            label="Tempo"
-            value={formatarDuracao(relatorio.duracaoSegundos)}
-            hint={relatorio.expirado ? 'tempo esgotado' : undefined}
-          />
-          <Stat
-            label="XP"
-            value={relatorio.xpGanho > 0 ? `+${relatorio.xpGanho}` : '0'}
-            hint={
-              relatorio.modo === 'cronometrado'
-                ? `${relatorio.limiteMinutos} min`
-                : 'modo livre'
-            }
-          />
-        </div>
+      {relatorio.xpBloqueadoPorDesempenho && (
+        <Notice tone="info">
+          No modo livre o XP só é liberado acima de 70% de acerto. Você ficou em {relatorio.percentual}%. Refaça
+          cronometrado para valer mais.
+        </Notice>
+      )}
 
-        {relatorio.xpBloqueadoPorDesempenho && (
-          <p className="rounded-xl border border-border bg-surface p-3 text-sm text-text-muted">
-            No modo livre o XP só é liberado acima de 70% de acerto. Você ficou em{' '}
-            {relatorio.percentual}% — refaça cronometrado para valer mais.
-          </p>
-        )}
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="space-y-4 p-5">
-          <h2 className="font-bold">Por área</h2>
+      <div className="grid gap-space-7 md:grid-cols-2">
+        <Section title="Por área" as="h2" divided>
           <BarraRecorte recortes={relatorio.porArea} rotular={rotuloArea} />
-        </Card>
-
-        <Card className="space-y-4 p-5">
-          <h2 className="font-bold">Por dificuldade</h2>
+        </Section>
+        <Section title="Por dificuldade" as="h2" divided>
           <BarraRecorte recortes={relatorio.porDificuldade} rotular={rotuloDificuldade} />
-        </Card>
+        </Section>
       </div>
 
-      <Card className="space-y-3 p-5">
-        <h2 className="font-bold">Pontos a melhorar</h2>
-        <ul className="space-y-2 text-sm">
+      <Section title="Pontos a melhorar" divided>
+        <ul className="m-0 flex list-none flex-col gap-space-4 p-0 text-body text-ink">
           {relatorio.melhorArea && (
-            <li className="flex gap-2">
-              <span aria-hidden>✅</span>
+            <li className="flex gap-space-3">
+              <CircleCheck aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-success" />
               <span>
-                Seu ponto forte é <strong>{rotuloArea(relatorio.melhorArea)}</strong>. Use essa área
-                para garantir tempo para as outras.
+                Seu ponto forte é <strong>{rotuloArea(relatorio.melhorArea)}</strong>. Use essa área para garantir
+                tempo para as outras.
               </span>
             </li>
           )}
           {relatorio.areaAMelhorar && relatorio.areaAMelhorar !== relatorio.melhorArea && (
-            <li className="flex gap-2">
-              <span aria-hidden>🎯</span>
+            <li className="flex gap-space-3">
+              <Target aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-primary" />
               <span>
-                <strong>{rotuloArea(relatorio.areaAMelhorar)}</strong> foi onde você mais perdeu
-                pontos — comece o estudo por aqui.
+                <strong>{rotuloArea(relatorio.areaAMelhorar)}</strong> foi onde você mais perdeu pontos. Comece o
+                estudo por aqui.
               </span>
             </li>
           )}
           {dificuldadesFracas.map((d) => (
-            <li key={d.chave} className="flex gap-2">
-              <span aria-hidden>📈</span>
+            <li key={d.chave} className="flex gap-space-3">
+              <TrendingUp aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-primary" />
               <span>
-                Nas questões de nível <strong>{rotuloDificuldade(d.chave).toLowerCase()}</strong> você
-                acertou {d.acertos} de {d.total}. Treinar esse nível é o caminho mais curto para subir
-                a nota.
+                Nas questões de nível <strong>{rotuloDificuldade(d.chave).toLowerCase()}</strong> você acertou{' '}
+                {d.acertos} de {d.total}. Treinar esse nível é o caminho mais curto para subir a nota.
               </span>
             </li>
           ))}
           {relatorio.emBranco > 0 && (
-            <li className="flex gap-2">
-              <span aria-hidden>⏱️</span>
+            <li className="flex gap-space-3">
+              <Clock aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-warning" />
               <span>
                 {relatorio.emBranco}{' '}
-                {relatorio.emBranco === 1 ? 'questão ficou em branco' : 'questões ficaram em branco'}{' '}
-                e contam como erro. Na prova real, chutar vale mais que deixar vazio.
+                {relatorio.emBranco === 1 ? 'questão ficou em branco' : 'questões ficaram em branco'} e contam como
+                erro. Na prova real, chutar vale mais que deixar vazio.
               </span>
             </li>
           )}
           {dificuldadesFracas.length === 0 && relatorio.emBranco === 0 && (
-            <li className="flex gap-2">
-              <span aria-hidden>🔥</span>
+            <li className="flex gap-space-3">
+              <Flame aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-primary" />
               <span>Nenhum ponto crítico neste simulado. Aumente a dificuldade reduzindo o tempo.</span>
             </li>
           )}
         </ul>
-      </Card>
+      </Section>
 
-      <Card className="space-y-4 p-5">
+      <Section divided>
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-2 text-left"
+          className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md text-left"
           onClick={() => setRevisaoAberta((v) => !v)}
           aria-expanded={revisaoAberta}
         >
-          <span className="font-bold">
+          <span className="font-display text-heading-3 text-ink">
             Revisar questões{' '}
-            <span className="font-normal text-text-muted">
+            <span className="font-text text-body font-normal text-ink-muted">
               ({erradas.length} {erradas.length === 1 ? 'erro' : 'erros'})
             </span>
           </span>
-          <span aria-hidden className="text-text-muted">
-            {revisaoAberta ? '▲' : '▼'}
-          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className={cn('h-5 w-5 text-ink-muted transition-transform duration-base ease-out', revisaoAberta && 'rotate-180')}
+          />
         </button>
 
         {revisaoAberta && (
-          <ol className="space-y-6">
+          <ol className="m-0 flex list-none flex-col gap-space-6 p-0">
             {relatorio.questoes.map((q) => (
-              <li key={q.itemId} className="space-y-3 border-t border-border pt-4">
+              <li key={q.itemId} className="flex flex-col gap-space-3 border-t border-line pt-space-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="neutral">Questão {q.ordem}</Badge>
-                  <Badge variant="info">{rotuloArea(q.area)}</Badge>
-                  <Badge variant="neutral">{rotuloDificuldade(q.dificuldade)}</Badge>
-                  <Badge variant={q.acerto ? 'success' : 'error'}>
+                  <Chip tone="neutral">Questão {q.ordem}</Chip>
+                  <Chip tone="info">{rotuloArea(q.area)}</Chip>
+                  <Chip tone="neutral">{rotuloDificuldade(q.dificuldade)}</Chip>
+                  <Chip tone={q.acerto ? 'success' : 'danger'}>
                     {q.acerto ? 'Acertou' : q.respostaDada == null ? 'Em branco' : 'Errou'}
-                  </Badge>
+                  </Chip>
                 </div>
-                <p className="whitespace-pre-line text-sm leading-relaxed">{q.enunciado}</p>
-                <div className="space-y-2">
+                <p className="m-0 max-w-texto whitespace-pre-line text-body">{q.enunciado}</p>
+                <div className="flex flex-col gap-space-2">
                   {q.alternativas.map((a) => (
                     <OptionCard
                       key={a.id}
@@ -209,9 +202,7 @@ export function RelatorioSimulado({
                       }
                       selected={a.id === q.respostaDada}
                       disabled
-                      className={cn(
-                        a.id !== q.gabarito && a.id !== q.respostaDada && 'opacity-70',
-                      )}
+                      className={cn(a.id !== q.gabarito && a.id !== q.respostaDada && 'opacity-70')}
                     />
                   ))}
                 </div>
@@ -219,16 +210,16 @@ export function RelatorioSimulado({
             ))}
           </ol>
         )}
-      </Card>
+      </Section>
 
-      <div className="flex flex-wrap justify-center gap-3 pb-8">
-        <Button asChild variant="secondary" size="lg">
-          <Link href="/dashboard">Voltar ao início</Link>
-        </Button>
-        <Button variant="cta" size="lg" onClick={onRefazer}>
+      <div className="flex flex-wrap gap-space-3">
+        <Button variant="primary" onClick={onRefazer}>
           Fazer outro simulado
         </Button>
+        <ButtonLink as={Link} href="/dashboard" variant="secondary">
+          Voltar ao início
+        </ButtonLink>
       </div>
-    </div>
+    </Pagina>
   );
 }

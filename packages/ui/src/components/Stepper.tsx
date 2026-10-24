@@ -26,16 +26,16 @@ export const Stepper = React.forwardRef<HTMLOListElement, StepperProps>(function
             className={cn(
               'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold',
               // Texto sobre superfície, não branco sobre verde (1,77:1): o estado vem do ✓ e da borda.
-              estado === 'concluido' && 'border-2 border-success bg-surface-2 text-text',
-              estado === 'atual' && 'bg-brand-secondary text-on-primary',
-              estado === 'futuro' && 'border border-border text-text-muted',
+              estado === 'concluido' && 'border border-success bg-success-tint text-ink',
+              estado === 'atual' && 'bg-primary text-primary-on',
+              estado === 'futuro' && 'border border-line-strong text-ink-muted',
             )}
           >
             {estado === 'concluido' ? '✓' : i + 1}
           </span>
         );
         const texto = (
-          <span className={cn('text-sm', estado === 'atual' ? 'font-semibold text-text' : 'text-text-muted')}>
+          <span className={cn('text-sm', estado === 'atual' ? 'font-semibold text-ink' : 'text-ink-muted')}>
             {rotulo}
             <span className="sr-only">
               {estado === 'concluido' ? ' (concluído)' : estado === 'atual' ? ' (passo atual)' : ''}
@@ -48,7 +48,7 @@ export const Stepper = React.forwardRef<HTMLOListElement, StepperProps>(function
               <button
                 type="button"
                 onClick={() => onIrPara(i)}
-                className="flex min-h-[44px] items-center gap-2 rounded-md px-1 hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="flex min-h-[44px] items-center gap-2 rounded-md px-1 hover:bg-surface-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               >
                 {marcador}
                 {texto}
@@ -60,7 +60,7 @@ export const Stepper = React.forwardRef<HTMLOListElement, StepperProps>(function
               </span>
             )}
             {i < passos.length - 1 ? (
-              <span aria-hidden="true" className="hidden h-px w-6 bg-border sm:block" />
+              <span aria-hidden="true" className="hidden h-px w-6 bg-line sm:block" />
             ) : null}
           </li>
         );

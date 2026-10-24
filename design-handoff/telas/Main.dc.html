@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Regra de avaliação</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/nota-a/tokens.css">
+<link rel="stylesheet" href="ds/nota-a/components/bundle.css">
+<script src="ds/nota-a/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Sora:wght@500;600&display=swap">
+<style>
+body{margin:0}
+.sim-table{width:100%;border-collapse:collapse;font:400 14px/22px var(--font-text)}
+.sim-table th{padding:8px 0;text-align:left;font-weight:700;color:var(--ink-muted);border-bottom:1px solid var(--line)}
+.sim-table td{padding:10px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+.sim-table .num{text-align:right;font:600 15px/20px var(--font-display);font-variant-numeric:tabular-nums;padding-right:16px}
+.sim-table th.num{font:700 14px/22px var(--font-text);padding-right:16px}
+.sim-table tr:last-child td{border-bottom:0}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 1120px; display: flex; flex-wrap: wrap; align-items: stretch; background: var(--paper); color: var(--ink); font-family: var(--font-text);">
+  <x-import component-from-global-scope="NotaA.SideNav" items="{{nav}}" current="regras" logo="/_blob/54dac930fcaa51e6b872c9c04da5f36a" style="display: flex; align-self: stretch; flex: 0 0 248px;"></x-import>
+
+  <main style="flex: 999 1 640px; min-width: 0; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 32px;">
+    <header style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end; max-width: 1184px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <h1 style="margin: 0; font: 600 32px/40px var(--font-display); letter-spacing: -0.01em;">Ensino médio 2026</h1>
+          <x-import component-from-global-scope="NotaA.Chip" tone="brand">Versão 3, rascunho</x-import>
+        </div>
+        <p style="margin: 0; max-width: 640px; color: var(--ink-muted);">Defina como a média sai das notas. Cada mudança aparece na turma de exemplo ao lado, antes de valer para alguém.</p>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <x-import component-from-global-scope="NotaA.Button" variant="secondary">Salvar rascunho</x-import>
+        <x-import component-from-global-scope="NotaA.Button" variant="primary">Publicar versão 3</x-import>
+      </div>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; max-width: 1184px;">
+
+      <section aria-labelledby="cfg" style="flex: 1 1 520px; min-width: 0; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 32px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <h2 id="cfg" style="margin: 0; font: 600 19px/26px var(--font-display);">Períodos do ano</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px;">
+            <x-import component-from-global-scope="NotaA.Select" label="Divisão do ano" options="{{divisoes}}" value="trimestre" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.Select" label="Média do ano" options="{{mediaAno}}" value="ponderada" style="display: block;"></x-import>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;">
+            <x-import component-from-global-scope="NotaA.TextField" label="Peso do 1º trimestre" value="3" inputmode="decimal" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.TextField" label="Peso do 2º trimestre" value="3" inputmode="decimal" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.TextField" label="Peso do 3º trimestre" value="4" inputmode="decimal" style="display: block;"></x-import>
+          </div>
+          <x-import component-from-global-scope="NotaA.ProgressTrail" total="{{trailTotal}}" done="{{trailDone}}" label="Períodos do ano" caption="1º trimestre em andamento"></x-import>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--line); padding-top: 24px;">
+          <h2 style="margin: 0; font: 600 19px/26px var(--font-display);">Notas de cada trimestre</h2>
+          <p style="margin: 0; color: var(--ink-muted);">A média do trimestre é a soma de cada nota vezes o peso, dividida pela soma dos pesos.</p>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;">
+            <x-import component-from-global-scope="NotaA.TextField" label="Peso da prova" value="{{prova}}" onChange="{{setProva}}" error="{{errProva}}" inputmode="decimal" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.TextField" label="Peso do trabalho" value="{{trab}}" onChange="{{setTrab}}" error="{{errTrab}}" inputmode="decimal" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.TextField" label="Peso da participação" value="{{part}}" onChange="{{setPart}}" error="{{errPart}}" inputmode="decimal" style="display: block;"></x-import>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--line); padding-top: 24px;">
+          <h2 style="margin: 0; font: 600 19px/26px var(--font-display);">Situação do aluno</h2>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;">
+            <x-import component-from-global-scope="NotaA.TextField" label="Média para aprovação" value="{{pass}}" onChange="{{setPass}}" error="{{errPass}}" inputmode="decimal" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.TextField" label="Média para recuperação" value="{{rec}}" onChange="{{setRec}}" error="{{errRec}}" inputmode="decimal" style="display: block;"></x-import>
+            <x-import component-from-global-scope="NotaA.TextField" label="Frequência mínima (%)" value="75" hint="A LDB exige 75%. Você pode pedir mais, nunca menos." inputmode="numeric" style="display: block;"></x-import>
+          </div>
+        </div>
+
+        <x-import component-from-global-scope="NotaA.Notice" tone="info" title="Como a versão 3 vale">Boletins já fechados continuam na versão 2. Mudar um deles depois exige uma justificativa, que fica registrada.</x-import>
+      </section>
+
+      <section aria-labelledby="sim" style="flex: 1 1 440px; min-width: 0; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 id="sim" style="margin: 0; font: 600 19px/26px var(--font-display);">Simulador</h2>
+          <p style="margin: 0; color: var(--ink-muted);">Matemática, 3º A, 1º trimestre. Mexa nos pesos e veja o efeito agora.</p>
+        </div>
+
+        <div style="background: var(--surface-sunken); border-radius: var(--radius-md); padding: 16px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <span style="font: 700 14px/20px var(--font-text);">{{exemploNome}}</span>
+            <span style="color: var(--ink-muted); font: 400 14px/22px var(--font-text); font-variant-numeric: tabular-nums;">{{exemploConta}}</span>
+          </div>
+          <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">{{exemploMedia}}</span>
+        </div>
+
+        <table class="sim-table">
+          <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Situação de cada aluno com a regra atual e com a versão 2</caption>
+          <thead>
+            <tr>
+              <th scope="col">Aluno</th>
+              <th scope="col" class="num">Média</th>
+              <th scope="col">Agora</th>
+              <th scope="col">Versão 2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{linhas}}" as="r" hint-placeholder-count="6">
+              <tr>
+                <th scope="row" style="padding: 10px 0; text-align: left; font-weight: 400; border-bottom: 1px solid var(--line);">{{r.name}}</th>
+                <td class="num">{{r.media}}</td>
+                <td>
+                  <span style="display: inline-flex; align-items: center; gap: 8px;">
+                    <x-import component-from-global-scope="NotaA.Chip" tone="{{r.tone}}">{{r.label}}</x-import>
+                    <span style="font: 700 13px/18px var(--font-text); color: var(--ink);">{{r.mudou}}</span>
+                  </span>
+                </td>
+                <td style="color: var(--ink-muted);">{{r.antes}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+
+        <sc-if value="{{temMudanca}}" hint-placeholder-val="{{true}}">
+          <x-import component-from-global-scope="NotaA.Notice" tone="warning" title="Confira antes de publicar">{{textoMudanca}}</x-import>
+        </sc-if>
+        <sc-if value="{{semMudanca}}" hint-placeholder-val="{{false}}">
+          <x-import component-from-global-scope="NotaA.Notice" tone="success" title="Nenhuma mudança de situação">Com esta regra, todos os alunos da turma ficam como estavam na versão 2.</x-import>
+        </sc-if>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { prova: '6', trab: '3', part: '1', pass: '6,0', rec: '4,0' };
+  }
+  renderVals() {
+    const s = this.state;
+    const parse = (v) => { const t = String(v).trim().replace(',', '.'); return t === '' ? NaN : Number(t); };
+    const okW = (v) => { const n = parse(v); return n >= 1 && n <= 10; };
+    const okM = (v) => { const n = parse(v); return n >= 0 && n <= 10; };
+    const wOf = (v, d) => (okW(v) ? parse(v) : d);
+    const mOf = (v, d) => (okM(v) ? parse(v) : d);
+    const wp = wOf(s.prova, 6), wt = wOf(s.trab, 3), wq = wOf(s.part, 1);
+    const pass = mOf(s.pass, 6), rec = mOf(s.rec, 4);
+    const r1 = (x) => Math.round(x * 10 + 1e-9) / 10;
+    const fmt = (x) => r1(x).toFixed(1).replace('.', ',');
+    const num = (x) => String(x).replace('.', ',');
+    const avg = (a, b, c, x, y, z) => r1((a * x + b * y + c * z) / (x + y + z));
+    const sit = (m, p, r) => (m >= p ? { label: 'Aprovado', tone: 'success' } : m >= r ? { label: 'Recuperação', tone: 'warning' } : { label: 'Abaixo do mínimo', tone: 'danger' });
+    const alunos = [
+      { name: 'Ana Clara Souza', p: 8.0, t: 5.5, q: 9.0 },
+      { name: 'Bruno Lima', p: 4.5, t: 8.0, q: 7.0 },
+      { name: 'Camila Torres', p: 6.0, t: 6.0, q: 6.0 },
+      { name: 'Davi Nascimento', p: 3.0, t: 5.0, q: 8.0 },
+      { name: 'Eduarda Reis', p: 9.5, t: 9.0, q: 10 },
+      { name: 'Felipe Andrade', p: 5.5, t: 6.5, q: 9.0 }
+    ];
+    let mudancas = 0;
+    const linhas = alunos.map((a) => {
+      const m = avg(a.p, a.t, a.q, wp, wt, wq);
+      const now = sit(m, pass, rec);
+      const old = sit(avg(a.p, a.t, a.q, 5, 3, 2), 6, 4);
+      const mudou = now.label !== old.label;
+      if (mudou) mudancas += 1;
+      return { name: a.name, media: fmt(m), label: now.label, tone: now.tone, antes: old.label, mudou: mudou ? 'mudou' : '' };
+    });
+    const e = alunos[0];
+    const soma = wp + wt + wq;
+    const nomeErro = (v) => (okW(v) ? '' : 'O peso precisa ficar entre 1 e 10.');
+    const notaErro = (v) => (okM(v) ? '' : 'A média precisa ficar entre 0 e 10.');
+    return {
+      theme: this.props.theme ?? 'light',
+      nav: [
+        { id: 'inicio', label: 'Início' },
+        { group: 'Acadêmico' },
+        { id: 'turmas', label: 'Turmas' }, { id: 'boletins', label: 'Boletins', badge: 2 }, { id: 'frequencia', label: 'Frequência' }, { id: 'agenda', label: 'Agenda' },
+        { group: 'Comunidade' },
+        { id: 'comunicados', label: 'Comunicados' }, { id: 'responsaveis', label: 'Responsáveis' },
+        { group: 'Configuração' },
+        { id: 'regras', label: 'Regras de avaliação' }, { id: 'importacao', label: 'Importação' }
+      ],
+      divisoes: [{ value: 'bimestre', label: 'Bimestre' }, { value: 'trimestre', label: 'Trimestre' }, { value: 'semestre', label: 'Semestre' }],
+      mediaAno: [{ value: 'ponderada', label: 'Média ponderada dos períodos' }, { value: 'simples', label: 'Média simples dos períodos' }],
+      trailTotal: 3, trailDone: 1,
+      prova: s.prova, trab: s.trab, part: s.part, pass: s.pass, rec: s.rec,
+      errProva: nomeErro(s.prova), errTrab: nomeErro(s.trab), errPart: nomeErro(s.part),
+      errPass: notaErro(s.pass), errRec: notaErro(s.rec),
+      setProva: (ev) => this.setState({ prova: ev.target.value }),
+      setTrab: (ev) => this.setState({ trab: ev.target.value }),
+      setPart: (ev) => this.setState({ part: ev.target.value }),
+      setPass: (ev) => this.setState({ pass: ev.target.value }),
+      setRec: (ev) => this.setState({ rec: ev.target.value }),
+      exemploNome: e.name,
+      exemploConta: '(' + fmt(e.p) + ' × ' + num(wp) + ' + ' + fmt(e.t) + ' × ' + num(wt) + ' + ' + fmt(e.q) + ' × ' + num(wq) + ') ÷ ' + num(soma),
+      exemploMedia: fmt(avg(e.p, e.t, e.q, wp, wt, wq)),
+      linhas,
+      temMudanca: mudancas > 0,
+      semMudanca: mudancas === 0,
+      textoMudanca: mudancas + (mudancas === 1 ? ' aluno muda' : ' alunos mudam') + ' de situação em relação à versão 2. Veja a marca "mudou" na tabela.'
+    };
+  }
+}
+</script>
+</body>
+</html>

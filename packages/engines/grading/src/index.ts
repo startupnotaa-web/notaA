@@ -15,4 +15,14 @@ export {
   type ResultadoSituacaoFinal,
 } from './calculo';
 export { simularAluno } from './simulacao';
+export {
+  resumirFrequencia,
+  resumirPorDisciplina,
+  avaliarFrequencia,
+  frequenciaMinimaEfetiva,
+  type RegistroFrequencia,
+  type OpcoesFrequencia,
+  type ResumoFrequencia,
+  type ResumoPorDisciplina,
+} from './frequencia';
 export { EntradaInvalidaError } from './erros';

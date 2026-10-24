@@ -75,7 +75,7 @@ flowchart TD
     API -->|único portão de IA| AIP
     WORK -->|único portão de IA| AIP
     API --> RT
-    classDef gate fill:#310A62,stroke:#D022E3,color:#fff;
+    classDef gate stroke-width:3px,stroke-dasharray:5 3;
     class API gate;
 ```
 

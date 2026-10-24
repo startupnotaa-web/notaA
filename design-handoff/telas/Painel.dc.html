@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel da coordenação</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/nota-a/tokens.css">
+<link rel="stylesheet" href="ds/nota-a/components/bundle.css">
+<script src="ds/nota-a/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Sora:wght@500;600&display=swap">
+<style>
+body{margin:0}
+.pend{width:100%;border-collapse:collapse;font:400 14px/22px var(--font-text)}
+.pend th{padding:10px 16px 10px 0;text-align:left;font-weight:700;color:var(--ink-muted);border-bottom:1px solid var(--line)}
+.pend td{padding:12px 16px 12px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+.pend tr:last-child td,.pend tr:last-child th{border-bottom:0}
+.pend .num{font:600 15px/20px var(--font-display);font-variant-numeric:tabular-nums}
+.row-act{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.row-act:last-child{border-bottom:0}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 1120px; display: flex; flex-wrap: wrap; align-items: stretch; background: var(--paper); color: var(--ink); font-family: var(--font-text);">
+  <x-import component-from-global-scope="NotaA.SideNav" items="{{nav}}" current="inicio" logo="/_blob/54dac930fcaa51e6b872c9c04da5f36a" style="display: flex; align-self: stretch; flex: 0 0 248px;"></x-import>
+
+  <main style="flex: 999 1 640px; min-width: 0; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 40px;">
+    <header style="display: flex; flex-direction: column; gap: 20px; max-width: 1184px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <h1 style="margin: 0; font: 600 32px/40px var(--font-display); letter-spacing: -0.01em;">Fechamento do 3º trimestre</h1>
+        <p style="margin: 0; color: var(--ink-muted);">Prazo para publicar os boletins: 30 de outubro. Hoje faltam 14 dias.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <x-import component-from-global-scope="NotaA.ProgressTrail" total="{{trailTotal}}" done="{{trailDone}}" label="Etapas do fechamento" caption="Etapa atual: revisão das notas"></x-import>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 32px; color: var(--ink-muted); font: 400 14px/22px var(--font-text);">
+          <span>Notas lançadas</span><span style="color: var(--ink); font-weight: 700;">Revisão</span><span>Boletins fechados</span><span>Boletins publicados</span>
+        </div>
+      </div>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start; max-width: 1184px;">
+      <div style="flex: 3 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 40px;">
+
+        <section aria-labelledby="acoes" style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 id="acoes" style="margin: 0 0 8px; font: 600 24px/32px var(--font-display);">Precisa de você</h2>
+          <div class="row-act">
+            <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 12px;"><x-import component-from-global-scope="NotaA.Chip" tone="success">Pronto</x-import><strong>2 boletins prontos para publicar</strong></div>
+              <span style="color: var(--ink-muted);">1º A e 2º B têm todas as notas e frequência fechadas. Responsáveis e alunos recebem aviso ao publicar.</span>
+            </div>
+            <x-import component-from-global-scope="NotaA.Button" variant="primary">Publicar boletins</x-import>
+          </div>
+          <div class="row-act">
+            <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 12px;"><x-import component-from-global-scope="NotaA.Chip" tone="warning">Pendência</x-import><strong>7 professores ainda não lançaram todas as notas</strong></div>
+              <span style="color: var(--ink-muted);">São 11 turmas com notas faltando. A lista completa está logo abaixo.</span>
+            </div>
+            <x-import component-from-global-scope="NotaA.Button" variant="secondary">Lembrar professores</x-import>
+          </div>
+          <div class="row-act">
+            <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 12px;"><x-import component-from-global-scope="NotaA.Chip" tone="danger">Abaixo de 75%</x-import><strong>5 alunos com frequência abaixo do mínimo</strong></div>
+              <span style="color: var(--ink-muted);">A LDB exige 75% de presença. Os responsáveis desses alunos ainda não foram avisados.</span>
+            </div>
+            <x-import component-from-global-scope="NotaA.Button" variant="secondary">Ver alunos</x-import>
+          </div>
+          <div class="row-act">
+            <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 12px;"><x-import component-from-global-scope="NotaA.Chip" tone="info">Retificação</x-import><strong>1 pedido de mudança em boletim fechado</strong></div>
+              <span style="color: var(--ink-muted);">Matemática, 3º A. A justificativa do professor já foi enviada.</span>
+            </div>
+            <x-import component-from-global-scope="NotaA.Button" variant="secondary">Revisar pedido</x-import>
+          </div>
+        </section>
+
+        <section aria-labelledby="notas" style="display: flex; flex-direction: column; gap: 12px;">
+          <h2 id="notas" style="margin: 0; font: 600 24px/32px var(--font-display);">Notas que faltam</h2>
+          <table class="pend">
+            <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Turmas com notas pendentes</caption>
+            <thead>
+              <tr><th scope="col">Turma</th><th scope="col">Disciplina</th><th scope="col">Professor</th><th scope="col">Faltam</th><th scope="col">Situação</th></tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{pendencias}}" as="p" hint-placeholder-count="5">
+                <tr>
+                  <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; font-weight: 700; border-bottom: 1px solid var(--line);">{{p.turma}}</th>
+                  <td>{{p.disciplina}}</td>
+                  <td style="color: var(--ink-muted);">{{p.professor}}</td>
+                  <td class="num">{{p.faltam}}</td>
+                  <td><x-import component-from-global-scope="NotaA.Chip" tone="{{p.tone}}">{{p.label}}</x-import></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <div><x-import component-from-global-scope="NotaA.Button" variant="quiet" size="sm">Ver as 11 turmas</x-import></div>
+        </section>
+      </div>
+
+      <aside aria-label="Comunidade e agenda" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 40px;">
+        <section aria-labelledby="com" style="display: flex; flex-direction: column; gap: 12px;">
+          <h2 id="com" style="margin: 0; font: 600 19px/26px var(--font-display);">Último comunicado</h2>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <strong>Reunião de pais, 6 de novembro</strong>
+            <span style="color: var(--ink-muted);">Enviado ontem para todos os responsáveis</span>
+          </div>
+          <div style="height: 8px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden;" role="img" aria-label="142 de 190 responsáveis leram">
+            <div style="width: 75%; height: 100%; border-radius: 999px; background: var(--primary);"></div>
+          </div>
+          <span style="font: 400 14px/22px var(--font-text);"><strong style="font-family: var(--font-display); font-variant-numeric: tabular-nums;">142</strong> de 190 responsáveis já leram</span>
+          <div><x-import component-from-global-scope="NotaA.Button" variant="quiet" size="sm">Ver quem não leu</x-import></div>
+        </section>
+
+        <section aria-labelledby="agenda" style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 id="agenda" style="margin: 0 0 8px; font: 600 19px/26px var(--font-display);">Próximos na agenda</h2>
+          <sc-for list="{{agenda}}" as="a" hint-placeholder-count="3">
+            <div style="display: flex; gap: 16px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line);">
+              <span style="flex: 0 0 56px; font: 600 15px/20px var(--font-display); font-variant-numeric: tabular-nums;">{{a.data}}</span>
+              <span style="min-width: 0;">{{a.evento}}</span>
+            </div>
+          </sc-for>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.theme ?? 'light',
+      trailTotal: 4, trailDone: 1,
+      nav: [
+        { id: 'inicio', label: 'Início' },
+        { group: 'Acadêmico' },
+        { id: 'turmas', label: 'Turmas' }, { id: 'boletins', label: 'Boletins', badge: 2 }, { id: 'frequencia', label: 'Frequência' }, { id: 'agenda', label: 'Agenda' },
+        { group: 'Comunidade' },
+        { id: 'comunicados', label: 'Comunicados' }, { id: 'responsaveis', label: 'Responsáveis' },
+        { group: 'Configuração' },
+        { id: 'regras', label: 'Regras de avaliação' }, { id: 'importacao', label: 'Importação' }
+      ],
+      pendencias: [
+        { turma: '3º A', disciplina: 'Matemática', professor: 'Carlos Mendes', faltam: '2 notas', label: 'Em andamento', tone: 'info' },
+        { turma: '3º B', disciplina: 'Física', professor: 'Renata Alves', faltam: '14 notas', label: 'Atrasado', tone: 'danger' },
+        { turma: '2º A', disciplina: 'Química', professor: 'Paulo Freitas', faltam: '6 notas', label: 'Em andamento', tone: 'info' },
+        { turma: '2º C', disciplina: 'História', professor: 'Lúcia Barros', faltam: '1 nota', label: 'Quase pronto', tone: 'success' },
+        { turma: '1º B', disciplina: 'Redação', professor: 'Marcos Teles', faltam: '22 notas', label: 'Atrasado', tone: 'danger' }
+      ],
+      agenda: [
+        { data: '19/10', evento: 'Simulado de ciências da natureza, 3º ano' },
+        { data: '23/10', evento: 'Conselho de classe do 2º ano' },
+        { data: '30/10', evento: 'Prazo para publicar os boletins' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

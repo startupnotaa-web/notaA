@@ -1,4 +1,4 @@
-import { deflateRawSync } from 'node:zlib';
+import { deflateRawSync, inflateRawSync } from 'node:zlib';
 import type { MapeamentoColunas } from '@notaa/contracts';
 import { describe, expect, it } from 'vitest';
 import {
@@ -15,6 +15,7 @@ import {
   type AlunoExistente,
   type ContextoAlunos,
 } from '../index';
+import { celula } from '../valores';
 
 const texto = (s: string) => new TextEncoder().encode(s);
 
@@ -183,7 +184,6 @@ describe('planejarAlunos', () => {
       ['duplicada', ['t2', 't3']],
     ]),
     alunosPorMatricula: new Map(alunos.map((a) => [a.matricula, a])),
-    contasResponsavelPorEmail: new Map([['mae@x.test', 'u-mae']]),
   });
 
   it('classifica cada linha com o motivo', () => {
@@ -211,9 +211,9 @@ describe('planejarAlunos', () => {
       email: null,
       turmaId: 't1',
     });
-    // Responsável casado pela conta existente, pelo e-mail sem diferenciar caixa.
+    // Responsável é só contato: e-mail em minúsculas, nenhuma conta ligada.
     expect(ana!.responsaveisNovos).toEqual([
-      { nome: 'Mãe', email: 'mae@x.test', telefone: null, parentesco: null, usuarioId: 'u-mae' },
+      { nome: 'Mãe', email: 'mae@x.test', telefone: null, parentesco: null },
     ]);
     expect(recusadas.map((i) => i.previa.motivos[0])).toEqual([
       'Matrícula em branco.',
@@ -312,5 +312,82 @@ describe('exportação CSV', () => {
     expect(csv.startsWith('\uFEFF')).toBe(true);
     const lida = await lerPlanilha(texto(csv), 'csv');
     expect(lida.linhas[0]!.celulas).toEqual(["'=1", 'Ana; Bia']);
+  });
+});
+
+// ── XLSX de verdade (ExcelJS), adulterado depois de gerado ────────────────────
+
+interface EntradaZip {
+  nome: string;
+  dados: Uint8Array;
+}
+
+function fimDoZip(bytes: Uint8Array): number {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  for (let i = bytes.length - 22; i >= 0; i--) if (dv.getUint32(i, true) === 0x06054b50) return i;
+  throw new Error('ZIP sem diretório central');
+}
+
+/** Abre um ZIP real (o que o ExcelJS escreve) e devolve as entradas já descompactadas. */
+function lerEntradas(bytes: Uint8Array): EntradaZip[] {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const eocd = fimDoZip(bytes);
+  const total = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const entradas: EntradaZip[] = [];
+  for (let n = 0; n < total; n++) {
+    const metodo = dv.getUint16(p + 10, true);
+    const compactado = dv.getUint32(p + 20, true);
+    const tamNome = dv.getUint16(p + 28, true);
+    const tamExtra = dv.getUint16(p + 30, true);
+    const tamComentario = dv.getUint16(p + 32, true);
+    const local = dv.getUint32(p + 42, true);
+    const nome = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + tamNome));
+    const inicio = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+    const brutos = bytes.subarray(inicio, inicio + compactado);
+    entradas.push({ nome, dados: metodo === 8 ? new Uint8Array(inflateRawSync(brutos)) : brutos });
+    p += 46 + tamNome + tamExtra + tamComentario;
+  }
+  return entradas;
+}
+
+describe('planilha real adulterada', () => {
+  it('o ZIP reescrito sem adulteração continua sendo lido (controle do teste)', async () => {
+    const real = await gerarXlsx(['matricula', 'nome'], [['1', 'Ana']]);
+    const refeito = zip(lerEntradas(real));
+    expect(detectarFormato(refeito, 'alunos.xlsx')).toBe('xlsx');
+    expect((await lerPlanilha(refeito, 'xlsx')).linhas).toHaveLength(1);
+  });
+
+  it('recusa um XLSX do ExcelJS com xl/vbaProject.bin dentro', async () => {
+    const real = await gerarXlsx(['matricula', 'nome'], [['1', 'Ana']]);
+    const comMacro = zip([...lerEntradas(real), { nome: 'xl/vbaProject.bin', dados: texto('macro') }]);
+    expect(() => detectarFormato(comMacro, 'alunos.xlsx')).toThrow(/macros/);
+  });
+
+  it('recusa um XLSX do ExcelJS com o bit de senha ligado numa entrada', async () => {
+    const real = await gerarXlsx(['matricula', 'nome'], [['1', 'Ana']]);
+    const adulterado = new Uint8Array(real);
+    const dv = new DataView(adulterado.buffer);
+    const primeiraDoDiretorio = dv.getUint32(fimDoZip(adulterado) + 16, true);
+    dv.setUint16(primeiraDoDiretorio + 8, dv.getUint16(primeiraDoDiretorio + 8, true) | 0x1, true);
+    expect(() => detectarFormato(adulterado, 'alunos.xlsx')).toThrow(/senha/);
+  });
+});
+
+describe('exportar e reimportar devolve o mesmo valor', () => {
+  const valores = ['-5', '+5511999990000', '=1+1', '@usuario', '\tcom tab', 'normal', "'já com apóstrofo"];
+  const mapeamento: MapeamentoColunas = { v: 0 };
+
+  it.each(valores)('CSV: %j', async (valor) => {
+    const csv = gerarCsv(['v'], [[valor]]);
+    const planilha = await lerPlanilha(new TextEncoder().encode(csv), 'csv');
+    expect(celula(planilha.linhas[0]!.celulas, mapeamento, 'v')).toBe(valor);
+  });
+
+  it.each(valores)('o que sai começando com fórmula sai com apóstrofo: %j', (valor) => {
+    const saida = celulaSegura(valor).replace(/^"/, '');
+    if (/^[=+\-@\t\r]/.test(valor)) expect(saida.startsWith("'")).toBe(true);
+    else expect(saida.startsWith("'")).toBe(valor.startsWith("'"));
   });
 });

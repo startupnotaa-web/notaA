@@ -1,271 +1,287 @@
-import type { SVGProps } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Badge, Button, Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter, Input } from '@notaa/ui';
-import { FEATURES } from '../../lib/feature-flags';
+import { Aurora } from '@notaa/ui';
+import { Cabecalho } from '../_landing/componentes/Cabecalho';
+import { FormularioLead } from '../_landing/componentes/FormularioLead';
+import { PalcoHome } from '../_landing/componentes/Palcos';
+import { Rodape } from '../_landing/componentes/Rodape';
+import { BOTAO_HOME, FOCO, FORM_HOME } from '../_landing/componentes/estilos';
+import { FallbackHome } from '../_landing/fallbacks/FallbackHome';
+import { metadadosDaPagina } from '../../lib/site';
 
-type IconProps = SVGProps<SVGSVGElement>;
+// A CSP com nonce (middleware.ts) exige HTML gerado por requisição: um HTML do build não teria nonce.
+export const dynamic = 'force-dynamic';
 
-export default function LandingPage() {
+export const metadata = metadadosDaPagina({
+  titulo: 'Nota A: um ambiente para cada papel',
+  descricao:
+    'O Nota A reúne o aluno que se prepara para o ENEM, o professor, a escola e, em breve, a faculdade. Um ambiente para cada papel, todos com a mesma base.',
+  caminho: '/',
+  imagem: 'home',
+});
+
+const AMBIENTES = [
+  {
+    id: 'aluno',
+    href: '/aluno',
+    nome: 'Aluno',
+    sub: 'ENEM, no seu ritmo',
+    posicao: 'md:left-[50%] md:top-[84%]',
+    chip: 'Para quem estuda para o ENEM',
+    texto: 'Trilha de estudo, simulados e uma nota estimada do ENEM.',
+    ir: 'Conhecer o ambiente do aluno',
+    glifo:
+      'rounded-full bg-[conic-gradient(from_200deg,var(--amb-accent),var(--amb-cyan),var(--amb-pink),var(--amb-accent))] opacity-75',
+  },
+  {
+    id: 'professor',
+    href: '/professores',
+    nome: 'Professor',
+    sub: 'Suas aulas, seu painel',
+    posicao: 'md:left-[80%] md:top-[52%]',
+    chip: 'Para quem dá aula por conta própria',
+    texto: 'Turmas, alunos e o acompanhamento de cada um em um painel só.',
+    ir: 'Conhecer o ambiente do professor',
+    glifo: 'flex items-end gap-2.5',
+  },
+  {
+    id: 'escola',
+    href: '/escola',
+    nome: 'Escola',
+    sub: 'Gestão acadêmica',
+    posicao: 'md:left-[50%] md:top-[14%]',
+    chip: 'Para instituições de ensino',
+    texto: 'Boletim com a regra de média da sua instituição, frequência e importação das planilhas da secretaria.',
+    ir: 'Conhecer o ambiente da escola',
+    glifo: 'grid grid-cols-2 gap-2.5',
+  },
+  {
+    id: 'faculdade',
+    href: '/faculdade',
+    nome: 'Faculdade',
+    sub: 'ENADE, em breve',
+    posicao: 'md:left-[20%] md:top-[52%]',
+    chip: 'Em breve, para o ENADE',
+    texto: 'Simulados e acompanhamento por curso, com relatório para a coordenação.',
+    ir: 'Ver o que está por vir',
+    glifo: 'rotate-45 rounded-[12px] border-[3px] border-[color:color-mix(in_srgb,var(--surface)_50%,transparent)] !h-[90px] !w-[90px] !bottom-3 !right-3',
+  },
+] as const;
+
+const IGUAL_EM_TODOS = [
+  {
+    titulo: 'Média e situação por regra, não por IA',
+    texto:
+      'Médias, frequência e situação do aluno seguem regras fixas que dá para conferir. A IA ajuda a explicar um erro ou sugerir um estudo, e não decide média nem situação.',
+  },
+  {
+    titulo: 'Feito para todo mundo ler',
+    texto:
+      'Letra desenhada para leitura, contraste alto, navegação por teclado e movimento que respeita a preferência do seu sistema.',
+  },
+  {
+    titulo: 'Cada pessoa vê só o que é seu',
+    texto:
+      'O acesso segue o papel: aluno, responsável, professor e instituição veem só o que o papel permite. Dados sensíveis de menores de 18 anos só são coletados com a autorização do responsável.',
+  },
+];
+
+function Glifo({ id, classe }: { id: string; classe: string }) {
+  const base = 'pointer-events-none absolute bottom-0 right-0 h-[130px] w-[130px]';
+  if (id === 'professor') {
+    return (
+      <span aria-hidden="true" className={`${base} ${classe}`}>
+        <i className="h-1/2 flex-1 rounded-md bg-amb-amber" />
+        <i className="h-4/5 flex-1 rounded-md bg-[color-mix(in_srgb,var(--surface)_55%,transparent)]" />
+        <i className="h-[65%] flex-1 rounded-md bg-[color-mix(in_srgb,var(--surface)_30%,transparent)]" />
+      </span>
+    );
+  }
+  if (id === 'escola') {
+    return (
+      <span aria-hidden="true" className={`${base} ${classe}`}>
+        <i className="rounded-sm bg-[color-mix(in_srgb,var(--surface)_55%,transparent)]" />
+        <i className="rounded-sm bg-[color-mix(in_srgb,var(--surface)_25%,transparent)]" />
+        <i className="rounded-sm bg-[color-mix(in_srgb,var(--surface)_25%,transparent)]" />
+        <i className="rounded-sm bg-amb-glyph" />
+      </span>
+    );
+  }
+  return <span aria-hidden="true" className={`${base} ${classe}`} />;
+}
+
+export default function Home() {
   return (
-    <div className="min-h-screen bg-bg text-text">
-      {/* Nav Minimalista */}
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-4">
-          <Image src="/brand/logo-full.png" alt="Nota A" width={80} height={50} priority />
-          <Badge variant="brand" className="hidden sm:inline-flex">Beta 1.0 ao vivo</Badge>
-        </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/login">Entrar</Link>
-        </Button>
-      </header>
+    <div data-theme="light" className="min-h-screen overflow-x-clip bg-paper font-text text-ink">
+      <Aurora as="section">
+        <Cabecalho
+          links={[
+            { href: '#ambientes', rotulo: 'Ambientes' },
+            { href: '#base', rotulo: 'O que é igual em todos' },
+            { href: '#contato', rotulo: 'Contato' },
+          ]}
+          secundario={{ href: '/login', rotulo: 'Entrar' }}
+          acao={
+            <a href="#contato" className={`${BOTAO_HOME.primario} ${BOTAO_HOME.compacto}`}>
+              Agendar demonstração
+            </a>
+          }
+        />
 
-      {/* Hero Section */}
-      <section className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-6 pb-20 pt-16 text-center">
-        <h1 className="text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl">
-          <span className="bg-gradient-brand bg-clip-text text-transparent">Aprenda jogando.</span><br />
-          Evolua estudando.
-        </h1>
-        <p className="max-w-2xl text-xl text-text-muted">
-          A primeira plataforma EdTech gamificada do Brasil com IA adaptativa. Personalizamos sua jornada do ENEM, do primeiro simulado à aprovação.
-        </p>
-        <div className="flex w-full flex-col justify-center gap-4 sm:w-auto sm:flex-row">
-          <Button asChild variant="cta" size="lg" className="shadow-brand">
-            <Link href="/cadastro">Começar Grátis</Link>
-          </Button>
-          <Button asChild variant="secondary" size="lg">
-            <Link href="#demonstracao">Ver demonstração</Link>
-          </Button>
-        </div>
-      </section>
-
-      {/* O problema é real (Glassmorphism) */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-16">
-        <h2 className="mb-12 text-center text-3xl font-bold">O problema é real</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { t: 'Sem direcionamento', d: 'Você estuda o que já sabe e ignora o que mais cai.' },
-            { t: 'Sem tempo', d: 'Rotinas pesadas que não se adaptam à sua vida real.' },
-            { t: 'Método genérico', d: 'O cursinho ensina igual para todos, sem respeitar seu ritmo.' },
-            { t: 'Neurodivergentes ignorados', d: 'TDAH, dislexia e autismo não são contemplados nos métodos.' },
-          ].map((prob) => (
-            <Card key={prob.t} className="border-white/5 bg-surface/40 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-lg">{prob.t}</CardTitle>
-                <CardDescription>{prob.d}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* A Solução */}
-      <section id="demonstracao" className="mx-auto w-full max-w-6xl px-6 py-16">
-        <h2 className="mb-12 text-center text-3xl font-bold">A solução: Nota A</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { i: DiagnosticIcon, t: 'IA Diagnóstica', d: 'Descubra exatamente onde focar em 10 minutos.' },
-            { i: WritingIcon, t: 'Redação com IA', d: 'Correção instantânea pelas 5 competências do ENEM.' },
-            { i: ExamIcon, t: 'Simulado Adaptativo', d: 'Questões que evoluem junto com seu nível.' },
-            { i: SocraticIcon, t: 'IA Socrática', d: 'Um tutor que ensina a pensar, não apenas dá respostas.' },
-            // A vitrine só anuncia o que está no ar. Com a Arena oculta
-            // (lib/feature-flags.ts), Batalha PvP cede o lugar à Previsão de
-            // Nota, que já existe em /previsao-nota.
-            FEATURES.arena
-              ? { i: PvpIcon, t: 'Batalha PvP', d: 'Desafie amigos e aprenda de forma gamificada.' }
-              : { i: ForecastIcon, t: 'Previsão de Nota', d: 'Veja a projeção da sua nota evoluir a cada simulado.' },
-            { i: CertIcon, t: 'Certificados', d: 'Comprove suas horas de estudo e habilidades.' },
-          ].map(({ i: Icon, t, d }) => (
-            <Card key={t} className="border-border bg-surface-2">
-              <CardHeader>
-                <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-surface text-brand-primary">
-                  <Icon className="h-6 w-6" aria-hidden="true" />
-                </span>
-                <CardTitle className="text-xl">{t}</CardTitle>
-                <CardDescription>{d}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Para quem é */}
-      <section className="bg-surface py-16">
-        <div className="mx-auto w-full max-w-6xl px-6">
-          <h2 className="mb-12 text-center text-3xl font-bold">Feito para todo o ecossistema</h2>
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              { role: 'Estudante', desc: 'Plano de estudos dinâmico, simulados gamificados e redações corrigidas em segundos.' },
-              { role: 'Professor', desc: 'Acompanhe métricas da turma, identifique lacunas e personalize tarefas facilmente.' },
-              { role: 'Instituição', desc: 'Painel administrativo com rendimento e histórico dos alunos vinculados.' },
-            ].map((persona) => (
-              <div key={persona.role} className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-2">
-                  <span className="text-2xl font-bold text-brand-accent">{persona.role.charAt(0)}</span>
-                </div>
-                <h3 className="mb-2 text-xl font-semibold">{persona.role}</h3>
-                <p className="text-text-muted">{persona.desc}</p>
+        <main id="conteudo">
+          <div className="relative mx-auto flex w-full max-w-landing flex-wrap items-center gap-6 px-5 pb-16 pt-6 md:px-10">
+            <div className="flex min-w-0 flex-[1_1_520px] flex-col gap-7">
+              <h1 className="max-w-[700px] animate-landing-rise font-display text-[clamp(2.625rem,5.6vw,4.875rem)] font-semibold leading-[1.06] tracking-[-0.03em] [animation-delay:80ms]">
+                Um só caminho, de quem estuda a quem ensina.
+              </h1>
+              <p className="max-w-[540px] animate-landing-rise text-[20px] leading-8 text-ink-muted [animation-delay:220ms]">
+                O Nota A tem um ambiente para cada papel: o aluno que se prepara para o ENEM, o professor que cuida das
+                próprias aulas, a escola e, em breve, a faculdade. Cada um com o seu jeito, todos com a mesma base.
+              </p>
+              <div className="flex animate-landing-rise flex-wrap gap-3.5 [animation-delay:360ms]">
+                <a href="#ambientes" className={BOTAO_HOME.primario}>
+                  Escolher meu ambiente
+                </a>
+                <a href="#contato" className={BOTAO_HOME.secundario}>
+                  Falar com a gente
+                </a>
               </div>
-            ))}
+            </div>
+
+            <PalcoHome
+              fallback={<FallbackHome />}
+              className="min-w-0 flex-[1_1_560px] md:h-[640px]"
+              classeDaArte="inset-x-0 top-0 h-[340px] md:inset-0 md:h-auto"
+            >
+              <div className="h-[340px] md:hidden" />
+              <ul className="relative m-0 grid list-none grid-cols-2 gap-3 p-0 md:absolute md:inset-0 md:block">
+                {AMBIENTES.map((a) => (
+                  <li key={a.id} className="contents">
+                    <Link
+                      href={a.href}
+                      data-ancora
+                      data-ambiente={a.id}
+                      className={`flex w-full flex-col gap-0.5 rounded-[18px] bg-amb-tag px-[18px] py-3.5 text-surface no-underline shadow-raise md:absolute md:w-[172px] md:-translate-x-1/2 md:-translate-y-1/2 ${a.posicao} ${FOCO}`}
+                    >
+                      <strong className="font-display text-[20px] font-semibold leading-[26px]">{a.nome}</strong>
+                      <span className="text-body-sm">{a.sub}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </PalcoHome>
           </div>
+        </main>
+      </Aurora>
+
+      <section id="ambientes" aria-labelledby="amb" className="mx-auto w-full max-w-landing px-5 pb-6 pt-[72px] md:px-10">
+        <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
+          <h2
+            id="amb"
+            className="max-w-[640px] font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.12] tracking-[-0.02em]"
+          >
+            Escolha o ambiente que combina com o seu dia.
+          </h2>
+          <p className="max-w-[420px] text-[18px] leading-[29px] text-ink-muted">
+            Cada um tem cores, ritmo e telas próprias, pensadas para quem usa.
+          </p>
+        </div>
+        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(270px,1fr))] gap-5 p-0">
+          {AMBIENTES.map((a) => (
+            <li key={a.id} className="contents">
+              <Link
+                href={a.href}
+                data-ambiente={a.id}
+                className={`group relative flex min-h-[430px] flex-col gap-3.5 overflow-hidden rounded-[26px] bg-[linear-gradient(160deg,var(--amb-card-from),var(--amb-card-to))] px-7 py-[30px] text-surface no-underline transition-[transform,box-shadow] duration-base ease-out hover:-translate-y-2 hover:shadow-raise motion-reduce:transition-none ${FOCO}`}
+              >
+                <span className="inline-flex self-start rounded-pill bg-[color-mix(in_srgb,var(--amb-card-to)_55%,transparent)] px-3 py-1 text-[13.5px] font-bold leading-5">
+                  {a.chip}
+                </span>
+                <h3 className="m-0 font-display text-[34px] font-semibold leading-10 tracking-[-0.01em]">{a.nome}</h3>
+                <p className="m-0 max-w-[300px] text-[17px] leading-[27px]">{a.texto}</p>
+                {/* A arte ocupa o espaço entre o texto e a chamada, sem passar por baixo do texto. */}
+                <div className="relative min-h-[130px] flex-1">
+                  <Glifo id={a.id} classe={a.glifo} />
+                </div>
+                <span className="text-body font-bold underline underline-offset-[5px]">{a.ir}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section id="base" aria-labelledby="bas" className="mx-auto w-full max-w-landing px-5 pb-6 pt-[88px] md:px-10">
+        <h2
+          id="bas"
+          className="mb-10 max-w-[700px] font-display text-[clamp(1.875rem,3.4vw,2.75rem)] font-semibold leading-[1.14] tracking-[-0.02em]"
+        >
+          O que é igual nos quatro ambientes.
+        </h2>
+        <div className="flex flex-wrap border-t border-line">
+          {IGUAL_EM_TODOS.map((item, i) => (
+            <div
+              key={item.titulo}
+              className={`flex-[1_1_320px] py-8 ${i === 0 ? 'pr-9' : 'border-line lg:border-l lg:px-9'} ${i === 2 ? 'lg:pr-0' : ''}`}
+            >
+              <h3 className="mb-2.5 font-display text-heading-2 font-semibold">{item.titulo}</h3>
+              <p className="max-w-[380px] text-[17px] leading-7 text-ink-muted">{item.texto}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Planos (Pricing) */}
-      <section className="mx-auto w-full max-w-5xl px-6 py-20">
-        <h2 className="mb-4 text-center text-3xl font-bold">Planos que cabem no bolso</h2>
-        <p className="mb-12 text-center text-text-muted">Comece de graça, faça upgrade quando quiser.</p>
-        <div className="grid items-center gap-6 lg:grid-cols-3">
-          
-          <Card className="flex flex-col border-border bg-surface">
-            <CardHeader>
-              <CardTitle>Free</CardTitle>
-              <div className="mt-2 flex items-baseline text-3xl font-bold">R$ 0<span className="text-sm font-normal text-text-muted">/mês</span></div>
-              <CardDescription>Para testar a metodologia.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <ul className="space-y-3 text-sm text-text-muted">
-                <li>• Diagnóstico inicial</li>
-                <li>• 1 Simulado adaptativo por mês</li>
-                <li>• Tutoria IA limitada</li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="secondary">Começar Grátis</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="relative flex transform flex-col border-brand-primary bg-surface-2 shadow-brand lg:-translate-y-4">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-primary px-3 py-1 text-xs font-bold text-white">
-              Mais Popular
-            </div>
-            <CardHeader>
-              <CardTitle>Plus</CardTitle>
-              <div className="mt-2 flex items-baseline text-4xl font-bold text-brand-primary">R$ 39<span className="text-sm font-normal text-text-muted">/mês</span></div>
-              <CardDescription>O kit completo para sua aprovação.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <ul className="space-y-3 text-sm text-text-muted">
-                <li>• Tudo do plano Free</li>
-                <li>• Correção ilimitada de Redação</li>
-                <li>• Simulados e desafios semanais</li>
-                <li>• Acesso total à IA Socrática</li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="cta">Assinar Plus</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="flex flex-col border-border bg-surface">
-            <CardHeader>
-              <CardTitle>Instituição</CardTitle>
-              <div className="mt-2 flex items-baseline text-3xl font-bold">R$ 2.400<span className="text-sm font-normal text-text-muted">/ano</span></div>
-              <CardDescription>Licença completa para instituições.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <ul className="space-y-3 text-sm text-text-muted">
-                <li>• Até 100 alunos inclusos</li>
-                <li>• Dashboards e relatórios MEC</li>
-                <li>• Gestão de turmas e tarefas</li>
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="secondary">Falar com Vendas</Button>
-            </CardFooter>
-          </Card>
-
+      <section id="contato" aria-labelledby="con" className="mx-auto w-full max-w-landing px-5 pb-20 pt-[72px] md:px-10">
+        {/* O degradê da marca entra como luz de fundo, e o texto fica sobre o índigo sólido: branco sobre o ciano do
+            degradê não chegaria a 4,5:1. */}
+        <div className="relative isolate flex flex-wrap gap-10 overflow-hidden rounded-[32px] bg-ink p-6 text-surface md:p-14">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-24 -top-32 -z-10 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,var(--brand-cyan),transparent_68%)] opacity-60 blur-[60px]"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-40 -right-20 -z-10 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,var(--brand-magenta),transparent_68%)] opacity-50 blur-[60px]"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/3 top-1/2 -z-10 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,var(--brand-violet),transparent_68%)] opacity-60 blur-[60px]"
+          />
+          <div className="flex flex-[1_1_380px] flex-col justify-center gap-4">
+            <h2
+              id="con"
+              className="m-0 font-display text-[clamp(2rem,3.6vw,2.875rem)] font-semibold leading-[1.12] tracking-[-0.02em]"
+            >
+              Conte quem você é e indicamos o caminho.
+            </h2>
+          </div>
+          <FormularioLead
+            origem="contato"
+            botao="Quero conhecer"
+            consentimento="Autorizo o Nota A a usar meu nome e e-mail para responder a este pedido, como descrito na"
+            sucesso={{
+              titulo: 'Pedido recebido',
+              texto: 'Vamos responder por e-mail com o ambiente indicado para você.',
+            }}
+            estilo={FORM_HOME}
+            campos={[
+              { nome: 'nome', rotulo: 'Seu nome', tipo: 'text', autoComplete: 'name' },
+              { nome: 'email', rotulo: 'Seu e-mail', tipo: 'email', autoComplete: 'email' },
+              {
+                nome: 'perfil',
+                rotulo: 'Eu sou',
+                tipo: 'select',
+                opcoes: [
+                  { valor: 'aluno', rotulo: 'Aluno que estuda para o ENEM' },
+                  { valor: 'professor', rotulo: 'Professor com aulas próprias' },
+                  { valor: 'gestor', rotulo: 'Gestor de escola ou instituição' },
+                  { valor: 'faculdade', rotulo: 'Da faculdade, quero a lista de espera' },
+                ],
+              },
+            ]}
+          />
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-surface-2 pb-8 pt-12">
-        <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 md:grid-cols-4">
-          <div className="flex flex-col gap-4 md:col-span-2">
-            <Image src="/brand/logo-full.png" alt="Nota A" width={80} height={50} />
-            <p className="text-sm text-text-muted">Aprenda jogando. Evolua estudando.</p>
-            <div className="mt-2 flex max-w-md items-center gap-2">
-              <Input placeholder="Seu melhor e-mail" className="bg-bg" />
-              <Button variant="primary">Lista de espera</Button>
-            </div>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="font-bold">Plataforma</h4>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Sobre nós</Link>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Para Instituições</Link>
-            <Link href="#" className="text-sm text-text-muted hover:text-text">Planos</Link>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="font-bold">Contato</h4>
-            <span className="text-sm text-text-muted">contato@notaa.com.br</span>
-            <span className="text-sm text-text-muted">CNPJ: 12.345.678/0001-99</span>
-            <div className="mt-2 flex gap-4">
-              <Link href="#" className="text-sm text-text-muted hover:text-text">Privacidade</Link>
-              <Link href="#" className="text-sm text-text-muted hover:text-text">Termos</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Rodape className="text-ink-muted" />
     </div>
-  );
-}
-
-// Ícones SVGs extraídos/adaptados
-function DiagnosticIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M2 12h4l3-9 5 18 3-9h5" />
-    </svg>
-  );
-}
-function WritingIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
-    </svg>
-  );
-}
-function ExamIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10 9 9 9 8 9" />
-    </svg>
-  );
-}
-function SocraticIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M21 11.5a8.38 8.38 0 0 1-9 8.3L3 21l1.3-4A8.5 8.5 0 1 1 21 11.5z" />
-      <path d="M9.5 9a2.5 2.5 0 1 1 3 2.4c-.7.2-1 .7-1 1.6" />
-      <path d="M11.5 16h.01" />
-    </svg>
-  );
-}
-function PvpIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  );
-}
-function ForecastIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
-    </svg>
-  );
-}
-function CertIcon(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="8" r="7" />
-      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
-    </svg>
   );
 }

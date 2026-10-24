@@ -8,13 +8,6 @@ export const AREA_LABEL: Record<string, string> = {
   matematica: 'Matemática',
 };
 
-export const AREA_ICONE: Record<string, string> = {
-  linguagens: '📚',
-  humanas: '🌍',
-  natureza: '🔬',
-  matematica: '📐',
-};
-
 export const DIFICULDADE_LABEL: Record<string, string> = {
   facil: 'Fácil',
   media: 'Média',

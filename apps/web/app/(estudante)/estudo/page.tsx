@@ -1,10 +1,12 @@
 'use client';
-import { SectionHeader, Skeleton, Card } from '@notaa/ui';
-import { ShortcutCard } from '../../components/ShortcutCard';
-import { useUser } from '../../../lib/user-context';
 import { useEffect, useState } from 'react';
-import { apiFetch, ApiError } from '../../../lib/api-client';
+import { ClipboardList, Landmark, PenLine, Zap } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
+import { Carregando, Notice, PageHeader, Section, Skeleton } from '@notaa/ui';
+import { apiFetch, ApiError } from '../../../lib/api-client';
+import { useUser } from '../../../lib/user-context';
+import { Atalho, AtalhoLista } from '../../components/Atalho';
+import { Pagina } from '../../components/Pagina';
 
 export default function EstudoHubPage() {
   const { loading: userLoading } = useUser();
@@ -20,9 +22,9 @@ export default function EstudoHubPage() {
       } catch (e) {
         if (!cancelled) {
           if (e instanceof ApiError && e.code === 'NETWORK_ERROR') {
-            setErro('Sem conexão com o servidor.');
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente de novo.');
           } else {
-            setErro('Erro ao carregar os dados de estudo.');
+            setErro('Não foi possível carregar os dados de estudo. Tente recarregar a página.');
           }
         }
       }
@@ -33,9 +35,11 @@ export default function EstudoHubPage() {
 
   if (erro) {
     return (
-      <div className="mx-auto w-full max-w-3xl p-4">
-        <p className="text-sm text-error">{erro}</p>
-      </div>
+      <Pagina>
+        <Notice tone="danger" title="Não foi possível abrir o estudo">
+          {erro}
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -44,72 +48,65 @@ export default function EstudoHubPage() {
   const { progresso } = data;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-text">Estudo Ativo</h1>
-        <p className="text-text-muted">Pratique com ferramentas que se adaptam ao seu ritmo e ao seu cérebro.</p>
-      </header>
+    <Pagina>
+      <PageHeader
+        title="Estudo ativo"
+        description="Pratique com ferramentas que se adaptam ao seu ritmo e ao seu cérebro."
+      />
 
-      <section className="space-y-4">
-        <SectionHeader title="Ferramentas" accent="de Prática" as="h2" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          <ShortcutCard
-            icon="⚡"
-            title="Quiz com IA"
-            description="Questões personalizadas focadas nas suas lacunas de conhecimento."
+      <Section title="Ferramentas de prática">
+        <AtalhoLista>
+          <Atalho
+            icone={<Zap className="h-5 w-5" />}
+            titulo="Quiz com IA"
+            descricao="Questões personalizadas, focadas nas suas lacunas de conhecimento."
             href="/quiz"
           />
-          <ShortcutCard
-            icon="✍️"
-            title="Redação"
-            description="Envie textos e receba correções detalhadas nas 5 competências do ENEM."
-            metric={`${progresso.redacoesEnviadas} redação(ões) enviada(s)`}
+          <Atalho
+            icone={<PenLine className="h-5 w-5" />}
+            titulo="Redação"
+            descricao="Envie textos e receba correções detalhadas nas 5 competências do ENEM."
+            metrica={`${progresso.redacoesEnviadas} ${progresso.redacoesEnviadas === 1 ? 'redação enviada' : 'redações enviadas'}`}
             href="/redacao"
           />
-          <ShortcutCard
-            icon="📊"
-            title="Simulado Adaptativo"
-            description="Uma bateria de questões onde a dificuldade se ajusta a cada acerto ou erro em tempo real."
+          <Atalho
+            icone={<ClipboardList className="h-5 w-5" />}
+            titulo="Simulado adaptativo"
+            descricao="Uma bateria de questões em que a dificuldade se ajusta a cada acerto ou erro."
             href="/simulado"
           />
-          <ShortcutCard
-            icon="🏛️"
-            title="Tutor Socrático"
-            description="Converse com uma IA que não te dá a resposta pronta, mas sim te guia a pensar."
-            metric={`${progresso.sessoesSocraticas} sessão(ões) iniciada(s)`}
+          <Atalho
+            icone={<Landmark className="h-5 w-5" />}
+            titulo="Tutor socrático"
+            descricao="Converse com uma IA que não dá a resposta pronta: ela guia você a pensar."
+            metrica={`${progresso.sessoesSocraticas} ${progresso.sessoesSocraticas === 1 ? 'sessão iniciada' : 'sessões iniciadas'}`}
             href="/tutor"
           />
-        </div>
-      </section>
-      
-      <section className="mt-8">
-         <Card className="bg-gradient-to-br from-brand-primary/10 to-transparent border-brand-primary/20 p-6 flex flex-col sm:flex-row items-center gap-6">
-            <div className="text-5xl">🧠</div>
-            <div>
-               <h3 className="font-bold text-lg text-text">O Segredo da Retenção</h3>
-               <p className="text-sm text-text-muted mt-1">
-                 Estudos comprovam que praticar ativamente (Quiz, Simulado) gera até <strong className="text-brand-primary">4x mais retenção</strong> do que apenas assistir videoaulas. Mantenha o foco!
-               </p>
-            </div>
-         </Card>
-      </section>
-    </div>
+        </AtalhoLista>
+      </Section>
+
+      <Notice tone="info" title="O segredo da retenção">
+        Praticar ativamente (quiz e simulado) gera mais retenção do que apenas assistir a videoaulas. Mantenha o foco.
+      </Notice>
+    </Pagina>
   );
 }
 
 function EstudoSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-4">
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-5 w-2/3" />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
-      </div>
-    </div>
+    <Pagina>
+      <Carregando rotulo="Carregando o estudo" className="flex flex-col gap-space-6 md:gap-space-7">
+        <div className="flex flex-col gap-space-2">
+          <Skeleton className="h-10 w-1/3" />
+          <Skeleton className="h-5 w-2/3" />
+        </div>
+        <div className="flex flex-col gap-space-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </Carregando>
+    </Pagina>
   );
 }

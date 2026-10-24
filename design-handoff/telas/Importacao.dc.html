@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Importação de planilha</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/nota-a/tokens.css">
+<link rel="stylesheet" href="ds/nota-a/components/bundle.css">
+<script src="ds/nota-a/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Sora:wght@500;600&display=swap">
+<style>
+body{margin:0}
+.err-table{width:100%;border-collapse:collapse;font:400 14px/22px var(--font-text)}
+.err-table th{padding:10px 16px 10px 0;text-align:left;font-weight:700;color:var(--ink-muted);border-bottom:1px solid var(--line)}
+.err-table td{padding:14px 16px 14px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.err-table tr:last-child td{border-bottom:0}
+.err-table .num{font:600 15px/22px var(--font-display);font-variant-numeric:tabular-nums}
+.err-table code{font:400 13.5px/20px var(--font-text);background:var(--surface-sunken);padding:1px 6px;border-radius:var(--radius-sm)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 1240px; display: flex; flex-wrap: wrap; align-items: stretch; background: var(--paper); color: var(--ink); font-family: var(--font-text);">
+  <x-import component-from-global-scope="NotaA.SideNav" items="{{nav}}" current="importacao" logo="/_blob/54dac930fcaa51e6b872c9c04da5f36a" style="display: flex; align-self: stretch; flex: 0 0 248px;"></x-import>
+
+  <main style="flex: 999 1 640px; min-width: 0; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 32px;">
+    <header style="display: flex; flex-direction: column; gap: 16px; max-width: 1184px;">
+      <h1 style="margin: 0; font: 600 32px/40px var(--font-display); letter-spacing: -0.01em;">Importar alunos</h1>
+      <x-import component-from-global-scope="NotaA.ProgressTrail" total="{{trailTotal}}" done="{{trailDone}}" label="Etapas da importação" caption="Etapa 3 de 4: revisar antes de importar"></x-import>
+    </header>
+
+    <section aria-label="Resumo do arquivo" style="max-width: 1184px; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); display: flex; flex-wrap: wrap;">
+      <div style="flex: 1 1 280px; padding: 24px; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <span style="font: 700 14px/20px var(--font-text);">alunos_3ano_2026.xlsx</span>
+        <span style="color: var(--ink-muted); font: 400 14px/22px var(--font-text);">Aba Alunos, 300 linhas lidas</span>
+        <div style="margin-top: 8px;"><x-import component-from-global-scope="NotaA.Button" variant="quiet" size="sm">Trocar arquivo</x-import></div>
+      </div>
+      <div style="flex: 1 1 220px; padding: 24px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px;">
+        <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">252</span>
+        <span>Alunos novos</span>
+        <div><x-import component-from-global-scope="NotaA.Chip" tone="success">Prontos</x-import></div>
+      </div>
+      <div style="flex: 1 1 220px; padding: 24px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px;">
+        <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">28</span>
+        <span>Atualizados pela matrícula</span>
+        <div><x-import component-from-global-scope="NotaA.Chip" tone="info">Já existem</x-import></div>
+      </div>
+      <div style="flex: 1 1 220px; padding: 24px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px;">
+        <span style="font: 600 28px/32px var(--font-display); font-variant-numeric: tabular-nums;">20</span>
+        <span>Linhas com erro</span>
+        <div><x-import component-from-global-scope="NotaA.Chip" tone="danger">Ficam de fora</x-import></div>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; max-width: 1184px;">
+      <section aria-labelledby="erros" style="flex: 3 1 560px; min-width: 0; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+        <h2 id="erros" style="margin: 0; font: 600 19px/26px var(--font-display);">O que revisar</h2>
+        <x-import component-from-global-scope="NotaA.Tabs" label="Resultado da leitura" tabs="{{abas}}" default-value="erros"></x-import>
+        <table class="err-table">
+          <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Linhas da planilha com erro</caption>
+          <thead>
+            <tr>
+              <th scope="col">Linha</th>
+              <th scope="col">Matrícula</th>
+              <th scope="col">O que aconteceu</th>
+              <th scope="col">Como resolver</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{erros}}" as="e" hint-placeholder-count="6">
+              <tr>
+                <th scope="row" class="num" style="padding: 14px 16px 14px 0; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top;">{{e.linha}}</th>
+                <td><code>{{e.matricula}}</code></td>
+                <td>{{e.problema}}</td>
+                <td style="color: var(--ink-muted);">{{e.solucao}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--line); padding-top: 16px;">
+          <span style="color: var(--ink-muted);">Mostrando 6 de 20 linhas</span>
+          <x-import component-from-global-scope="NotaA.Button" variant="secondary" size="sm">Baixar as 20 linhas (CSV)</x-import>
+        </div>
+      </section>
+
+      <section aria-labelledby="cols" style="flex: 2 1 380px; min-width: 0; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h2 id="cols" style="margin: 0; font: 600 19px/26px var(--font-display);">Colunas da planilha</h2>
+          <p style="margin: 0; color: var(--ink-muted);">Reconhecemos as colunas pelo nome. Troque se algo estiver no campo errado.</p>
+        </div>
+        <sc-for list="{{colunas}}" as="c" hint-placeholder-count="5">
+          <x-import component-from-global-scope="NotaA.Select" label="{{c.nome}}" options="{{campos}}" value="{{c.campo}}" hint="{{c.exemplo}}" style="display: block;"></x-import>
+        </sc-for>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 760px;">
+      <x-import component-from-global-scope="NotaA.Notice" tone="warning" title="3 células começavam com = e viraram texto">Elas foram importadas como texto, não como fórmula, para a planilha não executar nada no sistema.</x-import>
+      <x-import component-from-global-scope="NotaA.Notice" tone="info" title="Pode importar de novo sem duplicar">Alunos são identificados pela matrícula. Se você corrigir o arquivo e enviar outra vez, as 280 linhas boas só serão atualizadas.</x-import>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; max-width: 1184px;">
+      <x-import component-from-global-scope="NotaA.Button" variant="quiet">Voltar para as colunas</x-import>
+      <x-import component-from-global-scope="NotaA.Button" variant="primary">Importar 280 linhas</x-import>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.theme ?? 'light',
+      nav: [
+        { id: 'inicio', label: 'Início' },
+        { group: 'Acadêmico' },
+        { id: 'turmas', label: 'Turmas' }, { id: 'boletins', label: 'Boletins', badge: 2 }, { id: 'frequencia', label: 'Frequência' }, { id: 'agenda', label: 'Agenda' },
+        { group: 'Comunidade' },
+        { id: 'comunicados', label: 'Comunicados' }, { id: 'responsaveis', label: 'Responsáveis' },
+        { group: 'Configuração' },
+        { id: 'regras', label: 'Regras de avaliação' }, { id: 'importacao', label: 'Importação' }
+      ],
+      trailTotal: 4, trailDone: 2,
+      abas: [{ id: 'erros', label: 'Erros', count: 20 }, { id: 'atualizados', label: 'Atualizados', count: 28 }, { id: 'novos', label: 'Novos', count: 252 }],
+      erros: [
+        { linha: '12', matricula: '2026-0412', problema: 'Data de nascimento inválida: "31/02/2010".', solucao: 'Use uma data real, no formato dia/mês/ano.' },
+        { linha: '41', matricula: '2026-0087', problema: 'Matrícula repetida: a mesma aparece na linha 18.', solucao: 'Deixe uma linha por matrícula.' },
+        { linha: '58', matricula: 'em branco', problema: 'A matrícula não foi preenchida.', solucao: 'Preencha a matrícula para identificar o aluno.' },
+        { linha: '77', matricula: '2026-0231', problema: 'A turma "3 ano Z" não existe.', solucao: 'Escolha uma turma da lista ou crie a turma antes.' },
+        { linha: '103', matricula: '2026-0310', problema: 'E-mail do responsável sem @: "maria.silva.gmail.com".', solucao: 'Confira o e-mail e envie a linha de novo.' },
+        { linha: '156', matricula: '2026-0178', problema: 'O nome completo não foi preenchido.', solucao: 'Escreva o nome como consta na matrícula.' }
+      ],
+      campos: [
+        { value: 'matricula', label: 'Matrícula' }, { value: 'nome', label: 'Nome completo' }, { value: 'turma', label: 'Turma' },
+        { value: 'nascimento', label: 'Data de nascimento' }, { value: 'email', label: 'E-mail do responsável' },
+        { value: 'telefone', label: 'Telefone do responsável' }, { value: 'ignorar', label: 'Ignorar esta coluna' }
+      ],
+      colunas: [
+        { nome: 'Coluna MATRICULA', campo: 'matricula', exemplo: 'Exemplo: 2026-0412' },
+        { nome: 'Coluna NOME_ALUNO', campo: 'nome', exemplo: 'Exemplo: Ana Clara Souza' },
+        { nome: 'Coluna TURMA', campo: 'turma', exemplo: 'Exemplo: 3º A' },
+        { nome: 'Coluna NASC', campo: 'nascimento', exemplo: 'Exemplo: 14/05/2009' },
+        { nome: 'Coluna EMAIL_RESP', campo: 'email', exemplo: 'Exemplo: responsavel@email.com' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

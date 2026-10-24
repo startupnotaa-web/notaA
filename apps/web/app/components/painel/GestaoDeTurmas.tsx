@@ -9,7 +9,7 @@ import type {
   SolicitacaoPendente,
   Turma,
 } from '@notaa/contracts';
-import { Badge, Button, Card, CardHeader, Input, Label, Skeleton } from '@notaa/ui';
+import { Button, Carregando, Chip, EmptyState, Inset, Notice, Panel, Section, Select, SkeletonLinhas, TextField } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 
 /**
@@ -90,78 +90,72 @@ export function GestaoDeTurmas({
   }
 
   return (
-    <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <form onSubmit={criarTurma} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="nome-turma">Criar turma</Label>
-              <Input
-                id="nome-turma"
-                value={nomeNovo}
-                onChange={(ev) => setNomeNovo(ev.target.value)}
-                placeholder="Ex.: 3º ano B"
-                required
-                disabled={!anoAtual}
-              />
-              {anoAtual ? (
-                <p className="text-xs text-text-muted">
-                  Será criada no ano letivo {anoAtual.rotulo}, já com código de convite.
-                </p>
-              ) : (
-                <p className="text-xs text-text-muted">
-                  Crie um ano letivo na aba Ano letivo antes de criar turmas.
-                </p>
-              )}
-            </div>
-            <Button type="submit" disabled={criando || !anoAtual || nomeNovo.trim().length < 2}>
-              {criando ? 'Criando…' : 'Criar turma'}
+    <div className="flex flex-col gap-space-6 md:gap-space-7">
+      <Panel title="Criar turma">
+        <form onSubmit={criarTurma} className="flex max-w-xl flex-col gap-space-5">
+          <TextField
+            label="Nome da turma"
+            id="nome-turma"
+            value={nomeNovo}
+            onChange={(ev) => setNomeNovo(ev.target.value)}
+            placeholder="Ex.: 3º ano B"
+            required
+            disabled={!anoAtual}
+            hint={
+              anoAtual
+                ? `Será criada no ano letivo ${anoAtual.rotulo}, já com código de convite.`
+                : 'Crie um ano letivo na aba Ano letivo antes de criar turmas.'
+            }
+          />
+          <div>
+            <Button type="submit" loading={criando} disabled={!anoAtual || nomeNovo.trim().length < 2}>
+              {criando ? 'Criando' : 'Criar turma'}
             </Button>
-          </form>
-        </CardHeader>
-      </Card>
+          </div>
+        </form>
+      </Panel>
 
-      {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      )}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
-      {turmas === null ? (
-        <Skeleton className="h-32 w-full rounded-2xl" />
-      ) : turmas.length === 0 ? (
-        <p className="text-sm text-text-muted">Nenhuma turma ainda.</p>
-      ) : (
-        <ul className="space-y-3">
-          {turmas.map((t) => (
-            <li key={t.id}>
-              <CartaoTurma
-                turma={t}
-                podeGerenciarProfessores={podeGerenciarProfessores}
-                expandida={aberta === t.id}
-                onAlternar={() => setAberta(aberta === t.id ? null : t.id)}
-                onRegenerarCodigo={() =>
-                  acao(
-                    () => apiFetch<CodigoConvite>(`/turma/${t.id}/codigo`, { method: 'POST' }),
-                    'Não foi possível gerar um código novo.',
-                  )
-                }
-                onArquivar={() =>
-                  acao(
-                    () =>
-                      apiFetch<Turma>(`/turma/${t.id}`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({ arquivada: !t.arquivada }),
-                      }),
-                    'Não foi possível alterar a turma.',
-                  )
-                }
-                onDecidir={() => carregar()}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <Section title="Turmas">
+        {turmas === null ? (
+          <Carregando rotulo="Carregando as turmas">
+            <SkeletonLinhas linhas={3} />
+          </Carregando>
+        ) : turmas.length === 0 ? (
+          <EmptyState title="Nenhuma turma ainda">Crie a primeira turma acima para gerar o código de convite.</EmptyState>
+        ) : (
+          <ul className="m-0 flex list-none flex-col p-0">
+            {turmas.map((t) => (
+              <li key={t.id} className="border-b border-line py-space-4 first:pt-0 last:border-b-0 last:pb-0">
+                <CartaoTurma
+                  turma={t}
+                  podeGerenciarProfessores={podeGerenciarProfessores}
+                  expandida={aberta === t.id}
+                  onAlternar={() => setAberta(aberta === t.id ? null : t.id)}
+                  onRegenerarCodigo={() =>
+                    acao(
+                      () => apiFetch<CodigoConvite>(`/turma/${t.id}/codigo`, { method: 'POST' }),
+                      'Não foi possível gerar um código novo.',
+                    )
+                  }
+                  onArquivar={() =>
+                    acao(
+                      () =>
+                        apiFetch<Turma>(`/turma/${t.id}`, {
+                          method: 'PATCH',
+                          body: JSON.stringify({ arquivada: !t.arquivada }),
+                        }),
+                      'Não foi possível alterar a turma.',
+                    )
+                  }
+                  onDecidir={() => carregar()}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
     </div>
   );
 }
@@ -184,74 +178,64 @@ function CartaoTurma({
   onDecidir: () => Promise<void>;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="font-bold text-text">{turma.nome}</p>
-              <Badge variant="neutral">{turma.anoLetivo.rotulo}</Badge>
-              {turma.arquivada && <Badge variant="neutral">Arquivada</Badge>}
-              {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
-                <Badge variant="neutral">Sem professor</Badge>
-              )}
-            </div>
-            <p className="text-sm text-text-muted">
-              {turma.quantidadeDeAlunos} aluno(s) · {turma.quantidadeDeProfessores} professor(es)
-              {turma.solicitacoesPendentes > 0 && ` · ${turma.solicitacoesPendentes} pendente(s)`}
-            </p>
-            {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
-              <p className="text-xs text-text-muted">
-                Vincule um professor para a turma aceitar alunos.
-              </p>
-            )}
+    <div className="flex flex-col gap-space-4">
+      <div className="flex flex-wrap items-start justify-between gap-space-4">
+        <div className="flex flex-col gap-space-1">
+          <div className="flex flex-wrap items-center gap-space-2">
+            <p className="m-0 text-body font-bold text-ink">{turma.nome}</p>
+            <Chip tone="neutral">{turma.anoLetivo.rotulo}</Chip>
+            {turma.arquivada && <Chip tone="neutral">Arquivada</Chip>}
+            {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && <Chip tone="warning">Sem professor</Chip>}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={onAlternar}>
-              {expandida ? 'Fechar' : 'Gerenciar'}
-            </Button>
-          </div>
+          <p className="m-0 text-body-sm text-ink-muted">
+            {turma.quantidadeDeAlunos} {turma.quantidadeDeAlunos === 1 ? 'aluno' : 'alunos'} · {turma.quantidadeDeProfessores}{' '}
+            {turma.quantidadeDeProfessores === 1 ? 'professor' : 'professores'}
+            {turma.solicitacoesPendentes > 0 &&
+              ` · ${turma.solicitacoesPendentes} ${turma.solicitacoesPendentes === 1 ? 'pendente' : 'pendentes'}`}
+          </p>
+          {podeGerenciarProfessores && !turma.aceitaAluno && !turma.arquivada && (
+            <p className="m-0 text-caption text-ink-muted">Vincule um professor para a turma aceitar alunos.</p>
+          )}
         </div>
+        <Button variant="secondary" onClick={onAlternar} aria-expanded={expandida}>
+          {expandida ? 'Fechar' : 'Gerenciar'}
+        </Button>
+      </div>
 
-        {expandida && (
-          <div className="mt-4 space-y-5 border-t border-border pt-4">
-            <div className="space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
-                Código de convite
-              </p>
-              {turma.codigoConvite ? (
-                <p className="font-mono text-2xl font-bold tracking-widest text-text">
-                  {turma.codigoConvite}
-                </p>
-              ) : (
-                <p className="text-sm text-text-muted">Sem código ativo.</p>
-              )}
-              <p className="text-xs text-text-muted">
-                Gerar um código novo invalida o anterior. Quem já está na turma não é afetado.
-              </p>
-              <Button variant="secondary" size="sm" onClick={() => void onRegenerarCodigo()}>
+      {expandida && (
+        <Inset className="flex flex-col gap-space-5 p-space-5">
+          <div className="flex flex-col gap-space-2">
+            <p className="m-0 text-label text-ink-muted">Código de convite</p>
+            {turma.codigoConvite ? (
+              <p className="m-0 font-display text-heading-2 tabular-nums text-ink">{turma.codigoConvite}</p>
+            ) : (
+              <p className="m-0 text-body-sm text-ink-muted">Sem código ativo.</p>
+            )}
+            <p className="m-0 text-caption text-ink-muted">
+              Gerar um código novo invalida o anterior. Quem já está na turma não é afetado.
+            </p>
+            <div>
+              <Button variant="secondary" onClick={() => void onRegenerarCodigo()}>
                 Gerar código novo
               </Button>
             </div>
+          </div>
 
-            {podeGerenciarProfessores && (
-              <ProfessoresDaTurma turmaId={turma.id} onMudou={onDecidir} />
-            )}
+          {podeGerenciarProfessores && <ProfessoresDaTurma turmaId={turma.id} onMudou={onDecidir} />}
 
-            <Solicitacoes turmaId={turma.id} onDecidir={onDecidir} />
+          <Solicitacoes turmaId={turma.id} onDecidir={onDecidir} />
 
-            <div className="space-y-2 border-t border-border pt-4">
-              <Button variant="secondary" size="sm" onClick={() => void onArquivar()}>
+          <div className="flex flex-col gap-space-2 border-t border-line pt-space-4">
+            <div>
+              <Button variant="secondary" onClick={() => void onArquivar()}>
                 {turma.arquivada ? 'Reativar turma' : 'Arquivar turma'}
               </Button>
-              <p className="text-xs text-text-muted">
-                Turma arquivada fica somente leitura e não aceita novos alunos.
-              </p>
             </div>
+            <p className="m-0 text-caption text-ink-muted">Turma arquivada fica somente leitura e não aceita novos alunos.</p>
           </div>
-        )}
-      </CardHeader>
-    </Card>
+        </Inset>
+      )}
+    </div>
   );
 }
 
@@ -296,23 +280,24 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
   }
 
   return (
-    <div className="space-y-3 border-t border-border pt-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
-        Entradas pendentes
-      </p>
+    <div className="flex flex-col gap-space-3 border-t border-line pt-space-4">
+      <p className="m-0 text-label text-ink-muted">Entradas pendentes</p>
 
       {pendentes === null ? (
-        <Skeleton className="h-16 w-full rounded-lg" />
+        <Carregando rotulo="Carregando as solicitações">
+          <SkeletonLinhas linhas={2} />
+        </Carregando>
       ) : pendentes.length === 0 ? (
-        <p className="text-sm text-text-muted">Nenhuma solicitação aguardando.</p>
+        <p className="text-sm text-ink-muted">Nenhuma solicitação aguardando.</p>
       ) : (
         <>
           <ul className="space-y-1">
             {pendentes.map((s) => (
               <li key={s.estudanteId}>
-                <label className="flex items-center gap-2 text-sm text-text">
+                <label className="flex min-h-[44px] items-center gap-3 text-sm text-ink">
                   <input
                     type="checkbox"
+                    className="h-5 w-5 accent-primary"
                     checked={selecionados.includes(s.estudanteId)}
                     onChange={(ev) =>
                       setSelecionados((atual) =>
@@ -323,20 +308,20 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
                     }
                   />
                   <span>{s.nome ?? 'Sem nome'}</span>
-                  <span className="text-xs text-text-muted">
+                  <span className="text-caption text-ink-muted">
                     {new Date(s.solicitadoEm).toLocaleDateString('pt-BR')}
                   </span>
                 </label>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-text-muted">
+          <p className="text-caption text-ink-muted">
             A partir da aprovação, a instituição passa a ver o rendimento do aluno. Nada anterior a
             ela fica visível.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
-              size="sm"
+             
               onClick={() => void decidir('aprovar')}
               disabled={enviando || selecionados.length === 0}
             >
@@ -344,7 +329,7 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+             
               onClick={() => void decidir('recusar')}
               disabled={enviando || selecionados.length === 0}
             >
@@ -355,9 +340,7 @@ function Solicitacoes({ turmaId, onDecidir }: { turmaId: string; onDecidir: () =
       )}
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
     </div>
   );
@@ -420,23 +403,25 @@ function ProfessoresDaTurma({
   }
 
   return (
-    <div className="space-y-3 border-t border-border pt-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Professores</p>
+    <div className="flex flex-col gap-space-3 border-t border-line pt-space-4">
+      <p className="m-0 text-label text-ink-muted">Professores</p>
 
       {daTurma === null ? (
-        <Skeleton className="h-12 w-full rounded-lg" />
+        <Carregando rotulo="Carregando os professores da turma">
+          <SkeletonLinhas linhas={2} />
+        </Carregando>
       ) : daTurma.length === 0 ? (
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-ink-muted">
           Nenhum professor vinculado. Enquanto isso, a turma não aceita alunos.
         </p>
       ) : (
         <ul className="space-y-1">
           {daTurma.map((p) => (
             <li key={p.professorId} className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-text">{p.nome ?? p.email}</span>
+              <span className="text-ink">{p.nome ?? p.email}</span>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="quiet"
+               
                 disabled={enviando}
                 onClick={() =>
                   void mutar(
@@ -457,24 +442,19 @@ function ProfessoresDaTurma({
 
       {disponiveis.length > 0 && (
         <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-[14rem] flex-1 space-y-1">
-            <Label htmlFor={`add-prof-${turmaId}`}>Vincular professor</Label>
-            <select
-              id={`add-prof-${turmaId}`}
-              value={escolhido}
-              onChange={(ev) => setEscolhido(ev.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-focus"
-            >
-              <option value="">Selecione…</option>
-              {disponiveis.map((p) => (
-                <option key={p.professorId} value={p.professorId}>
-                  {p.nome ?? p.email}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Vincular professor"
+            id={`add-prof-${turmaId}`}
+            className="min-w-[14rem] flex-1"
+            value={escolhido}
+            onChange={(ev) => setEscolhido(ev.target.value)}
+            options={[
+              { value: '', label: 'Selecione…' },
+              ...disponiveis.map((p) => ({ value: p.professorId, label: p.nome ?? p.email })),
+            ]}
+          />
           <Button
-            size="sm"
+           
             disabled={enviando || !escolhido}
             onClick={() =>
               void mutar(async () => {
@@ -492,15 +472,13 @@ function ProfessoresDaTurma({
       )}
 
       {daInstituicao.length === 0 && (
-        <p className="text-xs text-text-muted">
+        <p className="text-caption text-ink-muted">
           Nenhum professor no quadro ainda. Convide professores na aba Professores.
         </p>
       )}
 
       {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
+        <Notice tone="danger">{erro}</Notice>
       )}
     </div>
   );

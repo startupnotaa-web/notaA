@@ -17,9 +17,26 @@ import {
   type SimuladoRelatorio,
   type StartSimuladoResponse,
 } from '@notaa/contracts';
-import { Badge, Button, Card, Label, OptionCard, Progress, Select, Skeleton, cn } from '@notaa/ui';
+import { Clock } from 'lucide-react';
+import {
+  Button,
+  ButtonLink,
+  Card,
+  Carregando,
+  Chip,
+  Inset,
+  Notice,
+  OptionCard,
+  PageHeader,
+  Progress,
+  Section,
+  Select,
+  Skeleton,
+  cn,
+} from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/api-client';
 import { useUser } from '../../../lib/user-context';
+import { Pagina } from '../../components/Pagina';
 import { toast } from '../../components/toast';
 import { RelatorioSimulado } from './RelatorioSimulado';
 import { formatarDuracao, rotuloArea } from './labels';
@@ -29,7 +46,7 @@ type Fase = 'config' | 'prova' | 'relatorio';
 /** Opção escolhida na tela inicial — o modo livre não tem limite. */
 type Escolha = { modo: 'cronometrado'; limiteMinutos: 60 | 90 } | { modo: 'livre' };
 
-/** Abaixo disto o cronômetro fica vermelho e pulsa. */
+/** Abaixo disto o cronômetro muda de cor e ganha o aviso "Pouco tempo". */
 const ALERTA_TEMPO_SEGUNDOS = 5 * 60;
 
 /**
@@ -282,11 +299,13 @@ export default function SimuladoPage() {
 
   if (verificandoRetomada) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 p-8">
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
+      <Pagina largura="estreita">
+        <Carregando rotulo="Verificando se há uma prova em andamento" className="flex flex-col gap-space-4">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </Carregando>
+      </Pagina>
     );
   }
 
@@ -303,26 +322,26 @@ export default function SimuladoPage() {
   const tempoAcabando = restante != null && restante <= ALERTA_TEMPO_SEGUNDOS;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5 p-4 pb-28">
-      <div className="space-y-2">
+    <Pagina largura="estreita">
+      <div className="flex flex-col gap-space-3">
         <div className="flex items-center justify-between gap-3">
-          <Badge variant="info">{rotuloArea(questao.area)}</Badge>
+          <Chip tone="info">{rotuloArea(questao.area)}</Chip>
           {restante != null ? (
-            <span
-              className={cn(
-                'font-mono text-lg font-bold tabular-nums',
-                tempoAcabando ? 'animate-pulse text-error' : 'text-text',
-              )}
-              role="timer"
-              aria-live={tempoAcabando ? 'polite' : 'off'}
-            >
-              {formatarDuracao(restante)}
+            <span className="flex items-center gap-space-3">
+              {tempoAcabando ? <span className="text-label text-danger">Pouco tempo</span> : null}
+              <span
+                className={cn('font-display text-heading-3 tabular-nums', tempoAcabando ? 'text-danger' : 'text-ink')}
+                role="timer"
+                aria-live={tempoAcabando ? 'polite' : 'off'}
+              >
+                {formatarDuracao(restante)}
+              </span>
             </span>
           ) : (
-            <span className="text-sm text-text-muted">Sem cronômetro</span>
+            <span className="text-body-sm text-ink-muted">Sem cronômetro</span>
           )}
         </div>
-        <div className="flex items-center justify-between text-sm text-text-muted">
+        <div className="flex items-center justify-between text-body-sm text-ink-muted">
           <span>
             Questão {indice + 1} de {questoes.length}
           </span>
@@ -331,14 +350,11 @@ export default function SimuladoPage() {
         <Progress
           value={respondidas}
           max={questoes.length}
-          gradient
           aria-label="Questões respondidas"
         />
       </div>
 
-      <p className="max-w-[70ch] whitespace-pre-line text-base leading-relaxed">
-        {questao.enunciado}
-      </p>
+      <p className="m-0 max-w-texto whitespace-pre-line text-body">{questao.enunciado}</p>
 
       {questao.imagemUrl && (
         // <img> cru de propósito: a imagem vem do banco público do ENEM, em
@@ -347,11 +363,11 @@ export default function SimuladoPage() {
         <img
           src={questao.imagemUrl}
           alt={`Imagem da questão ${indice + 1}`}
-          className="max-w-full rounded-xl border border-border"
+          className="max-w-full rounded-lg"
         />
       )}
 
-      <div role="radiogroup" aria-label="Alternativas" className="space-y-2">
+      <div role="radiogroup" aria-label="Alternativas" className="flex flex-col gap-space-3">
         {questao.alternativas.map((a) => (
           <OptionCard
             key={a.id}
@@ -372,18 +388,18 @@ export default function SimuladoPage() {
       />
 
       {confirmandoFim ? (
-        <Card variant="highlight" className="space-y-3 p-5">
-          <p className="font-semibold">Finalizar o simulado?</p>
-          <p className="text-sm text-text-muted">
+        <Card variant="highlight" className="flex flex-col gap-space-3 p-space-5">
+          <p className="m-0 text-body font-bold">Finalizar o simulado?</p>
+          <p className="m-0 text-body-sm text-ink-muted">
             {emBranco > 0
               ? `${emBranco} ${emBranco === 1 ? 'questão continua' : 'questões continuam'} em branco e ${emBranco === 1 ? 'contará' : 'contarão'} como erro. Depois de finalizar não dá para voltar.`
               : 'Você respondeu todas. Depois de finalizar não dá para voltar.'}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button variant="cta" onClick={() => void finalizar()} disabled={carregando}>
+            <Button variant="primary" onClick={() => void finalizar()} disabled={carregando}>
               {carregando ? 'Corrigindo…' : 'Finalizar e ver relatório'}
             </Button>
-            <Button variant="ghost" onClick={() => setConfirmandoFim(false)} disabled={carregando}>
+            <Button variant="quiet" onClick={() => setConfirmandoFim(false)} disabled={carregando}>
               Continuar respondendo
             </Button>
           </div>
@@ -402,7 +418,7 @@ export default function SimuladoPage() {
               Próxima
             </Button>
           ) : (
-            <Button variant="cta" onClick={() => setConfirmandoFim(true)}>
+            <Button variant="primary" onClick={() => setConfirmandoFim(true)}>
               Finalizar
             </Button>
           )}
@@ -410,15 +426,11 @@ export default function SimuladoPage() {
       )}
 
       {!confirmandoFim && indice < questoes.length - 1 && (
-        <button
-          type="button"
-          className="w-full text-sm text-text-muted underline underline-offset-4"
-          onClick={() => setConfirmandoFim(true)}
-        >
+        <Button variant="quiet" className="self-start" onClick={() => setConfirmandoFim(true)}>
           Finalizar simulado agora
-        </button>
+        </Button>
       )}
-    </div>
+    </Pagina>
   );
 }
 
@@ -435,11 +447,9 @@ function GradeNavegacao({
   onIr: (i: number) => void;
 }) {
   return (
-    <div className="space-y-2 rounded-xl border border-border bg-surface-2 p-3">
-      <p className="text-xs font-medium text-text-muted">
-        Navegue entre as questões — respondidas ficam preenchidas
-      </p>
-      <div className="grid grid-cols-10 gap-1.5">
+    <Inset className="flex flex-col gap-space-3">
+      <p className="m-0 text-caption text-ink-muted">Navegue entre as questões. As respondidas ficam preenchidas.</p>
+      <div className="grid grid-cols-5 gap-space-2 sm:grid-cols-10">
         {questoes.map((q, i) => {
           const respondida = respostas[q.itemId] != null;
           return (
@@ -450,11 +460,11 @@ function GradeNavegacao({
               aria-label={`Questão ${i + 1}${respondida ? ' (respondida)' : ' (em branco)'}`}
               aria-current={i === indice ? 'true' : undefined}
               className={cn(
-                'aspect-square rounded-md border text-xs font-semibold transition',
-                i === indice && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-2',
+                'min-h-[44px] rounded-md border text-label tabular-nums transition-colors duration-fast ease-out',
+                i === indice && 'ring-2 ring-primary ring-offset-2 ring-offset-surface-sunken',
                 respondida
-                  ? 'border-brand-primary bg-brand-primary text-white'
-                  : 'border-border bg-surface text-text-muted hover:border-brand-primary',
+                  ? 'border-primary bg-primary text-primary-on'
+                  : 'border-line-strong bg-surface text-ink-muted hover:border-primary',
               )}
             >
               {i + 1}
@@ -462,7 +472,7 @@ function GradeNavegacao({
           );
         })}
       </div>
-    </div>
+    </Inset>
   );
 }
 
@@ -515,98 +525,81 @@ function TelaConfig({
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 p-4">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-extrabold">Simulado ENEM</h1>
-        <p className="text-text-muted">
-          {SIMULADO_TOTAL_QUESTOES} questões — {SIMULADO_QUESTOES_POR_AREA} de cada área, em três
-          níveis de dificuldade. Você só descobre o que acertou no fim, como numa prova de verdade.
-        </p>
-      </div>
+    <Pagina largura="estreita">
+      <PageHeader
+        title="Simulado ENEM"
+        description={`${SIMULADO_TOTAL_QUESTOES} questões, ${SIMULADO_QUESTOES_POR_AREA} de cada área, em três níveis de dificuldade. Você só descobre o que acertou no fim, como numa prova de verdade.`}
+      />
 
-      <div className="space-y-3">
-        <p className="text-sm font-semibold">Escolha como quer fazer</p>
-        {OPCOES.map((o, i) => (
-          <OptionCard
-            key={o.titulo}
-            leading={o.escolha.modo === 'livre' ? '∞' : '⏱'}
-            title={
-              <span className="flex flex-wrap items-center gap-2">
-                {o.titulo}
-                {o.destaque && <Badge variant="brand">Mais XP</Badge>}
-              </span>
-            }
-            description={
-              <span className="block space-y-1">
-                <span className="block">{o.descricao}</span>
-                <span className="block text-xs font-medium text-brand-primary">{o.recompensa}</span>
-              </span>
-            }
-            selected={selecionada === i}
-            onClick={() => setSelecionada(i)}
-          />
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="simulado-idioma">Língua estrangeira da prova</Label>
-        <Select
-          id="simulado-idioma"
-          value={idioma}
-          onChange={(e) => setIdioma(e.target.value as IdiomaEstrangeiro | '')}
-          aria-describedby="simulado-idioma-ajuda"
-        >
-          <option value="">Escolha uma língua</option>
-          {IDIOMAS_ESTRANGEIROS.map((i) => (
-            <option key={i} value={i}>
-              {ROTULO_IDIOMA[i]}
-            </option>
+      <Section title="Escolha como quer fazer" as="h2">
+        <div role="radiogroup" aria-label="Modo do simulado" className="flex flex-col gap-space-3">
+          {OPCOES.map((o, i) => (
+            <OptionCard
+              key={o.titulo}
+              leading={o.escolha.modo === 'livre' ? '∞' : <Clock aria-hidden="true" className="h-4 w-4" />}
+              title={
+                <span className="flex flex-wrap items-center gap-2">
+                  {o.titulo}
+                  {o.destaque && <Chip tone="brand">Mais XP</Chip>}
+                </span>
+              }
+              description={
+                <span className="block space-y-1">
+                  <span className="block">{o.descricao}</span>
+                  <span className="block text-caption font-bold text-primary">{o.recompensa}</span>
+                </span>
+              }
+              selected={selecionada === i}
+              onClick={() => setSelecionada(i)}
+            />
           ))}
-        </Select>
-        <p id="simulado-idioma-ajuda" className="text-xs text-text-muted">
-          As questões de língua estrangeira de Linguagens vêm só na língua que você escolher.
-        </p>
-      </div>
+        </div>
+      </Section>
 
-      <Card className="space-y-2 p-4 text-sm text-text-muted">
-        <p className="font-semibold text-text">Como funciona</p>
-        <ul className="list-inside list-disc space-y-1">
+      <Select
+        id="simulado-idioma"
+        label="Língua estrangeira da prova"
+        hint="As questões de língua estrangeira de Linguagens vêm só na língua que você escolher."
+        value={idioma}
+        onChange={(e) => setIdioma(e.target.value as IdiomaEstrangeiro | '')}
+        options={[
+          { value: '', label: 'Escolha uma língua' },
+          ...IDIOMAS_ESTRANGEIROS.map((i) => ({ value: i, label: ROTULO_IDIOMA[i] })),
+        ]}
+      />
+
+      <Section title="Como funciona" as="h2" divided>
+        <ul className="m-0 flex list-none flex-col gap-space-2 p-0 text-body text-ink-muted">
           <li>Você pode navegar entre as questões e trocar de resposta quando quiser.</li>
-          <li>Nada de certo ou errado durante a prova — o relatório vem no fim.</li>
+          <li>Nada de certo ou errado durante a prova: o relatório vem no fim.</li>
           <li>Questão em branco conta como erro.</li>
           <li>Quanto menor o tempo escolhido, maior o XP por acerto.</li>
         </ul>
-      </Card>
+      </Section>
 
-      {erro && (
-        <p role="alert" className="text-sm text-error">
-          {erro}
-        </p>
-      )}
+      {erro && <Notice tone="danger">{erro}</Notice>}
 
-      <div className="flex flex-wrap justify-center gap-3">
-        <Button asChild variant="secondary" size="lg">
-          <Link href="/dashboard">Voltar</Link>
-        </Button>
+      <div className="flex flex-wrap gap-space-3">
         <Button
-          variant="cta"
-          size="lg"
+          variant="primary"
           onClick={() => idioma && onIniciar(opcao.escolha, idioma)}
-          disabled={carregando || !idioma}
+          loading={carregando}
+          disabled={!idioma}
         >
-          {carregando ? 'Montando sua prova…' : 'Começar simulado'}
+          {carregando ? 'Montando sua prova' : 'Começar simulado'}
         </Button>
+        <ButtonLink as={Link} href="/dashboard" variant="secondary">
+          Voltar
+        </ButtonLink>
       </div>
       {!idioma && !carregando && (
-        <p className="text-center text-xs text-text-muted">
-          Escolha a língua estrangeira para começar.
-        </p>
+        <p className="m-0 text-body-sm text-ink-muted">Escolha a língua estrangeira para começar.</p>
       )}
       {carregando && (
-        <p className="text-center text-xs text-text-muted">
-          Montando {SIMULADO_TOTAL_QUESTOES} questões — isso pode levar alguns segundos.
+        <p role="status" className="m-0 text-body-sm text-ink-muted">
+          Montando {SIMULADO_TOTAL_QUESTOES} questões. Isso pode levar alguns segundos.
         </p>
       )}
-    </div>
+    </Pagina>
   );
 }

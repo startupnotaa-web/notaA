@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { CircleCheck, Clock, Flame, Trophy } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
-import { Card, SectionHeader, Skeleton, Badge, cn, Button } from '@notaa/ui';
+import { Button, Carregando, Chip, Notice, PageHeader, Panel, Section, Skeleton } from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Pagina } from '../../components/Pagina';
+import { Voltar } from '../../components/Voltar';
 
 // Mock list of players in the lobby
 const MOCK_PLAYERS = [
@@ -30,9 +32,9 @@ export default function BatalhaColetivaPage() {
       } catch (e) {
         if (!cancelled) {
           if (e instanceof ApiError && e.code === 'NETWORK_ERROR') {
-            setErro('Sem conexão com o servidor.');
+            setErro('Sem conexão com o servidor. Verifique sua internet e tente de novo.');
           } else {
-            setErro('Erro ao carregar o Lobby.');
+            setErro('Não foi possível carregar o lobby. Tente recarregar a página.');
           }
         }
       }
@@ -51,9 +53,12 @@ export default function BatalhaColetivaPage() {
 
   if (erro) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-        <p className="text-sm text-error">{erro}</p>
-      </div>
+      <Pagina>
+        <Voltar />
+        <Notice tone="danger" title="Não foi possível abrir o lobby">
+          {erro}
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -62,161 +67,109 @@ export default function BatalhaColetivaPage() {
   const { perfil, nivel } = data;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 p-4">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-2">
-          <Link href="/dashboard" className="text-sm font-semibold text-brand-primary hover:underline">
-            &larr; Voltar ao Painel
-          </Link>
-          <h1 className="text-3xl font-bold text-text flex items-center gap-3">
-            Batalha Coletiva
-            <Badge variant="error" className="animate-pulse px-3 py-1 text-xs">AO VIVO</Badge>
-          </h1>
-          <p className="text-text-muted">Represente sua instituição no duelo nacional.</p>
-        </div>
-        
-        <div className="flex items-center gap-4 rounded-xl border border-border bg-surface-2 p-4">
-           <div className="text-right">
-              <p className="text-xs text-text-muted">Seu Perfil</p>
-              <p className="font-bold text-text">{perfil.nome || 'Estudante'}</p>
-           </div>
-           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary/20 text-brand-primary font-black">
-              {nivel.atual}
-           </div>
-        </div>
-      </header>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Lado Esquerdo: Lobby e Conexão */}
-        <div className="md:col-span-2 space-y-6">
-           <Card className="relative overflow-hidden border-brand-primary/30 bg-surface-2 p-6 md:p-10">
-              {/* Efeito de Neon de Fundo */}
-              <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-primary/10 blur-[80px] pointer-events-none" />
-              
-              <div className="relative z-10 flex flex-col items-center justify-center space-y-8 text-center min-h-[250px]">
-                 {connected ? (
-                   <>
-                     <div className="flex flex-col items-center gap-4">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/20 text-success shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                           <span className="text-4xl" aria-hidden="true">✓</span>
-                        </div>
-                        <h2 className="text-2xl font-black text-text">Conectado ao Servidor</h2>
-                        <p className="text-text-muted">Aguardando o Host (Professor) iniciar a partida...</p>
-                     </div>
-                     <div className="flex gap-2">
-                        <span className="h-2 w-2 rounded-full bg-brand-primary animate-bounce" />
-                        <span className="h-2 w-2 rounded-full bg-brand-primary animate-bounce delay-75" />
-                        <span className="h-2 w-2 rounded-full bg-brand-primary animate-bounce delay-150" />
-                     </div>
-                   </>
-                 ) : (
-                   <>
-                     <div className="space-y-2">
-                        <h2 className="text-3xl font-black text-text">Sessão: Grande Duelo de Exatas</h2>
-                        <p className="text-text-muted">Sexta-feira, 15h00. O servidor está aceitando conexões.</p>
-                     </div>
-                     <Button 
-                       size="lg" 
-                       onClick={handleConnect} 
-                       disabled={connecting}
-                       className={cn("w-full max-w-sm text-lg font-bold transition-all", connecting ? "animate-pulse" : "hover:scale-105 hover:shadow-[0_0_20px_rgba(38,153,233,0.4)]")}
-                     >
-                       {connecting ? 'Conectando...' : 'ENTRAR NO COMBATE'}
-                     </Button>
-                   </>
-                 )}
-              </div>
-           </Card>
-
-           {/* Regras */}
-           <section className="space-y-4">
-             <SectionHeader title="Como Funciona" accent="A Batalha" as="h2" />
-             <div className="grid gap-4 sm:grid-cols-3">
-                <Card className="p-4 bg-surface/50 border-border">
-                  <div className="text-2xl mb-2">⏱️</div>
-                  <h3 className="font-bold text-text text-sm">Tempo Limitado</h3>
-                  <p className="text-xs text-text-muted mt-1">Responda o mais rápido possível para ganhar bônus de XP.</p>
-                </Card>
-                <Card className="p-4 bg-surface/50 border-border">
-                  <div className="text-2xl mb-2">🔥</div>
-                  <h3 className="font-bold text-text text-sm">Combos</h3>
-                  <p className="text-xs text-text-muted mt-1">Acertos consecutivos multiplicam a sua pontuação global.</p>
-                </Card>
-                <Card className="p-4 bg-surface/50 border-border">
-                  <div className="text-2xl mb-2">🏆</div>
-                  <h3 className="font-bold text-text text-sm">Pódio da Instituição</h3>
-                  <p className="text-xs text-text-muted mt-1">Os 3 melhores ganham insígnias exclusivas no perfil.</p>
-                </Card>
-             </div>
-           </section>
-        </div>
-
-        {/* Lado Direito: Jogadores Online */}
-        <div className="space-y-4">
-           <div className="flex items-center justify-between">
-              <SectionHeader title="Jogadores" accent="no Lobby" as="h2" />
-              <Badge variant="neutral" className="text-xs">
-                {connected ? MOCK_PLAYERS.length + 1 : MOCK_PLAYERS.length} Online
-              </Badge>
-           </div>
-           
-           <Card className="flex flex-col p-2 bg-surface-2/30 border-border max-h-[500px] overflow-y-auto">
-             {connected && (
-               <div className="flex items-center justify-between p-3 rounded-lg bg-brand-primary/10 border border-brand-primary/20 mb-2">
-                 <div className="flex items-center gap-3">
-                   <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                   <div>
-                     <p className="text-sm font-bold text-brand-primary">{perfil.nome || 'Você'}</p>
-                     <p className="text-[10px] text-text-muted">Sua Instituição</p>
-                   </div>
-                 </div>
-                 <div className="text-xs font-black text-brand-primary">Nv {nivel.atual}</div>
-               </div>
-             )}
-
-             {MOCK_PLAYERS.map(p => (
-               <div key={p.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-2 transition-colors">
-                 <div className="flex items-center gap-3">
-                   <div className="h-2 w-2 rounded-full bg-text-muted/30" />
-                   <div>
-                     <p className="text-sm font-bold text-text">{p.nome}</p>
-                     <p className="text-[10px] text-text-muted">{p.instituicao}</p>
-                   </div>
-                 </div>
-                 <div className="text-xs font-bold text-text-muted">Nv {p.nivel}</div>
-               </div>
-             ))}
-             
-             <div className="p-4 text-center">
-               <p className="text-xs text-text-muted">Mais jogadores conectando...</p>
-             </div>
-           </Card>
-        </div>
+    <Pagina largura="media">
+      <div className="flex flex-col gap-space-3">
+        <Voltar />
+        <PageHeader
+          title="Batalha coletiva"
+          status={<Chip tone="danger">Ao vivo</Chip>}
+          description="Represente sua instituição no duelo nacional."
+          actions={
+            <p className="m-0 text-right">
+              <span className="block text-caption text-ink-muted">Seu perfil</span>
+              <span className="text-body font-bold text-ink">
+                {perfil.nome || 'Estudante'} · nível {nivel.atual}
+              </span>
+            </p>
+          }
+        />
       </div>
-    </div>
+
+      <Panel>
+        <div className="flex min-h-[200px] flex-col items-start justify-center gap-space-5">
+          {connected ? (
+            <>
+              <CircleCheck aria-hidden="true" className="h-10 w-10 text-success" />
+              <div className="flex flex-col gap-space-2">
+                <h2 className="m-0 font-display text-heading-2 text-ink">Conectado ao servidor</h2>
+                <p role="status" className="m-0 text-body text-ink-muted">
+                  Aguardando o host (professor) iniciar a partida…
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-space-2">
+                <h2 className="m-0 font-display text-heading-2 text-ink">Sessão: Grande Duelo de Exatas</h2>
+                <p className="m-0 text-body text-ink-muted">Sexta-feira, 15h00. O servidor está aceitando conexões.</p>
+              </div>
+              <Button onClick={handleConnect} loading={connecting}>
+                {connecting ? 'Conectando' : 'Entrar na batalha'}
+              </Button>
+            </>
+          )}
+        </div>
+      </Panel>
+
+      <Section title="Como funciona a batalha" divided>
+        <ul className="m-0 grid list-none grid-cols-1 gap-space-5 p-0 sm:grid-cols-3">
+          <li className="flex flex-col gap-space-2">
+            <Clock aria-hidden="true" className="h-5 w-5 text-primary" />
+            <h3 className="m-0 text-body font-bold text-ink">Tempo limitado</h3>
+            <p className="m-0 text-body-sm text-ink-muted">Responda o mais rápido possível para ganhar bônus de XP.</p>
+          </li>
+          <li className="flex flex-col gap-space-2">
+            <Flame aria-hidden="true" className="h-5 w-5 text-primary" />
+            <h3 className="m-0 text-body font-bold text-ink">Combos</h3>
+            <p className="m-0 text-body-sm text-ink-muted">Acertos consecutivos multiplicam a sua pontuação global.</p>
+          </li>
+          <li className="flex flex-col gap-space-2">
+            <Trophy aria-hidden="true" className="h-5 w-5 text-primary" />
+            <h3 className="m-0 text-body font-bold text-ink">Pódio da instituição</h3>
+            <p className="m-0 text-body-sm text-ink-muted">Os 3 melhores ganham insígnias exclusivas no perfil.</p>
+          </li>
+        </ul>
+      </Section>
+
+      <Section
+        title="Jogadores no lobby"
+        action={<Chip tone="neutral">{connected ? MOCK_PLAYERS.length + 1 : MOCK_PLAYERS.length} online</Chip>}
+        divided
+      >
+        <ul className="m-0 flex list-none flex-col p-0">
+          {connected && (
+            <li className="flex items-center justify-between gap-space-4 border-b border-line py-space-3">
+              <span>
+                <span className="block text-body font-bold text-primary">{perfil.nome || 'Você'}</span>
+                <span className="block text-caption text-ink-muted">Sua instituição</span>
+              </span>
+              <span className="text-label tabular-nums text-primary">Nível {nivel.atual}</span>
+            </li>
+          )}
+          {MOCK_PLAYERS.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-space-4 border-b border-line py-space-3 last:border-b-0">
+              <span>
+                <span className="block text-body font-bold text-ink">{p.nome}</span>
+                <span className="block text-caption text-ink-muted">{p.instituicao}</span>
+              </span>
+              <span className="text-label tabular-nums text-ink-muted">Nível {p.nivel}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="m-0 text-caption text-ink-muted">Mais jogadores conectando…</p>
+      </Section>
+    </Pagina>
   );
 }
 
 function LobbySkeleton() {
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 p-4">
-      <div className="flex justify-between">
-        <Skeleton className="h-12 w-1/3" />
-        <Skeleton className="h-12 w-32" />
-      </div>
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2 space-y-6">
-          <Skeleton className="h-[300px] w-full rounded-2xl" />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Skeleton className="h-24 w-full rounded-xl" />
-            <Skeleton className="h-24 w-full rounded-xl" />
-            <Skeleton className="h-24 w-full rounded-xl" />
-          </div>
-        </div>
-        <div>
-          <Skeleton className="h-[400px] w-full rounded-2xl" />
-        </div>
-      </div>
-    </div>
+    <Pagina>
+      <Carregando rotulo="Carregando o lobby" className="flex flex-col gap-space-6 md:gap-space-7">
+        <Skeleton className="h-12 w-1/2" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }

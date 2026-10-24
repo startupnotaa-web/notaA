@@ -78,6 +78,27 @@
       "when": 1792192154094,
       "tag": "0015_gestao_academica",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792287375175,
+      "tag": "0016_seguranca_gestao_academica",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792390048473,
+      "tag": "0017_vinculo_responsavel_pendente",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792434481088,
+      "tag": "0018_lead_landing",
+      "breakpoints": true
     }
   ]
 }

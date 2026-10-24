@@ -13,10 +13,12 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { EmailOtpType } from '@supabase/supabase-js';
-import { Button, Card, Input, Label } from '@notaa/ui';
+import { Button, Notice, Panel, TextField } from '@notaa/ui';
+import { AuthPagina } from '../../../components/auth';
 import { supabaseBrowser } from '../../../../lib/supabase-browser';
 import { USER_STATE_STORAGE_KEY } from '../../../../lib/storage-keys';
 import { garantirRegistro } from '../../../../lib/post-auth';
+import { caminhoInternoSeguro } from '../../../../lib/destino';
 import { rotaPosRegistro } from '../../../../lib/rota-inicial';
 
 const TIPOS_OTP: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
@@ -37,7 +39,8 @@ function ConfirmarEmail() {
   // (dev), que consumiria "de novo" o token e mostraria erro após o sucesso.
   const jaProcessou = useRef(false);
 
-  const next = params.get('next') ?? '/onboarding';
+  // `next` vem da URL do e-mail e pode ser forjado: só passa caminho interno (sem open redirect).
+  const next = caminhoInternoSeguro(params.get('next')) ?? '/onboarding';
 
   useEffect(() => {
     if (jaProcessou.current) return;
@@ -51,7 +54,8 @@ function ConfirmarEmail() {
       await garantirRegistro();
       const { data } = await supabaseBrowser.auth.getSession();
       const papel = data.session?.user.app_metadata?.papel;
-      router.replace(papel ? rotaPosRegistro(papel) : next);
+      // Sem papel o registro não terminou: nunca seguir para `next` (que pode ser o painel do aluno).
+      router.replace(papel ? rotaPosRegistro(papel) : `/concluir-cadastro?next=${encodeURIComponent(next)}`);
     }
 
     async function confirmar() {
@@ -135,76 +139,46 @@ function ConfirmarEmail() {
     setReenviado(true);
   }
 
+  if (estado.fase === 'processando') return <AuthPagina titulo="Confirmando seu e-mail" descricao="Só um instante." />;
+  if (estado.fase === 'sucesso') return <AuthPagina titulo="E-mail confirmado" descricao="Levando você para o Nota A." />;
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
-      <Card className="w-full space-y-4 p-6">
-        {estado.fase === 'processando' && (
-          <>
-            <h1 className="text-xl font-bold">Confirmando seu e-mail...</h1>
-            <p className="text-text-muted">Só um instante.</p>
-          </>
-        )}
-
-        {estado.fase === 'sucesso' && (
-          <>
-            <h1 className="text-xl font-bold">E-mail confirmado!</h1>
-            <p className="text-text-muted">Levando você para o Nota A...</p>
-          </>
-        )}
-
-        {estado.fase === 'erro' && (
-          <>
-            <h1 className="text-xl font-bold">Não foi possível confirmar</h1>
-            <p role="alert" className="text-sm text-error">
-              {estado.mensagem}
-            </p>
-
-            <form onSubmit={reenviar} className="space-y-3 text-left">
-              <div className="space-y-1">
-                <Label htmlFor="email-reenvio">E-mail do cadastro</Label>
-                <Input
-                  id="email-reenvio"
-                  type="email"
-                  value={emailReenvio}
-                  onChange={(e) => setEmailReenvio(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" variant="primary" fullWidth disabled={reenviando}>
-                {reenviando ? 'Reenviando...' : 'Reenviar link de confirmação'}
-              </Button>
-              {reenviado && (
-                <p className="text-sm text-text-muted">
-                  Se este e-mail tiver um cadastro pendente, um novo link foi enviado. Abra o mais recente.
-                </p>
-              )}
-            </form>
-
-            <p className="text-sm text-text-muted">
-              Já confirmou antes?{' '}
-              <Link href="/login" className="text-brand-primary underline">
-                Ir para o login
-              </Link>
-            </p>
-          </>
-        )}
-      </Card>
-    </main>
+    <AuthPagina titulo="Não foi possível confirmar">
+      <Notice tone="danger">{estado.mensagem}</Notice>
+      <Panel>
+        <form onSubmit={reenviar} className="flex flex-col gap-space-5">
+          <TextField
+            label="E-mail do cadastro"
+            type="email"
+            autoComplete="email"
+            value={emailReenvio}
+            onChange={(e) => setEmailReenvio(e.target.value)}
+            required
+          />
+          <Button type="submit" variant="primary" className="w-full" loading={reenviando}>
+            {reenviando ? 'Reenviando' : 'Reenviar link de confirmação'}
+          </Button>
+          {reenviado && (
+            <Notice tone="success">
+              Se este e-mail tiver um cadastro pendente, um novo link foi enviado. Abra o mais recente.
+            </Notice>
+          )}
+        </form>
+      </Panel>
+      <p className="m-0 text-body-sm text-ink-muted">
+        Já confirmou antes?{' '}
+        <Link href="/login" className="font-bold text-primary underline">
+          Ir para o login
+        </Link>
+      </p>
+    </AuthPagina>
   );
 }
 
 export default function AuthConfirmPage() {
   // useSearchParams exige um boundary de Suspense em páginas do App Router.
   return (
-    <Suspense
-      fallback={
-        <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-6">
-          <Card className="w-full space-y-3 p-6 text-center">
-            <h1 className="text-xl font-bold">Confirmando seu e-mail...</h1>
-          </Card>
-        </main>
-      }
-    >
+    <Suspense fallback={<AuthPagina titulo="Confirmando seu e-mail" descricao="Só um instante." />}>
       <ConfirmarEmail />
     </Suspense>
   );

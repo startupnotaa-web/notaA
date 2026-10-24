@@ -13,6 +13,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { citext } from './common';
@@ -237,6 +238,7 @@ export const responsavelAluno = pgTable(
       foreignColumns: [alunoInstituicao.id, alunoInstituicao.instituicaoId],
     }).onDelete('cascade'),
     unique('uq_responsavel_aluno_email').on(t.alunoInstituicaoId, t.email),
+    unique('uq_responsavel_aluno_id_instituicao').on(t.id, t.instituicaoId),
     index('idx_responsavel_aluno_instituicao').on(t.instituicaoId),
     index('idx_responsavel_aluno_usuario').on(t.usuarioId),
   ],
@@ -307,5 +309,128 @@ export const auditLog = pgTable(
   (t) => [
     index('idx_audit_log_instituicao').on(t.instituicaoId, t.criadoEm),
     index('idx_audit_log_entidade').on(t.entidade, t.entidadeId),
+  ],
+);
+
+/**
+ * Convite para o responsável ligar a própria conta ao cadastro do aluno
+ * (migração 0016). O token é uma credencial de 32 bytes aleatórios que só
+ * existe em claro na resposta da criação; aqui fica o SHA-256 dele. Expira,
+ * vale uma vez (`usado_em`) e pode ser revogado.
+ */
+export const conviteResponsavel = pgTable(
+  'convite_responsavel',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    instituicaoId: uuid('instituicao_id')
+      .notNull()
+      .references(() => instituicao.id, { onDelete: 'restrict' }),
+    responsavelAlunoId: uuid('responsavel_aluno_id').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    expiraEm: timestamp('expira_em', { withTimezone: true }).notNull(),
+    usadoEm: timestamp('usado_em', { withTimezone: true }),
+    usadoPor: uuid('usado_por').references(() => usuario.id, { onDelete: 'restrict' }),
+    revogadoEm: timestamp('revogado_em', { withTimezone: true }),
+    criadoPor: uuid('criado_por')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'restrict' }),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('uq_convite_responsavel_token_hash').on(t.tokenHash),
+    unique('uq_convite_responsavel_id_instituicao').on(t.id, t.instituicaoId),
+    foreignKey({
+      name: 'convite_responsavel_responsavel_escopo_fk',
+      columns: [t.responsavelAlunoId, t.instituicaoId],
+      foreignColumns: [responsavelAluno.id, responsavelAluno.instituicaoId],
+    }).onDelete('cascade'),
+    check('ck_convite_responsavel_expiracao', sql`${t.expiraEm} > ${t.criadoEm}`),
+    index('idx_convite_responsavel_responsavel').on(t.responsavelAlunoId),
+  ],
+);
+
+/**
+ * Consentimento do responsável: quem, quando e qual versão do termo. SÓ DE
+ * INSERÇÃO (trigger na 0016). É a condição para o responsável ler o aluno.
+ */
+export const consentimentoResponsavel = pgTable(
+  'consentimento_responsavel',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    instituicaoId: uuid('instituicao_id')
+      .notNull()
+      .references(() => instituicao.id, { onDelete: 'restrict' }),
+    responsavelAlunoId: uuid('responsavel_aluno_id').notNull(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'restrict' }),
+    conviteId: uuid('convite_id'),
+    versaoTermo: text('versao_termo').notNull(),
+    aceitoEm: timestamp('aceito_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('uq_consentimento_responsavel_versao').on(t.responsavelAlunoId, t.versaoTermo),
+    foreignKey({
+      name: 'consentimento_responsavel_responsavel_escopo_fk',
+      columns: [t.responsavelAlunoId, t.instituicaoId],
+      foreignColumns: [responsavelAluno.id, responsavelAluno.instituicaoId],
+    }).onDelete('restrict'),
+    foreignKey({
+      name: 'consentimento_responsavel_convite_escopo_fk',
+      columns: [t.conviteId, t.instituicaoId],
+      foreignColumns: [conviteResponsavel.id, conviteResponsavel.instituicaoId],
+    }).onDelete('restrict'),
+    index('idx_consentimento_responsavel_usuario').on(t.usuarioId),
+  ],
+);
+
+/**
+ * Tentativa de vínculo cujo e-mail da conta não é o do contato (migração 0017).
+ * Não abre leitura nenhuma: o contato segue sem `usuario_id` e sem consentimento.
+ * A coordenação aprova (aí o vínculo e o consentimento nascem, com os dados da
+ * própria solicitação) ou recusa. `emailConta` existe só para ela decidir e é
+ * apagado na decisão.
+ */
+export const solicitacaoVinculoResponsavel = pgTable(
+  'solicitacao_vinculo_responsavel',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    instituicaoId: uuid('instituicao_id')
+      .notNull()
+      .references(() => instituicao.id, { onDelete: 'restrict' }),
+    responsavelAlunoId: uuid('responsavel_aluno_id').notNull(),
+    conviteId: uuid('convite_id').notNull(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuario.id, { onDelete: 'restrict' }),
+    versaoTermo: text('versao_termo').notNull(),
+    emailConta: text('email_conta'),
+    status: text('status', { enum: ['pendente_aprovacao', 'aprovada', 'recusada', 'cancelada'] })
+      .notNull()
+      .default('pendente_aprovacao'),
+    decididoPor: uuid('decidido_por').references(() => usuario.id, { onDelete: 'restrict' }),
+    decididoEm: timestamp('decidido_em', { withTimezone: true }),
+    criadoEm: timestamp('criado_em', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: 'solicitacao_vinculo_responsavel_responsavel_escopo_fk',
+      columns: [t.responsavelAlunoId, t.instituicaoId],
+      foreignColumns: [responsavelAluno.id, responsavelAluno.instituicaoId],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'solicitacao_vinculo_responsavel_convite_escopo_fk',
+      columns: [t.conviteId, t.instituicaoId],
+      foreignColumns: [conviteResponsavel.id, conviteResponsavel.instituicaoId],
+    }).onDelete('cascade'),
+    check(
+      'ck_solicitacao_vinculo_status',
+      sql`${t.status} in ('pendente_aprovacao', 'aprovada', 'recusada', 'cancelada')`,
+    ),
+    check('ck_solicitacao_vinculo_decisao', sql`(${t.status} = 'pendente_aprovacao') = (${t.decididoEm} is null)`),
+    uniqueIndex('uq_solicitacao_vinculo_pendente')
+      .on(t.responsavelAlunoId)
+      .where(sql`${t.status} = 'pendente_aprovacao'`),
+    index('idx_solicitacao_vinculo_instituicao').on(t.instituicaoId, t.status),
   ],
 );

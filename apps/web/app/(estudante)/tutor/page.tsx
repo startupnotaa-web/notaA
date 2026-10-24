@@ -6,15 +6,15 @@
 // mensagem volta para o input (o aluno não perde o que digitou) e o balão otimista
 // é removido. O Perfil 4D é injetado no backend — o cliente nunca manda contexto.
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { SocraticResponse, SocraticHistoryItem, MeResponse } from '@notaa/contracts';
-import { Button, cn } from '@notaa/ui';
+import { Button, EmptyState, Progress, TextArea, cn } from '@notaa/ui';
 import { apiFetch } from '../../../lib/api-client';
 import { useUser } from '../../../lib/user-context';
 import { toast } from '../../components/toast';
+import { Voltar } from '../../components/Voltar';
 
-const ERRO_IA = 'Nossos servidores de IA estão lotados. Tente novamente em instantes.';
+const ERRO_IA = 'Nossos servidores de IA estão lotados. Tente de novo em instantes.';
 
 type ChatMsg = {
   id: string;
@@ -60,7 +60,7 @@ export default function SocraticoPage() {
         if (vivo) setConversaId(s.conversaId);
       })
       .catch(() => {
-        if (vivo) toast('Não foi possível abrir a sessão do tutor. Recarregue a página.', { variant: 'error' });
+        if (vivo) toast('Não foi possível abrir a conversa com o tutor. Recarregue a página.', { variant: 'error' });
       })
       .finally(() => {
         if (vivo) setAbrindo(false);
@@ -107,7 +107,7 @@ export default function SocraticoPage() {
       setConversaId(s.conversaId);
       setMensagens([]);
     } catch {
-      toast('Não foi possível abrir nova sessão.', { variant: 'error' });
+      toast('Não foi possível abrir uma nova conversa.', { variant: 'error' });
     } finally {
       setAbrindo(false);
     }
@@ -136,7 +136,7 @@ export default function SocraticoPage() {
         const next = prev + 1;
         if (next % 4 === 0) {
           addXP(20);
-          toast('+20 XP! Belo raciocínio socrático.', { variant: 'success' });
+          toast('+20 XP. Belo raciocínio socrático!', { variant: 'success' });
         }
         return next;
       });
@@ -160,59 +160,54 @@ export default function SocraticoPage() {
   const limiteMax = isPremium ? Infinity : 3;
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-9rem)] w-full max-w-5xl gap-4 p-4">
-      {/* Sidebar de Histórico */}
-      <aside className="hidden w-64 flex-col rounded-2xl border border-border bg-surface p-4 md:flex">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-bold">Histórico</h2>
-          <Button variant="ghost" size="sm" onClick={novaSessao} title="Nova Sessão">
-            +
+    <div className="mx-auto flex h-[calc(100dvh-9rem)] w-full max-w-5xl gap-space-6 px-4 py-space-4">
+      {/* Histórico de conversas */}
+      <aside aria-label="Conversas anteriores" className="hidden w-64 flex-col border-r border-line pr-space-5 md:flex">
+        <div className="mb-space-4 flex items-center justify-between gap-space-2">
+          <h2 className="m-0 font-display text-heading-3 text-ink">Histórico</h2>
+          <Button variant="quiet" onClick={novaSessao} aria-label="Começar uma nova conversa">
+            Nova
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+        <ul className="m-0 flex min-h-0 flex-1 list-none flex-col gap-space-1 overflow-y-auto p-0">
           {historico.length === 0 ? (
-            <p className="text-sm text-text-muted">Nenhuma conversa salva.</p>
+            <li className="text-body-sm text-ink-muted">Nenhuma conversa salva.</li>
           ) : (
             historico.map((h) => (
-              <div 
-                key={h.id} 
-                onClick={() => carregarSessaoAntiga(h.id)}
-                className={cn(
-                  "cursor-pointer rounded-xl border p-3 text-sm transition-colors hover:border-brand",
-                  conversaId === h.id ? "border-brand bg-brand/5" : "border-border"
-                )}
-              >
-                <p className="font-semibold">{h.temaAtivo ?? 'Sessão Livre'}</p>
-                <p className="text-xs text-text-muted">{new Date(h.criadoEm).toLocaleDateString()}</p>
-              </div>
+              <li key={h.id}>
+                <button
+                  type="button"
+                  onClick={() => carregarSessaoAntiga(h.id)}
+                  aria-current={conversaId === h.id ? 'true' : undefined}
+                  className={cn(
+                    'flex min-h-[44px] w-full flex-col items-start justify-center rounded-md px-space-3 py-space-2 text-left transition-colors duration-fast ease-out',
+                    conversaId === h.id ? 'bg-violet-tint' : 'hover:bg-surface-sunken',
+                  )}
+                >
+                  <span className="text-label text-ink">{h.temaAtivo ?? 'Conversa livre'}</span>
+                  <span className="text-caption text-ink-muted">{new Date(h.criadoEm).toLocaleDateString('pt-BR')}</span>
+                </button>
+              </li>
             ))
           )}
-        </div>
-        <div className="mt-4 shrink-0 border-t border-border pt-4">
-          <p className="text-sm font-semibold">
-            {isPremium ? (
-              <span className="text-brand-accent">Armazenamento Ilimitado</span>
-            ) : (
-              <span>Armazenamento (Free)</span>
-            )}
-          </p>
-          {!isPremium && (
-            <div className="mt-2 text-xs text-text-muted">
-              <div className="flex justify-between font-bold mb-1">
-                <span>Usado</span>
-                <span className={historico.length >= limiteMax ? 'text-warning' : ''}>
-                  {historico.length}/{limiteMax} Disponíveis
-                </span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                <div
-                  className="h-full rounded-full bg-warning transition-all"
-                  style={{ width: `${Math.min((historico.length / 3) * 100, 100)}%` }}
-                />
-              </div>
+        </ul>
+        <div className="mt-space-4 shrink-0 border-t border-line pt-space-4">
+          {isPremium ? (
+            <p className="m-0 text-label text-primary">Armazenamento ilimitado</p>
+          ) : (
+            <div className="flex flex-col gap-space-2">
+              <Progress
+                value={Math.min(historico.length, 3)}
+                max={3}
+                label="Conversas salvas"
+                aria-label="Conversas salvas no plano gratuito"
+              />
+              <p className="m-0 text-caption text-ink-muted">
+                {historico.length}/{limiteMax} no plano gratuito
+              </p>
               {historico.length >= 3 && (
-                <p className="mt-2 text-[10px] leading-tight text-warning/80">
-                  Limite atingido. O chat mais antigo será excluído automaticamente ao criar um novo.
+                <p className="m-0 text-caption text-warning">
+                  Limite atingido. A conversa mais antiga será excluída ao criar uma nova.
                 </p>
               )}
             </div>
@@ -220,40 +215,47 @@ export default function SocraticoPage() {
         </div>
       </aside>
 
-      {/* Main Chat Area */}
-      <div className="flex flex-1 flex-col">
-        <header className="mb-3 shrink-0 space-y-0.5">
-          <Link href="/dashboard" className="text-sm text-text-muted hover:text-text">
-            ← Início
-          </Link>
-          <h1 className="text-xl font-bold">Tutor Socrático</h1>
+      {/* Conversa */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="mb-space-3 flex shrink-0 flex-col gap-space-1">
+          <Voltar rotulo="Início" />
+          <h1 className="m-0 font-display text-[28px] leading-9 tracking-[-0.02em] text-ink sm:text-heading-1">Tutor socrático</h1>
         </header>
 
-        {/* Histórico Ativo */}
-        <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl border border-border bg-surface/40 p-4">
+        <div className="flex flex-1 flex-col gap-space-4 overflow-y-auto py-space-4">
           {abrindo ? (
-            <p className="text-sm text-text-muted">Abrindo sua sessão...</p>
+            <p role="status" className="m-0 text-body-sm text-ink-muted">
+              Abrindo sua conversa…
+            </p>
           ) : mensagens.length === 0 ? (
-            <EmptyState />
+            <EmptyState title="Comece com uma pergunta">
+              Pergunte sobre qualquer matéria. O tutor vai guiar você até a resposta com perguntas, sem entregá-la pronta.
+            </EmptyState>
           ) : (
             mensagens.map((m) => <Bubble key={m.id} msg={m} />)
           )}
-          {pensando && <TypingIndicator />}
+          {pensando && (
+            <p role="status" className="m-0 text-body-sm text-ink-muted">
+              O tutor está pensando…
+            </p>
+          )}
           <div ref={fimRef} />
         </div>
 
         {/* Composer */}
-        <div className="mt-3 flex shrink-0 items-end gap-2">
-          <textarea
+        <div className="mt-space-3 flex shrink-0 items-end gap-space-3">
+          <TextArea
+            label="Sua mensagem para o tutor"
+            labelOculto
+            className="flex-1"
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
             onKeyDown={onKeyDown}
             disabled={abrindo || !conversaId}
             rows={1}
-            placeholder="Pergunte algo... (o tutor vai te guiar, não dar a resposta pronta)"
-            className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-surface px-4 py-3 text-text placeholder:text-text-muted/60 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
+            placeholder="Pergunte algo. O tutor vai guiar você, não dar a resposta pronta."
           />
-          <Button variant="cta" onClick={enviar} disabled={!rascunho.trim() || pensando || !conversaId}>
+          <Button variant="primary" onClick={enviar} disabled={!rascunho.trim() || pensando || !conversaId}>
             Enviar
           </Button>
         </div>
@@ -268,23 +270,22 @@ function Bubble({ msg }: { msg: ChatMsg }) {
     <div className={cn('flex', isAluno ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-          isAluno
-            ? 'bg-gradient-brand text-white'
-            : 'border border-border bg-surface-2 text-text',
+          'max-w-[85%] rounded-lg px-space-4 py-space-3 text-body',
+          isAluno ? 'bg-primary text-primary-on' : 'bg-surface-sunken text-ink',
         )}
       >
+        <span className="sr-only">{isAluno ? 'Você: ' : 'Tutor: '}</span>
         {isAluno ? <span>{msg.conteudo}</span> : <Markdown text={msg.conteudo} />}
         {msg.resposta?.tipo === 'degraded_static' && msg.resposta.dicasEstaticas.length > 0 && (
-          <ul className="mt-2 space-y-1 border-t border-border pt-2 text-xs text-text-muted">
+          <ul className="m-0 mt-space-3 flex list-none flex-col gap-space-1 border-t border-line p-0 pt-space-3 text-body-sm text-ink-muted">
             {msg.resposta.dicasEstaticas.map((d, i) => (
               <li key={i}>• {d}</li>
             ))}
           </ul>
         )}
         {msg.resposta?.tipo === 'care_protocol' && (
-          <div className="mt-2 space-y-1 border-t border-error/40 pt-2 text-xs">
-            <p className="font-semibold text-error">Você não está sozinho. Recursos de apoio:</p>
+          <div className="mt-space-3 flex flex-col gap-space-1 border-t border-line pt-space-3 text-body-sm">
+            <p className="m-0 font-bold text-danger">Você não está sozinho. Recursos de apoio:</p>
             {msg.resposta.recursos.map((r, i) => (
               <a key={i} href={r.url} target="_blank" rel="noreferrer" className="block text-info underline">
                 {r.nome} — {r.contato}
@@ -293,36 +294,6 @@ function Bubble({ msg }: { msg: ChatMsg }) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex justify-start" aria-label="O tutor está digitando">
-      <div className="flex items-center gap-1 rounded-2xl border border-border bg-surface-2 px-4 py-3">
-        {[0, 150, 300].map((delay) => (
-          <span
-            key={delay}
-            className="h-2 w-2 animate-bounce rounded-full bg-text-muted"
-            style={{ animationDelay: `${delay}ms` }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
-      <span className="text-4xl" aria-hidden="true">
-        💬
-      </span>
-      <p className="max-w-xs text-sm">
-        Faça uma pergunta sobre qualquer matéria. O tutor vai te guiar até a resposta com perguntas —
-        nunca entregando-a de bandeja.
-      </p>
     </div>
   );
 }

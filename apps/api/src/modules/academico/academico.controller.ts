@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import {
   AnoLetivoQuerySchema,
+  AtivarRegraRequestSchema,
   AtribuirDisciplinaRequestSchema,
   AtualizarDisciplinaRequestSchema,
   AtualizarPeriodoAvaliativoRequestSchema,
@@ -22,6 +23,7 @@ import {
   CriarRegraAvaliativaRequestSchema,
   SimularRegraRequestSchema,
   type AnoLetivoQuery,
+  type AtivarRegraRequest,
   type AtribuirDisciplinaRequest,
   type AtualizarDisciplinaRequest,
   type AtualizarPeriodoAvaliativoRequest,
@@ -182,7 +184,8 @@ export class AcademicoController {
   ativarRegra(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(AtivarRegraRequestSchema)) body: AtivarRegraRequest,
   ): Promise<RegraAvaliativaVersao> {
-    return this.academico.ativarRegra(req.user.sub, req.user.app_metadata.papel, id);
+    return this.academico.ativarRegra(req.user.sub, req.user.app_metadata.papel, id, body);
   }
 }

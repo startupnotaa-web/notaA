@@ -181,6 +181,11 @@ export const AprovacaoRegraSchema = z.object({
     .number()
     .min(FREQUENCIA_MINIMA_LEGAL, 'A frequência mínima não pode ser menor que 75%.')
     .max(1),
+  /**
+   * A falta justificada conta como presença? Por padrão não: o abono é uma
+   * escolha da instituição e precisa estar escrito na regra que o boletim congela.
+   */
+  abonaFaltaJustificada: z.boolean().default(false),
 });
 export type AprovacaoRegra = z.infer<typeof AprovacaoRegraSchema>;
 

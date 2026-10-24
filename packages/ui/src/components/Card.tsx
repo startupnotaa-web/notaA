@@ -1,5 +1,6 @@
-// docs/07 §5 — Card e subcomponentes. Superfície (bg-surface) + borda + raio + sombra.
-// Variante "highlight" usa bg-surface-2 + glow da marca para destaque.
+// docs/07 §5 — Card e subcomponentes. Superfície (bg-surface) com borda fina `line` e raio generoso, sem sombra
+// (sombra é só do que flutua). Variante "highlight" usa o tint violeta, sem gradiente. O padding de cada parte é
+// space-5 (24px); quem precisa de menos passa className. Prefira Section a Card: painel só para formulário ou tabela.
 import * as React from 'react';
 import { cn } from '../lib/cn';
 
@@ -15,8 +16,8 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(function Card(
     <div
       ref={ref}
       className={cn(
-        'rounded-lg border border-border',
-        variant === 'highlight' ? 'bg-surface-2 shadow-brand' : 'bg-surface shadow-1',
+        'rounded-lg border border-line',
+        variant === 'highlight' ? 'bg-violet-tint' : 'bg-surface',
         className,
       )}
       {...props}
@@ -26,7 +27,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(function Card(
 
 export const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   function CardHeader({ className, ...props }, ref) {
-    return <div ref={ref} className={cn('flex flex-col gap-1 p-4', className)} {...props} />;
+    return <div ref={ref} className={cn('flex flex-col gap-1 p-space-5', className)} {...props} />;
   },
 );
 
@@ -35,7 +36,7 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttribut
     return (
       <h3
         ref={ref}
-        className={cn('font-sans text-lg font-bold leading-tight text-text', className)}
+        className={cn('font-display text-heading-3 text-ink', className)}
         {...props}
       />
     );
@@ -46,17 +47,17 @@ export const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(function CardDescription({ className, ...props }, ref) {
-  return <p ref={ref} className={cn('text-sm text-text-muted', className)} {...props} />;
+  return <p ref={ref} className={cn('text-body-sm text-ink-muted', className)} {...props} />;
 });
 
 export const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   function CardContent({ className, ...props }, ref) {
-    return <div ref={ref} className={cn('p-4 pt-0', className)} {...props} />;
+    return <div ref={ref} className={cn('p-space-5 pt-0', className)} {...props} />;
   },
 );
 
 export const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   function CardFooter({ className, ...props }, ref) {
-    return <div ref={ref} className={cn('flex items-center gap-2 p-4 pt-0', className)} {...props} />;
+    return <div ref={ref} className={cn('flex items-center gap-2 p-space-5 pt-0', className)} {...props} />;
   },
 );

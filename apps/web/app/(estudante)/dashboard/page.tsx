@@ -6,8 +6,21 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardResponse, Eixo4D } from '@notaa/contracts';
-import { Badge, Card, CardHeader, SectionHeader, Skeleton } from '@notaa/ui';
+import {
+  Aurora,
+  Button,
+  ButtonLink,
+  Carregando,
+  Chip,
+  Notice,
+  PageHeader,
+  ProgressTrail,
+  Section,
+  Skeleton,
+  toast,
+} from '@notaa/ui';
 import { apiFetch, ApiError } from '../../../lib/api-client';
+import { Pagina } from '../../components/Pagina';
 
 // Mapeia o id de curso coletado no onboarding (objetivoEnem) para um rótulo legível.
 const CURSO_LABEL: Record<string, string> = {
@@ -22,8 +35,6 @@ const CURSO_LABEL: Record<string, string> = {
 export default function DashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-
-  const [toastMsg, setToastMsg] = useState<{ type: string; msg: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,14 +70,11 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Custom Event Listener para simulação de Toast de Gamificação
+  // Conquistas desbloqueadas em outras telas avisam por este evento; o aviso usa o Toast do sistema.
   useEffect(() => {
     const handleToast = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail && detail.msg) {
-        setToastMsg(detail);
-        setTimeout(() => setToastMsg(null), 4000);
-      }
+      if (detail && detail.msg) toast(`Nova conquista: ${detail.msg}`, { variant: 'success' });
     };
     window.addEventListener('toast-gamificacao', handleToast);
     return () => window.removeEventListener('toast-gamificacao', handleToast);
@@ -74,11 +82,11 @@ export default function DashboardPage() {
 
   if (erro) {
     return (
-      <div className="p-4">
-        <p role="alert" className="text-sm text-error">
+      <Pagina>
+        <Notice tone="danger" title="Não foi possível carregar o seu painel">
           {erro}
-        </p>
-      </div>
+        </Notice>
+      </Pagina>
     );
   }
 
@@ -89,162 +97,101 @@ export default function DashboardPage() {
     ? (CURSO_LABEL[perfil.objetivoEnem] ?? perfil.objetivoEnem)
     : null;
 
-  return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-      {/* Header: saudação personalizada + objetivo + ofensiva */}
-      <header className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-sm text-text-muted">
-            Olá <span aria-hidden="true">👋</span>
-          </p>
-          <h1 className="text-2xl font-bold">{perfil.nome ? perfil.nome : 'Bom te ver de volta'}</h1>
-          {objetivo && (
-            <p className="text-sm text-text-muted">
-              Foco: <span className="font-semibold text-text">{objetivo}</span>
-            </p>
-          )}
-        </div>
-        {streak.diasConsecutivos > 0 && (
-          <Badge variant="warning" icon={<span aria-hidden="true">🔥</span>}>
-            {streak.diasConsecutivos} dia(s)
-          </Badge>
-        )}
-      </header>
+  // Faltou um dia inteiro: a ofensiva ainda pode ser recuperada com a missão.
+  const podeRecuperar =
+    streak.ultimaAtividade &&
+    Math.round(
+      (new Date().setHours(0, 0, 0, 0) - new Date(`${streak.ultimaAtividade}T00:00:00`).getTime()) / (24 * 60 * 60 * 1000),
+    ) === 2 &&
+    streak.diasConsecutivos > 0;
 
-      {/* Card de Missão de Recuperação */}
-      {streak.ultimaAtividade &&
-       Math.round((new Date().setHours(0,0,0,0) - new Date(`${streak.ultimaAtividade}T00:00:00`).getTime()) / (24 * 60 * 60 * 1000)) === 2 &&
-       streak.diasConsecutivos > 0 && (
-        <Card className="border-warning bg-warning/10 shadow-lg shadow-warning/20">
-          <CardHeader className="items-center justify-between sm:flex-row">
-            <div>
-              <h2 className="text-lg font-bold text-warning flex items-center gap-2">
-                <span aria-hidden="true">⚠️</span> Missão de Recuperação
-              </h2>
-              <p className="text-sm font-medium text-text mt-1">
-                Não perca seu ritmo! Estude mais 20 minutos hoje no Quiz ou Tutor Socrático e recupere sua ofensiva!
-              </p>
-            </div>
-            <button 
+  const ETAPAS = 5;
+  const progresso = Math.max(0, Math.min(1, nivel.progresso));
+
+  return (
+    <Pagina>
+      <PageHeader
+        title={perfil.nome ? `Olá, ${perfil.nome}` : 'Bom te ver de volta'}
+        description={objetivo ? `Foco: ${objetivo}` : undefined}
+      />
+
+      {podeRecuperar && (
+        <Notice
+          tone="warning"
+          title="Missão de recuperação"
+          action={
+            <Button
+              variant="secondary"
               onClick={async () => {
                 try {
                   await apiFetch('/me/recover-streak', { method: 'POST' });
                   window.location.reload();
                 } catch {
-                  setErro('Falha ao recuperar ofensiva');
+                  setErro('Não foi possível recuperar a ofensiva. Tente de novo.');
                 }
               }}
-              className="mt-4 shrink-0 rounded-full bg-warning px-6 py-2 text-sm font-bold text-warning-foreground transition-transform hover:scale-105 sm:mt-0"
             >
-              Recuperar Ofensiva
-            </button>
-          </CardHeader>
-        </Card>
+              Recuperar ofensiva
+            </Button>
+          }
+        >
+          Estude mais 20 minutos hoje, no quiz ou no tutor socrático, para não perder o seu ritmo.
+        </Notice>
       )}
 
-      {/* Card de Gamificação Premium (Passo C) */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary/30 via-surface to-brand-accent/30 p-[1px] shadow-lg">
-        <div className="flex flex-col gap-5 rounded-2xl bg-surface/70 p-6 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-brand text-2xl font-bold text-white shadow-[0_0_20px_rgba(38,153,233,0.6)]">
-              {nivel.atual}
-            </div>
+      {/* O ponto de energia da marca nesta tela: a aurora e o losango de progresso. */}
+      <Aurora className="rounded-lg">
+        <div className="flex flex-col gap-space-5 p-space-5 md:p-space-6">
+          <div className="flex flex-wrap items-end justify-between gap-x-space-5 gap-y-space-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-brand-primary">Nível Atual</p>
-              <p className="text-2xl font-extrabold text-text">{xpTotal.toLocaleString('pt-BR')} XP</p>
+              <p className="m-0 text-label text-ink-muted">Nível {nivel.atual}</p>
+              <p className="m-0 font-display text-heading-1 tabular-nums text-ink">{xpTotal.toLocaleString('pt-BR')} XP</p>
             </div>
+            <p className="m-0 text-body-sm tabular-nums text-ink-muted">
+              {nivel.xpNoNivel} de {nivel.xpParaProximoNivel} XP para o nível {nivel.atual + 1}
+            </p>
           </div>
-          
-          <div className="flex-1 sm:px-6">
-             <div className="mb-2 flex items-center justify-between text-xs font-bold text-text-muted">
-               <span>PROGRESSO</span>
-               <span>{nivel.xpNoNivel} / {nivel.xpParaProximoNivel} XP</span>
-             </div>
-             <ProgressBar fraction={nivel.progresso} />
-          </div>
-
-          <div className="flex flex-col items-center justify-center rounded-xl bg-surface-2/60 px-5 py-3 border border-white/5">
-             <span className="text-2xl drop-shadow-md" aria-hidden="true">🔥</span>
-             <span className="text-xl font-extrabold text-warning">{streak.diasConsecutivos}</span>
-             <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Ofensiva</span>
-          </div>
+          <ProgressTrail
+            total={ETAPAS}
+            done={Math.floor(progresso * ETAPAS)}
+            label="Progresso até o próximo nível"
+            caption={`${Math.round(progresso * 100)}% do nível ${nivel.atual}`}
+          />
         </div>
-      </div>
+      </Aurora>
 
-
-
-      {/* Perfil Cognitivo 4D — radar */}
-      <section className="space-y-3">
-        <SectionHeader
-          title="Mapa"
-          accent="Cognitivo 4D"
-          description="Como você aprende. Cada eixo se revela conforme você pratica."
-          as="h2"
-        />
-        <Card>
-          <CardHeader className="gap-6 sm:flex-row sm:items-center">
-            <Radar eixos={perfilCognitivo4d.eixos} />
-            <ul className="flex-1 space-y-3">
-              {perfilCognitivo4d.eixos.map((e) => (
-                <AxisRow key={e.chave} eixo={e} />
-              ))}
-              <li className="text-xs text-text-muted">
-                Confiança da inferência:{' '}
-                <strong className="text-text">{Math.round(perfilCognitivo4d.confianca * 100)}%</strong>.
-                Só mostramos posição onde há sinal seu — os demais eixos entram com novas fontes
-                (Detector de Erro, Socrática).
-              </li>
-            </ul>
-          </CardHeader>
-        </Card>
-      </section>
-
-
-
-      {/* Atalhos para o estudo aprofundado (com progresso real) */}
-      <section className="space-y-6 pt-6">
-        <div className="flex flex-col items-center justify-center text-center space-y-4 rounded-3xl bg-surface-2 p-8 border border-brand-primary/20 shadow-lg relative overflow-hidden">
-           <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-primary/10 blur-[80px] pointer-events-none" />
-           <h2 className="text-2xl font-black text-text">Pronto para o próximo passo?</h2>
-           <p className="text-text-muted max-w-md">Continue sua jornada de estudos pelas trilhas sugeridas pela IA ou escolha uma ferramenta prática no Hub de Estudos.</p>
-           
-           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center pt-2">
-              <Link href="/estudo" className="w-full sm:w-auto">
-                 <button className="w-full rounded-full bg-brand-primary px-8 py-4 text-sm font-bold text-brand-primary-foreground transition-all hover:bg-brand-primary-hover hover:scale-105 shadow-[0_0_20px_rgba(38,153,233,0.3)] focus:outline-none focus:ring-4 focus:ring-brand-primary/50">
-                    Continuar Estudando →
-                 </button>
-              </Link>
-           </div>
+      <Section
+        title="Mapa cognitivo 4D"
+        description="Como você aprende. Cada eixo se revela conforme você pratica."
+        divided
+      >
+        <div className="flex flex-col gap-space-6 sm:flex-row sm:items-center">
+          <Radar eixos={perfilCognitivo4d.eixos} />
+          <ul className="m-0 flex flex-1 list-none flex-col gap-space-5 p-0">
+            {perfilCognitivo4d.eixos.map((e) => (
+              <AxisRow key={e.chave} eixo={e} />
+            ))}
+            <li className="text-body-sm text-ink-muted">
+              Confiança da inferência: <strong className="text-ink">{Math.round(perfilCognitivo4d.confianca * 100)}%</strong>.
+              Só mostramos posição onde há sinal seu. Os demais eixos entram com novas fontes (detector de erro e tutor
+              socrático).
+            </li>
+          </ul>
         </div>
-      </section>
+      </Section>
 
-
-      
-      {/* Toast Animado */}
-      {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 flex animate-in slide-in-from-bottom-5 items-center gap-3 rounded-2xl bg-gradient-brand p-4 text-white shadow-xl">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-xl font-bold backdrop-blur-md">
-             🎉
-          </div>
-          <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-brand-primary-content opacity-90">Nova Conquista</p>
-            <p className="text-lg font-extrabold">{toastMsg.msg}</p>
-          </div>
+      <Section
+        title="Próximo passo"
+        description="Siga as trilhas sugeridas pela IA ou escolha uma ferramenta prática no estudo."
+        divided
+      >
+        <div>
+          <ButtonLink as={Link} href="/estudo" variant="primary">
+            Continuar estudando
+          </ButtonLink>
         </div>
-      )}
-    </div>
-  );
-}
-
-function ProgressBar({ fraction }: { fraction: number }) {
-  const pct = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-      <div
-        className="h-full rounded-full bg-gradient-brand transition-all duration-1000 ease-out"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
+      </Section>
+    </Pagina>
   );
 }
 
@@ -274,35 +221,21 @@ function Radar({ eixos }: { eixos: Eixo4D[] }) {
     .join(' ');
 
   return (
-    <div className="mx-auto h-44 w-44 shrink-0">
-      <svg viewBox={`0 0 ${RADAR.size} ${RADAR.size}`} className="h-full w-full">
+    <div className="h-44 w-44 shrink-0">
+      <svg viewBox={`0 0 ${RADAR.size} ${RADAR.size}`} role="img" aria-label="Radar dos quatro eixos do perfil cognitivo" className="h-full w-full">
         {[0.25, 0.5, 0.75, 1].map((lvl) => (
-          <polygon
-            key={lvl}
-            points={polyAt(lvl)}
-            fill="none"
-            className="stroke-border"
-            strokeWidth="1"
-          />
+          <polygon key={lvl} points={polyAt(lvl)} fill="none" className="stroke-line" strokeWidth="1" />
         ))}
         {ANGLES.map((_, i) => {
           const tip = radarPoint(i, 1);
           return (
-            <line
-              key={i}
-              x1={RADAR.center}
-              y1={RADAR.center}
-              x2={tip.x}
-              y2={tip.y}
-              className="stroke-border"
-              strokeWidth="1"
-            />
+            <line key={i} x1={RADAR.center} y1={RADAR.center} x2={tip.x} y2={tip.y} className="stroke-line" strokeWidth="1" />
           );
         })}
         <polygon
           points={valuePoly}
-          className="text-brand-primary [fill:currentColor] [stroke:currentColor]"
-          fillOpacity={0.18}
+          className="text-primary [fill:currentColor] [stroke:currentColor]"
+          fillOpacity={0.14}
           strokeWidth="2"
         />
         {eixos.slice(0, 4).map((e, i) => {
@@ -313,7 +246,7 @@ function Radar({ eixos }: { eixos: Eixo4D[] }) {
               cx={p.x}
               cy={p.y}
               r={e.temSinal ? 4 : 3}
-              className={e.temSinal ? 'text-brand-accent [fill:currentColor]' : 'fill-text-muted'}
+              className={e.temSinal ? 'text-primary [fill:currentColor]' : 'fill-ink-muted'}
               fillOpacity={e.temSinal ? 1 : 0.5}
             />
           );
@@ -327,58 +260,43 @@ function AxisRow({ eixo }: { eixo: Eixo4D }) {
   const pct = ((eixo.valor + 1) / 2) * 100;
   const lado = eixo.valor === 0 ? null : eixo.valor < 0 ? eixo.poloA : eixo.poloB;
   return (
-    <li className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm font-medium text-text">
+    <li className="flex flex-col gap-space-2">
+      <div className="flex items-center justify-between text-label text-ink">
         <span>{eixo.poloA}</span>
         <span>{eixo.poloB}</span>
       </div>
-      <div className="relative h-2 w-full overflow-hidden rounded-full bg-surface-2">
+      <div className="relative h-2 w-full rounded-pill bg-surface-sunken">
         {eixo.temSinal ? (
           <span
-            className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-brand ring-2 ring-bg"
+            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-pill border-2 border-surface bg-primary"
             style={{ left: `${pct}%` }}
             aria-hidden="true"
           />
-        ) : (
-          <div
-            className="h-full w-full opacity-50"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(45deg, var(--color-border) 0 6px, transparent 6px 12px)',
-            }}
-            aria-hidden="true"
-          />
-        )}
+        ) : null}
       </div>
-      <div className="text-xs">
+      <div className="text-body-sm">
         {eixo.temSinal && lado ? (
-          <span className="text-text-muted">
-            Tende ao lado <strong className="text-text">{lado}</strong>
+          <span className="text-ink-muted">
+            Tende ao lado <strong className="text-ink">{lado}</strong>
           </span>
         ) : (
-          <Badge variant="neutral">Aguardando sinal</Badge>
+          <Chip tone="neutral">Aguardando sinal</Chip>
         )}
       </div>
     </li>
   );
 }
 
-// ─────────────────────────── Cards de atalho ───────────────────────────
-
-
-
-// ─────────────────────────── Loading ───────────────────────────
+// ─────────────────────────── Carregando ───────────────────────────
 
 function DashboardSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-      <Skeleton className="h-16 w-2/3" />
-      <Skeleton className="h-40 w-full" />
-      <Skeleton className="h-56 w-full" />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    </div>
+    <Pagina>
+      <Carregando rotulo="Carregando o seu painel" className="flex flex-col gap-space-6 md:gap-space-7">
+        <Skeleton className="h-12 w-2/3" />
+        <Skeleton className="h-36 w-full" />
+        <Skeleton className="h-56 w-full" />
+      </Carregando>
+    </Pagina>
   );
 }

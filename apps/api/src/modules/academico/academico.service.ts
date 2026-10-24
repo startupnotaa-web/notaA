@@ -6,8 +6,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import {
+  JustificativaSchema,
   quantidadeDePeriodos,
   RegraAvaliativaSchema,
+  type AtivarRegraRequest,
   type AtribuirDisciplinaRequest,
   type AtualizarDisciplinaRequest,
   type AtualizarPeriodoAvaliativoRequest,
@@ -23,6 +25,7 @@ import {
 } from '@notaa/contracts';
 import {
   Database,
+  type DbExecutor,
   and,
   anoLetivoPeriodo,
   asc,
@@ -79,6 +82,34 @@ function paraDisciplina(d: LinhaDisciplina): Disciplina {
   };
 }
 
+/** Quem escreve a configuração acadêmica é sempre admin de instituição (gestão ou coordenação). */
+const PAPEL_AUDITORIA = 'admin_instituicao';
+
+/** Motivo da mudança de regra. Recusa aqui também, para o serviço não depender só do pipe. */
+function justificativaValida(texto: unknown): string {
+  const r = JustificativaSchema.safeParse(texto);
+  if (!r.success) {
+    throw new UnprocessableEntityException({
+      error: { code: 'JUSTIFICATIVA_INVALIDA', message: r.error.issues[0]!.message },
+    });
+  }
+  return r.data;
+}
+
+/** Só os campos de `chaves` que vieram em `depois` E mudam, na ordem de `chaves`. */
+function diferencas<T extends Record<string, unknown>>(
+  antes: T,
+  depois: Partial<T>,
+  chaves: readonly (keyof T & string)[],
+): { campos: string[]; antes: Record<string, unknown>; depois: Record<string, unknown> } {
+  const campos = chaves.filter((c) => depois[c] !== undefined && depois[c] !== antes[c]);
+  return {
+    campos,
+    antes: Object.fromEntries(campos.map((c) => [c, antes[c]])),
+    depois: Object.fromEntries(campos.map((c) => [c, depois[c]])),
+  };
+}
+
 /**
  * Configuração acadêmica da instituição: períodos, disciplinas, atribuição
  * turma–disciplina–professor e versões da regra avaliativa.
@@ -116,6 +147,81 @@ export class AcademicoService {
     }
   }
 
+  /** Auditoria de uma escrita acadêmica, na MESMA transação da escrita. Só ids e campos. */
+  private auditar(
+    tx: DbExecutor,
+    instituicaoId: string,
+    usuarioId: string,
+    acao: string,
+    entidade: string,
+    entidadeId: string,
+    dados: Record<string, unknown>,
+  ): Promise<void> {
+    return registrarAuditoria(tx, {
+      instituicaoId,
+      atorId: usuarioId,
+      papel: PAPEL_AUDITORIA,
+      acao,
+      entidade,
+      entidadeId,
+      dados,
+    });
+  }
+
+  /** Regra vigente do ano (a da ativação mais recente), ou null. */
+  private async regraVigente(
+    tx: DbExecutor,
+    instituicaoId: string,
+    anoLetivoId: string,
+  ): Promise<{ id: string; regra: unknown } | null> {
+    const [vigente] = await tx
+      .select({ id: regraAvaliativa.id, regra: regraAvaliativa.regra })
+      .from(regraAvaliativaAtivacao)
+      .innerJoin(regraAvaliativa, eq(regraAvaliativa.id, regraAvaliativaAtivacao.regraId))
+      .where(
+        and(
+          eq(regraAvaliativaAtivacao.instituicaoId, instituicaoId),
+          eq(regraAvaliativaAtivacao.anoLetivoId, anoLetivoId),
+        ),
+      )
+      .orderBy(desc(regraAvaliativaAtivacao.ativadoEm), desc(regraAvaliativaAtivacao.id))
+      .limit(1);
+    return vigente ?? null;
+  }
+
+  /**
+   * Com regra vigente, o número de períodos do ano é o que a regra pede (a
+   * ativação conferiu). Criar ou remover um período quebraria isso, e a nota do
+   * período que sumiu não teria onde cair: recusa.
+   */
+  private async assertContagemCompativel(
+    tx: DbExecutor,
+    instituicaoId: string,
+    anoLetivoId: string,
+    delta: 1 | -1,
+  ): Promise<void> {
+    const vigente = await this.regraVigente(tx, instituicaoId, anoLetivoId);
+    if (!vigente) return;
+    const esperado = quantidadeDePeriodos(RegraAvaliativaSchema.parse(vigente.regra).regime);
+    const [{ total }] = (await tx
+      .select({ total: count() })
+      .from(periodoAvaliativo)
+      .where(
+        and(
+          eq(periodoAvaliativo.instituicaoId, instituicaoId),
+          eq(periodoAvaliativo.anoLetivoId, anoLetivoId),
+        ),
+      )) as [{ total: number }];
+    if (total + delta !== esperado) {
+      conflito(
+        'PERIODOS_COM_REGRA_ATIVA',
+        `A regra em vigor pede ${esperado} períodos. Crie uma nova versão da regra e ative-a antes de ${
+          delta > 0 ? 'criar' : 'remover'
+        } períodos.`,
+      );
+    }
+  }
+
   // ─── Períodos ──────────────────────────────────────────────────────────────
 
   async listarPeriodos(usuarioId: string, anoLetivoId: string): Promise<PeriodoAvaliativo[]> {
@@ -141,11 +247,19 @@ export class AcademicoService {
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     await this.assertAnoDaInstituicao(instituicaoId, body.anoLetivoId, { paraEscrita: true });
     try {
-      const [criado] = await this.db
-        .insert(periodoAvaliativo)
-        .values({ instituicaoId, ...body })
-        .returning();
-      return paraPeriodo(criado!);
+      const criado = await this.db.transaction(async (tx) => {
+        await this.assertContagemCompativel(tx, instituicaoId, body.anoLetivoId, 1);
+        const [c] = await tx
+          .insert(periodoAvaliativo)
+          .values({ ...body, instituicaoId })
+          .returning();
+        await this.auditar(tx, instituicaoId, usuarioId, 'periodo.criado', 'periodo_avaliativo', c!.id, {
+          anoLetivoId: c!.anoLetivoId,
+          ordem: c!.ordem,
+        });
+        return c!;
+      });
+      return paraPeriodo(criado);
     } catch (e) {
       if (temViolacaoDeUnicidade(e)) {
         conflito('PERIODO_DUPLICADO', `Já existe um período na posição ${body.ordem}.`);
@@ -179,13 +293,22 @@ export class AcademicoService {
         error: { code: 'DATAS_INVALIDAS', message: 'O fim precisa ser depois do início.' },
       });
     }
+    const mudou = diferencas(atual, body, ['ordem', 'nome', 'dataInicio', 'dataFim']);
+    if (mudou.campos.length === 0) return paraPeriodo(atual);
     try {
-      const [atualizado] = await this.db
-        .update(periodoAvaliativo)
-        .set({ ...body, atualizadoEm: new Date() })
-        .where(and(eq(periodoAvaliativo.id, id), eq(periodoAvaliativo.instituicaoId, instituicaoId)))
-        .returning();
-      return paraPeriodo(atualizado!);
+      const atualizado = await this.db.transaction(async (tx) => {
+        const [p] = await tx
+          .update(periodoAvaliativo)
+          .set({ ...body, instituicaoId, atualizadoEm: new Date() })
+          .where(and(eq(periodoAvaliativo.id, id), eq(periodoAvaliativo.instituicaoId, instituicaoId)))
+          .returning();
+        await this.auditar(tx, instituicaoId, usuarioId, 'periodo.atualizado', 'periodo_avaliativo', id, {
+          anoLetivoId: atual.anoLetivoId,
+          ...mudou,
+        });
+        return p!;
+      });
+      return paraPeriodo(atualizado);
     } catch (e) {
       if (temViolacaoDeUnicidade(e)) {
         conflito('PERIODO_DUPLICADO', `Já existe um período na posição ${body.ordem}.`);
@@ -198,9 +321,16 @@ export class AcademicoService {
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     const atual = await this.periodoDaInstituicao(instituicaoId, id);
     await this.assertAnoDaInstituicao(instituicaoId, atual.anoLetivoId, { paraEscrita: true });
-    await this.db
-      .delete(periodoAvaliativo)
-      .where(and(eq(periodoAvaliativo.id, id), eq(periodoAvaliativo.instituicaoId, instituicaoId)));
+    await this.db.transaction(async (tx) => {
+      await this.assertContagemCompativel(tx, instituicaoId, atual.anoLetivoId, -1);
+      await tx
+        .delete(periodoAvaliativo)
+        .where(and(eq(periodoAvaliativo.id, id), eq(periodoAvaliativo.instituicaoId, instituicaoId)));
+      await this.auditar(tx, instituicaoId, usuarioId, 'periodo.removido', 'periodo_avaliativo', id, {
+        anoLetivoId: atual.anoLetivoId,
+        ordem: atual.ordem,
+      });
+    });
   }
 
   // ─── Disciplinas ───────────────────────────────────────────────────────────
@@ -218,16 +348,23 @@ export class AcademicoService {
   async criarDisciplina(usuarioId: string, body: CriarDisciplinaRequest): Promise<Disciplina> {
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     try {
-      const [criada] = await this.db
-        .insert(disciplina)
-        .values({
-          instituicaoId,
-          nome: body.nome,
-          codigo: body.codigo ?? null,
-          areaEnem: body.areaEnem ?? null,
-        })
-        .returning();
-      return paraDisciplina(criada!);
+      const criada = await this.db.transaction(async (tx) => {
+        const [c] = await tx
+          .insert(disciplina)
+          .values({
+            instituicaoId,
+            nome: body.nome,
+            codigo: body.codigo ?? null,
+            areaEnem: body.areaEnem ?? null,
+          })
+          .returning();
+        await this.auditar(tx, instituicaoId, usuarioId, 'disciplina.criada', 'disciplina', c!.id, {
+          codigo: c!.codigo,
+          areaEnem: c!.areaEnem,
+        });
+        return c!;
+      });
+      return paraDisciplina(criada);
     } catch (e) {
       if (temViolacaoDeUnicidade(e)) conflito('DISCIPLINA_DUPLICADA', `A disciplina ${body.nome} já existe.`);
       throw e;
@@ -241,12 +378,24 @@ export class AcademicoService {
   ): Promise<Disciplina> {
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     try {
-      const [atualizada] = await this.db
-        .update(disciplina)
-        .set({ ...body, atualizadoEm: new Date() })
-        .where(and(eq(disciplina.id, id), eq(disciplina.instituicaoId, instituicaoId)))
-        .returning();
-      if (!atualizada) naoEncontrado('Disciplina não encontrada.');
+      const atualizada = await this.db.transaction(async (tx) => {
+        const [atual] = await tx
+          .select()
+          .from(disciplina)
+          .where(and(eq(disciplina.id, id), eq(disciplina.instituicaoId, instituicaoId)))
+          .limit(1);
+        if (!atual) naoEncontrado('Disciplina não encontrada.');
+        const mudou = diferencas(atual, body, ['nome', 'codigo', 'areaEnem', 'arquivada']);
+        const [d] = await tx
+          .update(disciplina)
+          .set({ ...body, instituicaoId, atualizadoEm: new Date() })
+          .where(and(eq(disciplina.id, id), eq(disciplina.instituicaoId, instituicaoId)))
+          .returning();
+        if (mudou.campos.length > 0) {
+          await this.auditar(tx, instituicaoId, usuarioId, 'disciplina.atualizada', 'disciplina', id, mudou);
+        }
+        return d!;
+      });
       return paraDisciplina(atualizada);
     } catch (e) {
       if (temViolacaoDeUnicidade(e)) conflito('DISCIPLINA_DUPLICADA', `A disciplina ${body.nome} já existe.`);
@@ -315,28 +464,55 @@ export class AcademicoService {
       }
     }
 
-    await this.db
-      .insert(turmaDisciplina)
-      .values({ turmaId, disciplinaId, instituicaoId, professorId: body.professorId })
-      .onConflictDoUpdate({
-        target: [turmaDisciplina.turmaId, turmaDisciplina.disciplinaId],
-        set: { professorId: body.professorId, atualizadoEm: new Date() },
+    await this.db.transaction(async (tx) => {
+      const [anterior] = await tx
+        .select({ professorId: turmaDisciplina.professorId })
+        .from(turmaDisciplina)
+        .where(
+          and(
+            eq(turmaDisciplina.turmaId, turmaId),
+            eq(turmaDisciplina.disciplinaId, disciplinaId),
+            eq(turmaDisciplina.instituicaoId, instituicaoId),
+          ),
+        )
+        .limit(1);
+      await tx
+        .insert(turmaDisciplina)
+        .values({ turmaId, disciplinaId, instituicaoId, professorId: body.professorId })
+        .onConflictDoUpdate({
+          target: [turmaDisciplina.turmaId, turmaDisciplina.disciplinaId],
+          set: { professorId: body.professorId, atualizadoEm: new Date() },
+        });
+      await this.auditar(tx, instituicaoId, usuarioId, 'disciplina.atribuida', 'disciplina', disciplinaId, {
+        turmaId,
+        professorId: body.professorId ?? null,
+        professorAnteriorId: anterior?.professorId ?? null,
       });
+    });
     return this.listarDisciplinasDaTurma(usuarioId, turmaId);
   }
 
   async removerDisciplinaDaTurma(usuarioId: string, turmaId: string, disciplinaId: string): Promise<void> {
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     await this.escopo.assertTurmaDoDono(turmaId, { instituicaoId });
-    await this.db
-      .delete(turmaDisciplina)
-      .where(
-        and(
-          eq(turmaDisciplina.turmaId, turmaId),
-          eq(turmaDisciplina.disciplinaId, disciplinaId),
-          eq(turmaDisciplina.instituicaoId, instituicaoId),
-        ),
-      );
+    await this.db.transaction(async (tx) => {
+      const removidas = await tx
+        .delete(turmaDisciplina)
+        .where(
+          and(
+            eq(turmaDisciplina.turmaId, turmaId),
+            eq(turmaDisciplina.disciplinaId, disciplinaId),
+            eq(turmaDisciplina.instituicaoId, instituicaoId),
+          ),
+        )
+        .returning({ disciplinaId: turmaDisciplina.disciplinaId });
+      // Nada removido (já não estava na turma) não é uma escrita: não há o que auditar.
+      if (removidas.length > 0) {
+        await this.auditar(tx, instituicaoId, usuarioId, 'disciplina.removida_da_turma', 'disciplina', disciplinaId, {
+          turmaId,
+        });
+      }
+    });
   }
 
   // ─── Regra avaliativa ─────────────────────────────────────────────────────
@@ -409,6 +585,7 @@ export class AcademicoService {
     papel: string,
     body: CriarRegraAvaliativaRequest,
   ): Promise<RegraAvaliativaVersao> {
+    const justificativa = justificativaValida(body.justificativa);
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     await this.assertAnoDaInstituicao(instituicaoId, body.anoLetivoId, { paraEscrita: true });
 
@@ -443,7 +620,7 @@ export class AcademicoService {
             acao: 'regra.criada',
             entidade: 'regra_avaliativa',
             entidadeId: criada!.id,
-            dados: { anoLetivoId: body.anoLetivoId, versao: proxima },
+            dados: { anoLetivoId: body.anoLetivoId, versao: proxima, justificativa },
           });
           return criada!.id;
         });
@@ -461,7 +638,13 @@ export class AcademicoService {
    * períodos que a regra pede: sem isso, a nota do 4º bimestre não teria onde
    * cair.
    */
-  async ativarRegra(usuarioId: string, papel: string, regraId: string): Promise<RegraAvaliativaVersao> {
+  async ativarRegra(
+    usuarioId: string,
+    papel: string,
+    regraId: string,
+    body: AtivarRegraRequest,
+  ): Promise<RegraAvaliativaVersao> {
+    const justificativa = justificativaValida(body?.justificativa);
     const { instituicaoId } = await this.escopo.funcaoNaInstituicao(usuarioId);
     const [regra] = await this.db
       .select()
@@ -492,6 +675,10 @@ export class AcademicoService {
     const versoes = await this.versoes(instituicaoId, regra.anoLetivoId);
     const jaAtiva = versoes.find((v) => v.id === regraId)?.ativa;
     if (!jaAtiva) {
+      // Voltar a uma versão que já vigorou é reativação: fica marcado, com a
+      // versão que ela substitui, para a auditoria contar a história inteira.
+      const reativacao = versoes.find((v) => v.id === regraId)?.ativadaEm != null;
+      const regraAnteriorId = versoes.find((v) => v.ativa)?.id ?? null;
       await this.db.transaction(async (tx) => {
         await tx.insert(regraAvaliativaAtivacao).values({
           regraId,
@@ -506,7 +693,13 @@ export class AcademicoService {
           acao: 'regra.ativada',
           entidade: 'regra_avaliativa',
           entidadeId: regraId,
-          dados: { anoLetivoId: regra.anoLetivoId, versao: regra.versao },
+          dados: {
+            anoLetivoId: regra.anoLetivoId,
+            versao: regra.versao,
+            justificativa,
+            reativacao,
+            regraAnteriorId,
+          },
         });
       });
     }
