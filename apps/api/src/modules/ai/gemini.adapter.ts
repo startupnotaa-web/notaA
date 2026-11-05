@@ -16,6 +16,10 @@ const BACKOFF_BASE_MS = 500;
 // redação e quiz sempre passam seu próprio LLM_MODEL_* (ver serviços).
 export const DEFAULT_MODEL = 'gemini-2.5-flash';
 
+// Modelo de último recurso quando LLM_MODEL_*/GEMINI_MODEL vêm com lixo (ver
+// resolverModelo). É o mesmo default de `modeloPadrao`.
+export const MODELO_FALLBACK = 'gemini-3.1-flash-lite';
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Configuração ausente é diferente de indisponibilidade temporária do Gemini. */
@@ -37,6 +41,29 @@ export function isErroTransitorio(err: unknown): boolean {
   }
   const msg = err instanceof Error ? err.message : String(err);
   return /timeout|timed out|fetch failed|network|econnreset|socket|aborted/i.test(msg);
+}
+
+/**
+ * Nome de modelo do Google: minúsculo, sem espaços, só [a-z0-9._-] (opcionalmente
+ * com o prefixo `models/`). Uma chave de API colada por engano numa variável
+ * LLM_MODEL_* (maiúsculas, pontos, 40+ chars) NÃO passa — e vira 400 "unexpected
+ * model name format" em toda geração, mascarado como 503 genérico.
+ */
+export function nomeDeModeloValido(nome: string): boolean {
+  return /^(models\/)?[a-z][a-z0-9._-]{1,62}$/.test(nome);
+}
+
+/**
+ * Devolve o modelo a usar. Se o candidato (vindo de env ou do chamador) não for
+ * um nome de modelo válido, cai no padrão (ou no MODELO_FALLBACK). Nunca devolve
+ * o candidato inválido para o chamador logar: ele pode ser um segredo.
+ */
+export function resolverModelo(
+  candidato: string,
+  padrao: string,
+): { modelo: string; substituido: boolean } {
+  if (nomeDeModeloValido(candidato)) return { modelo: candidato, substituido: false };
+  return { modelo: nomeDeModeloValido(padrao) ? padrao : MODELO_FALLBACK, substituido: true };
 }
 
 function diagnosticoErro(err: unknown): string {
@@ -66,7 +93,7 @@ function diagnosticoErro(err: unknown): string {
 @Injectable()
 export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
   private readonly logger = new Logger('LLMProvider');
-  private readonly modeloPadrao = process.env.GEMINI_MODEL ?? process.env.LLM_MODEL ?? 'gemini-3.1-flash-lite';
+  private readonly modeloPadrao = process.env.GEMINI_MODEL ?? process.env.LLM_MODEL ?? MODELO_FALLBACK;
 
   // O .env atual do projeto usa LLM_*. GEMINI_* continua suportado para novos
   // ambientes, mas a chave/modelo legados não podem ser ignorados em runtime.
@@ -84,6 +111,19 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
     this.logger.log(
       `[IA_DIAGNOSTICO] etapa=boot chave=${this.apiKeySource} modeloPadrao=${this.modeloPadrao}`,
     );
+  }
+
+  private escolherModelo(modelo: string | undefined, origem?: LLMChamadaMeta['origem']): string {
+    const candidato = modelo ?? this.modeloPara(origem);
+    const { modelo: escolhido, substituido } = resolverModelo(candidato, this.modeloPadrao);
+    if (substituido) {
+      // Não loga o valor: se for uma chave de API colada na variável, vazaria nos logs.
+      this.logger.error(
+        `[IA_DIAGNOSTICO] etapa=modelo_invalido origem=${origem ?? 'desconhecida'} ` +
+          `tamanho=${candidato.length} — a variável LLM_MODEL_* não é um nome de modelo; usando ${escolhido}`,
+      );
+    }
+    return escolhido;
   }
 
   private modeloPara(origem?: LLMChamadaMeta['origem']): string {
@@ -151,7 +191,7 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
       throw new GeminiConfigurationError();
     }
     const inicio = Date.now();
-    const modelo = input.modelo ?? this.modeloPara(input.origem);
+    const modelo = this.escolherModelo(input.modelo, input.origem);
     this.logger.log(
       `[IA_DIAGNOSTICO] etapa=inicio origem=${input.origem ?? 'desconhecida'} modelo=${modelo} chave=${this.apiKeySource}`,
     );
@@ -241,7 +281,7 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
       throw new GeminiConfigurationError();
     }
     const inicio = Date.now();
-    const modelo = input.modelo ?? this.modeloPara(input.origem);
+    const modelo = this.escolherModelo(input.modelo, input.origem);
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel(
       { model: modelo, systemInstruction: input.sistema },
@@ -272,7 +312,7 @@ export class GeminiAdapter implements LLMProviderPort, OnModuleInit {
    */
   async ping(modelName?: string): Promise<{ ok: boolean; modelo: string; texto?: string; erro?: string }> {
     const apiKey = this.apiKey;
-    const modelo = modelName?.trim() || this.modeloPara('quiz');
+    const modelo = this.escolherModelo(modelName?.trim() || undefined, 'quiz');
     if (!apiKey) {
       return { ok: false, modelo, erro: 'LLM_API_KEY não configurado no ambiente da API.' };
     }
