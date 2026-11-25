@@ -57,12 +57,6 @@ Este modo não foi executado contra um ambiente real ao ser escrito.
   JS que carrega antes do `load`, os fallbacks do 3D (movimento reduzido, sem WebGL, aparelho com 4 núcleos ou menos),
   pausa da cena fora da viewport, os três formulários de lead (a API é simulada na rota) e o teclado. O WebGL roda por
   software (SwiftShader), configurado em `playwright.config.ts`.
-- `capturas-landing.spec.ts`: grava as páginas em 390, 768, 1366 e 1920 px, com a cena 3D e com a arte estática:
-
-```bash
-E2E_SHOTS=../../design-handoff/landing-depois pnpm --filter @notaa/web exec playwright test e2e/capturas-landing.spec.ts
-```
-
 - `pnpm --filter @notaa/web verificar:bundle` (depois do build) falha se o `three` entrar no JS inicial de uma rota.
 - `pnpm --filter @notaa/web og` regenera as imagens de compartilhamento em `public/og/` a partir dos tokens.
 - O Lighthouse exige LCP de até 2,5 s nas páginas públicas.

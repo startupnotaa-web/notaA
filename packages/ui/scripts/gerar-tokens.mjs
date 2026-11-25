@@ -2,19 +2,16 @@
 //
 //   node scripts/gerar-tokens.mjs           reescreve o CSS
 //   node scripts/gerar-tokens.mjs --check   falha se o CSS commitado divergir do JSON
-//   node scripts/gerar-tokens.mjs --handoff também reescreve design-handoff/tokens.{json,css}; o CSS
-//                                           do handoff não leva as variáveis do next/font, que só o app tem
 //
 // O tokens.json é a fonte única dos valores de cor. Nenhum outro arquivo do
 // monorepo deve repetir um hexadecimal (ver docs/07-design-system.md).
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const entrada = join(raiz, 'tokens', 'tokens.json');
 const saida = join(raiz, 'src', 'tokens', 'tokens.css');
-const pastaHandoff = join(raiz, '..', '..', 'design-handoff');
 
 // next/font injeta Sora e Atkinson em variáveis próprias (apps/web/app/layout.tsx).
 // Elas entram na frente da pilha; o resto do stack segue como fallback.
@@ -107,9 +104,4 @@ if (process.argv.includes('--check')) {
   mkdirSync(dirname(saida), { recursive: true });
   writeFileSync(saida, css);
   console.log(`gerado ${saida}`);
-  if (process.argv.includes('--handoff') && existsSync(pastaHandoff)) {
-    copyFileSync(entrada, join(pastaHandoff, 'tokens.json'));
-    writeFileSync(join(pastaHandoff, 'tokens.css'), gerar(false));
-    console.log(`atualizado ${pastaHandoff}`);
-  }
 }

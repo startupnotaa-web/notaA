@@ -32,8 +32,6 @@ export { SideNav } from './components/SideNav';
 export type { SideNavProps, SideNavItem } from './components/SideNav';
 export { BottomNav } from './components/BottomNav';
 export type { BottomNavProps, BottomNavItem } from './components/BottomNav';
-export { GradeGrid } from './components/GradeGrid';
-export type { GradeGridProps } from './components/GradeGrid';
 export { ProgressTrail } from './components/ProgressTrail';
 export type { ProgressTrailProps } from './components/ProgressTrail';
 export { Notice } from './components/Notice';
@@ -122,9 +120,6 @@ export type { OptionCardProps, OptionCardState } from './components/OptionCard';
 
 export { Stat } from './components/Stat';
 export type { StatProps } from './components/Stat';
-
-export { SectionHeader } from './components/SectionHeader';
-export type { SectionHeaderProps } from './components/SectionHeader';
 
 export { Skeleton, SkeletonText, SkeletonLinhas, Carregando } from './components/Skeleton';
 
