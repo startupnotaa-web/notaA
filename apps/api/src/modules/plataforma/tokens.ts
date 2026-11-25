@@ -5,3 +5,6 @@ export const LLM_PROVIDER = Symbol('LLM_PROVIDER');
 // Token de DI para o repositório de ocorrências de risco (protocolo de cuidado
 // humano, I6/doc 01 §1.5) — append-only, acesso restrito (doc 10).
 export const RISK_REPOSITORY = Symbol('RISK_REPOSITORY');
+
+// Token de DI para LeadRepositoryPort (interfaces TS não existem em runtime).
+export const LEAD_REPOSITORY = Symbol('LEAD_REPOSITORY');

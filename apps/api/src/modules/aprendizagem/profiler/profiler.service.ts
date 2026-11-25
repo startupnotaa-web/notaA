@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SINAL_RESPOSTA_QUIZ, cognitiveProfiler, confiancaPorVolume, PERFIL_NEUTRO } from '@notaa/engine-profiler';
 import type { CognitiveProfileResponse, PerfilCognitivoState, ProfilerRepositoryPort } from '@notaa/contracts';
-import { PROFILER_REPOSITORY } from './profiler.tokens';
+import { PROFILER_REPOSITORY } from '../tokens';
 
 const CONFIANCA_TETO = 0.7; // mesmo teto do engine (model.ts) — só uma fonte de sinal na Fase 1.
 

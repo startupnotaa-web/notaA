@@ -5,7 +5,7 @@ import {
   type ConviteResponsavelAceito,
   type ConviteResponsavelCriado,
 } from '@notaa/contracts';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { ConviteResponsavelService } from './convite-responsavel.service';

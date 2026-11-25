@@ -10,12 +10,20 @@ export default function Erro({ error, reset }: { error: Error & { digest?: strin
     console.error('[app] erro de renderização', error);
   }, [error]);
 
+  function tentarDeNovo() {
+    if (error.name === 'ChunkLoadError' || error.message.includes('Loading chunk')) {
+      window.location.reload();
+      return;
+    }
+    reset();
+  }
+
   return (
     <TelaDeEstado
       titulo="Algo deu errado"
       acoes={
         <>
-          <Button variant="primary" onClick={reset}>
+          <Button variant="primary" onClick={tentarDeNovo}>
             Tentar de novo
           </Button>
           <ButtonLink as={Link} href="/" variant="secondary">

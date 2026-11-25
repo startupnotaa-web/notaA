@@ -2,8 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@
 import { Reflector } from '@nestjs/core';
 import { CABECALHO_CONTEXTO, lerContexto } from '@notaa/contracts';
 import { ContextosService } from '../../modules/identidade/auth/contextos/contextos.service';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { SEM_VALIDAR_CONTEXTO_KEY } from '../decorators/sem-validar-contexto.decorator';
+import { IS_PUBLIC_KEY, SEM_VALIDAR_CONTEXTO_KEY } from '../decorators/acesso';
 import type { AuthenticatedRequest } from './auth.guard';
 
 function contextoInvalido(): never {

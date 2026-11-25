@@ -5,6 +5,7 @@ supabase/migrations/*.sql
 # Build/deps
 node_modules/
 .next/
+.next-dev/
 dist/
 .turbo/
 pnpm-lock.yaml

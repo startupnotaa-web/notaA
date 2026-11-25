@@ -2,7 +2,7 @@ import { Injectable, Inject, Logger, ServiceUnavailableException } from '@nestjs
 import { z } from 'zod';
 import { Database, batalhaPvp, usuario, eq, and, sql, ne } from '@notaa/db';
 import { DB_CLIENT } from '../../../db/db.tokens';
-import { LLM_PROVIDER } from '../../plataforma/ai/ai.tokens';
+import { LLM_PROVIDER } from '../../plataforma/tokens';
 import { StudentProfileService } from '../../plataforma/ai/student-profile.service';
 import type {
   AreaConhecimento,

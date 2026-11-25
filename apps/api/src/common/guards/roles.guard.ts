@@ -2,8 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@
 import { Reflector } from '@nestjs/core';
 import type { Papel } from '@notaa/contracts';
 import { hasRole } from '../../modules/identidade/auth/acesso/rbac';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { ROLES_KEY } from '../decorators/roles.decorator';
+import { IS_PUBLIC_KEY, ROLES_KEY } from '../decorators/acesso';
 import type { AuthenticatedRequest } from './auth.guard';
 
 /**

@@ -6,7 +6,7 @@ import {
   type PasswordResetRequest,
   type RegisterRequest,
 } from '@notaa/contracts';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Public } from '../../../common/decorators/acesso';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { AuthService } from './auth.service';
 import { verifySupabaseJwtBootstrap } from './acesso/verify-jwt';

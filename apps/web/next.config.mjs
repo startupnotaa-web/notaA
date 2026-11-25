@@ -1,4 +1,5 @@
 import withSerwistInit from '@serwist/next';
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js';
 
 const withSerwist = withSerwistInit({
   swSrc: 'app/sw.ts',
@@ -19,4 +20,10 @@ const nextConfig = {
   transpilePackages: ['@notaa/ui', '@notaa/contracts'],
 };
 
-export default withSerwist(nextConfig);
+export default function config(phase) {
+  // Um build de produção pode rodar enquanto o servidor local está aberto.
+  return withSerwist({
+    ...nextConfig,
+    distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next-dev' : '.next',
+  });
+}

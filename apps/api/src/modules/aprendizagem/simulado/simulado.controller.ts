@@ -10,7 +10,7 @@ import type {
   StartSimuladoRequest,
 } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { SimuladoService } from './simulado.service';
 import { SimuladoSessaoService } from './simulado-sessao.service';

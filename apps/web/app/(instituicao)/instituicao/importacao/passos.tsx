@@ -10,7 +10,7 @@ import type {
   TipoImportacao,
 } from '@notaa/contracts';
 import { Button, Carregando, Chip, FileDrop, Notice, OptionCard, Progress, Select, SkeletonLinhas, SummaryStrip, Table, Tabs } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../../../lib/http/api-client';
+import { ApiError, apiFetch } from '../../../../lib/http/api-client';
 
 const ACOES: Record<AcaoLinha, { rotulo: string; variante: 'success' | 'info' | 'neutral' | 'danger' }> = {
   criar: { rotulo: 'Criar', variante: 'success' },

@@ -6,7 +6,7 @@ import type {
   Eixo4D,
 } from '@notaa/contracts';
 import { GamificacaoService } from '../../engajamento/gamificacao/gamificacao.service';
-import { DASHBOARD_REPOSITORY } from './dashboard.tokens';
+import { DASHBOARD_REPOSITORY } from '../tokens';
 
 /**
  * Mapa θ→nota PROVISÓRIO (Q-06, doc 04 §4/doc 08 §8) — linear simples,

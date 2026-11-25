@@ -20,7 +20,7 @@ import {
   MOCK_DEV_USER_NOME,
   isDevBypassEnabled,
 } from '../../../common/dev-user';
-import type { RedacaoRepositoryPort } from './redacao.repository.memory';
+import type { RedacaoRepositoryPort } from './redacao.repository.port';
 
 // Títulos canônicos das 5 competências do ENEM (doc 05 §6). Não são persistidos
 // (a tabela avaliacao_competencia guarda só número+nota+justificativa+citações),

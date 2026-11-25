@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable }
 import { Reflector } from '@nestjs/core';
 import { USUARIO_STATUS } from '../../modules/identidade/auth/auth.tokens';
 import type { UsuarioStatusPort } from '../../modules/identidade/auth/acesso/usuario-status';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IS_PUBLIC_KEY } from '../decorators/acesso';
 import type { AuthenticatedRequest } from './auth.guard';
 
 /** Quanto tempo o status de um usuário fica em memória. É o atraso máximo para uma suspensão valer. */

@@ -57,9 +57,6 @@ const REGRAS_DE_ROTA: readonly RegraDeRota[] = [
     '/relatorio-familiar',
     '/onboarding',
     // Arena, batalha e comunidade ficam ocultas por feature flag (middleware), mas a regra já existe.
-    '/arena',
-    '/batalha-coletiva',
-    '/comunidade',
   ].map((prefixo): RegraDeRota => ({ prefixo, papeis: ['estudante'] })),
 ];
 

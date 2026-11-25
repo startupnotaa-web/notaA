@@ -13,9 +13,9 @@ import {
   SkeletonLinhas,
   Table,
   TextField,
+  toast,
 } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../../lib/http/api-client';
-import { toast } from '../../../../components/feedback/toast';
 
 function dataBr(iso: string): string {
   const [a, m, d] = iso.split('-');

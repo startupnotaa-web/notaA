@@ -1,11 +1,8 @@
 /**
- * Interruptores de funcionalidade da API — espelho de apps/web/lib/feature-flags.ts.
+ * Interruptores de funcionalidade da API.
  *
- * Ocultar um módulo no front não basta: a rota continuaria acessível a quem
- * montasse a requisição na mão. No caso da Arena isso tem custo real, porque
- * POST /battle/matchmake gera questões pelo Gemini quando não encontra um
- * oponente. Com a flag desligada o controller responde 404, como se a rota não
- * existisse, e nenhum token de IA é consumido.
+ * POST /battle/matchmake pode gerar questões pelo Gemini quando não encontra
+ * um oponente. Com a flag desligada, a API responde 404 antes de chamar o Gemini.
  *
  * O módulo segue registrado no AppModule de propósito: as rotas continuam
  * enumeráveis pelo guard-rail de RBAC (route-roles-sync.test.ts) e nada

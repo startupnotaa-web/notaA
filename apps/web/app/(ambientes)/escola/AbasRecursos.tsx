@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { cn } from '@notaa/ui';
-import { FOCO } from '../../../_landing/componentes/estilos';
+import { FOCO } from '../../_landing/componentes/estilos';
 
 export interface RecursoDaEscola {
   id: string;

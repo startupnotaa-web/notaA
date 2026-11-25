@@ -28,7 +28,7 @@ import {
   type TipoImportacao,
 } from '@notaa/contracts';
 import type { FastifyReply } from 'fastify';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { ImportacaoService } from './importacao.service';

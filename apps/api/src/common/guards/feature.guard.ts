@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { FEATURE_KEY } from '../decorators/feature.decorator';
+import { FEATURE_KEY } from '../decorators/acesso';
 import { isFeatureEnabled, type Feature } from '../feature-flags';
 
 /**

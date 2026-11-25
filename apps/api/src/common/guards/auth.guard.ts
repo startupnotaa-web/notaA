@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import { verifySupabaseJwt } from '../../modules/identidade/auth/acesso/verify-jwt';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IS_PUBLIC_KEY } from '../decorators/acesso';
 import { MOCK_DEV_USER_ID, isDevBypassEnabled } from '../dev-user';
 import type { ContextoDeAcesso, JwtClaims } from '@notaa/contracts';
 

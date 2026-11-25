@@ -8,7 +8,7 @@ import {
   MOCK_DEV_USER_NOME,
   isDevBypassEnabled,
 } from '../../../common/dev-user';
-import type { SocraticRepositoryPort } from './socratic.repository.memory';
+import type { SocraticRepositoryPort } from './socratic.repository.port';
 
 /**
  * Adaptador Drizzle real de SocraticRepositoryPort (conversa_socratica +

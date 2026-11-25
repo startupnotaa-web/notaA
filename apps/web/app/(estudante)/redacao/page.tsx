@@ -6,10 +6,20 @@
 import { useEffect, useState } from 'react';
 import type { CreateRedacaoResponse, EssayEvaluation, RedacaoHistoryItem, MeResponse } from '@notaa/contracts';
 import { Lightbulb } from 'lucide-react';
-import { Button, Chip, Inset, PageHeader, Progress, Section, TextArea, TextField, cn } from '@notaa/ui';
+import {
+  Button,
+  Chip,
+  Inset,
+  PageHeader,
+  Progress,
+  Section,
+  TextArea,
+  TextField,
+  cn,
+  toast,
+} from '@notaa/ui';
 import { apiFetch } from '../../../lib/http/api-client';
 import { Pagina } from '../../components/estrutura/Pagina';
-import { toast } from '../../components/feedback/toast';
 import { Voltar } from '../../components/navegacao/Voltar';
 
 const ERRO_IA = 'Nossos servidores de IA estão lotados. Seu texto foi preservado. Tente de novo em instantes.';

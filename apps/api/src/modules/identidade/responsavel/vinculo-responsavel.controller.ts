@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import type { ListaVinculosPendentes, VinculoDecidido } from '@notaa/contracts';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { VinculoResponsavelService } from './vinculo-responsavel.service';
 

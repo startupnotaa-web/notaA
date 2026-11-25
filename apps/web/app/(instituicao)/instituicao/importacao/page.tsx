@@ -9,10 +9,9 @@ import {
   type MapeamentoColunas,
   type TipoImportacao,
 } from '@notaa/contracts';
-import { Button, Notice, PageHeader, Panel, ProgressTrail } from '@notaa/ui';
+import { Button, Notice, PageHeader, Panel, ProgressTrail, toast } from '@notaa/ui';
 import { ApiError, apiDownload, apiFetch, enviarPlanilha } from '../../../../lib/http/api-client';
-import { toast } from '../../../components/feedback/toast';
-import { PassoArquivo, PassoMapeamento, PassoPrevia, PassoResultado } from './components/passos';
+import { PassoArquivo, PassoMapeamento, PassoPrevia, PassoResultado } from './passos';
 
 const PASSOS = ['Tipo e arquivo', 'Colunas', 'Prévia', 'Resultado'] as const;
 

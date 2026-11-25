@@ -25,9 +25,9 @@ import {
   Switch,
   Table,
   TextField,
+  toast,
 } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../../lib/http/api-client';
-import { toast } from '../../../../components/feedback/toast';
 import { comRegime, ETAPA_DO_CAMPO, ETAPAS, FAIXAS_PADRAO, REGRA_PADRAO } from '../regra';
 import { SimuladorRegra } from './SimuladorRegra';
 

@@ -37,7 +37,7 @@ import {
 } from '@notaa/contracts';
 import { PROMPT_SIMULADO_TEMPLATE, montarPromptSimulado, nomeArea } from '@notaa/prompts';
 import { DB_CLIENT } from '../../../db/db.tokens';
-import { LLM_PROVIDER } from '../../plataforma/ai/ai.tokens';
+import { LLM_PROVIDER } from '../../plataforma/tokens';
 import { GamificacaoService } from '../../engajamento/gamificacao/gamificacao.service';
 import { LETRAS, calcularXp, intercalarPorArea, montarPlano } from './simulado.montador';
 

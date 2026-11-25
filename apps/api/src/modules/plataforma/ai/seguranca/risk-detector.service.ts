@@ -6,7 +6,7 @@ import {
   detectarSinalDeRisco,
   type ResultadoTriagem,
 } from './guardrails';
-import { RISK_REPOSITORY } from '../ai.tokens';
+import { RISK_REPOSITORY } from '../../tokens';
 import type { RiskRepositoryPort } from './risk.repository';
 import { CareNotifierService } from './care-notifier.service';
 

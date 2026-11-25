@@ -5,7 +5,7 @@ import {
   type PreviaConviteProfessor,
   type RegistrarProfessorRequest,
 } from '@notaa/contracts';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Public } from '../../../common/decorators/acesso';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { AuthService } from '../../identidade/auth/auth.service';
 import { verifySupabaseJwtBootstrap } from '../../identidade/auth/acesso/verify-jwt';

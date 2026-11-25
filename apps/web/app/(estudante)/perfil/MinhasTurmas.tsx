@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { MinhaTurma, PreviaConvite } from '@notaa/contracts';
 import { Button, Chip, Inset, Notice, Panel, Section, Skeleton, TextField } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../../lib/http/api-client';
+import { ApiError, apiFetch } from '../../../lib/http/api-client';
 
 /**
  * Seção "Entrar em uma turma" do perfil do aluno (perfis.md).

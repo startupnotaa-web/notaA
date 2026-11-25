@@ -7,8 +7,8 @@ import Link from 'next/link';
 import { ChevronDown, CircleCheck, Clock, Flame, Target, TrendingUp } from 'lucide-react';
 import type { SimuladoRecorte, SimuladoRelatorio } from '@notaa/contracts';
 import { Button, ButtonLink, Chip, Notice, OptionCard, PageHeader, Progress, Section, SummaryStrip, cn } from '@notaa/ui';
-import { Pagina } from '../../../components/estrutura/Pagina';
-import { formatarDuracao, rotuloArea, rotuloDificuldade } from '../labels';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { formatarDuracao, rotuloArea, rotuloDificuldade } from './labels';
 
 /** Um comentário por faixa — o número sozinho não diz ao aluno o que fazer. */
 function leituraDoDesempenho(percentual: number): string {

@@ -33,12 +33,12 @@ import {
   Select,
   Skeleton,
   cn,
+  toast,
 } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../lib/http/api-client';
 import { useUser } from '../../../lib/auth/user-context';
 import { Pagina } from '../../components/estrutura/Pagina';
-import { toast } from '../../components/feedback/toast';
-import { RelatorioSimulado } from './components/RelatorioSimulado';
+import { RelatorioSimulado } from './RelatorioSimulado';
 import { formatarDuracao, rotuloArea } from './labels';
 
 type Fase = 'config' | 'prova' | 'relatorio';

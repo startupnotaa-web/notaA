@@ -5,7 +5,7 @@ import {
   type OnboardingStepResponse,
 } from '@notaa/contracts';
 import type { OnboardingRepositoryPort } from '@notaa/contracts';
-import { ONBOARDING_REPOSITORY } from './onboarding.tokens';
+import { ONBOARDING_REPOSITORY } from '../tokens';
 
 const TOTAL_PASSOS = 8;
 const PASSO_OPCIONAL = 7; // neurodivergência (I10, doc 10 §3) — pode ser pulado

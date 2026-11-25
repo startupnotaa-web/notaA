@@ -5,7 +5,7 @@ import {
 } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
-import { RateLimitIA, RateLimiterInterceptor } from '../../plataforma/ai/rate-limiter/rate-limiter.interceptor';
+import { RateLimitIA, RateLimiterInterceptor } from '../../plataforma/ai/rate-limiter.interceptor';
 import { SocraticService } from './socratic.service';
 
 // doc 05 §7 — IA Socrática (E8). estudanteId SEMPRE vem do JWT (req.user.sub),

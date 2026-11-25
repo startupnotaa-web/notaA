@@ -7,7 +7,7 @@ import { ProfilerModule } from '../profiler/profiler.module';
 import { AiModule } from '../../plataforma/ai/ai.module';
 import { QuizController } from './quiz.controller';
 import { QuizService } from './quiz.service';
-import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QUIZ_REPOSITORY } from '../tokens';
 import { QuizUnitOfWork } from './quiz.unit-of-work';
 
 @Module({

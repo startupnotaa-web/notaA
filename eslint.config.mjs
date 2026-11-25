@@ -31,6 +31,7 @@ const config = [
       '**/dist-vercel/**',
       '**/.vercel/**',
       '**/.next/**',
+      '**/.next-dev/**',
       '**/node_modules/**',
       '**/.turbo/**',
       '**/next-env.d.ts', // gerado pelo Next.js — não editar/lintar

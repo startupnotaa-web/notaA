@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DB_CLIENT } from '../../../db/db.tokens';
 import { Database, trilhaEstudo, desc, eq } from '@notaa/db';
-import { LLM_PROVIDER } from '../../plataforma/ai/ai.tokens';
+import { LLM_PROVIDER } from '../../plataforma/tokens';
 import { StudentProfileService } from '../../plataforma/ai/student-profile.service';
 import { GeminiStudyTrailSchema, StudyTrailResponse, type LLMProviderPort } from '@notaa/contracts';
 import { PROMPT_TRILHA_TEMPLATE, montarBlocoAluno, montarPromptTrilha, nomeArea } from '@notaa/prompts';

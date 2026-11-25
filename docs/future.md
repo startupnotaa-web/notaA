@@ -97,7 +97,7 @@
 ### M4. `POST /quiz/generate` sem idempotência e com custo por clique `[verificar]`
 **Onde:** `quiz.controller.ts` (`generate`) + `quiz.service.ts` (`temperature: 1.1`).
 
-**Problema:** cada chamada dispara uma geração no Gemini (custo/cota) sem chave de idempotência; duplo-clique ou retry do cliente = duas questões e duas cobranças. Confirmar se o `rate-limiter.interceptor` está de fato aplicado a esta rota (existe em `ai/rate-limiter/`, mas o quiz importa `AiModule` — verificar cobertura).
+**Problema:** cada chamada dispara uma geração no Gemini (custo/cota) sem chave de idempotência; duplo-clique ou retry do cliente = duas questões e duas cobranças. Confirmar se `ai/rate-limiter.interceptor.ts` está aplicado a esta rota.
 
 **Correção sugerida:** aplicar o rate-limiter a `/quiz/generate`, e/ou aceitar `Idempotency-Key` como no `submitAnswer`.
 
@@ -112,12 +112,6 @@
 
 ## ⚪ Dívidas técnicas / polimento
 
-### D1. `.env.production.example` cita "Render/Railway", mas o deploy é Vercel serverless `[confirmado]`
-`apps/api/api/index.ts` + `vercel.json` indicam Vercel; o exemplo de env fala em Render/Railway e `PORT=8080`. Alinhar a doc para não configurar variáveis no host errado.
-
-### D2. Repositórios `*.repository.memory.ts` convivem sem estar "wired" `[confirmado]`
-Todos os módulos usam os adaptadores Drizzle (`useFactory` com `DB_CLIENT`). Os `*.memory.ts` existem para teste/fallback mas podem confundir. Documentar claramente ou mover para pasta de testes.
-
 ### D3. Log de toda requisição com `Origin` no `main.ts` `[confirmado]`
 `fastify.addHook('onRequest', ...)` faz `console.log` por request. Ruído em produção e potencial dado sensível. Rebaixar para nível debug/condicional a `LOG_LEVEL`.
 
@@ -127,9 +121,6 @@ O front injeta `x-development-mode: true` quando `NODE_ENV === development`. O b
 ### D5. `AiController` (`/ai/test`, `/ai/models`) consome cota real e expõe conta Google `[confirmado, mitigado]`
 Já está `@Roles('admin')`. Manter atenção: `/ai/models` lista modelos da conta e `/ai/test` gasta cota; garantir que nunca vire `@Public()`.
 
-### D6. Divergência de modelo Gemini entre docs de env `[confirmado]`
-`.env.production.example` sugere `gemini-1.5-pro` para socrática/redação em `LLM_MODEL_*`, mas o `GeminiAdapter` usa `GEMINI_MODEL` (default `gemini-2.5-flash`) para tudo — as variáveis `LLM_MODEL_SOCRATICA/REDACAO` não parecem consumidas pelo adaptador. Remover as variáveis mortas ou implementar seleção de modelo por integração.
-
 ---
 
 ## Sugestão de priorização
@@ -138,6 +129,6 @@ Já está `@Roles('admin')`. Manter atenção: `/ai/models` lista modelos da con
 2. **C2 + A2 + A3** (nível/XP/streak inconsistentes e sem reatividade) → experiência central de gamificação.
 3. **A1** (fuso do streak).
 4. **M1–M5** conforme o produto amadurece (calibração TRI, custo de IA).
-5. **D1–D6** limpeza contínua.
+5. **D3–D5** manutenção operacional.
 
 > Observação: itens `[verificar]` (M2, M4) merecem uma checagem rápida em runtime/DB antes de virar tarefa — o restante está confirmado na leitura do código.

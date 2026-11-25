@@ -11,8 +11,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Observable } from 'rxjs';
 import { Database, assinatura, contadorRateLimit, desc, eq, plano, sql } from '@notaa/db';
-import { DB_CLIENT } from '../../../../db/db.tokens';
-import type { AuthenticatedRequest } from '../../../../common/guards/auth.guard';
+import { DB_CLIENT } from '../../../db/db.tokens';
+import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 
 type Integracao = 'socratica' | 'redacao';
 

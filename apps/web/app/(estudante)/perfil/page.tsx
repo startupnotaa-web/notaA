@@ -15,7 +15,7 @@ import {
   TextField,
   ThemeSwitch,
 } from '@notaa/ui';
-import { MinhasTurmas } from './components/MinhasTurmas';
+import { MinhasTurmas } from './MinhasTurmas';
 import { apiFetch, ApiError } from '../../../lib/http/api-client';
 import { useAuth } from '../../../lib/auth/auth-context';
 import { aplicarPreferenciaDeTema, lerPreferenciaDeTema, type PreferenciaDeTema } from '../../../lib/navegador/tema';

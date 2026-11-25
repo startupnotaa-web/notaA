@@ -3,7 +3,7 @@ import { AiModule } from '../../plataforma/ai/ai.module';
 import { SocraticController } from './socratic.controller';
 import { SocraticRepositoryDrizzle } from './socratic.repository.drizzle';
 import { SocraticService } from './socratic.service';
-import { SOCRATIC_REPOSITORY } from './socratic.tokens';
+import { SOCRATIC_REPOSITORY } from '../tokens';
 
 // E8 (Fase 2) — IA Socrática (doc 05 §7). Consome AiModule (LLM + ContextBuilder).
 // Persistência real via Drizzle (conversa_socratica + mensagem_socratica).

@@ -5,7 +5,7 @@ import {
   type FinishBattleRequest,
   type MatchmakeRequest,
 } from '@notaa/contracts';
-import { RequiresFeature } from '../../../common/decorators/feature.decorator';
+import { RequiresFeature } from '../../../common/decorators/acesso';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { BattleService } from './battle.service';

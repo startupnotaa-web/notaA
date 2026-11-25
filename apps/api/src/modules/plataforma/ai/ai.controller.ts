@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { z } from 'zod';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 import { GeminiAdapter } from './provedores/gemini.adapter';
 
 // Schema mínimo só para a rota de fumaça — exercita o caminho completo do

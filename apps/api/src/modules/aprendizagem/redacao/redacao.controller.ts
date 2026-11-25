@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Req, UseInterceptors } from '@nestj
 import { CreateRedacaoRequestSchema } from '@notaa/contracts';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
-import { RateLimitIA, RateLimiterInterceptor } from '../../plataforma/ai/rate-limiter/rate-limiter.interceptor';
+import { RateLimitIA, RateLimiterInterceptor } from '../../plataforma/ai/rate-limiter.interceptor';
 import { RedacaoService } from './redacao.service';
 
 // doc 05 §6 — Redação (E7). estudanteId SEMPRE vem do JWT (req.user.sub).

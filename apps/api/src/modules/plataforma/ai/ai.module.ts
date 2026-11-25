@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProfilerModule } from '../../aprendizagem/profiler/profiler.module';
-import { LLM_PROVIDER, RISK_REPOSITORY } from './ai.tokens';
+import { LLM_PROVIDER, RISK_REPOSITORY } from '../tokens';
 import { AiController } from './ai.controller';
 import { GeminiAdapter } from './provedores/gemini.adapter';
 import { StudentProfileService } from './student-profile.service';

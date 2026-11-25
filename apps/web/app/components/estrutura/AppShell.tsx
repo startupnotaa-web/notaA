@@ -1,8 +1,7 @@
 'use client';
 import type { ReactNode } from 'react';
-import { BookOpen, Compass, Flame, House, School, Target, User } from 'lucide-react';
+import { BookOpen, Compass, Flame, House, School, User } from 'lucide-react';
 import { Chip } from '@notaa/ui';
-import { FEATURES } from '../../../lib/feature-flags';
 import { useAuth } from '../../../lib/auth/auth-context';
 import { useUser } from '../../../lib/auth/user-context';
 import { SeletorDePerfil } from '../acesso/SeletorDePerfil';
@@ -20,16 +19,12 @@ const ICONE = 'h-5 w-5';
  * dono dela. O plano também não serve de critério — um estudante coberto por uma
  * licença institucional tem plano 'instituicao' e não pode ver dado de colega.
  *
- * No computador a SideNav mostra todos os destinos. Abaixo de 768px a navegação inferior comporta
- * 5: o Painel da Instituição é o único que pode ficar de fora, e fica na SideNav e na paleta (Ctrl/Cmd+K).
  */
 function destinosDoAluno(isAdminInstituicao: boolean): ItemDeNavegacao[] {
   return [
     { href: '/dashboard', rotulo: 'Início', icone: <House className={ICONE} /> },
     { href: '/trilhas', rotulo: 'Trilha', icone: <Compass className={ICONE} /> },
     { href: '/estudo', rotulo: 'Estudo', icone: <BookOpen className={ICONE} /> },
-    // Arena oculta enquanto FEATURES.arena estiver desligada (lib/feature-flags.ts).
-    ...(FEATURES.arena ? [{ href: '/arena', rotulo: 'Arena', icone: <Target className={ICONE} /> }] : []),
     { href: '/perfil', rotulo: 'Perfil', icone: <User className={ICONE} /> },
     ...(isAdminInstituicao ? [{ href: '/instituicao', rotulo: 'Instituição', icone: <School className={ICONE} /> }] : []),
   ];

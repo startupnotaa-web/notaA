@@ -6,8 +6,8 @@ import { Test } from '@nestjs/testing';
 import supertest from 'supertest';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppModule } from '../../../../app.module';
-import { LeadRepositoryMemory } from '../lead.repository.memory';
-import { LEAD_REPOSITORY } from '../lead.tokens';
+import { LeadRepositoryMemory } from './lead.repository.memory';
+import { LEAD_REPOSITORY } from '../../tokens';
 
 // O .env do repositório aponta para o banco de produção; este teste só usa o double em memória
 // e fixa um host inexistente para qualquer acesso acidental falhar alto (ver app.e2e.test.ts).

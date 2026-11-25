@@ -23,7 +23,7 @@ import { PROMPT_QUIZ_TEMPLATE, montarPromptQuiz, nomeArea } from '@notaa/prompts
 import { ErrorDetectorService } from '../error-detector/error-detector.service';
 import { GamificacaoService } from '../../engajamento/gamificacao/gamificacao.service';
 import { ProfilerService } from '../profiler/profiler.service';
-import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QUIZ_REPOSITORY } from '../tokens';
 import { QuizUnitOfWork } from './quiz.unit-of-work';
 
 const HISTORICO_RECENTE_LIMIT = 10; // baseline comportamental p/ ErrorDetector (E5) — ajustável.
@@ -94,7 +94,7 @@ function toItemPublico(item: BancoDeItemRegistro, numero: number): ItemPublico {
 }
 
 import { StudentProfileService } from '../../plataforma/ai/student-profile.service';
-import { LLM_PROVIDER } from '../../plataforma/ai/ai.tokens';
+import { LLM_PROVIDER } from '../../plataforma/tokens';
 import type { LLMProviderPort } from '@notaa/contracts';
 
 @Injectable()

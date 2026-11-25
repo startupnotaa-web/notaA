@@ -20,9 +20,9 @@ import {
   SkeletonLinhas,
   Table,
   TextField,
+  toast,
 } from '@notaa/ui';
 import { ApiError, apiFetch } from '../../../../../lib/http/api-client';
-import { toast } from '../../../../components/feedback/toast';
 
 const AREAS: { valor: AreaEnem; rotulo: string }[] = [
   { valor: 'linguagens', rotulo: 'Linguagens' },

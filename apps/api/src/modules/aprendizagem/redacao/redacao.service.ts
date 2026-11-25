@@ -6,13 +6,13 @@ import {
   type EssayEvaluation,
   type LLMProviderPort,
 } from '@notaa/contracts';
-import { LLM_PROVIDER } from '../../plataforma/ai/ai.tokens';
+import { LLM_PROVIDER } from '../../plataforma/tokens';
 import { StudentProfileService } from '../../plataforma/ai/student-profile.service';
 import { isErroTransitorio } from '../../plataforma/ai/provedores/gemini.adapter';
 import { RiskDetectorService } from '../../plataforma/ai/seguranca/risk-detector.service';
 import { GamificacaoService } from '../../engajamento/gamificacao/gamificacao.service';
-import type { RedacaoRepositoryPort } from './redacao.repository.memory';
-import { REDACAO_REPOSITORY } from './redacao.tokens';
+import type { RedacaoRepositoryPort } from './redacao.repository.port';
+import { REDACAO_REPOSITORY } from '../tokens';
 import { DB_CLIENT } from '../../../db/db.tokens';
 import { Database, assinatura, plano, temaRedacao, eq, desc } from '@notaa/db';
 import { PROMPT_CORRETOR_REDACAO, montarPromptCorretorRedacao } from '@notaa/prompts';

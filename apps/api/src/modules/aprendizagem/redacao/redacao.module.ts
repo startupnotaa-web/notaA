@@ -4,7 +4,7 @@ import { GamificacaoModule } from '../../engajamento/gamificacao/gamificacao.mod
 import { RedacaoController } from './redacao.controller';
 import { RedacaoRepositoryDrizzle } from './redacao.repository.drizzle';
 import { RedacaoService } from './redacao.service';
-import { REDACAO_REPOSITORY } from './redacao.tokens';
+import { REDACAO_REPOSITORY } from '../tokens';
 
 // E7 (Fase 2) — Editor de Redação + Corretor IA (doc 05 §6).
 // Consome AiModule (LLM + ContextBuilder) e GamificacaoModule (XP por submissão).

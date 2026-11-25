@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 
 // doc 05 §8 — Painel Administrador (MVP parcial). Stub: prova o caminho
 // FORBIDDEN_ROLE do RolesGuard; dado real (LogUsoIA, gestão de usuários)

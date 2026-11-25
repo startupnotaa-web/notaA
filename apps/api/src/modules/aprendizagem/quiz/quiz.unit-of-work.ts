@@ -3,7 +3,7 @@ import type { QuizRepositoryPort } from '@notaa/contracts';
 import { GamificacaoRepositoryDb, QuizRepositoryDb, type Database } from '@notaa/db';
 import { DB_CLIENT } from '../../../db/db.tokens';
 import { GamificacaoService } from '../../engajamento/gamificacao/gamificacao.service';
-import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QUIZ_REPOSITORY } from '../tokens';
 
 export interface QuizTxContext {
   quizRepo: QuizRepositoryPort;

@@ -4,7 +4,7 @@ import type {
   IndicadorDeTurma,
   InstituicaoOverview,
 } from '@notaa/contracts';
-import { Roles } from '../../../common/decorators/roles.decorator';
+import { Roles } from '../../../common/decorators/acesso';
 import type { AuthenticatedRequest } from '../../../common/guards/auth.guard';
 import { InstituicaoService } from './instituicao.service';
 

@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { HttpException, HttpStatus, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import type { CriarLeadRequest, CriarLeadResponse, LeadParaGravar, LeadRepositoryPort } from '@notaa/contracts';
-import { LEAD_REPOSITORY } from './lead.tokens';
+import { LEAD_REPOSITORY } from '../tokens';
 
 /** Envios por origem de rede, por hora. Ajustável por LEAD_LIMITE_POR_HORA. */
 const LIMITE_PADRAO_POR_HORA = 5;

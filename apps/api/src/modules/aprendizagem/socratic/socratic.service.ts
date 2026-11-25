@@ -5,12 +5,12 @@ import {
   type MensagemHistorico,
   type SocraticResponse,
 } from '@notaa/contracts';
-import { LLM_PROVIDER } from '../../plataforma/ai/ai.tokens';
+import { LLM_PROVIDER } from '../../plataforma/tokens';
 import { StudentProfileService } from '../../plataforma/ai/student-profile.service';
 import { fallbackGuiado } from '../../plataforma/ai/seguranca/guardrails';
 import { RiskDetectorService } from '../../plataforma/ai/seguranca/risk-detector.service';
-import type { SocraticRepositoryPort } from './socratic.repository.memory';
-import { SOCRATIC_REPOSITORY } from './socratic.tokens';
+import type { SocraticRepositoryPort } from './socratic.repository.port';
+import { SOCRATIC_REPOSITORY } from '../tokens';
 import { DB_CLIENT } from '../../../db/db.tokens';
 import { Database, assinatura, plano, eq, desc } from '@notaa/db';
 import { PROMPT_SOCRATICO, montarPromptSocratico } from '@notaa/prompts';

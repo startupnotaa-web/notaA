@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
-import { focaveisEm } from '../../lib/focaveis';
+import { focaveisEm } from '../../lib/foco';
 
 export interface DialogProps {
   open: boolean;

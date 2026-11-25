@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { CriarLeadRequestSchema, type CriarLeadRequest, type CriarLeadResponse } from '@notaa/contracts';
 import type { FastifyRequest } from 'fastify';
-import { Public } from '../../../common/decorators/public.decorator';
+import { Public } from '../../../common/decorators/acesso';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { LeadService } from './lead.service';
 

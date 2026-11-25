@@ -2,8 +2,7 @@ import 'reflect-metadata';
 import { RequestMethod } from '@nestjs/common';
 import type { Papel } from '@notaa/contracts';
 import { AppModule } from '../../../../app.module';
-import { IS_PUBLIC_KEY } from '../../../../common/decorators/public.decorator';
-import { ROLES_KEY } from '../../../../common/decorators/roles.decorator';
+import { IS_PUBLIC_KEY, ROLES_KEY } from '../../../../common/decorators/acesso';
 import { PUBLICO, TODOS_OS_PAPEIS } from '../acesso/rbac';
 
 // Enumera as rotas registradas nos controllers do AppModule por reflexão, sem

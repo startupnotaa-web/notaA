@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { errorDetector } from '@notaa/engine-error-detector';
 import type { ErroClassificacao, ErrorDetectorRepositoryPort, Tentativa } from '@notaa/contracts';
-import { ERROR_DETECTOR_REPOSITORY } from './error-detector.tokens';
+import { ERROR_DETECTOR_REPOSITORY } from '../tokens';
 
 @Injectable()
 export class ErrorDetectorService {

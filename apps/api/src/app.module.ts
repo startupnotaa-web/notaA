@@ -27,7 +27,7 @@ import { EscopoModule } from './modules/identidade/escopo/escopo.module';
 import { DesempenhoModule } from './modules/academico/desempenho/desempenho.module';
 import { AnoLetivoModule } from './modules/academico/ano-letivo/ano-letivo.module';
 import { TurmaModule } from './modules/academico/turma/turma.module';
-import { AcademicoModule } from './modules/academico/academico/academico.module';
+import { AcademicoModule } from './modules/academico/configuracao/academico.module';
 import { ImportacaoModule } from './modules/academico/importacao/importacao.module';
 import { ResponsavelModule } from './modules/identidade/responsavel/responsavel.module';
 import { LeadModule } from './modules/plataforma/lead/lead.module';

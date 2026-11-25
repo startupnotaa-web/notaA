@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { AcessoNegado, IrParaConcluirCadastro } from '../components/acesso/AcessoNegado';
 import { AppShell } from '../components/estrutura/AppShell';
 import { TelaCarregando } from '../components/feedback/TelaCarregando';
-import { Toaster } from '../components/feedback/toast';
+import { Toaster } from '@notaa/ui';
 import { papeisDaRota } from '../../lib/auth/destino';
 import { useGuardaDePapel } from '../../lib/acesso/guarda-de-papel';
 import { UserProvider } from '../../lib/auth/user-context';

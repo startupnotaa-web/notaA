@@ -6,9 +6,9 @@ import type {
   UsuarioRegistro,
   UsuarioRepositoryPort,
 } from '@notaa/contracts';
-import type { StatusDeUsuario, UsuarioStatusPort } from '../acesso/usuario-status';
+import type { StatusDeUsuario, UsuarioStatusPort } from '../modules/identidade/auth/acesso/usuario-status';
 
-/** ⚠️ Adaptadores EM MEMÓRIA — dev/test doubles (ver gamificacao.repository.memory.ts). */
+/** Adaptadores em memória usados pelos testes HTTP da API. */
 @Injectable()
 export class UsuarioRepositoryMemory implements UsuarioRepositoryPort {
   private readonly porAuthUid = new Map<string, UsuarioRegistro>();

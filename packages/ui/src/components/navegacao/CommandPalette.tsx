@@ -5,7 +5,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { cn } from '../../lib/cn';
-import { focaveisEm } from '../../lib/focaveis';
+import { focaveisEm } from '../../lib/foco';
 
 export interface ComandoItem {
   id: string;

@@ -6,7 +6,7 @@ import {
   type ContextosResponse,
   type TrocarContextoRequest,
 } from '@notaa/contracts';
-import { SemValidarContexto } from '../../../../common/decorators/sem-validar-contexto.decorator';
+import { SemValidarContexto } from '../../../../common/decorators/acesso';
 import type { AuthenticatedRequest } from '../../../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../../../common/pipes/zod-validation.pipe';
 import { ContextosService } from './contextos.service';

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PASTAS = ['apps', 'packages', 'docs'];
 const EXTENSOES = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.css', '.json', '.md', '.svg', '.html']);
-const IGNORAR_PASTAS = new Set(['node_modules', '.next', '.turbo', 'dist', 'test-results', 'playwright-report', 'coverage']);
+const IGNORAR_PASTAS = new Set(['node_modules', '.next', '.next-dev', '.turbo', 'dist', 'test-results', 'playwright-report', 'coverage']);
 // Fontes de verdade e ativos que carregam cor por natureza.
 const PERMITIDOS = new Set([
   'packages/ui/tokens/tokens.json',
