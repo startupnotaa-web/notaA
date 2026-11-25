@@ -1,6 +1,6 @@
 # 03 — Arquitetura
 
-> Materializa os **12 invariantes** do [doc 01](01-entendimento-produto.md) na stack confirmada no [doc 02](02-stack-e-justificativa.md). Fonte de domínio: seção 1 do [planejamento](../NotaA_Planejamento_Criacao_Execucao.md).
+> Materializa os **12 invariantes** do [doc 01](01-entendimento-produto.md) na stack confirmada no [doc 02](02-stack-e-justificativa.md). Fonte de domínio: seção 1 do planejamento original ([consulta no Git](01-entendimento-produto.md)).
 
 ---
 

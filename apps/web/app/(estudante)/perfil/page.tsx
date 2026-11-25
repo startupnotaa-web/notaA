@@ -15,12 +15,12 @@ import {
   TextField,
   ThemeSwitch,
 } from '@notaa/ui';
-import { MinhasTurmas } from './MinhasTurmas';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { useAuth } from '../../../lib/auth-context';
-import { aplicarPreferenciaDeTema, lerPreferenciaDeTema, type PreferenciaDeTema } from '../../../lib/tema';
-import { Atalho, AtalhoLista } from '../../components/Atalho';
-import { Pagina } from '../../components/Pagina';
+import { MinhasTurmas } from './components/MinhasTurmas';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { useAuth } from '../../../lib/auth/auth-context';
+import { aplicarPreferenciaDeTema, lerPreferenciaDeTema, type PreferenciaDeTema } from '../../../lib/navegador/tema';
+import { Atalho, AtalhoLista } from '../../components/navegacao/Atalho';
+import { Pagina } from '../../components/estrutura/Pagina';
 
 const PLANO_ROTULO: Record<NonNullable<MeResponse['plano']>['tipo'], string> = {
   free: 'Gratuito',

@@ -2,7 +2,7 @@
 // para linguagem que o modelo consegue usar. Cada prompt de canal recebe este
 // bloco em `{{blocoAluno}}` e diz, na sua própria seção, o que fazer com ele.
 //
-// Função PURA: recebe fatos já coletados (apps/api/modules/ai/student-profile
+// Função PURA: recebe fatos já coletados (apps/api/src/modules/plataforma/ai/student-profile.service.ts
 // .service.ts lê o banco) e devolve texto. Não sabe de Drizzle nem de Nest.
 //
 // Princípios (decididos com o produto em 2026-09-15):

@@ -4,9 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, ButtonLink, Notice, Panel, TextField } from '@notaa/ui';
-import { AuthPagina, IconeGoogle, SeparadorOu } from '../../components/auth';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { supabaseBrowser } from '../../../lib/supabase-browser';
+import { AuthPagina, IconeGoogle, SeparadorOu } from '../../components/acesso/auth';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { supabaseBrowser } from '../../../lib/auth/supabase-browser';
 
 type TipoPerfilPublico = 'estudante' | 'professor_independente' | 'instituicao';
 
@@ -48,7 +48,7 @@ export default function CadastroPage() {
         options: {
           // `nomeInstituicao` vai junto no user_metadata porque, se o projeto exigir
           // confirmação de e-mail, quem chama /auth/register é o login seguinte
-          // (lib/post-auth.ts) — e a essa altura o formulário já não existe mais.
+          // (lib/auth/post-auth.ts) — e a essa altura o formulário já não existe mais.
           data: tipoPerfil === 'instituicao' ? { nome, tipoPerfil, nomeInstituicao } : { nome, tipoPerfil },
           // /auth/confirm trata sucesso E erro do link (token expirado, path
           // inválido) — antes o erro chegava em /onboarding no fragment #... e

@@ -9,10 +9,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { SocraticResponse, SocraticHistoryItem, MeResponse } from '@notaa/contracts';
 import { Button, EmptyState, Progress, TextArea, cn } from '@notaa/ui';
-import { apiFetch } from '../../../lib/api-client';
-import { useUser } from '../../../lib/user-context';
-import { toast } from '../../components/toast';
-import { Voltar } from '../../components/Voltar';
+import { apiFetch } from '../../../lib/http/api-client';
+import { useUser } from '../../../lib/auth/user-context';
+import { toast } from '../../components/feedback/toast';
+import { Voltar } from '../../components/navegacao/Voltar';
 
 const ERRO_IA = 'Nossos servidores de IA estão lotados. Tente de novo em instantes.';
 

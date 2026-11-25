@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { cn } from '@notaa/ui';
-import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/juridico';
+import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/publico/juridico';
 
-/** Rodapé das páginas públicas. A razão social e o CNPJ entram só quando estiverem em lib/juridico.ts. */
+/** Rodapé das páginas públicas. A razão social e o CNPJ entram só quando estiverem em lib/publico/juridico.ts. */
 export function Rodape({ className, classeDoLink }: { className?: string; classeDoLink?: string }) {
   const link = cn(
     'inline-flex min-h-[44px] items-center rounded-sm underline underline-offset-4 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[color:var(--amb-focus,var(--focus))]',

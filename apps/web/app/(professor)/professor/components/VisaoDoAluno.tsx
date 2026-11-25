@@ -14,7 +14,7 @@ import {
   Skeleton,
   SummaryStrip,
 } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../../lib/api-client';
+import { ApiError, apiFetch } from '../../../../lib/http/api-client';
 import { SituacaoDoAluno } from './SituacaoDoAluno';
 
 /**

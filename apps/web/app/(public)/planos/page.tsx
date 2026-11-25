@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ButtonLink } from '@notaa/ui';
-import { AuthPagina } from '../../components/auth';
+import { AuthPagina } from '../../components/acesso/auth';
 
 export default function PlanosPage() {
   return (

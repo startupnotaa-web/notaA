@@ -229,8 +229,6 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.0)(jsdom@30.1.3(@noble/hashes@1.8.0))
 
-  packages/config: {}
-
   packages/contracts:
     dependencies:
       zod:

@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { Atkinson_Hyperlegible_Next, Sora } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { corDoToken } from '@notaa/ui';
-import { AuthProvider } from '../lib/auth-context';
-import { ContextoDeAcessoProvider } from '../lib/contexto-de-acesso-provider';
-import { URL_DO_SITE } from '../lib/site';
-import { ErrorSuppressor } from './components/ErrorSuppressor';
+import { AuthProvider } from '../lib/auth/auth-context';
+import { ContextoDeAcessoProvider } from '../lib/acesso/contexto-de-acesso-provider';
+import { URL_DO_SITE } from '../lib/publico/site';
+import { ErrorSuppressor } from './components/feedback/ErrorSuppressor';
 import './globals.css';
 
 // Sora (títulos, números e marca) e Atkinson Hyperlegible Next (texto e interface)

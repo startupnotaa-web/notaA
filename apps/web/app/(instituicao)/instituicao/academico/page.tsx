@@ -12,11 +12,11 @@ import {
   Tabs,
   propsDoPainel,
 } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../../lib/api-client';
+import { ApiError, apiFetch } from '../../../../lib/http/api-client';
 import { GestaoDeAnosLetivos } from '../../../components/painel/GestaoDeAnosLetivos';
-import { Disciplinas } from './Disciplinas';
-import { Periodos } from './Periodos';
-import { RegraAvaliativa } from './RegraAvaliativa';
+import { Disciplinas } from './components/Disciplinas';
+import { Periodos } from './components/Periodos';
+import { RegraAvaliativa } from './components/RegraAvaliativa';
 
 /**
  * Configuração acadêmica da instituição: ano letivo, períodos avaliativos,

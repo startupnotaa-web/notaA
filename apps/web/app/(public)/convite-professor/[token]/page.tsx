@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import type { PreviaConviteProfessor } from '@notaa/contracts';
 import { Button, Chip, Notice, Panel, TextField } from '@notaa/ui';
-import { AuthPagina } from '../../../components/auth';
-import { ApiError, apiFetch } from '../../../../lib/api-client';
-import { supabaseBrowser } from '../../../../lib/supabase-browser';
+import { AuthPagina } from '../../../components/acesso/auth';
+import { ApiError, apiFetch } from '../../../../lib/http/api-client';
+import { supabaseBrowser } from '../../../../lib/auth/supabase-browser';
 
 /**
  * Página que o professor abre a partir do link de convite da instituição.

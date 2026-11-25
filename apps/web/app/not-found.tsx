@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ButtonLink } from '@notaa/ui';
-import { TelaDeEstado } from './components/TelaDeEstado';
+import { TelaDeEstado } from './components/feedback/TelaDeEstado';
 
 export default function NaoEncontrada() {
   return (

@@ -1,6 +1,6 @@
 # 08 — Backlog & Roadmap
 
-> Fiel à seção 2 do [planejamento](../NotaA_Planejamento_Criacao_Execucao.md). Épicos, histórias com critérios de aceite, sequenciamento em fases e introdução faseada da gamificação. Guardrails dos docs 06/07/10 entram como **gates de qualidade** (DoD).
+> Fiel à seção 2 do planejamento original ([consulta no Git](01-entendimento-produto.md)). Épicos, histórias com critérios de aceite, sequenciamento em fases e introdução faseada da gamificação. Guardrails dos docs 06/07/10 entram como **gates de qualidade** (DoD).
 
 ---
 

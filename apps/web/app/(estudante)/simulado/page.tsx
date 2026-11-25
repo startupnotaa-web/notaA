@@ -34,11 +34,11 @@ import {
   Skeleton,
   cn,
 } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../lib/api-client';
-import { useUser } from '../../../lib/user-context';
-import { Pagina } from '../../components/Pagina';
-import { toast } from '../../components/toast';
-import { RelatorioSimulado } from './RelatorioSimulado';
+import { ApiError, apiFetch } from '../../../lib/http/api-client';
+import { useUser } from '../../../lib/auth/user-context';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { toast } from '../../components/feedback/toast';
+import { RelatorioSimulado } from './components/RelatorioSimulado';
 import { formatarDuracao, rotuloArea } from './labels';
 
 type Fase = 'config' | 'prova' | 'relatorio';

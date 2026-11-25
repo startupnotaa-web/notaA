@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { CABECALHOS_DE_SEGURANCA, montarCsp } from './lib/csp';
+import { CABECALHOS_DE_SEGURANCA, montarCsp } from './lib/http/csp';
 import { FEATURES } from './lib/feature-flags';
 
 /**
- * Porta de entrada das rotas ocultas (lib/feature-flags.ts) e CSP das páginas públicas (lib/csp.ts).
+ * Porta de entrada das rotas ocultas (lib/feature-flags.ts) e CSP das páginas públicas (lib/http/csp.ts).
  *
  * Fica no middleware, e não num layout com `notFound()`, porque um
  * `notFound()` disparado em layout devolve o HTML do 404 com status HTTP 200 —
@@ -21,7 +21,7 @@ const ROTAS_DA_ARENA = ['/arena', '/batalha-coletiva', '/comunidade'];
 const CAMINHO_INEXISTENTE = '/_funcionalidade-oculta';
 
 /**
- * Páginas públicas que recebem CSP com nonce (lib/csp.ts). Caminhos exatos, não prefixos: "/" casaria o app todo.
+ * Páginas públicas que recebem CSP com nonce (lib/http/csp.ts). Caminhos exatos, não prefixos: "/" casaria o app todo.
  * "/professores" é a landing; "/professor" (sem "es") é o painel autenticado e fica de fora.
  */
 const ROTAS_PUBLICAS_COM_CSP = ['/', '/aluno', '/professores', '/escola', '/faculdade', '/privacidade', '/termos'];

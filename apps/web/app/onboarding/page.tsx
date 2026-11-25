@@ -10,10 +10,10 @@ import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OnboardingState } from '@notaa/contracts';
 import { Button, ChoiceChip, Inset, Notice, NotaASimbolo, OptionCard, Progress, Switch, TextField } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../lib/api-client';
-import { useAuth } from '../../lib/auth-context';
-import { useUser } from '../../lib/user-context';
-import { TelaCarregando } from '../components/TelaCarregando';
+import { apiFetch, ApiError } from '../../lib/http/api-client';
+import { useAuth } from '../../lib/auth/auth-context';
+import { useUser } from '../../lib/auth/user-context';
+import { TelaCarregando } from '../components/feedback/TelaCarregando';
 
 const TOTAL = 8;
 

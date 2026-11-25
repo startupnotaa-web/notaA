@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IDIOMAS_ESTRANGEIROS, StartSimuladoRequestSchema } from '../simulado';
+import { IDIOMAS_ESTRANGEIROS, StartSimuladoRequestSchema } from '../aprendizagem/simulado';
 
 describe('StartSimuladoRequestSchema: língua estrangeira', () => {
   it.each(IDIOMAS_ESTRANGEIROS)('aceita %s', (idiomaEstrangeiro) => {

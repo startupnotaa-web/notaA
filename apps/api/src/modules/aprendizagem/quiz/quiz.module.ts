@@ -1,0 +1,26 @@
+import { Module } from '@nestjs/common';
+import { QuizRepositoryDb, type Database } from '@notaa/db';
+import { DB_CLIENT } from '../../../db/db.tokens';
+import { ErrorDetectorModule } from '../error-detector/error-detector.module';
+import { GamificacaoModule } from '../../engajamento/gamificacao/gamificacao.module';
+import { ProfilerModule } from '../profiler/profiler.module';
+import { AiModule } from '../../plataforma/ai/ai.module';
+import { QuizController } from './quiz.controller';
+import { QuizService } from './quiz.service';
+import { QUIZ_REPOSITORY } from './quiz.tokens';
+import { QuizUnitOfWork } from './quiz.unit-of-work';
+
+@Module({
+  imports: [GamificacaoModule, ProfilerModule, ErrorDetectorModule, AiModule],
+  controllers: [QuizController],
+  providers: [
+    QuizService,
+    QuizUnitOfWork,
+    {
+      provide: QUIZ_REPOSITORY,
+      inject: [DB_CLIENT],
+      useFactory: (db: Database) => new QuizRepositoryDb(db),
+    },
+  ],
+})
+export class QuizModule {}

@@ -2,18 +2,18 @@
 
 // Conta com sessão e sem papel: o cadastro não terminou. Esta é a ÚNICA tela possível nesse estado
 // (além de /login e sair). Nunca leva a /dashboard nem a qualquer painel. O que aparece depende do
-// motivo pelo qual o registro não terminou (lib/registro.ts).
+// motivo pelo qual o registro não terminou (lib/auth/registro.ts).
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { semRotulo, type ContextoListado, type TipoPerfilPublico } from '@notaa/contracts';
 import { Button, Notice, OptionCard, Panel, TextField } from '@notaa/ui';
-import { AuthPagina } from '../../components/auth';
-import { EscolherContexto } from '../../components/EscolherContexto';
-import { TelaCarregando } from '../../components/TelaCarregando';
-import { useAuth } from '../../../lib/auth-context';
-import { caminhoInternoSeguro } from '../../../lib/destino';
-import { confirmarContexto, prepararEntrada, type Entrada } from '../../../lib/entrada';
-import { registrarComo, type MotivoDaFalha } from '../../../lib/post-auth';
+import { AuthPagina } from '../../components/acesso/auth';
+import { EscolherContexto } from '../../components/acesso/EscolherContexto';
+import { TelaCarregando } from '../../components/feedback/TelaCarregando';
+import { useAuth } from '../../../lib/auth/auth-context';
+import { caminhoInternoSeguro } from '../../../lib/auth/destino';
+import { confirmarContexto, prepararEntrada, type Entrada } from '../../../lib/auth/entrada';
+import { registrarComo, type MotivoDaFalha } from '../../../lib/auth/post-auth';
 
 const EMAIL_SUPORTE = process.env.NEXT_PUBLIC_EMAIL_SUPORTE;
 

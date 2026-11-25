@@ -8,10 +8,10 @@ import type { AreaConhecimento, ItemPublico, SubmitAnswerResponse } from '@notaa
 import { QUIZ_TOTAL_QUESTOES } from '@notaa/contracts';
 import { Brain, Calculator, FlaskConical, Globe, Palette, PiggyBank, BookOpen, type LucideIcon } from 'lucide-react';
 import { Button, ButtonLink, Chip, Notice, OptionCard, PageHeader, Progress } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Atalho, AtalhoLista } from '../../components/Atalho';
-import { Pagina } from '../../components/Pagina';
-import { toast } from '../../components/toast';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Atalho, AtalhoLista } from '../../components/navegacao/Atalho';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { toast } from '../../components/feedback/toast';
 
 const AREAS: { valor: AreaConhecimento; label: string; descricao: string; Icone: LucideIcon }[] = [
   { valor: 'matematica', label: 'Matemática', descricao: 'Álgebra, geometria, estatística e funções.', Icone: Calculator },

@@ -1,10 +1,26 @@
 # 09 — Estrutura do Repositório & Primeiros Passos
 
-> Árvore do monorepo refletindo as camadas do [doc 03](03-arquitetura.md), e a **ordem concreta** dos primeiros passos (Fase 0). Stack do [doc 02](02-stack-e-justificativa.md). _Nada aqui é executado ainda — é o plano de scaffolding, a ser aprovado no Passo 4._
+> Árvore do monorepo refletindo as camadas do [doc 03](03-arquitetura.md), e a **ordem concreta** dos primeiros passos (Fase 0). Stack do [doc 02](02-stack-e-justificativa.md). Este documento registra a proposta inicial. Consulte o [README](../README.md) para a estrutura atual do monorepo.
 
 ---
 
-## 1. Árvore proposta (monorepo pnpm + Turborepo)
+## 1. Estrutura atual
+
+| Local | Organização |
+| --- | --- |
+| `apps/web/app/` | Rotas e layouts por ambiente. Componentes exclusivos de uma rota ficam junto dela em `components/`. |
+| `apps/web/app/components/` | Componentes compartilhados de acesso, estrutura, navegação, feedback e gestão de painéis. |
+| `apps/web/lib/` | Autenticação, contexto de acesso, navegador, HTTP e páginas públicas. |
+| `apps/api/src/modules/` | Identidade, gestão acadêmica, aprendizagem, engajamento e plataforma. Cada funcionalidade tem seu módulo NestJS e mantém os testes junto dele. |
+| `apps/api/src/common/` | Guards, decorators, filtros e pipes compartilhados. |
+| `packages/contracts/src/` | Schemas por domínio e contratos transversais na raiz do pacote. |
+| `packages/db/src/` | Schema e repositórios por domínio, com pontos de entrada em `schema/index.ts` e `repositories/index.ts`. |
+| `packages/ui/src/components/` | Formulários, navegação, feedback, estrutura e marca. Testes de componentes ficam junto deles e testes de composição em `__tests__/`. |
+| `packages/importacao/src/` | Leitura de arquivos em `leitura/` e interpretação dos campos em `validacao/`. |
+
+Os pacotes compartilhados expõem seus pontos de entrada por `@notaa/*`. Para mudanças de estrutura do banco, o Drizzle lê o ponto de entrada do schema e gera arquivos em `supabase/migrations/`.
+
+## Proposta inicial
 
 ```text
 notaa/

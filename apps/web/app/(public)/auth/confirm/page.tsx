@@ -14,12 +14,12 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { Button, Notice, Panel, TextField } from '@notaa/ui';
-import { AuthPagina } from '../../../components/auth';
-import { supabaseBrowser } from '../../../../lib/supabase-browser';
-import { USER_STATE_STORAGE_KEY } from '../../../../lib/storage-keys';
-import { garantirRegistro } from '../../../../lib/post-auth';
-import { caminhoInternoSeguro } from '../../../../lib/destino';
-import { rotaPosRegistro } from '../../../../lib/rota-inicial';
+import { AuthPagina } from '../../../components/acesso/auth';
+import { supabaseBrowser } from '../../../../lib/auth/supabase-browser';
+import { USER_STATE_STORAGE_KEY } from '../../../../lib/navegador/storage-keys';
+import { garantirRegistro } from '../../../../lib/auth/post-auth';
+import { caminhoInternoSeguro } from '../../../../lib/auth/destino';
+import { rotaPosRegistro } from '../../../../lib/auth/rota-inicial';
 
 const TIPOS_OTP: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 

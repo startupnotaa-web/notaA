@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { cn } from '@notaa/ui';
 import { LEAD_SCHEMAS, VERSAO_POLITICA_LEAD, type LeadOrigem } from '@notaa/contracts';
-import { juridicoCompleto } from '../../../lib/juridico';
+import { juridicoCompleto } from '../../../lib/publico/juridico';
 
 export interface CampoDoLead {
   nome: string;
@@ -62,7 +62,7 @@ function urlDaApi(caminho: string): string {
  * para analytics e nada é registrado em console.
  */
 export function FormularioLead(props: FormularioLeadProps) {
-  // Sem os dados da empresa (lib/juridico.ts) a política de privacidade não está publicada: o site não coleta nada.
+  // Sem os dados da empresa (lib/publico/juridico.ts) a política de privacidade não está publicada: o site não coleta nada.
   // O contato vira um e-mail comum, que a pessoa escreve do próprio aplicativo.
   if (!juridicoCompleto()) {
     // Dentro do painel do ambiente: as cores do texto e do link foram escolhidas para o fundo dele.

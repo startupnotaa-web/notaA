@@ -1,6 +1,6 @@
 // Aplica o tema guardado antes da pintura, para não piscar o tema errado.
 // Arquivo estático (e não script inline) para a CSP das páginas públicas não precisar de 'unsafe-inline'.
-// A chave é a mesma de lib/storage-keys.ts (THEME_STORAGE_KEY); se uma mudar, mude a outra.
+// A chave é a mesma de lib/navegador/storage-keys.ts (THEME_STORAGE_KEY); se uma mudar, mude a outra.
 /* global localStorage, matchMedia, document */
 try {
   var t = localStorage.getItem('notaa:tema');

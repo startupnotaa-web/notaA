@@ -2,9 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { FileSpreadsheet, LayoutDashboard, Settings } from 'lucide-react';
-import { PainelShell, type ItemDeNavegacao } from '../components/PainelShell';
-import { papeisDaRota } from '../../lib/destino';
-import { UserProvider } from '../../lib/user-context';
+import { PainelShell, type ItemDeNavegacao } from '../components/estrutura/PainelShell';
+import { papeisDaRota } from '../../lib/auth/destino';
+import { UserProvider } from '../../lib/auth/user-context';
 
 // O painel da instituição NÃO fica no grupo de rotas do aluno de propósito: a
 // moldura de lá traz a barra de gamificação e o menu de estudo, que não fazem

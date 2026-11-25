@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { CircleCheck, Clock, Flame, Trophy } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
 import { Button, Carregando, Chip, Notice, PageHeader, Panel, Section, Skeleton } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Pagina } from '../../components/Pagina';
-import { Voltar } from '../../components/Voltar';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { Voltar } from '../../components/navegacao/Voltar';
 
 // Mock list of players in the lobby
 const MOCK_PLAYERS = [

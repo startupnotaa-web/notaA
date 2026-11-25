@@ -10,7 +10,7 @@ import type {
   Turma,
 } from '@notaa/contracts';
 import { Button, Carregando, Chip, EmptyState, Inset, Notice, Panel, Section, Select, SkeletonLinhas, TextField } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../lib/api-client';
+import { ApiError, apiFetch } from '../../../lib/http/api-client';
 
 /**
  * Gestão de turmas de quem é DONO delas: criar, gerar código, aprovar entradas e

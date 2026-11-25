@@ -1,6 +1,6 @@
 # 10 — Segurança & Privacidade
 
-> RBAC por papel, dados de menores e de neurodivergência, isolamento de contexto de IA, trilha de auditoria e o **protocolo de cuidado humano**. Aplica a seção 1.5 do [planejamento](../NotaA_Planejamento_Criacao_Execucao.md) à stack do doc 02. Lei reitora: **LGPD** + **ECA** (consentimento parental) — premissa A1.
+> RBAC por papel, dados de menores e de neurodivergência, isolamento de contexto de IA, trilha de auditoria e o **protocolo de cuidado humano**. Aplica a seção 1.5 do planejamento original ([consulta no Git](01-entendimento-produto.md)) à stack do doc 02. Lei reitora: **LGPD** + **ECA** (consentimento parental) — premissa A1.
 
 ---
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RegraAvaliativaSchema, SimularRegraRequestSchema } from '../regra-avaliativa';
+import { RegraAvaliativaSchema, SimularRegraRequestSchema } from '../academico/regra-avaliativa';
 
 function regraValida() {
   return {

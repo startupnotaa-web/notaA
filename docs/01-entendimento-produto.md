@@ -1,7 +1,7 @@
 # 01 — Entendimento do Produto (Nota A)
 
 > **Status:** validado em conversa (Passo 0).
-> **Fonte da verdade:** [`NotaA_Planejamento_Criacao_Execucao.md`](../NotaA_Planejamento_Criacao_Execucao.md). Em qualquer divergência, a fonte da verdade tem precedência sobre este documento. Mudanças de modelagem ou de regra de negócio que surgirem aqui estão registradas na seção **9** para retroalimentar aquele arquivo.
+> Este documento resume o planejamento original do produto. O arquivo original pode ser consultado no Git com `git show 1534bd5:NotaA_Planejamento_Criacao_Execucao.md`. A seção 9 registra decisões de modelagem e regras de negócio.
 
 ---
 

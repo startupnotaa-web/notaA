@@ -1,6 +1,6 @@
 # 06 — Integração de IA Generativa
 
-> Especificação estrutural da **IA Socrática** e do **Corretor de Redação**. Ambas consomem o contexto dos motores (nunca os substituem) e passam pelo **portão único** (Rate Limiter). Fonte: seção 3 do [planejamento](../NotaA_Planejamento_Criacao_Execucao.md). Guardrails aqui = **testes**, não sugestões (fonte, Anexo §3).
+> Especificação estrutural da **IA Socrática** e do **Corretor de Redação**. Ambas consomem o contexto dos motores (nunca os substituem) e passam pelo **portão único** (Rate Limiter). Fonte: seção 3 do planejamento original ([consulta no Git](01-entendimento-produto.md)). Guardrails aqui = **testes**, não sugestões (fonte, Anexo §3).
 
 ---
 

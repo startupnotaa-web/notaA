@@ -4,7 +4,7 @@ import { PalcoProfessores } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_PROFESSOR } from '../../_landing/componentes/estilos';
 import { FallbackProfessores } from '../../_landing/fallbacks/FallbackProfessores';
-import { metadadosDaPagina } from '../../../lib/site';
+import { metadadosDaPagina } from '../../../lib/publico/site';
 
 export const metadata = metadadosDaPagina({
   titulo: 'Nota A para professores: turmas e alunos em um painel só',

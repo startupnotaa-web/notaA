@@ -3,15 +3,15 @@
  * banco nem com Storage. A API usa para a prévia, o worker para gravar — o
  * mesmo plano nos dois lados, para a tela mostrar exatamente o que será feito.
  */
-export { ArquivoInvalidoError, detectarFormato } from './tipo-arquivo';
-export { gerarXlsx, lerPlanilha, type Planilha } from './ler-planilha';
+export { ArquivoInvalidoError, detectarFormato } from './leitura/tipo-arquivo';
+export { gerarXlsx, lerPlanilha, type Planilha } from './leitura/ler-planilha';
 export {
   cabecalhoDoModelo,
   camposDoTipo,
   normalizarTexto,
   sugerirMapeamento,
   validarMapeamento,
-} from './campos';
+} from './validacao/campos';
 export {
   planejarAlunos,
   type AlunoExistente,
@@ -21,12 +21,12 @@ export {
   type PlanoImportacao,
   type ResponsavelExistente,
   type ResponsavelPlanejado,
-} from './alunos';
+} from './validacao/alunos';
 export {
   planejarDisciplinas,
   type ContextoDisciplinas,
   type DadosDisciplina,
   type DisciplinaExistente,
   type ItemPlanoDisciplinas,
-} from './disciplinas';
-export { celulaSegura, gerarCsv } from './csv';
+} from './validacao/disciplinas';
+export { celulaSegura, gerarCsv } from './leitura/csv';

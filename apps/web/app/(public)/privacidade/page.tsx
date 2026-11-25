@@ -1,7 +1,7 @@
 import { VERSAO_POLITICA_LEAD } from '@notaa/contracts';
 import { PaginaLegal } from '../../_landing/componentes/PaginaLegal';
-import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/juridico';
-import { metadadosDaPagina } from '../../../lib/site';
+import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/publico/juridico';
+import { metadadosDaPagina } from '../../../lib/publico/site';
 
 // A CSP com nonce (middleware.ts) exige HTML gerado por requisição.
 export const dynamic = 'force-dynamic';
@@ -16,8 +16,8 @@ export const metadata = metadadosDaPagina({
   semIndexacao: !completa,
 });
 
-// O que está aqui descreve o que os formulários da landing fazem hoje (packages/contracts/src/lead.ts e
-// apps/api/src/modules/lead). Os dados da empresa vêm de lib/juridico.ts; sem eles a página não publica o texto.
+// O que está aqui descreve o que os formulários da landing fazem hoje (packages/contracts/src/plataforma/lead.ts e
+// apps/api/src/modules/plataforma/lead). Os dados da empresa vêm de lib/publico/juridico.ts; sem eles a página não publica o texto.
 export default function Privacidade() {
   if (!completa) {
     return (

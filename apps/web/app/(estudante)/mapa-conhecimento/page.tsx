@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardResponse } from '@notaa/contracts';
 import { ActionRow, ButtonLink, Carregando, Chip, Notice, PageHeader, Progress, Section, Skeleton, type Tone } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Pagina } from '../../components/Pagina';
-import { Voltar } from '../../components/Voltar';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { Voltar } from '../../components/navegacao/Voltar';
 
 const AREA_LABELS: Record<string, string> = {
   linguagens: 'Linguagens',

@@ -12,83 +12,68 @@ export { cn } from './lib/cn';
 export type { ClassValue } from './lib/cn';
 
 // Componentes do Nota A (espelham o bundle do handoff; props de index.d.ts).
-export { Button, classesDoBotao } from './components/Button';
-export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
-export { ButtonLink } from './components/ButtonLink';
-export type { ButtonLinkProps } from './components/ButtonLink';
-export { TextField } from './components/TextField';
-export type { TextFieldProps } from './components/TextField';
-export { TextArea } from './components/TextArea';
-export type { TextAreaProps } from './components/TextArea';
-export { Select } from './components/Select';
-export type { SelectProps } from './components/Select';
-export { Chip } from './components/Chip';
-export type { ChipProps, Tone } from './components/Chip';
-export { ChoiceChip } from './components/ChoiceChip';
-export type { ChoiceChipProps } from './components/ChoiceChip';
-export { Tabs, propsDoPainel } from './components/Tabs';
-export type { TabsProps } from './components/Tabs';
-export { SideNav } from './components/SideNav';
-export type { SideNavProps, SideNavItem } from './components/SideNav';
-export { BottomNav } from './components/BottomNav';
-export type { BottomNavProps, BottomNavItem } from './components/BottomNav';
-export { ProgressTrail } from './components/ProgressTrail';
-export type { ProgressTrailProps } from './components/ProgressTrail';
-export { Notice } from './components/Notice';
-export type { NoticeProps, StatusTone } from './components/Notice';
-export { EmptyState } from './components/EmptyState';
-export type { EmptyStateProps } from './components/EmptyState';
-export { Aurora } from './components/Aurora';
-export type { AuroraProps } from './components/Aurora';
-export { NotaASimbolo } from './components/NotaASimbolo';
-export type { NotaASimboloProps } from './components/NotaASimbolo';
-export { Dialog } from './components/Dialog';
-export type { DialogProps } from './components/Dialog';
-export { Toaster, toast, dismiss } from './components/Toast';
-export type { ToastVariant } from './components/Toast';
-export { Menu } from './components/Menu';
-export type { MenuProps, MenuItem } from './components/Menu';
+export { Button, classesDoBotao } from './components/formularios/Button';
+export type { ButtonProps, ButtonVariant, ButtonSize } from './components/formularios/Button';
+export { ButtonLink } from './components/formularios/ButtonLink';
+export type { ButtonLinkProps } from './components/formularios/ButtonLink';
+export { TextField } from './components/formularios/TextField';
+export type { TextFieldProps } from './components/formularios/TextField';
+export { TextArea } from './components/formularios/TextArea';
+export type { TextAreaProps } from './components/formularios/TextArea';
+export { Select } from './components/formularios/Select';
+export type { SelectProps } from './components/formularios/Select';
+export { Chip } from './components/feedback/Chip';
+export type { ChipProps, Tone } from './components/feedback/Chip';
+export { ChoiceChip } from './components/formularios/ChoiceChip';
+export type { ChoiceChipProps } from './components/formularios/ChoiceChip';
+export { Tabs, propsDoPainel } from './components/navegacao/Tabs';
+export type { TabsProps } from './components/navegacao/Tabs';
+export { SideNav } from './components/navegacao/SideNav';
+export type { SideNavProps, SideNavItem } from './components/navegacao/SideNav';
+export { BottomNav } from './components/navegacao/BottomNav';
+export type { BottomNavProps, BottomNavItem } from './components/navegacao/BottomNav';
+export { ProgressTrail } from './components/navegacao/ProgressTrail';
+export type { ProgressTrailProps } from './components/navegacao/ProgressTrail';
+export { Notice } from './components/feedback/Notice';
+export type { NoticeProps, StatusTone } from './components/feedback/Notice';
+export { EmptyState } from './components/feedback/EmptyState';
+export type { EmptyStateProps } from './components/feedback/EmptyState';
+export { Aurora } from './components/marca/Aurora';
+export type { AuroraProps } from './components/marca/Aurora';
+export { NotaASimbolo } from './components/marca/NotaASimbolo';
+export type { NotaASimboloProps } from './components/marca/NotaASimbolo';
+export { Dialog } from './components/feedback/Dialog';
+export type { DialogProps } from './components/feedback/Dialog';
+export { Toaster, toast, dismiss } from './components/feedback/Toast';
+export type { ToastVariant } from './components/feedback/Toast';
+export { Menu } from './components/navegacao/Menu';
+export type { MenuProps, MenuItem } from './components/navegacao/Menu';
 
 // Estrutura de página leve: seções separadas por espaço e linha fina; painel só para formulário ou tabela.
-export { Section } from './components/Section';
-export type { SectionProps } from './components/Section';
-export { Panel } from './components/Panel';
-export type { PanelProps } from './components/Panel';
-export { PageHeader } from './components/PageHeader';
-export type { PageHeaderProps } from './components/PageHeader';
-export { ActionRow } from './components/ActionRow';
-export type { ActionRowProps } from './components/ActionRow';
-export { SummaryStrip } from './components/SummaryStrip';
-export type { SummaryStripProps, SummaryItem } from './components/SummaryStrip';
-export { Inset } from './components/Inset';
-export type { InsetProps } from './components/Inset';
-export { ThemeSwitch } from './components/ThemeSwitch';
-export type { ThemeSwitchProps, PreferenciaDeTema } from './components/ThemeSwitch';
+export { Section } from './components/estrutura/Section';
+export type { SectionProps } from './components/estrutura/Section';
+export { Panel } from './components/estrutura/Panel';
+export type { PanelProps } from './components/estrutura/Panel';
+export { PageHeader } from './components/estrutura/PageHeader';
+export type { PageHeaderProps } from './components/estrutura/PageHeader';
+export { ActionRow } from './components/estrutura/ActionRow';
+export type { ActionRowProps } from './components/estrutura/ActionRow';
+export { SummaryStrip } from './components/estrutura/SummaryStrip';
+export type { SummaryStripProps, SummaryItem } from './components/estrutura/SummaryStrip';
+export { Inset } from './components/estrutura/Inset';
+export type { InsetProps } from './components/estrutura/Inset';
+export { ThemeSwitch } from './components/navegacao/ThemeSwitch';
+export type { ThemeSwitchProps, PreferenciaDeTema } from './components/navegacao/ThemeSwitch';
 
-// Estrutura de aplicativo para computador (a partir de 1.024px): moldura de altura da tela, barra superior com
-// busca e Ctrl/Cmd+K, grade de 12 colunas, zonas, master-detail, painel lateral e tabela densa.
-export { AppFrame } from './components/AppFrame';
-export type { AppFrameProps } from './components/AppFrame';
-export { TopBar } from './components/TopBar';
-export type { TopBarProps } from './components/TopBar';
-export { CommandPalette } from './components/CommandPalette';
-export type { CommandPaletteProps, ComandoItem } from './components/CommandPalette';
-export { ShortcutsDialog } from './components/ShortcutsDialog';
-export type { ShortcutsDialogProps, GrupoDeAtalhos } from './components/ShortcutsDialog';
-export { SidePanel } from './components/SidePanel';
-export type { SidePanelProps } from './components/SidePanel';
-export { Grade, Col } from './components/Grade';
-export type { ColProps } from './components/Grade';
-export { Zonas } from './components/Zonas';
-export type { ZonasProps } from './components/Zonas';
-export { MasterDetail } from './components/MasterDetail';
-export type { MasterDetailProps } from './components/MasterDetail';
-export { DataTable } from './components/DataTable';
-export type { DataTableProps, ColunaDaTabela, Densidade } from './components/DataTable';
-export { Breadcrumbs } from './components/Breadcrumbs';
-export type { BreadcrumbsProps, BreadcrumbItem } from './components/Breadcrumbs';
-export { KpiRow } from './components/KpiRow';
-export type { KpiRowProps, KpiItem } from './components/KpiRow';
+// Navegação e atalhos do aplicativo para computador.
+export { AppFrame } from './components/estrutura/AppFrame';
+export type { AppFrameProps } from './components/estrutura/AppFrame';
+export { TopBar } from './components/navegacao/TopBar';
+export type { TopBarProps } from './components/navegacao/TopBar';
+export { CommandPalette } from './components/navegacao/CommandPalette';
+export type { CommandPaletteProps, ComandoItem } from './components/navegacao/CommandPalette';
+export { ShortcutsDialog } from './components/navegacao/ShortcutsDialog';
+export type { ShortcutsDialogProps, GrupoDeAtalhos } from './components/navegacao/ShortcutsDialog';
 export { useAtalhos, teclaModificadora } from './lib/atalhos';
 export type { Atalho } from './lib/atalhos';
 
@@ -104,30 +89,25 @@ export {
 } from './components/Card';
 export type { CardProps } from './components/Card';
 
-export { Progress } from './components/Progress';
-export type { ProgressProps } from './components/Progress';
+export { Progress } from './components/feedback/Progress';
+export type { ProgressProps } from './components/feedback/Progress';
 
-export { Input } from './components/Input';
-export type { InputProps } from './components/Input';
+export { Input } from './components/formularios/Input';
+export type { InputProps } from './components/formularios/Input';
 
-export { Label } from './components/Label';
+export { Switch } from './components/formularios/Switch';
+export type { SwitchProps } from './components/formularios/Switch';
 
-export { Switch } from './components/Switch';
-export type { SwitchProps } from './components/Switch';
+export { OptionCard } from './components/formularios/OptionCard';
+export type { OptionCardProps, OptionCardState } from './components/formularios/OptionCard';
 
-export { OptionCard } from './components/OptionCard';
-export type { OptionCardProps, OptionCardState } from './components/OptionCard';
+export { Skeleton, SkeletonText, SkeletonLinhas, Carregando } from './components/feedback/Skeleton';
 
-export { Stat } from './components/Stat';
-export type { StatProps } from './components/Stat';
+export { Stepper } from './components/navegacao/Stepper';
+export type { StepperProps } from './components/navegacao/Stepper';
 
-export { Skeleton, SkeletonText, SkeletonLinhas, Carregando } from './components/Skeleton';
+export { Table } from './components/estrutura/Table';
+export type { TableProps } from './components/estrutura/Table';
 
-export { Stepper } from './components/Stepper';
-export type { StepperProps } from './components/Stepper';
-
-export { Table } from './components/Table';
-export type { TableProps } from './components/Table';
-
-export { FileDrop } from './components/FileDrop';
-export type { FileDropProps } from './components/FileDrop';
+export { FileDrop } from './components/formularios/FileDrop';
+export type { FileDropProps } from './components/formularios/FileDrop';

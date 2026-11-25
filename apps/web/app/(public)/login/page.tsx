@@ -6,13 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { AuthError } from '@supabase/supabase-js';
 import { semRotulo, type ContextoListado } from '@notaa/contracts';
 import { Button, Notice, Panel, TextField } from '@notaa/ui';
-import { AuthPagina, IconeGoogle, SeparadorOu } from '../../components/auth';
-import { EscolherContexto } from '../../components/EscolherContexto';
-import { TelaCarregando } from '../../components/TelaCarregando';
-import { useAuth } from '../../../lib/auth-context';
-import { caminhoInternoSeguro } from '../../../lib/destino';
-import { confirmarContexto, prepararEntrada, type Entrada } from '../../../lib/entrada';
-import { supabaseBrowser } from '../../../lib/supabase-browser';
+import { AuthPagina, IconeGoogle, SeparadorOu } from '../../components/acesso/auth';
+import { EscolherContexto } from '../../components/acesso/EscolherContexto';
+import { TelaCarregando } from '../../components/feedback/TelaCarregando';
+import { useAuth } from '../../../lib/auth/auth-context';
+import { caminhoInternoSeguro } from '../../../lib/auth/destino';
+import { confirmarContexto, prepararEntrada, type Entrada } from '../../../lib/auth/entrada';
+import { supabaseBrowser } from '../../../lib/auth/supabase-browser';
 
 /** Texto de erro de login: diz o que fazer e não repassa a mensagem crua do Supabase. */
 function mensagemDeLogin(error: AuthError): string {

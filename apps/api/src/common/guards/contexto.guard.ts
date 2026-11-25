@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CABECALHO_CONTEXTO, lerContexto } from '@notaa/contracts';
-import { ContextosService } from '../../modules/auth/contextos.service';
+import { ContextosService } from '../../modules/identidade/auth/contextos/contextos.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { SEM_VALIDAR_CONTEXTO_KEY } from '../decorators/sem-validar-contexto.decorator';
 import type { AuthenticatedRequest } from './auth.guard';

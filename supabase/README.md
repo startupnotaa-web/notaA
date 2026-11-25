@@ -13,6 +13,7 @@ Schema versionado do Nota A — fonte de verdade é `packages/db/src/schema/` (D
 
 - `migrations/` — gerado por `pnpm --filter @notaa/db db:generate`. **Nunca editar manualmente**, exceto para acréscimos que o Drizzle não modela ainda (ex.: `CREATE EXTENSION`), já feito na `0000_equal_cerebro.sql` para `citext`.
 - `migrations/meta/` — snapshots internos do drizzle-kit (controle de diff entre gerações). Não reformatar (`.prettierignore`).
+- [`correcoes/`](correcoes/README.md) — correções manuais do catálogo ENEM, com instruções de aplicação.
 - `policies/` — políticas RLS (`docs/10-seguranca-e-privacidade.md` §2), aplicadas **depois** das migrations.
   - `0001_rls_estudante.sql` — 1ª passada: tabelas de dado de estudante com `estudante_id` direto ou por join de 1 nível, mais o helper `auth_current_usuario_id()`.
   - `0002_rls_restante.sql` — 2ª passada: as 15 tabelas restantes (catálogos públicos, `usuario`, institucionais/internas travadas a service role).

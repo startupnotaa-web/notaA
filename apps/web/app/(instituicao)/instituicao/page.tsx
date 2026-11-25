@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { PageHeader, Tabs, propsDoPainel } from '@notaa/ui';
 import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
 import { GestaoDeTurmas } from '../../components/painel/GestaoDeTurmas';
-import { Alunos } from './Alunos';
-import { Professores } from './Professores';
-import { VisaoGeral } from './VisaoGeral';
+import { Alunos } from './components/Alunos';
+import { Professores } from './components/Professores';
+import { VisaoGeral } from './components/VisaoGeral';
 
 /**
  * Painel administrativo da instituição (perfis.md).

@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button, ButtonLink, Notice } from '@notaa/ui';
-import { TelaDeEstado } from './components/TelaDeEstado';
+import { TelaDeEstado } from './components/feedback/TelaDeEstado';
 
 /** Erro de renderização em qualquer rota. Não mostra a mensagem técnica; o `digest` ajuda a achar o registro. */
 export default function Erro({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

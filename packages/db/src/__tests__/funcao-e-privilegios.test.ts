@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { InstituicaoRepositoryDb } from '../repositories/instituicao.repository';
+import { InstituicaoRepositoryDb } from '../repositories/academico/instituicao.repository';
 import { criarBancoDeTeste, type BancoDeTeste } from '../testing/banco-de-teste';
 
 // Dois fechamentos de menor privilégio da Gestão Acadêmica:

@@ -6,7 +6,7 @@ import { PalcoHome } from '../_landing/componentes/Palcos';
 import { Rodape } from '../_landing/componentes/Rodape';
 import { BOTAO_HOME, FOCO, FORM_HOME } from '../_landing/componentes/estilos';
 import { FallbackHome } from '../_landing/fallbacks/FallbackHome';
-import { metadadosDaPagina } from '../../lib/site';
+import { metadadosDaPagina } from '../../lib/publico/site';
 
 // A CSP com nonce (middleware.ts) exige HTML gerado por requisição: um HTML do build não teria nonce.
 export const dynamic = 'force-dynamic';

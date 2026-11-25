@@ -4,7 +4,7 @@ import { PalcoAluno } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_ALUNO } from '../../_landing/componentes/estilos';
 import { FallbackAluno } from '../../_landing/fallbacks/FallbackAluno';
-import { metadadosDaPagina } from '../../../lib/site';
+import { metadadosDaPagina } from '../../../lib/publico/site';
 
 export const metadata = metadadosDaPagina({
   titulo: 'Nota A para alunos: estude para o ENEM, um passo por dia',

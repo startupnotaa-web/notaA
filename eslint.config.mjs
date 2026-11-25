@@ -1,3 +1,42 @@
-import { baseConfig } from './packages/config/eslint.base.mjs';
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
-export default [...baseConfig];
+/** @type {import('eslint').Linter.Config[]} */
+const config = [
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+  {
+    // Arquivos de configuração (next.config.mjs etc.) e scripts de build rodam
+    // no Node, fora do bundle: `process` e `console` existem ali.
+    files: ['**/*.config.{js,mjs,cjs}', '**/scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly' } },
+  },
+  {
+    // Preset do Tailwind é CommonJS (tailwind.config o carrega com require).
+    files: ['**/*.preset.js'],
+    languageOptions: { sourceType: 'commonjs', globals: { module: 'writable' } },
+  },
+  {
+    // "**/" no início é necessário: cada app/package roda `eslint .` com cwd
+    // própria, então um padrão sem "**/" só casaria com a raiz daquele cwd —
+    // não com dist/ aninhado caso o pacote tenha subpastas (ex.: packages/db).
+    ignores: [
+      '**/dist/**',
+      '**/dist-vercel/**',
+      '**/.vercel/**',
+      '**/.next/**',
+      '**/node_modules/**',
+      '**/.turbo/**',
+      '**/next-env.d.ts', // gerado pelo Next.js — não editar/lintar
+      '**/public/sw.js', // bundle compilado pelo plugin Serwist (next build)
+    ],
+  },
+];
+
+export default config;

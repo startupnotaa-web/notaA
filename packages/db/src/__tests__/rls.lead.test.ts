@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { LeadRepositoryDb } from '../repositories/lead.repository';
+import { LeadRepositoryDb } from '../repositories/plataforma/lead.repository';
 import { criarBancoDeTeste, type BancoDeTeste } from '../testing/banco-de-teste';
 
 // Leads da landing (migração 0018): RLS ligada, sem política, sem privilégio para anon e

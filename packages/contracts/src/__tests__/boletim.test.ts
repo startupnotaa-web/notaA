@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FecharBoletimRequestSchema, RetificarBoletimRequestSchema } from '../boletim';
-import { LancarNotasRequestSchema } from '../notas';
+import { FecharBoletimRequestSchema, RetificarBoletimRequestSchema } from '../academico/boletim';
+import { LancarNotasRequestSchema } from '../academico/notas';
 
 const ID_1 = '11111111-1111-4111-8111-111111111111';
 

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { URL_DO_SITE } from '../lib/site';
+import { URL_DO_SITE } from '../lib/publico/site';
 
 // Em preview e em branch o site inteiro fica fora dos buscadores (as páginas também saem com noindex).
 const emProducao = process.env.VERCEL_ENV ? process.env.VERCEL_ENV === 'production' : process.env.NODE_ENV === 'production';

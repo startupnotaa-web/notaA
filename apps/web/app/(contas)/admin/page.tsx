@@ -3,12 +3,12 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@notaa/ui';
-import { AcessoNegado, IrParaConcluirCadastro } from '../../components/AcessoNegado';
-import { TelaCarregando } from '../../components/TelaCarregando';
-import { TelaDeEstado } from '../../components/TelaDeEstado';
-import { useAuth } from '../../../lib/auth-context';
-import { papeisDaRota } from '../../../lib/destino';
-import { useGuardaDePapel } from '../../../lib/guarda-de-papel';
+import { AcessoNegado, IrParaConcluirCadastro } from '../../components/acesso/AcessoNegado';
+import { TelaCarregando } from '../../components/feedback/TelaCarregando';
+import { TelaDeEstado } from '../../components/feedback/TelaDeEstado';
+import { useAuth } from '../../../lib/auth/auth-context';
+import { papeisDaRota } from '../../../lib/auth/destino';
+import { useGuardaDePapel } from '../../../lib/acesso/guarda-de-papel';
 
 /**
  * Home do administrador da plataforma. A administração é feita pela API e pelo banco; não há painel no

@@ -22,9 +22,9 @@ import {
 } from 'lucide-react';
 import type { AchievementsResponse } from '@notaa/contracts';
 import { Carregando, Chip, EmptyState, Notice, PageHeader, Progress, Section, Skeleton } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Pagina } from '../../components/Pagina';
-import { Voltar } from '../../components/Voltar';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { Voltar } from '../../components/navegacao/Voltar';
 
 const CONQUISTAS: Record<string, { titulo: string; descricao: string; Icone: LucideIcon }> = {
   'onboarding': { titulo: 'O despertar', descricao: 'Você deu o primeiro passo e completou o seu perfil.', Icone: Rocket },

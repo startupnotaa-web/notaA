@@ -6,19 +6,19 @@ import { SignJWT } from 'jose';
 import supertest from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from './app.module';
-import { GAMIFICACAO_REPOSITORY } from './modules/gamificacao/gamificacao.tokens';
-import { GamificacaoRepositoryMemory } from './modules/gamificacao/gamificacao.repository.memory';
-import { PROFILER_REPOSITORY } from './modules/profiler/profiler.tokens';
-import { ProfilerRepositoryMemory } from './modules/profiler/profiler.repository.memory';
-import { QUIZ_REPOSITORY } from './modules/quiz/quiz.tokens';
-import { QuizRepositoryMemory } from './modules/quiz/__tests__/quiz.repository.memory';
-import { DASHBOARD_REPOSITORY } from './modules/dashboard/dashboard.tokens';
-import { DashboardRepositoryMemory } from './modules/dashboard/dashboard.repository.memory';
-import { ERROR_DETECTOR_REPOSITORY } from './modules/error-detector/error-detector.tokens';
-import { ONBOARDING_REPOSITORY } from './modules/onboarding/onboarding.tokens';
-import { OnboardingRepositoryMemory } from './modules/onboarding/onboarding.repository.memory';
-import { LLM_PROVIDER } from './modules/ai/ai.tokens';
-import { ErrorDetectorRepositoryMemory } from './modules/error-detector/error-detector.repository.memory';
+import { GAMIFICACAO_REPOSITORY } from './modules/engajamento/gamificacao/gamificacao.tokens';
+import { GamificacaoRepositoryMemory } from './modules/engajamento/gamificacao/gamificacao.repository.memory';
+import { PROFILER_REPOSITORY } from './modules/aprendizagem/profiler/profiler.tokens';
+import { ProfilerRepositoryMemory } from './modules/aprendizagem/profiler/profiler.repository.memory';
+import { QUIZ_REPOSITORY } from './modules/aprendizagem/quiz/quiz.tokens';
+import { QuizRepositoryMemory } from './modules/aprendizagem/quiz/__tests__/quiz.repository.memory';
+import { DASHBOARD_REPOSITORY } from './modules/aprendizagem/dashboard/dashboard.tokens';
+import { DashboardRepositoryMemory } from './modules/aprendizagem/dashboard/dashboard.repository.memory';
+import { ERROR_DETECTOR_REPOSITORY } from './modules/aprendizagem/error-detector/error-detector.tokens';
+import { ONBOARDING_REPOSITORY } from './modules/aprendizagem/onboarding/onboarding.tokens';
+import { OnboardingRepositoryMemory } from './modules/aprendizagem/onboarding/onboarding.repository.memory';
+import { LLM_PROVIDER } from './modules/plataforma/ai/ai.tokens';
+import { ErrorDetectorRepositoryMemory } from './modules/aprendizagem/error-detector/error-detector.repository.memory';
 
 // e2e da fatia vertical E1→E2→E3→E4→E9 (passos 9 + Fase 1, doc 08 — valida
 // estruturalmente a métrica norte): onboarding incremental → quiz adaptativo

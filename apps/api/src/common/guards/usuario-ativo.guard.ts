@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { USUARIO_STATUS } from '../../modules/auth/auth.tokens';
-import type { UsuarioStatusPort } from '../../modules/auth/usuario-status';
+import { USUARIO_STATUS } from '../../modules/identidade/auth/auth.tokens';
+import type { UsuarioStatusPort } from '../../modules/identidade/auth/acesso/usuario-status';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import type { AuthenticatedRequest } from './auth.guard';
 

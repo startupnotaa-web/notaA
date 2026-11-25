@@ -10,7 +10,7 @@
 ## 🔴 Críticos
 
 ### C1. Trigger SQL de criação de usuário conflita com o fluxo de registro da API `[confirmado]`
-**Onde:** `supabase_sync_trigger.sql` (função `handle_new_user`) vs. `AuthService.register` / `UsuarioRepositoryDb.create`.
+**Onde:** instalações antigas que aplicaram o trigger `on_auth_user_created` (função `handle_new_user`) e o fluxo de cadastro em `AuthService.register` / `UsuarioRepositoryDb.create`. O script avulso foi removido do repositório. Ainda é preciso verificar se o trigger existe nos bancos já provisionados.
 
 **O que deveria fazer:** existir **um único** caminho de criação da linha `public.usuario`. Hoje o projeto tem a API criando o usuário (`AuthService` → `create()` → seta `tipo_perfil`, `auth_uid`, `nome` e depois `app_metadata.papel`).
 
@@ -26,7 +26,7 @@
 ### C2. Fórmula de nível divergente em 3 lugares `[confirmado]`
 **Onde:**
 - Backend (fonte da verdade): `gamificacao/nivel.ts` → `nivelDeXp` — curva **não-linear** (≤100=N1, ≤250=N2, ≤500=N3, depois blocos que dobram).
-- Frontend otimista: `web/lib/user-context.tsx` → `calcularNivelClient` = `Math.floor(xp / 500) + 1` — **linear**.
+- Frontend otimista: `web/lib/auth/user-context.tsx` → `calcularNivelClient` = `Math.floor(xp / 500) + 1` — **linear**.
 - Barra de progresso: `web/app/components/AppShell.tsx` → `progressoPorcento = (xp % 100) / 100 * 100` — **terceira** régua (cada 100 XP).
 
 **O que deveria fazer:** nível e progresso exibidos deveriam bater com o cálculo do servidor.
@@ -48,7 +48,7 @@
 
 **Correção sugerida:** resolver a data no fuso do aluno (guardar timezone no perfil ou receber do cliente) antes de comparar dias. Enquanto não houver fuso, ao menos padronizar em America/Sao_Paulo em vez de UTC.
 
-### A2. Dashboard e TopBar não reagem após atividades (bug #4 do handoff, ainda aberto) `[confirmado]`
+### A2. Dashboard e TopBar não reagem após atividades `[confirmado]`
 **Onde:** `web/app/(estudante)/dashboard/page.tsx` (carrega em `useEffect([])`), `quiz/page.tsx`, `simulado/page.tsx`, `tutor/page.tsx`.
 
 **O que deveria fazer:** depois de responder questões, o Mapa Cognitivo (θ), XP, nível e streak deveriam atualizar ao voltar ao dashboard/TopBar.
@@ -61,7 +61,7 @@
 **Correção sugerida:** após concluir sessão de quiz/simulado, chamar `refreshPerfil()`; no dashboard, refazer o fetch ao focar a rota (ex.: revalidar em `useEffect` dependente de `pathname`/foco, ou `router.refresh()`), garantindo o refetch do `getThetaResumo`.
 
 ### A3. `UserProvider` com `useEffect([])` lendo `authUid` (closure obsoleto) `[confirmado]`
-**Onde:** `web/lib/user-context.tsx` — o efeito de hidratação tem deps `[]` mas usa `authUid`.
+**Onde:** `web/lib/auth/user-context.tsx` — o efeito de hidratação tem deps `[]` mas usa `authUid`.
 
 **O que deveria fazer:** restaurar o snapshot e buscar `/me` **para o usuário atual**, reagindo a troca de sessão.
 

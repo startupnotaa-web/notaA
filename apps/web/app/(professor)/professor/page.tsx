@@ -18,8 +18,8 @@ import {
   Tabs,
   propsDoPainel,
 } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../lib/api-client';
-import { useUser } from '../../../lib/user-context';
+import { ApiError, apiFetch } from '../../../lib/http/api-client';
+import { useUser } from '../../../lib/auth/user-context';
 import { GestaoDeAnosLetivos } from '../../components/painel/GestaoDeAnosLetivos';
 import { GestaoDeTurmas } from '../../components/painel/GestaoDeTurmas';
 import { SituacaoDoAluno } from './components/SituacaoDoAluno';

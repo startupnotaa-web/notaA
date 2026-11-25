@@ -5,11 +5,11 @@
 //   NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=local NEXT_PUBLIC_API_URL=http://localhost:3001 pnpm --filter @notaa/web build
 //   pnpm --filter @notaa/web exec playwright test e2e/landing.spec.ts
 import { expect, test, type Page } from '@playwright/test';
-import { juridicoCompleto } from '../lib/juridico';
+import { juridicoCompleto } from '../lib/publico/juridico';
 
-// Com os dados da empresa vazios (lib/juridico.ts) o site não coleta nada: os formulários dão lugar ao e-mail de
+// Com os dados da empresa vazios (lib/publico/juridico.ts) o site não coleta nada: os formulários dão lugar ao e-mail de
 // contato e /privacidade e /termos saem sem o texto. Cada estado tem os seus testes. Contra E2E_BASE_URL vale o
-// estado do código local, então use um ambiente com o mesmo lib/juridico.ts.
+// estado do código local, então use um ambiente com o mesmo lib/publico/juridico.ts.
 const JURIDICO_COMPLETO = juridicoCompleto();
 
 const ROTAS = [
@@ -172,7 +172,7 @@ test.describe('3D: carga e fallbacks', () => {
 });
 
 test.describe('formulários de lead desativados (dados da empresa vazios)', () => {
-  test.skip(JURIDICO_COMPLETO, 'só vale com lib/juridico.ts incompleto');
+  test.skip(JURIDICO_COMPLETO, 'só vale com lib/publico/juridico.ts incompleto');
 
   test('home, escola e faculdade: sem formulário, só o e-mail de contato, e nada é enviado', async ({ page }) => {
     let enviou = false;
@@ -202,7 +202,7 @@ test.describe('formulários de lead desativados (dados da empresa vazios)', () =
 });
 
 test.describe('formulários de lead', () => {
-  test.skip(!JURIDICO_COMPLETO, 'os formulários só existem com lib/juridico.ts completo');
+  test.skip(!JURIDICO_COMPLETO, 'os formulários só existem com lib/publico/juridico.ts completo');
 
   test('home: erros por campo, foco no primeiro, e nada é enviado', async ({ page }) => {
     let enviou = false;

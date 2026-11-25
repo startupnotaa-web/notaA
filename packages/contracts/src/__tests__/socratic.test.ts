@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SocraticResponseSchema } from '../socratic';
+import { SocraticResponseSchema } from '../aprendizagem/socratic';
 
 describe('SocraticResponseSchema (I3 — união discriminada por tipo, doc 05 §7)', () => {
   it('aceita guidance (caso normal)', () => {

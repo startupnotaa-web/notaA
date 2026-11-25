@@ -1,6 +1,6 @@
 import { PaginaLegal } from '../../_landing/componentes/PaginaLegal';
-import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/juridico';
-import { metadadosDaPagina } from '../../../lib/site';
+import { DADOS_JURIDICOS, juridicoCompleto } from '../../../lib/publico/juridico';
+import { metadadosDaPagina } from '../../../lib/publico/site';
 
 // A CSP com nonce (middleware.ts) exige HTML gerado por requisição.
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ export const metadata = metadadosDaPagina({
   semIndexacao: !completa,
 });
 
-// As cláusulas vêm de lib/juridico.ts (textoDasClausulas), aprovadas pelo jurídico. Sem elas a página não publica.
+// As cláusulas vêm de lib/publico/juridico.ts (textoDasClausulas), aprovadas pelo jurídico. Sem elas a página não publica.
 export default function Termos() {
   if (!completa) {
     return (

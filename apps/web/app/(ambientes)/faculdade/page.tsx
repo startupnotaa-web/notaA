@@ -4,7 +4,7 @@ import { PalcoFaculdade } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_FACULDADE, FOCO, FORM_FACULDADE } from '../../_landing/componentes/estilos';
 import { FallbackFaculdade } from '../../_landing/fallbacks/FallbackFaculdade';
-import { metadadosDaPagina } from '../../../lib/site';
+import { metadadosDaPagina } from '../../../lib/publico/site';
 
 export const metadata = metadadosDaPagina({
   titulo: 'Nota A para faculdades: o módulo ENADE, em breve',

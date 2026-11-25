@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { ClipboardList, Landmark, PenLine, Zap } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
 import { Carregando, Notice, PageHeader, Section, Skeleton } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { useUser } from '../../../lib/user-context';
-import { Atalho, AtalhoLista } from '../../components/Atalho';
-import { Pagina } from '../../components/Pagina';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { useUser } from '../../../lib/auth/user-context';
+import { Atalho, AtalhoLista } from '../../components/navegacao/Atalho';
+import { Pagina } from '../../components/estrutura/Pagina';
 
 export default function EstudoHubPage() {
   const { loading: userLoading } = useUser();

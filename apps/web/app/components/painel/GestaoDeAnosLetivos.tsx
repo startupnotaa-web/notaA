@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AnoLetivo } from '@notaa/contracts';
 import { Button, Carregando, Chip, EmptyState, Notice, Panel, Section, SkeletonLinhas, TextField } from '@notaa/ui';
-import { ApiError, apiFetch } from '../../../lib/api-client';
+import { ApiError, apiFetch } from '../../../lib/http/api-client';
 
 /**
  * Ano letivo. O rótulo é global da plataforma; as datas são de quem é DONO das

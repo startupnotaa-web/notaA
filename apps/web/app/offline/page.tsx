@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@notaa/ui';
-import { TelaDeEstado } from '../components/TelaDeEstado';
+import { TelaDeEstado } from '../components/feedback/TelaDeEstado';
 
 // Entregue pelo service worker (app/sw.ts) quando uma página não está salva e não há internet.
 export default function Offline() {

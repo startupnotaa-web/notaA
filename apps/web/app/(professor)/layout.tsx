@@ -2,9 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { GraduationCap } from 'lucide-react';
-import { PainelShell, type ItemDeNavegacao } from '../components/PainelShell';
-import { papeisDaRota } from '../../lib/destino';
-import { UserProvider } from '../../lib/user-context';
+import { PainelShell, type ItemDeNavegacao } from '../components/estrutura/PainelShell';
+import { papeisDaRota } from '../../lib/auth/destino';
+import { UserProvider } from '../../lib/auth/user-context';
 
 const NAVEGACAO: ItemDeNavegacao[] = [{ href: '/professor', rotulo: 'Minhas turmas', icone: <GraduationCap className="h-5 w-5" /> }];
 

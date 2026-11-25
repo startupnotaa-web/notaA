@@ -19,8 +19,8 @@ import {
   Skeleton,
   toast,
 } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Pagina } from '../../components/Pagina';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Pagina } from '../../components/estrutura/Pagina';
 
 // Mapeia o id de curso coletado no onboarding (objetivoEnem) para um rótulo legível.
 const CURSO_LABEL: Record<string, string> = {

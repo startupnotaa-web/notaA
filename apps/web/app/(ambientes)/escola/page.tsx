@@ -4,8 +4,8 @@ import { PalcoEscola } from '../../_landing/componentes/Palcos';
 import { Rodape } from '../../_landing/componentes/Rodape';
 import { BOTAO_ESCOLA, FORM_ESCOLA } from '../../_landing/componentes/estilos';
 import { FallbackEscola, FallbackGradeEscola } from '../../_landing/fallbacks/FallbackEscola';
-import { metadadosDaPagina } from '../../../lib/site';
-import { AbasRecursos, type RecursoDaEscola } from './AbasRecursos';
+import { metadadosDaPagina } from '../../../lib/publico/site';
+import { AbasRecursos, type RecursoDaEscola } from './components/AbasRecursos';
 
 export const metadata = metadadosDaPagina({
   titulo: 'Nota A para escolas: boletim e frequência com a sua regra de média',

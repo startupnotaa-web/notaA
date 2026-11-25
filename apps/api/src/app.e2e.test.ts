@@ -6,13 +6,13 @@ import { SignJWT } from 'jose';
 import supertest from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from './app.module';
-import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY, USUARIO_STATUS } from './modules/auth/auth.tokens';
+import { AUTH_ADMIN, INSTITUICAO_REPOSITORY, USUARIO_REPOSITORY, USUARIO_STATUS } from './modules/identidade/auth/auth.tokens';
 import {
   AuthAdminMemory,
   InstituicaoRepositoryMemory,
   UsuarioRepositoryMemory,
   UsuarioStatusMemory,
-} from './modules/auth/auth.repository.memory';
+} from './modules/identidade/auth/adaptadores/auth.repository.memory';
 
 // e2e real: app Nest+Fastify de verdade, sem mocks de Guard — prova que
 // AuthGuard + RolesGuard (passo 6) e verifySupabaseJwt/hasRole (passo 5)

@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { MessageCircle, ThumbsUp } from 'lucide-react';
 import type { DashboardResponse } from '@notaa/contracts';
 import { Button, Carregando, Chip, Notice, PageHeader, Panel, Section, Skeleton, TextArea, cn } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Pagina } from '../../components/Pagina';
-import { Voltar } from '../../components/Voltar';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { Voltar } from '../../components/navegacao/Voltar';
 
 type Post = {
   id: string;

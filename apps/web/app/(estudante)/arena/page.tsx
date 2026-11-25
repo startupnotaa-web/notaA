@@ -1,9 +1,9 @@
 'use client';
 import { Landmark, Swords, Users } from 'lucide-react';
 import { Carregando, Chip, Inset, PageHeader, Section, Skeleton } from '@notaa/ui';
-import { useUser } from '../../../lib/user-context';
-import { Atalho, AtalhoLista } from '../../components/Atalho';
-import { Pagina } from '../../components/Pagina';
+import { useUser } from '../../../lib/auth/user-context';
+import { Atalho, AtalhoLista } from '../../components/navegacao/Atalho';
+import { Pagina } from '../../components/estrutura/Pagina';
 
 export default function ArenaHubPage() {
   const { loading: userLoading, xp } = useUser();

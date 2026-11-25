@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Lightbulb } from 'lucide-react';
 import type { StudyTrailResponse } from '@notaa/contracts';
-import { apiFetch, ApiError } from '../../../lib/api-client';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
 import { Button, Carregando, EmptyState, Inset, Notice, PageHeader, Section, Skeleton } from '@notaa/ui';
-import { Pagina } from '../../components/Pagina';
+import { Pagina } from '../../components/estrutura/Pagina';
 
 export default function TrilhasPage() {
   const [trilha, setTrilha] = useState<StudyTrailResponse | null>(null);

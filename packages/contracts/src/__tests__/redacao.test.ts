@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EssayEvaluationSchema, NotaCompetenciaSchema } from '../redacao';
+import { EssayEvaluationSchema, NotaCompetenciaSchema } from '../aprendizagem/redacao';
 
 function competencia(n: number, nota: number) {
   return {

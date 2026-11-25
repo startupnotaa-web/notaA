@@ -1,6 +1,6 @@
 # 04 — Modelo de Dados
 
-> Esquema concreto (PostgreSQL/Drizzle) derivado das entidades conceituais da seção 1.2 do [planejamento](../NotaA_Planejamento_Criacao_Execucao.md). Convenções abaixo, depois ER, entidades por contexto, e decisões de índice/integridade.
+> Esquema concreto (PostgreSQL/Drizzle) derivado das entidades conceituais da seção 1.2 do planejamento original ([consulta no Git](01-entendimento-produto.md)). Convenções abaixo, depois ER, entidades por contexto, e decisões de índice/integridade.
 
 ---
 

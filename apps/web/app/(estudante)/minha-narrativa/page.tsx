@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { Brain, Compass, Eye, GraduationCap, Landmark, ListOrdered, MessageCircle, Orbit, PenLine, Rocket, Scale, Sprout, Star, Zap, type LucideIcon } from 'lucide-react';
 import type { DashboardResponse, Eixo4D } from '@notaa/contracts';
 import { Carregando, Chip, Notice, PageHeader, Section, Skeleton, cn } from '@notaa/ui';
-import { apiFetch, ApiError } from '../../../lib/api-client';
-import { Pagina } from '../../components/Pagina';
-import { Voltar } from '../../components/Voltar';
+import { apiFetch, ApiError } from '../../../lib/http/api-client';
+import { Pagina } from '../../components/estrutura/Pagina';
+import { Voltar } from '../../components/navegacao/Voltar';
 
 const ARQUETIPOS: Record<string, { titulo: string; descricao: string; Icone: LucideIcon }> = {
   Visual: { titulo: 'O Observador', descricao: 'Você capta o mundo através de imagens e mapas mentais.', Icone: Eye },

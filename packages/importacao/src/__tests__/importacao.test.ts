@@ -15,7 +15,7 @@ import {
   type AlunoExistente,
   type ContextoAlunos,
 } from '../index';
-import { celula } from '../valores';
+import { celula } from '../validacao/valores';
 
 const texto = (s: string) => new TextEncoder().encode(s);
 

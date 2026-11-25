@@ -8,11 +8,11 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { semRotulo, type ContextoListado } from '@notaa/contracts';
 import { ButtonLink, Notice } from '@notaa/ui';
-import { AuthPagina } from '../../../components/auth';
-import { EscolherContexto } from '../../../components/EscolherContexto';
-import { useAuth } from '../../../../lib/auth-context';
-import { caminhoInternoSeguro } from '../../../../lib/destino';
-import { confirmarContexto, prepararEntrada, type Entrada } from '../../../../lib/entrada';
+import { AuthPagina } from '../../../components/acesso/auth';
+import { EscolherContexto } from '../../../components/acesso/EscolherContexto';
+import { useAuth } from '../../../../lib/auth/auth-context';
+import { caminhoInternoSeguro } from '../../../../lib/auth/destino';
+import { confirmarContexto, prepararEntrada, type Entrada } from '../../../../lib/auth/entrada';
 
 type Estado =
   | { fase: 'processando' }

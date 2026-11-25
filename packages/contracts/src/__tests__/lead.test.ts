@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CriarLeadRequestSchema, VERSAO_POLITICA_LEAD } from '../lead';
+import { CriarLeadRequestSchema, VERSAO_POLITICA_LEAD } from '../plataforma/lead';
 
 const base = { consentimento: true, versaoPolitica: VERSAO_POLITICA_LEAD, website: '' };
 

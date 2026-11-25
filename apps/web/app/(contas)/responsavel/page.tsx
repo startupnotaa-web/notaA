@@ -3,13 +3,13 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button, Notice } from '@notaa/ui';
-import { AcessoNegado, IrParaConcluirCadastro } from '../../components/AcessoNegado';
-import { SeletorDePerfil } from '../../components/SeletorDePerfil';
-import { TelaCarregando } from '../../components/TelaCarregando';
-import { TelaDeEstado } from '../../components/TelaDeEstado';
-import { useAuth } from '../../../lib/auth-context';
-import { papeisDaRota } from '../../../lib/destino';
-import { useGuardaDePapel } from '../../../lib/guarda-de-papel';
+import { AcessoNegado, IrParaConcluirCadastro } from '../../components/acesso/AcessoNegado';
+import { SeletorDePerfil } from '../../components/acesso/SeletorDePerfil';
+import { TelaCarregando } from '../../components/feedback/TelaCarregando';
+import { TelaDeEstado } from '../../components/feedback/TelaDeEstado';
+import { useAuth } from '../../../lib/auth/auth-context';
+import { papeisDaRota } from '../../../lib/auth/destino';
+import { useGuardaDePapel } from '../../../lib/acesso/guarda-de-papel';
 
 /**
  * Home provisória do responsável. O painel da família ainda não existe; até ele existir, esta tela

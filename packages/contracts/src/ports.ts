@@ -1,8 +1,8 @@
 import type { z } from 'zod';
 import type { AreaConhecimento, ErroClassificacao, Papel, XpOrigem } from './common';
 import type { ItemParams, Perfil4D, Recomendacao, Tentativa } from './engines';
-import type { OnboardingState } from './onboarding';
-import type { XpLedgerEntry } from './perfil';
+import type { OnboardingState } from './aprendizagem/onboarding';
+import type { XpLedgerEntry } from './identidade/perfil';
 
 // doc 05 §9 / doc 03 §4 — Portas (hexagonal). Implementadas por adaptadores em
 // apps/api; trocar provedor de IA ou banco = trocar o adaptador, sem mudar quem
