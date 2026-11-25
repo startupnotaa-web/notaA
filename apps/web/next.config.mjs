@@ -15,8 +15,8 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // @notaa/ui exporta TS/TSX cru (main: src/index.ts) — o Next precisa transpilá-lo.
-  transpilePackages: ['@notaa/ui'],
+  // @notaa/ui e @notaa/contracts — garante transpilação mesmo sem dist/ prévio.
+  transpilePackages: ['@notaa/ui', '@notaa/contracts'],
 };
 
 export default withSerwist(nextConfig);
