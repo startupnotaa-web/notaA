@@ -122,19 +122,37 @@ export default function Home() {
             <ArteHome />
           </section>
 
-          <section
-            aria-labelledby="manifesto"
-            className={`${LARGURA} grid gap-6 pb-16 md:grid-cols-[1fr_18rem] md:items-center lg:pb-24`}
-          >
-            <h2 id="manifesto" className={TITULO}>
-              De quem aprende
-              <br />
-              <span className="text-primary">para quem ensina</span>
-              <br />e quem transforma.
-            </h2>
-            <p className="border-l border-primary pl-5 text-lead text-ink-muted">
-              Cada ambiente reúne as ferramentas de que você precisa no dia a dia.
-            </p>
+          <section aria-labelledby="manifesto" className={styles.ribbonSection}>
+            <svg
+              className={styles.scrollRibbon}
+              viewBox="0 0 1440 600"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient id="home-scroll-ribbon" x1="0%" y1="0%" x2="100%" y2="76%">
+                  <stop stopColor="var(--primary-hover)" />
+                  <stop offset=".52" stopColor="var(--brand-blue)" />
+                  <stop offset="1" stopColor="var(--brand-blue)" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M-110 122C61 104 257 9 388 67C491 113 521 196 483 290C415 452 259 519 144 474C35 431 68 308 198 245C348 169 621 176 822 265C962 326 1027 443 1130 451C1235 459 1328 369 1420 422C1470 451 1512 468 1570 447"
+                pathLength="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+            <div className={`${LARGURA} ${styles.ribbonContent}`}>
+              <h2 id="manifesto" className={TITULO}>
+                De quem aprende
+                <br />
+                <span className="text-primary">para quem ensina</span>
+                <br />e quem transforma.
+              </h2>
+              <p className="border-l border-primary pl-5 text-lead text-ink-muted">
+                Cada ambiente reúne as ferramentas de que você precisa no dia a dia.
+              </p>
+            </div>
           </section>
 
           <section id="ambientes" aria-labelledby="amb" className={styles.paths}>
@@ -285,6 +303,16 @@ export default function Home() {
             </div>
           </section>
         </main>
+      </div>
+
+      <div className={styles.ribbonReturn} aria-hidden="true">
+        <svg className={styles.scrollRibbon} viewBox="0 0 1440 140" preserveAspectRatio="none">
+          <path
+            d="M1550 22C1315 7 1260 106 1052 99C832 92 795 31 588 53C366 77 189 151 -110 115"
+            pathLength="1"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
       </div>
 
       <footer className={styles.footer}>
