@@ -32,7 +32,7 @@ const ROTAS: Rota[] = [
   { rota: '/tutor', papel: 'estudante', espera: /Tutor socrático/ },
   { rota: '/redacao', papel: 'estudante', espera: /Corretor de redação/ },
   { rota: '/onboarding', papel: 'estudante', espera: /Boas-vindas/ },
-  { rota: '/', papel: null, espera: /Um só caminho/ },
+  { rota: '/', papel: null, espera: /Educação não deveria caber em uma caixa/ },
   { rota: '/aluno', papel: null, espera: /Um passo por dia/ },
   { rota: '/professores', papel: null, espera: /Você dá a aula/ },
   { rota: '/escola', papel: null, espera: /A regra de média da sua instituição/ },

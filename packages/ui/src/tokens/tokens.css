@@ -7,7 +7,9 @@
   --brand-magenta: #E210E2; --brand-blue: #4C87FF; --primary: #5B3FD6; --primary-hover: #4A2FC0;
   --on-primary: #FFFFFF; --violet-tint: #F3F0FE; --cyan-tint: #ECF7FD; --focus: #0A7CC2; --info: #0A6FAE;
   --success: #0B7352; --success-tint: #E9F7F1; --warning: #9A5B00; --warning-tint: #FEF5E6; --danger: #BE2A33;
-  --danger-tint: #FEEEEF; --scrim: rgba(20, 26, 58, 0.48);
+  --danger-tint: #FEEEEF; --home-navy: #14123A; --home-lime: #A6F45B; --home-lavender: #D3CCFF;
+  --home-lavender-end: #C0B6FF; --home-purple: #6A3CF0; --home-purple-end: #5A2AE6; --enem-blue: #8CCAF0;
+  --enem-yellow: #F8DF79; --enem-pink: #F1A7C7; --scrim: rgba(20, 26, 58, 0.48);
   --shadow-raise: 0 1px 2px rgba(20, 26, 58, 0.06), 0 8px 24px rgba(20, 26, 58, 0.06);
   --font-display: var(--nf-sora), Sora, "Segoe UI", system-ui, sans-serif;
   --font-text: var(--nf-atkinson), "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;

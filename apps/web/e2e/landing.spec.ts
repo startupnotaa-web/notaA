@@ -13,13 +13,13 @@ import { juridicoCompleto } from '../lib/publico/juridico';
 const JURIDICO_COMPLETO = juridicoCompleto();
 
 const ROTAS = [
-  { rota: '/', titulo: /Nota A: um ambiente para cada papel/, h1: /Um só caminho/, canonical: '/', og: 'home' },
+  { rota: '/', titulo: /Nota A: um ambiente para cada papel/, h1: /Educação não deveria caber em uma caixa/, canonical: '/', og: 'home' },
   { rota: '/aluno', titulo: /Nota A para alunos/, h1: /Um passo por dia/, canonical: '/aluno', og: 'aluno' },
   { rota: '/professores', titulo: /Nota A para professores/, h1: /Você dá a aula/, canonical: '/professores', og: 'professores' },
   { rota: '/escola', titulo: /Nota A para escolas/, h1: /A regra de média da sua instituição/, canonical: '/escola', og: 'escola' },
   { rota: '/faculdade', titulo: /Nota A para faculdades/, h1: /ENADE com método e evidência/, canonical: '/faculdade', og: 'faculdade' },
 ] as const;
-const COM_CENA = ROTAS;
+const COM_CENA = ROTAS.filter(({ rota }) => rota !== '/');
 
 // O 3D usa WebGL por software (SwiftShader) no Chromium sem GPU, e só liga com mais de 4 núcleos.
 const COM_GPU_FINGIDA = async (page: Page) => {
@@ -312,9 +312,9 @@ test.describe('teclado', () => {
     await expect(page.locator('#conteudo')).toBeVisible();
   });
 
-  test('home: os rótulos da órbita são links reais para as quatro rotas', async ({ page }) => {
+  test('home: as faixas de soluções são links reais para as quatro rotas', async ({ page }) => {
     await page.goto('/');
-    const hrefs = await page.locator('[data-ancora]').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).getAttribute('href')));
+    const hrefs = await page.locator('#ambientes a').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).getAttribute('href')));
     expect(hrefs).toEqual(['/aluno', '/professores', '/escola', '/faculdade']);
   });
 });

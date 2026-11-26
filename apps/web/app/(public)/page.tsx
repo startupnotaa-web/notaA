@@ -1,14 +1,17 @@
 import Link from 'next/link';
-import { Aurora } from '@notaa/ui';
+import { ArrowDown, ArrowUpRight, Building2, ChartNoAxesColumn, Sun } from 'lucide-react';
 import { Cabecalho } from '../_landing/componentes/Cabecalho';
 import { FormularioLead } from '../_landing/componentes/FormularioLead';
-import { PalcoHome } from '../_landing/componentes/Palcos';
-import { Rodape } from '../_landing/componentes/Rodape';
+import { NotaASimbolo } from '@notaa/ui';
+import { DADOS_JURIDICOS, juridicoCompleto } from '../../lib/publico/juridico';
 import { BOTAO_HOME, FOCO, FORM_HOME } from '../_landing/componentes/estilos';
-import { FallbackHome } from '../_landing/fallbacks/FallbackHome';
 import { metadadosDaPagina } from '../../lib/publico/site';
+import { ArteHome } from './ArteHome';
+import { MapaHome } from './MapaHome';
+import styles from './home.module.css';
+import { CartoesHome } from './CartoesHome';
 
-// A CSP com nonce (middleware.ts) exige HTML gerado por requisição: um HTML do build não teria nonce.
+// A CSP com nonce exige HTML gerado por requisição.
 export const dynamic = 'force-dynamic';
 
 export const metadata = metadadosDaPagina({
@@ -21,51 +24,39 @@ export const metadata = metadadosDaPagina({
 
 const AMBIENTES = [
   {
-    id: 'aluno',
     href: '/aluno',
     nome: 'Aluno',
-    sub: 'ENEM, no seu ritmo',
-    posicao: 'md:left-[50%] md:top-[84%]',
-    chip: 'Para quem estuda para o ENEM',
-    texto: 'Trilha de estudo, simulados e uma nota estimada do ENEM.',
-    ir: 'Conhecer o ambiente do aluno',
-    glifo:
-      'rounded-full bg-[conic-gradient(from_200deg,var(--amb-accent),var(--amb-cyan),var(--amb-pink),var(--amb-accent))] opacity-75',
+    texto: 'Aprenda mais, vá mais longe.',
+    Icone: ArrowUpRight,
+    corCaderno: 'Azul',
+    descricao: 'Monte sua trilha de estudos, faça simulados e acompanhe sua nota estimada do ENEM.',
   },
   {
-    id: 'professor',
     href: '/professores',
     nome: 'Professor',
-    sub: 'Suas aulas, seu painel',
-    posicao: 'md:left-[80%] md:top-[52%]',
-    chip: 'Para quem dá aula por conta própria',
-    texto: 'Turmas, alunos e o acompanhamento de cada um em um painel só.',
-    ir: 'Conhecer o ambiente do professor',
-    glifo: 'flex items-end gap-2.5',
+    texto: 'Ensine com mais apoio.',
+    Icone: Sun,
+    corCaderno: 'Amarelo',
+    descricao: 'Organize suas aulas e turmas e acompanhe o progresso dos alunos em um painel.',
   },
   {
-    id: 'escola',
     href: '/escola',
     nome: 'Escola',
-    sub: 'Gestão acadêmica',
-    posicao: 'md:left-[50%] md:top-[14%]',
-    chip: 'Para instituições de ensino',
-    texto: 'Boletim com a regra de média da sua instituição, frequência e importação das planilhas da secretaria.',
-    ir: 'Conhecer o ambiente da escola',
-    glifo: 'grid grid-cols-2 gap-2.5',
+    texto: 'Organize e evolua sua instituição.',
+    Icone: Building2,
+    corCaderno: 'Branco',
+    descricao: 'Gerencie boletins e frequência e importe as planilhas da secretaria.',
   },
   {
-    id: 'faculdade',
     href: '/faculdade',
     nome: 'Faculdade',
-    sub: 'ENADE, em breve',
-    posicao: 'md:left-[20%] md:top-[52%]',
-    chip: 'Em breve, para o ENADE',
-    texto: 'Simulados e acompanhamento por curso, com relatório para a coordenação.',
-    ir: 'Ver o que está por vir',
-    glifo: 'rotate-45 rounded-[12px] border-[3px] border-[color:color-mix(in_srgb,var(--surface)_50%,transparent)] !h-[90px] !w-[90px] !bottom-3 !right-3',
+    texto: 'Em breve, preparação para o ENADE.',
+    Icone: ChartNoAxesColumn,
+    corCaderno: 'Rosa',
+    descricao:
+      'Conheça o ambiente em preparação para o ENADE e veja como entrar na lista de espera.',
   },
-] as const;
+];
 
 const IGUAL_EM_TODOS = [
   {
@@ -85,38 +76,18 @@ const IGUAL_EM_TODOS = [
   },
 ];
 
-function Glifo({ id, classe }: { id: string; classe: string }) {
-  const base = 'pointer-events-none absolute bottom-0 right-0 h-[130px] w-[130px]';
-  if (id === 'professor') {
-    return (
-      <span aria-hidden="true" className={`${base} ${classe}`}>
-        <i className="h-1/2 flex-1 rounded-md bg-amb-amber" />
-        <i className="h-4/5 flex-1 rounded-md bg-[color-mix(in_srgb,var(--surface)_55%,transparent)]" />
-        <i className="h-[65%] flex-1 rounded-md bg-[color-mix(in_srgb,var(--surface)_30%,transparent)]" />
-      </span>
-    );
-  }
-  if (id === 'escola') {
-    return (
-      <span aria-hidden="true" className={`${base} ${classe}`}>
-        <i className="rounded-sm bg-[color-mix(in_srgb,var(--surface)_55%,transparent)]" />
-        <i className="rounded-sm bg-[color-mix(in_srgb,var(--surface)_25%,transparent)]" />
-        <i className="rounded-sm bg-[color-mix(in_srgb,var(--surface)_25%,transparent)]" />
-        <i className="rounded-sm bg-amb-glyph" />
-      </span>
-    );
-  }
-  return <span aria-hidden="true" className={`${base} ${classe}`} />;
-}
+const LARGURA = 'mx-auto w-full max-w-landing px-5 md:px-10';
+const TITULO = 'font-display text-[clamp(2rem,4.5vw,4rem)] font-bold leading-[1.08] tracking-tight';
 
 export default function Home() {
   return (
     <div data-theme="light" className="min-h-screen overflow-x-clip bg-paper font-text text-ink">
-      <Aurora as="section">
+      <div className="bg-[radial-gradient(ellipse_at_top_right,var(--violet-tint),transparent_75%)]">
         <Cabecalho
           links={[
-            { href: '#ambientes', rotulo: 'Ambientes' },
-            { href: '#base', rotulo: 'O que é igual em todos' },
+            { href: '#ambientes', rotulo: 'Soluções' },
+            { href: '#sobre', rotulo: 'Sobre' },
+            { href: '#base', rotulo: 'Plataforma' },
             { href: '#contato', rotulo: 'Contato' },
           ]}
           secundario={{ href: '/login', rotulo: 'Entrar' }}
@@ -126,162 +97,237 @@ export default function Home() {
             </a>
           }
         />
-
-        <main id="conteudo">
-          <div className="relative mx-auto flex w-full max-w-landing flex-wrap items-center gap-6 px-5 pb-16 pt-6 md:px-10">
-            <div className="flex min-w-0 flex-[1_1_520px] flex-col gap-7">
-              <h1 className="max-w-[700px] animate-landing-rise font-display text-[clamp(2.625rem,5.6vw,4.875rem)] font-semibold leading-[1.06] tracking-[-0.03em] [animation-delay:80ms]">
-                Um só caminho, de quem estuda a quem ensina.
+        <main id="conteudo" tabIndex={-1}>
+          <section
+            id="sobre"
+            className={`${LARGURA} grid items-center gap-8 pb-16 pt-12 md:grid-cols-[1fr_1.06fr] lg:pb-24 lg:pt-20`}
+          >
+            <div>
+              <h1 className="max-w-[10em] font-display text-[clamp(2.25rem,5.3vw,5.25rem)] font-extrabold leading-[1.04] tracking-[-0.055em]">
+                Educação não deveria caber em <span className="text-primary">uma caixa.</span>
               </h1>
-              <p className="max-w-[540px] animate-landing-rise text-[20px] leading-8 text-ink-muted [animation-delay:220ms]">
-                O Nota A tem um ambiente para cada papel: o aluno que se prepara para o ENEM, o professor que cuida das
-                próprias aulas, a escola e, em breve, a faculdade. Cada um com o seu jeito, todos com a mesma base.
+              <p className="mt-6 max-w-[37ch] text-lead text-ink-muted">
+                A Nota A conecta alunos, professores e instituições em uma plataforma para estudar,
+                ensinar e acompanhar a aprendizagem.
               </p>
-              <div className="flex animate-landing-rise flex-wrap gap-3.5 [animation-delay:360ms]">
-                <a href="#ambientes" className={BOTAO_HOME.primario}>
-                  Escolher meu ambiente
+              <div className="mt-7 flex flex-wrap gap-3">
+                <a href="#ambientes" className={`${BOTAO_HOME.primario} gap-2`}>
+                  Descubra seu ambiente <ArrowDown size={18} aria-hidden="true" />
                 </a>
-                <a href="#contato" className={BOTAO_HOME.secundario}>
-                  Falar com a gente
-                </a>
+                <Link href="/cadastro" className={BOTAO_HOME.secundario}>
+                  Criar conta
+                </Link>
               </div>
             </div>
+            <ArteHome />
+          </section>
 
-            <PalcoHome
-              fallback={<FallbackHome />}
-              className="min-w-0 flex-[1_1_560px] md:h-[640px]"
-              classeDaArte="inset-x-0 top-0 h-[340px] md:inset-0 md:h-auto"
-            >
-              <div className="h-[340px] md:hidden" />
-              <ul className="relative m-0 grid list-none grid-cols-2 gap-3 p-0 md:absolute md:inset-0 md:block">
-                {AMBIENTES.map((a) => (
-                  <li key={a.id} className="contents">
-                    <Link
-                      href={a.href}
-                      data-ancora
-                      data-ambiente={a.id}
-                      className={`flex w-full flex-col gap-0.5 rounded-[18px] bg-amb-tag px-[18px] py-3.5 text-surface no-underline shadow-raise md:absolute md:w-[172px] md:-translate-x-1/2 md:-translate-y-1/2 ${a.posicao} ${FOCO}`}
-                    >
-                      <strong className="font-display text-[20px] font-semibold leading-[26px]">{a.nome}</strong>
-                      <span className="text-body-sm">{a.sub}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </PalcoHome>
-          </div>
-        </main>
-      </Aurora>
-
-      <section id="ambientes" aria-labelledby="amb" className="mx-auto w-full max-w-landing px-5 pb-6 pt-[72px] md:px-10">
-        <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
-          <h2
-            id="amb"
-            className="max-w-[640px] font-display text-[clamp(2rem,3.6vw,3rem)] font-semibold leading-[1.12] tracking-[-0.02em]"
+          <section
+            aria-labelledby="manifesto"
+            className={`${LARGURA} grid gap-6 pb-16 md:grid-cols-[1fr_18rem] md:items-center lg:pb-24`}
           >
-            Escolha o ambiente que combina com o seu dia.
-          </h2>
-          <p className="max-w-[420px] text-[18px] leading-[29px] text-ink-muted">
-            Cada um tem cores, ritmo e telas próprias, pensadas para quem usa.
-          </p>
-        </div>
-        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(270px,1fr))] gap-5 p-0">
-          {AMBIENTES.map((a) => (
-            <li key={a.id} className="contents">
-              <Link
-                href={a.href}
-                data-ambiente={a.id}
-                className={`group relative flex min-h-[430px] flex-col gap-3.5 overflow-hidden rounded-[26px] bg-[linear-gradient(160deg,var(--amb-card-from),var(--amb-card-to))] px-7 py-[30px] text-surface no-underline transition-[transform,box-shadow] duration-base ease-out hover:-translate-y-2 hover:shadow-raise motion-reduce:transition-none ${FOCO}`}
-              >
-                <span className="inline-flex self-start rounded-pill bg-[color-mix(in_srgb,var(--amb-card-to)_55%,transparent)] px-3 py-1 text-[13.5px] font-bold leading-5">
-                  {a.chip}
-                </span>
-                <h3 className="m-0 font-display text-[34px] font-semibold leading-10 tracking-[-0.01em]">{a.nome}</h3>
-                <p className="m-0 max-w-[300px] text-[17px] leading-[27px]">{a.texto}</p>
-                {/* A arte ocupa o espaço entre o texto e a chamada, sem passar por baixo do texto. */}
-                <div className="relative min-h-[130px] flex-1">
-                  <Glifo id={a.id} classe={a.glifo} />
-                </div>
-                <span className="text-body font-bold underline underline-offset-[5px]">{a.ir}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section id="base" aria-labelledby="bas" className="mx-auto w-full max-w-landing px-5 pb-6 pt-[88px] md:px-10">
-        <h2
-          id="bas"
-          className="mb-10 max-w-[700px] font-display text-[clamp(1.875rem,3.4vw,2.75rem)] font-semibold leading-[1.14] tracking-[-0.02em]"
-        >
-          O que é igual nos quatro ambientes.
-        </h2>
-        <div className="flex flex-wrap border-t border-line">
-          {IGUAL_EM_TODOS.map((item, i) => (
-            <div
-              key={item.titulo}
-              className={`flex-[1_1_320px] py-8 ${i === 0 ? 'pr-9' : 'border-line lg:border-l lg:px-9'} ${i === 2 ? 'lg:pr-0' : ''}`}
-            >
-              <h3 className="mb-2.5 font-display text-heading-2 font-semibold">{item.titulo}</h3>
-              <p className="max-w-[380px] text-[17px] leading-7 text-ink-muted">{item.texto}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="contato" aria-labelledby="con" className="mx-auto w-full max-w-landing px-5 pb-20 pt-[72px] md:px-10">
-        {/* O degradê da marca entra como luz de fundo, e o texto fica sobre o índigo sólido: branco sobre o ciano do
-            degradê não chegaria a 4,5:1. */}
-        <div className="relative isolate flex flex-wrap gap-10 overflow-hidden rounded-[32px] bg-ink p-6 text-surface md:p-14">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute -left-24 -top-32 -z-10 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,var(--brand-cyan),transparent_68%)] opacity-60 blur-[60px]"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-40 -right-20 -z-10 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,var(--brand-magenta),transparent_68%)] opacity-50 blur-[60px]"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-1/3 top-1/2 -z-10 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,var(--brand-violet),transparent_68%)] opacity-60 blur-[60px]"
-          />
-          <div className="flex flex-[1_1_380px] flex-col justify-center gap-4">
-            <h2
-              id="con"
-              className="m-0 font-display text-[clamp(2rem,3.6vw,2.875rem)] font-semibold leading-[1.12] tracking-[-0.02em]"
-            >
-              Conte quem você é e indicamos o caminho.
+            <h2 id="manifesto" className={TITULO}>
+              De quem aprende
+              <br />
+              <span className="text-primary">para quem ensina</span>
+              <br />e quem transforma.
             </h2>
-          </div>
-          <FormularioLead
-            origem="contato"
-            botao="Quero conhecer"
-            consentimento="Autorizo o Nota A a usar meu nome e e-mail para responder a este pedido, como descrito na"
-            sucesso={{
-              titulo: 'Pedido recebido',
-              texto: 'Vamos responder por e-mail com o ambiente indicado para você.',
-            }}
-            estilo={FORM_HOME}
-            campos={[
-              { nome: 'nome', rotulo: 'Seu nome', tipo: 'text', autoComplete: 'name' },
-              { nome: 'email', rotulo: 'Seu e-mail', tipo: 'email', autoComplete: 'email' },
-              {
-                nome: 'perfil',
-                rotulo: 'Eu sou',
-                tipo: 'select',
-                opcoes: [
-                  { valor: 'aluno', rotulo: 'Aluno que estuda para o ENEM' },
-                  { valor: 'professor', rotulo: 'Professor com aulas próprias' },
-                  { valor: 'gestor', rotulo: 'Gestor de escola ou instituição' },
-                  { valor: 'faculdade', rotulo: 'Da faculdade, quero a lista de espera' },
-                ],
-              },
-            ]}
-          />
-        </div>
-      </section>
+            <p className="border-l border-primary pl-5 text-lead text-ink-muted">
+              Cada ambiente reúne as ferramentas de que você precisa no dia a dia.
+            </p>
+          </section>
 
-      <Rodape className="text-ink-muted" />
+          <section id="ambientes" aria-labelledby="amb" className={styles.paths}>
+            <h2 id="amb">Quatro caminhos, uma só experiência.</h2>
+            <ul className={styles.bands}>
+              {AMBIENTES.map(({ href, nome, texto, Icone }) => (
+                <li key={href}>
+                  <Link href={href} className={`${styles.band} ${FOCO}`}>
+                    <strong>{nome}</strong>
+                    <span>{texto}</span>
+                    <Icone aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section
+            id="como-funciona"
+            aria-labelledby="como-titulo"
+            className={`${LARGURA} ${styles.guide}`}
+          >
+            <div className={styles.guidePanel}>
+              <div className={styles.guideBackdrop} aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
+              <div className={styles.guideIntro}>
+                <h2 id="como-titulo" className={TITULO}>
+                  Como funciona
+                </h2>
+                <p>Escolha seu ambiente para ver o que você pode fazer no NotaA.</p>
+              </div>
+              <CartoesHome>
+                {AMBIENTES.map(({ href, nome, descricao, corCaderno }, indice) => (
+                  <Link key={href} href={href} className={`${styles.guideCard} ${FOCO}`}>
+                    <div className={styles.guideCover}>
+                      <span className={styles.guideBrand}>Nota A</span>
+                      <span className={styles.guideEdition}>
+                        Caderno {indice + 1} · {corCaderno}
+                      </span>
+                    </div>
+                    <h3>{nome}</h3>
+                    <p>{descricao}</p>
+                    <span className={styles.guideAction}>
+                      Ver ambiente <ArrowUpRight size={18} aria-hidden="true" />
+                    </span>
+                  </Link>
+                ))}
+              </CartoesHome>
+            </div>
+          </section>
+
+          <section id="base" aria-labelledby="bas" className={styles.impact}>
+            <svg
+              className={styles.wave}
+              viewBox="0 0 1440 70"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path d="M0 0H1440C1210 0 1080 5 880 8S410 3 305 12 100 28 0 56Z" />
+            </svg>
+            <svg
+              className={`${styles.wave} ${styles.bottomWave}`}
+              viewBox="0 0 1440 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path d="M0 30C96 82 127 108 222 69S356 0 421 10C552 32 735 100 869 100S1216 69 1440 15V100H0Z" />
+            </svg>
+            <div className={`${LARGURA} ${styles.impactGrid}`}>
+              <div className={styles.impactIntro}>
+                <p className={styles.eyebrow}>Nosso impacto</p>
+                <h2 id="bas">
+                  Uma educação mais forte em <span>todo o Brasil.</span>
+                </h2>
+                <a href="#contato" className={`${styles.impactLink} ${FOCO}`}>
+                  Tecnologia, dados e propósito para transformar a educação.
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </a>
+              </div>
+              <div className={styles.impactStats}>
+                <MapaHome />
+                <dl className={styles.impactFigures}>
+                  <div>
+                    <dt>Estudantes impactados</dt>
+                    <dd>14M+</dd>
+                  </div>
+                  <div>
+                    <dt>Escolas conectadas</dt>
+                    <dd>74 MIL</dd>
+                  </div>
+                  <div>
+                    <dt>Municípios</dt>
+                    <dd>5.500</dd>
+                  </div>
+                </dl>
+                <p className={styles.impactNote}>Números ilustrativos</p>
+              </div>
+            </div>
+          </section>
+
+          <div className={`${LARGURA} ${styles.impactDetails}`}>
+            {IGUAL_EM_TODOS.map((item) => (
+              <div key={item.titulo}>
+                <h3>{item.titulo}</h3>
+                <p>{item.texto}</p>
+              </div>
+            ))}
+          </div>
+
+          <section id="contato" aria-labelledby="con" className={`${LARGURA} py-16 lg:py-24`}>
+            <div className="flex flex-wrap items-center gap-8 rounded-[32px] bg-violet-tint p-5 md:p-12">
+              <div className="min-w-0 flex-[1_1_320px]">
+                <h2 id="con" className={TITULO}>
+                  Se a educação muda, <span className="text-primary">tudo muda.</span>
+                </h2>
+                <p className="mt-4 text-lead text-ink-muted">
+                  Conte quem você é e indicamos o ambiente para você.
+                </p>
+              </div>
+              <FormularioLead
+                origem="contato"
+                botao="Quero conhecer"
+                consentimento="Autorizo o Nota A a usar meu nome e e-mail para responder a este pedido, como descrito na"
+                sucesso={{
+                  titulo: 'Pedido recebido',
+                  texto: 'Vamos responder por e-mail com o ambiente indicado para você.',
+                }}
+                estilo={FORM_HOME}
+                campos={[
+                  { nome: 'nome', rotulo: 'Seu nome', tipo: 'text', autoComplete: 'name' },
+                  { nome: 'email', rotulo: 'Seu e-mail', tipo: 'email', autoComplete: 'email' },
+                  {
+                    nome: 'perfil',
+                    rotulo: 'Eu sou',
+                    tipo: 'select',
+                    opcoes: [
+                      { valor: 'aluno', rotulo: 'Aluno que estuda para o ENEM' },
+                      { valor: 'professor', rotulo: 'Professor com aulas próprias' },
+                      { valor: 'gestor', rotulo: 'Gestor de escola ou instituição' },
+                      { valor: 'faculdade', rotulo: 'Da faculdade, quero a lista de espera' },
+                    ],
+                  },
+                ]}
+              />
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <footer className={styles.footer}>
+        <div className={`${LARGURA} ${styles.footerGrid}`}>
+          <Link
+            href="/"
+            className={`${styles.footerLogo} ${FOCO}`}
+            aria-label="Nota A, página inicial"
+          >
+            <NotaASimbolo className="h-6 w-auto" /> nota A
+          </Link>
+          <nav aria-label="Rodapé" className={styles.footerNav}>
+            <a href="#ambientes" className={FOCO}>
+              Soluções
+            </a>
+            <a href="#sobre" className={FOCO}>
+              Sobre
+            </a>
+            <a href="#base" className={FOCO}>
+              Impacto
+            </a>
+            <a href="#contato" className={FOCO}>
+              Contato
+            </a>
+          </nav>
+          <div className={styles.legal}>
+            <p>© 2026 Nota A. Todos os direitos reservados.</p>
+            {juridicoCompleto() && (
+              <p>
+                {DADOS_JURIDICOS.razaoSocial}, CNPJ {DADOS_JURIDICOS.cnpj}.
+              </p>
+            )}
+            <div>
+              <Link href="/privacidade" className={FOCO}>
+                Privacidade
+              </Link>
+              <Link href="/termos" className={FOCO}>
+                Termos de uso
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
