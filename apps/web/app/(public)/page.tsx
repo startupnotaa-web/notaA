@@ -82,6 +82,17 @@ const TITULO = 'font-display text-[clamp(2rem,4.5vw,4rem)] font-bold leading-[1.
 export default function Home() {
   return (
     <div data-theme="light" className="min-h-screen overflow-x-clip bg-paper font-text text-ink">
+      <div className={styles.homeIntro} aria-hidden="true">
+        <svg className={styles.homeIntroRibbon} viewBox="0 0 1000 1000" preserveAspectRatio="none">
+          <path
+            d="M-75 -140C-41 65 22 523 135 542C251 560 229 71 355 77C478 83 410 820 523 900C650 988 638 409 773 425C884 438 866 968 1010 1125"
+            pathLength="1"
+          />
+        </svg>
+        <div className={styles.homeIntroMark}>
+          <NotaASimbolo className="h-auto w-full" />
+        </div>
+      </div>
       <div className="bg-[radial-gradient(ellipse_at_top_right,var(--violet-tint),transparent_75%)]">
         <Cabecalho
           links={[
@@ -102,9 +113,10 @@ export default function Home() {
             id="sobre"
             className={`${LARGURA} grid items-center gap-8 pb-16 pt-12 md:grid-cols-[1fr_1.06fr] lg:pb-24 lg:pt-20`}
           >
-            <div>
+            <div className={styles.heroIntroCopy}>
               <h1 className="max-w-[10em] font-display text-[clamp(2.25rem,5.3vw,5.25rem)] font-extrabold leading-[1.04] tracking-[-0.055em]">
-                Educação não deveria caber em <span className="text-primary">uma caixa.</span>
+                <span>Educação</span> <span>não</span> <span>deveria</span> <span>caber</span>{' '}
+                <span>em</span> <span className="text-primary">uma caixa.</span>
               </h1>
               <p className="mt-6 max-w-[37ch] text-lead text-ink-muted">
                 A Nota A conecta alunos, professores e instituições em uma plataforma para estudar,
@@ -119,7 +131,9 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-            <ArteHome />
+            <div className={styles.heroIntroArt}>
+              <ArteHome />
+            </div>
           </section>
 
           <section aria-labelledby="manifesto" className={styles.ribbonSection}>
@@ -265,6 +279,26 @@ export default function Home() {
             ))}
           </div>
 
+          <section id="perguntas" aria-labelledby="perguntas-titulo" className={styles.faqSection}>
+            <div className={LARGURA}>
+              <h2 id="perguntas-titulo" className={TITULO}>Perguntas frequentes</h2>
+              <div className={styles.faqList}>
+                <details>
+                  <summary className={FOCO}>Qual ambiente do NotaA é para mim?</summary>
+                  <p>Escolha Aluno para estudar para o ENEM, Professor para acompanhar turmas ou Escola para a gestão acadêmica. O ambiente Faculdade está em preparação para o ENADE.</p>
+                </details>
+                <details>
+                  <summary className={FOCO}>Posso estudar para o ENEM pelo NotaA?</summary>
+                  <p>Sim. No <Link href="/aluno">ambiente do aluno</Link> você encontra trilhas de estudo, simulados e uma estimativa de nota.</p>
+                </details>
+                <details>
+                  <summary className={FOCO}>Como conhecer o NotaA para minha escola?</summary>
+                  <p>Veja os recursos do <Link href="/escola">ambiente da escola</Link> ou <a href="#contato">entre em contato</a> para conversar com a equipe.</p>
+                </details>
+              </div>
+            </div>
+          </section>
+
           <section id="contato" aria-labelledby="con" className={`${LARGURA} py-16 lg:py-24`}>
             <div className="flex flex-wrap items-center gap-8 rounded-[32px] bg-violet-tint p-5 md:p-12">
               <div className="min-w-0 flex-[1_1_320px]">
@@ -316,6 +350,28 @@ export default function Home() {
       </div>
 
       <footer className={styles.footer}>
+        <div className={`${LARGURA} ${styles.footerFeature}`}>
+          <div className={styles.footerFeatureCopy}>
+            <h2>Qual é o seu próximo passo?</h2>
+            <a href="#ambientes" className={`${BOTAO_HOME.secundario} gap-2`}>
+              Conhecer os ambientes <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+          <div className={styles.footerBookletStack} aria-hidden="true">
+            <div className={styles.footerBooklet}>
+              <NotaASimbolo className="h-auto w-12" />
+              <strong>Nota A</strong>
+              <small>Caderno de estudos</small>
+            </div>
+          </div>
+          <div className={styles.footerFeatureContact}>
+            <h2>Vamos conversar?</h2>
+            <p>Fale com a equipe para conhecer o NotaA na sua escola ou faculdade.</p>
+            <a href="#contato" className={`${BOTAO_HOME.primario} gap-2`}>
+              Entrar em contato <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
         <div className={`${LARGURA} ${styles.footerGrid}`}>
           <Link
             href="/"
@@ -334,6 +390,7 @@ export default function Home() {
             <a href="#base" className={FOCO}>
               Impacto
             </a>
+            <a href="#perguntas" className={FOCO}>Perguntas frequentes</a>
             <a href="#contato" className={FOCO}>
               Contato
             </a>
