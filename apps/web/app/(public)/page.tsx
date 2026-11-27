@@ -409,14 +409,8 @@ export default function Home() {
                   <NotaASimbolo className={styles.footerPackageSymbol} />
                   <span>Nota A</span>
                 </div>
-                <strong>Estude com método</strong>
-                <div className={styles.footerPackageAnswers}>
-                  <span>A</span>
-                  <span>B</span>
-                  <span>C</span>
-                  <span>D</span>
-                  <span>E</span>
-                </div>
+                <strong>Seu ritmo. Seu ENEM.</strong>
+                <span className={styles.footerPackageSubtitle}>Trilhas, simulados e redação</span>
               </div>
             </div>
           </div>
