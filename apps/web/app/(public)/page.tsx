@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowUpRight, Building2, ChartNoAxesColumn, Sun } from 'lucide-react';
+import { ArrowDown, ArrowUpRight } from 'lucide-react';
 import { Cabecalho } from '../_landing/componentes/Cabecalho';
 import { FormularioLead } from '../_landing/componentes/FormularioLead';
 import { NotaASimbolo } from '@notaa/ui';
@@ -26,32 +26,32 @@ const AMBIENTES = [
   {
     href: '/aluno',
     nome: 'Aluno',
-    texto: 'Aprenda mais, vá mais longe.',
-    Icone: ArrowUpRight,
+    texto: 'Prepare-se para o ENEM com trilhas, simulados e correção de redação.',
+    acao: 'Explorar estudos',
     corCaderno: 'Azul',
     descricao: 'Monte sua trilha de estudos, faça simulados e acompanhe sua nota estimada do ENEM.',
   },
   {
     href: '/professores',
     nome: 'Professor',
-    texto: 'Ensine com mais apoio.',
-    Icone: Sun,
+    texto: 'Organize suas turmas e acompanhe o progresso de cada aluno.',
+    acao: 'Conhecer o painel',
     corCaderno: 'Amarelo',
     descricao: 'Organize suas aulas e turmas e acompanhe o progresso dos alunos em um painel.',
   },
   {
     href: '/escola',
     nome: 'Escola',
-    texto: 'Organize e evolua sua instituição.',
-    Icone: Building2,
+    texto: 'Acompanhe frequência, calcule médias e organize boletins.',
+    acao: 'Ver gestão escolar',
     corCaderno: 'Branco',
     descricao: 'Gerencie boletins e frequência e importe as planilhas da secretaria.',
   },
   {
     href: '/faculdade',
     nome: 'Faculdade',
-    texto: 'Em breve, preparação para o ENADE.',
-    Icone: ChartNoAxesColumn,
+    texto: 'Conheça o ambiente em preparação para o ENADE.',
+    acao: 'Ver o que vem aí',
     corCaderno: 'Rosa',
     descricao:
       'Conheça o ambiente em preparação para o ENADE e veja como entrar na lista de espera.',
@@ -63,7 +63,7 @@ const TITULO = 'font-display text-[clamp(2rem,4.5vw,4rem)] font-bold leading-[1.
 
 export default function Home() {
   return (
-    <div data-theme="light" className="min-h-screen overflow-x-clip bg-paper font-text text-ink">
+    <div data-theme="light" className="min-h-screen overflow-x-clip bg-surface font-text text-ink">
       <div className={styles.homeIntro} aria-hidden="true">
         <svg className={styles.homeIntroRibbon} viewBox="0 0 1000 1000" preserveAspectRatio="none">
           <path
@@ -75,7 +75,7 @@ export default function Home() {
           <NotaASimbolo className="h-auto w-full" />
         </div>
       </div>
-      <div className="bg-[radial-gradient(ellipse_at_top_right,var(--violet-tint),transparent_75%)]">
+      <div>
         <Cabecalho
           links={[
             { href: '#ambientes', rotulo: 'Soluções' },
@@ -152,14 +152,18 @@ export default function Home() {
           </section>
 
           <section id="ambientes" aria-labelledby="amb" className={styles.paths}>
-            <h2 id="amb">Quatro caminhos, uma só experiência.</h2>
+            <h2 id="amb">Qual é o seu ambiente?</h2>
             <ul className={styles.bands}>
-              {AMBIENTES.map(({ href, nome, texto, Icone }) => (
+              {AMBIENTES.map(({ href, nome, texto, acao }) => (
                 <li key={href}>
                   <Link href={href} className={`${styles.band} ${FOCO}`}>
-                    <strong>{nome}</strong>
-                    <span>{texto}</span>
-                    <Icone aria-hidden="true" />
+                    <div className={styles.bandCopy}>
+                      <strong>{nome}</strong>
+                      <span>{texto}</span>
+                    </div>
+                    <span className={styles.bandAction}>
+                      {acao} <ArrowUpRight aria-hidden="true" />
+                    </span>
                   </Link>
                 </li>
               ))}
