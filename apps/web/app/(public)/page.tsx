@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowDown, ArrowUpRight, Building2, ChartNoAxesColumn, Sun } from 'lucide-react';
 import { Cabecalho } from '../_landing/componentes/Cabecalho';
@@ -55,24 +56,6 @@ const AMBIENTES = [
     corCaderno: 'Rosa',
     descricao:
       'Conheça o ambiente em preparação para o ENADE e veja como entrar na lista de espera.',
-  },
-];
-
-const IGUAL_EM_TODOS = [
-  {
-    titulo: 'Média e situação por regra, não por IA',
-    texto:
-      'Médias, frequência e situação do aluno seguem regras fixas que dá para conferir. A IA ajuda a explicar um erro ou sugerir um estudo, e não decide média nem situação.',
-  },
-  {
-    titulo: 'Feito para todo mundo ler',
-    texto:
-      'Letra desenhada para leitura, contraste alto, navegação por teclado e movimento que respeita a preferência do seu sistema.',
-  },
-  {
-    titulo: 'Cada pessoa vê só o que é seu',
-    texto:
-      'O acesso segue o papel: aluno, responsável, professor e instituição veem só o que o papel permite. Dados sensíveis de menores de 18 anos só são coletados com a autorização do responsável.',
   },
 ];
 
@@ -184,40 +167,38 @@ export default function Home() {
             </ul>
           </section>
 
-          <section
-            id="como-funciona"
-            aria-labelledby="como-titulo"
-            className={`${LARGURA} ${styles.guide}`}
-          >
-            <div className={styles.guidePanel}>
-              <div className={styles.guideBackdrop} aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </div>
-              <div className={styles.guideIntro}>
-                <h2 id="como-titulo" className={TITULO}>
-                  Como funciona
-                </h2>
-                <p>Escolha seu ambiente para ver o que você pode fazer no NotaA.</p>
-              </div>
-              <CartoesHome>
-                {AMBIENTES.map(({ href, nome, descricao, corCaderno }, indice) => (
-                  <Link key={href} href={href} className={`${styles.guideCard} ${FOCO}`}>
-                    <div className={styles.guideCover}>
-                      <span className={styles.guideBrand}>Nota A</span>
-                      <span className={styles.guideEdition}>
-                        Caderno {indice + 1} · {corCaderno}
+          <section id="como-funciona" aria-labelledby="como-titulo" className={styles.guide}>
+            <div className={LARGURA}>
+              <div className={styles.guidePanel}>
+                <div className={styles.guideBackdrop} aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </div>
+                <div className={styles.guideIntro}>
+                  <h2 id="como-titulo" className={TITULO}>
+                    Como funciona
+                  </h2>
+                  <p>Escolha seu ambiente para ver o que você pode fazer no NotaA.</p>
+                </div>
+                <CartoesHome>
+                  {AMBIENTES.map(({ href, nome, descricao, corCaderno }, indice) => (
+                    <Link key={href} href={href} className={`${styles.guideCard} ${FOCO}`}>
+                      <div className={styles.guideCover}>
+                        <span className={styles.guideBrand}>Nota A</span>
+                        <span className={styles.guideEdition}>
+                          Caderno {indice + 1} · {corCaderno}
+                        </span>
+                      </div>
+                      <h3>{nome}</h3>
+                      <p>{descricao}</p>
+                      <span className={styles.guideAction}>
+                        Ver ambiente <ArrowUpRight size={18} aria-hidden="true" />
                       </span>
-                    </div>
-                    <h3>{nome}</h3>
-                    <p>{descricao}</p>
-                    <span className={styles.guideAction}>
-                      Ver ambiente <ArrowUpRight size={18} aria-hidden="true" />
-                    </span>
-                  </Link>
-                ))}
-              </CartoesHome>
+                    </Link>
+                  ))}
+                </CartoesHome>
+              </div>
             </div>
           </section>
 
@@ -270,146 +251,168 @@ export default function Home() {
             </div>
           </section>
 
-          <div className={`${LARGURA} ${styles.impactDetails}`}>
-            {IGUAL_EM_TODOS.map((item) => (
-              <div key={item.titulo}>
-                <h3>{item.titulo}</h3>
-                <p>{item.texto}</p>
-              </div>
-            ))}
-          </div>
-
           <section id="perguntas" aria-labelledby="perguntas-titulo" className={styles.faqSection}>
+            <svg
+              className={`${styles.scrollRibbon} ${styles.faqScrollRibbon}`}
+              viewBox="0 0 1440 320"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M1514 34C1430 40 1381 48 1331 92C1261 156 1294 285 1194 278C1108 272 1150 71 1057 67C979 64 968 131 867 144C711 164 535 50 300 47C112 45 112 215 -105 159"
+                pathLength="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+            <svg
+              className={styles.faqBackdrop}
+              viewBox="0 0 1440 640"
+              preserveAspectRatio="xMidYMid slice"
+              aria-hidden="true"
+            >
+              <path d="M-158 607C-31 576 -7 294 98 272C213 248 310 396 431 387C575 375 669 168 823 224C958 273 829 437 960 507C1096 579 1232 437 1459 490" />
+            </svg>
             <div className={LARGURA}>
-              <h2 id="perguntas-titulo" className={TITULO}>Perguntas frequentes</h2>
+              <h2 id="perguntas-titulo" className="font-display">
+                Perguntas frequentes
+              </h2>
               <div className={styles.faqList}>
                 <details>
                   <summary className={FOCO}>Qual ambiente do NotaA é para mim?</summary>
-                  <p>Escolha Aluno para estudar para o ENEM, Professor para acompanhar turmas ou Escola para a gestão acadêmica. O ambiente Faculdade está em preparação para o ENADE.</p>
+                  <p>
+                    Escolha Aluno para estudar para o ENEM, Professor para acompanhar turmas ou
+                    Escola para a gestão acadêmica. O ambiente Faculdade está em preparação para o
+                    ENADE.
+                  </p>
                 </details>
                 <details>
                   <summary className={FOCO}>Posso estudar para o ENEM pelo NotaA?</summary>
-                  <p>Sim. No <Link href="/aluno">ambiente do aluno</Link> você encontra trilhas de estudo, simulados e uma estimativa de nota.</p>
+                  <p>
+                    Sim. No <Link href="/aluno">ambiente do aluno</Link> você encontra trilhas de
+                    estudo, simulados e uma estimativa de nota.
+                  </p>
                 </details>
                 <details>
                   <summary className={FOCO}>Como conhecer o NotaA para minha escola?</summary>
-                  <p>Veja os recursos do <Link href="/escola">ambiente da escola</Link> ou <a href="#contato">entre em contato</a> para conversar com a equipe.</p>
+                  <p>
+                    Veja os recursos do <Link href="/escola">ambiente da escola</Link> ou{' '}
+                    <a href="#contato">entre em contato</a> para conversar com a equipe.
+                  </p>
                 </details>
               </div>
-            </div>
-          </section>
-
-          <section id="contato" aria-labelledby="con" className={`${LARGURA} py-16 lg:py-24`}>
-            <div className="flex flex-wrap items-center gap-8 rounded-[32px] bg-violet-tint p-5 md:p-12">
-              <div className="min-w-0 flex-[1_1_320px]">
-                <h2 id="con" className={TITULO}>
-                  Se a educação muda, <span className="text-primary">tudo muda.</span>
-                </h2>
-                <p className="mt-4 text-lead text-ink-muted">
-                  Conte quem você é e indicamos o ambiente para você.
-                </p>
-              </div>
-              <FormularioLead
-                origem="contato"
-                botao="Quero conhecer"
-                consentimento="Autorizo o Nota A a usar meu nome e e-mail para responder a este pedido, como descrito na"
-                sucesso={{
-                  titulo: 'Pedido recebido',
-                  texto: 'Vamos responder por e-mail com o ambiente indicado para você.',
-                }}
-                estilo={FORM_HOME}
-                campos={[
-                  { nome: 'nome', rotulo: 'Seu nome', tipo: 'text', autoComplete: 'name' },
-                  { nome: 'email', rotulo: 'Seu e-mail', tipo: 'email', autoComplete: 'email' },
-                  {
-                    nome: 'perfil',
-                    rotulo: 'Eu sou',
-                    tipo: 'select',
-                    opcoes: [
-                      { valor: 'aluno', rotulo: 'Aluno que estuda para o ENEM' },
-                      { valor: 'professor', rotulo: 'Professor com aulas próprias' },
-                      { valor: 'gestor', rotulo: 'Gestor de escola ou instituição' },
-                      { valor: 'faculdade', rotulo: 'Da faculdade, quero a lista de espera' },
-                    ],
-                  },
-                ]}
-              />
+              <a href="#contato" className={`${styles.faqAction} ${BOTAO_HOME.primario} gap-2`}>
+                Fale com a gente <ArrowUpRight size={18} aria-hidden="true" />
+              </a>
             </div>
           </section>
         </main>
       </div>
 
-      <div className={styles.ribbonReturn} aria-hidden="true">
-        <svg className={styles.scrollRibbon} viewBox="0 0 1440 140" preserveAspectRatio="none">
-          <path
-            d="M1550 22C1315 7 1260 106 1052 99C832 92 795 31 588 53C366 77 189 151 -110 115"
-            pathLength="1"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
+      <div className={styles.footerTransition}>
+        <div className={styles.footerCurve} aria-hidden="true" />
       </div>
 
       <footer className={styles.footer}>
         <div className={`${LARGURA} ${styles.footerFeature}`}>
           <div className={styles.footerFeatureCopy}>
+            <Link
+              href="/"
+              className={`${styles.footerLogo} ${FOCO}`}
+              aria-label="Nota A, página inicial"
+            >
+              <NotaASimbolo className="h-8 w-auto" /> nota A
+            </Link>
             <h2>Qual é o seu próximo passo?</h2>
-            <a href="#ambientes" className={`${BOTAO_HOME.secundario} gap-2`}>
+            <div className={styles.footerShortcuts}>
+              <Link href="/login" className={BOTAO_HOME.secundario}>
+                Entrar
+              </Link>
+              <Link href="/cadastro" className={BOTAO_HOME.primario}>
+                Criar conta
+              </Link>
+            </div>
+            <a href="#ambientes" className={`${styles.footerDiscover} ${FOCO}`}>
               Conhecer os ambientes <ArrowUpRight size={18} aria-hidden="true" />
             </a>
           </div>
-          <div className={styles.footerBookletStack} aria-hidden="true">
-            <div className={styles.footerBooklet}>
-              <NotaASimbolo className="h-auto w-12" />
-              <strong>Nota A</strong>
-              <small>Caderno de estudos</small>
+          <section id="contato" aria-labelledby="con" className={styles.footerFeatureContact}>
+            <h2 id="con">Vamos conversar?</h2>
+            <p>Conte quem você é e indicamos o ambiente do NotaA para você.</p>
+            <FormularioLead
+              origem="contato"
+              botao="Quero conhecer"
+              consentimento="Autorizo o Nota A a usar meu nome e e-mail para responder a este pedido, como descrito na"
+              sucesso={{
+                titulo: 'Pedido recebido',
+                texto: 'Vamos responder por e-mail com o ambiente indicado para você.',
+              }}
+              estilo={FORM_HOME}
+              campos={[
+                { nome: 'nome', rotulo: 'Seu nome', tipo: 'text', autoComplete: 'name' },
+                { nome: 'email', rotulo: 'Seu e-mail', tipo: 'email', autoComplete: 'email' },
+                {
+                  nome: 'perfil',
+                  rotulo: 'Eu sou',
+                  tipo: 'select',
+                  opcoes: [
+                    { valor: 'aluno', rotulo: 'Aluno que estuda para o ENEM' },
+                    { valor: 'professor', rotulo: 'Professor com aulas próprias' },
+                    { valor: 'gestor', rotulo: 'Gestor de escola ou instituição' },
+                    { valor: 'faculdade', rotulo: 'Da faculdade, quero a lista de espera' },
+                  ],
+                },
+              ]}
+            />
+          </section>
+        </div>
+        <div className={styles.footerBar}>
+          <div className={`${LARGURA} ${styles.footerGrid}`}>
+            <nav aria-label="Rodapé" className={styles.footerNav}>
+              <a href="#ambientes" className={FOCO}>
+                Soluções
+              </a>
+              <a href="#sobre" className={FOCO}>
+                Sobre
+              </a>
+              <a href="#base" className={FOCO}>
+                Impacto
+              </a>
+              <a href="#perguntas" className={FOCO}>
+                Perguntas frequentes
+              </a>
+              <a href="#contato" className={FOCO}>
+                Contato
+              </a>
+            </nav>
+            <div className={styles.legal}>
+              <p>© 2026 Nota A. Todos os direitos reservados.</p>
+              {juridicoCompleto() && (
+                <p>
+                  {DADOS_JURIDICOS.razaoSocial}, CNPJ {DADOS_JURIDICOS.cnpj}.
+                </p>
+              )}
+              <div>
+                <Link href="/privacidade" className={FOCO}>
+                  Privacidade
+                </Link>
+                <Link href="/termos" className={FOCO}>
+                  Termos de uso
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className={styles.footerFeatureContact}>
-            <h2>Vamos conversar?</h2>
-            <p>Fale com a equipe para conhecer o NotaA na sua escola ou faculdade.</p>
-            <a href="#contato" className={`${BOTAO_HOME.primario} gap-2`}>
-              Entrar em contato <ArrowUpRight size={18} aria-hidden="true" />
-            </a>
           </div>
         </div>
-        <div className={`${LARGURA} ${styles.footerGrid}`}>
-          <Link
-            href="/"
-            className={`${styles.footerLogo} ${FOCO}`}
-            aria-label="Nota A, página inicial"
-          >
-            <NotaASimbolo className="h-6 w-auto" /> nota A
-          </Link>
-          <nav aria-label="Rodapé" className={styles.footerNav}>
-            <a href="#ambientes" className={FOCO}>
-              Soluções
-            </a>
-            <a href="#sobre" className={FOCO}>
-              Sobre
-            </a>
-            <a href="#base" className={FOCO}>
-              Impacto
-            </a>
-            <a href="#perguntas" className={FOCO}>Perguntas frequentes</a>
-            <a href="#contato" className={FOCO}>
-              Contato
-            </a>
-          </nav>
-          <div className={styles.legal}>
-            <p>© 2026 Nota A. Todos os direitos reservados.</p>
-            {juridicoCompleto() && (
-              <p>
-                {DADOS_JURIDICOS.razaoSocial}, CNPJ {DADOS_JURIDICOS.cnpj}.
-              </p>
-            )}
-            <div>
-              <Link href="/privacidade" className={FOCO}>
-                Privacidade
-              </Link>
-              <Link href="/termos" className={FOCO}>
-                Termos de uso
-              </Link>
-            </div>
+        <div className={styles.footerPackageVisual} aria-hidden="true">
+          <div className={styles.footerPackagePosition}>
+            <Image
+              src="/brand/aardvark-footer-package.webp"
+              width={1260}
+              height={1578}
+              alt=""
+              sizes="(min-width: 992px) 33vw, 1px"
+              className={styles.footerPackageImage}
+              unoptimized
+            />
           </div>
         </div>
       </footer>
