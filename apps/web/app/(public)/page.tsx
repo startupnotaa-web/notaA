@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowDown, ArrowUpRight, Building2, ChartNoAxesColumn, Sun } from 'lucide-react';
 import { Cabecalho } from '../_landing/componentes/Cabecalho';
@@ -404,15 +403,22 @@ export default function Home() {
         </div>
         <div className={styles.footerPackageVisual} aria-hidden="true">
           <div className={styles.footerPackagePosition}>
-            <Image
-              src="/brand/aardvark-footer-package.webp"
-              width={1260}
-              height={1578}
-              alt=""
-              sizes="(min-width: 992px) 33vw, 1px"
-              className={styles.footerPackageImage}
-              unoptimized
-            />
+            <div className={styles.footerPackageImage}>
+              <div className={styles.footerPackageFace}>
+                <div className={styles.footerPackageBrand}>
+                  <NotaASimbolo className={styles.footerPackageSymbol} />
+                  <span>Nota A</span>
+                </div>
+                <strong>Estude com método</strong>
+                <div className={styles.footerPackageAnswers}>
+                  <span>A</span>
+                  <span>B</span>
+                  <span>C</span>
+                  <span>D</span>
+                  <span>E</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
