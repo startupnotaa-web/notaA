@@ -11,6 +11,7 @@ import { SequenciaAbertura } from './SequenciaAbertura';
 import { MapaHome } from './MapaHome';
 import styles from './home.module.css';
 import { CartoesHome } from './CartoesHome';
+import { RolagemLenis } from './RolagemLenis';
 
 // A CSP com nonce exige HTML gerado por requisição.
 export const dynamic = 'force-dynamic';
@@ -80,6 +81,7 @@ function CaixaHome() {
 export default function Home() {
   return (
     <div data-theme="light" className="min-h-screen overflow-x-clip bg-surface font-text text-ink">
+      <RolagemLenis />
       <div>
         <CabecalhoAbertura />
         <main id="conteudo" tabIndex={-1}>
@@ -148,7 +150,7 @@ export default function Home() {
                 </linearGradient>
               </defs>
               <path
-                d="M-260 122C-70 104 257 9 388 67C491 113 521 196 483 290C415 452 259 519 144 474C35 431 68 308 198 245C348 169 621 176 822 265C962 326 1027 443 1130 451C1235 459 1328 369 1420 422C1510 451 1580 468 1710 447"
+                d="M-500 122C-250 104 257 9 388 67C491 113 521 196 483 290C415 452 259 519 144 474C35 431 68 308 198 245C348 169 621 176 822 265C962 326 1027 443 1130 451C1235 459 1328 369 1420 422C1600 451 1740 468 1900 447C2040 429 2300 447 2600 447"
                 pathLength="1"
                 vectorEffect="non-scaling-stroke"
               />
@@ -278,7 +280,7 @@ export default function Home() {
               aria-hidden="true"
             >
               <path
-                d="M1660 34C1510 40 1381 48 1331 92C1261 156 1294 285 1194 278C1108 272 1150 71 1057 67C979 64 968 131 867 144C711 164 535 50 300 47C112 45 112 215 -250 159"
+                d="M1800 34C1640 40 1381 48 1331 92C1261 156 1294 285 1194 278C1108 272 1150 71 1057 67C979 64 968 131 867 144C711 164 535 50 300 47C112 45 112 215 -400 159"
                 pathLength="1"
                 vectorEffect="non-scaling-stroke"
               />

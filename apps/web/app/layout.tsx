@@ -7,6 +7,7 @@ import { ContextoDeAcessoProvider } from '../lib/acesso/contexto-de-acesso-provi
 import { URL_DO_SITE } from '../lib/publico/site';
 import { ErrorSuppressor } from './components/feedback/ErrorSuppressor';
 import './globals.css';
+import './lenis.css';
 
 // Sora (títulos, números e marca) e Atkinson Hyperlegible Next (texto e interface)
 // vêm por next/font, sem @import. Cada uma expõe uma variável própria, que
