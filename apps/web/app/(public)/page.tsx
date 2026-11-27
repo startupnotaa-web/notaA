@@ -6,7 +6,8 @@ import { NotaASimbolo } from '@notaa/ui';
 import { DADOS_JURIDICOS, juridicoCompleto } from '../../lib/publico/juridico';
 import { BOTAO_HOME, FOCO, FORM_HOME } from '../_landing/componentes/estilos';
 import { metadadosDaPagina } from '../../lib/publico/site';
-import { ArteHome } from './ArteHome';
+import { FundoAbertura } from './FundosHome';
+import { SequenciaAbertura } from './SequenciaAbertura';
 import { MapaHome } from './MapaHome';
 import styles from './home.module.css';
 import { CartoesHome } from './CartoesHome';
@@ -61,6 +62,21 @@ const AMBIENTES = [
 const LARGURA = 'mx-auto w-full max-w-landing px-5 md:px-10';
 const TITULO = 'font-display text-[clamp(2rem,4.5vw,4rem)] font-bold leading-[1.08] tracking-tight';
 
+function CaixaHome() {
+  return (
+    <div className={styles.footerPackageImage}>
+      <div className={styles.footerPackageFace}>
+        <div className={styles.footerPackageBrand}>
+          <NotaASimbolo className={styles.footerPackageSymbol} />
+          <span>Nota A</span>
+        </div>
+        <strong>Seu ritmo. Seu ENEM.</strong>
+        <span className={styles.footerPackageSubtitle}>Trilhas, simulados e redação</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <div data-theme="light" className="min-h-screen overflow-x-clip bg-surface font-text text-ink">
@@ -77,6 +93,7 @@ export default function Home() {
       </div>
       <div>
         <Cabecalho
+          className={styles.clubNav}
           links={[
             { href: '#ambientes', rotulo: 'Soluções' },
             { href: '#sobre', rotulo: 'Sobre' },
@@ -91,31 +108,31 @@ export default function Home() {
           }
         />
         <main id="conteudo" tabIndex={-1}>
-          <section
-            id="sobre"
-            className={`${LARGURA} grid items-center gap-8 pb-16 pt-12 md:grid-cols-[1fr_1.06fr] lg:pb-24 lg:pt-20`}
-          >
-            <div className={styles.heroIntroCopy}>
-              <h1 className="max-w-[10em] font-display text-[clamp(2.25rem,5.3vw,5.25rem)] font-extrabold leading-[1.04] tracking-[-0.055em]">
-                <span>Educação</span> <span>não</span> <span>deveria</span> <span>caber</span>{' '}
-                <span>em</span> <span className="text-primary">uma caixa.</span>
-              </h1>
-              <p className="mt-6 max-w-[37ch] text-lead text-ink-muted">
-                A Nota A conecta alunos, professores e instituições em uma plataforma para estudar,
-                ensinar e acompanhar a aprendizagem.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <a href="#ambientes" className={`${BOTAO_HOME.primario} gap-2`}>
-                  Descubra seu ambiente <ArrowDown size={18} aria-hidden="true" />
-                </a>
-                <Link href="/cadastro" className={BOTAO_HOME.secundario}>
-                  Criar conta
-                </Link>
+          <section id="sobre" className={styles.clubHero}>
+            <FundoAbertura className={styles.clubHeroBackdrop} />
+            <SequenciaAbertura className={styles.clubHeroSequence} />
+            <div className={`${LARGURA} ${styles.clubHeroContent}`}>
+              <div className={styles.heroIntroCopy}>
+                <h1 className={styles.clubHeroTitle}>
+                  <span>Educação</span>
+                  <span>para</span>
+                  <span>transformar</span>
+                  <span>futuros</span>
+                </h1>
+                <p className={styles.clubHeroParagraph}>
+                  Trilhas de estudo, simulados e ferramentas para aprender, ensinar e evoluir com
+                  confiança.
+                </p>
+                <div className={styles.clubHeroActions}>
+                  <a href="#ambientes" className={`${styles.clubHeroAction} ${FOCO}`}>
+                    Descubra seu ambiente <ArrowDown size={16} aria-hidden="true" />
+                  </a>
+                  <Link href="/login" className={styles.clubHeroLogin}>Já tem uma conta? Entrar</Link>
+                </div>
+                <p className={styles.clubHeroNote}>Uma jornada de aprendizagem feita para você.</p>
               </div>
             </div>
-            <div className={styles.heroIntroArt}>
-              <ArteHome />
-            </div>
+            <div className={styles.clubHeroMark} aria-hidden="true"><NotaASimbolo /></div>
           </section>
 
           <section aria-labelledby="manifesto" className={styles.ribbonSection}>
@@ -407,16 +424,7 @@ export default function Home() {
         </div>
         <div className={styles.footerPackageVisual} aria-hidden="true">
           <div className={styles.footerPackagePosition}>
-            <div className={styles.footerPackageImage}>
-              <div className={styles.footerPackageFace}>
-                <div className={styles.footerPackageBrand}>
-                  <NotaASimbolo className={styles.footerPackageSymbol} />
-                  <span>Nota A</span>
-                </div>
-                <strong>Seu ritmo. Seu ENEM.</strong>
-                <span className={styles.footerPackageSubtitle}>Trilhas, simulados e redação</span>
-              </div>
-            </div>
+            <CaixaHome />
           </div>
         </div>
       </footer>
