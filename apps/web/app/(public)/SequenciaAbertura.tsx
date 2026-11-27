@@ -5,12 +5,20 @@ import { useEffect, useRef } from 'react';
 const TOTAL_DE_QUADROS = 120;
 const INTERVALO_DO_QUADRO = 1000 / 24;
 
-export function SequenciaAbertura({ className }: { className?: string }) {
+export function SequenciaAbertura({
+  className,
+  elementClassName,
+  canvasClassName,
+}: {
+  className?: string;
+  elementClassName?: string;
+  canvasClassName?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const section = canvas?.parentElement;
+    const section = canvas?.parentElement?.parentElement;
     const context = canvas?.getContext('2d');
     if (!canvas || !section || !context) return;
 
@@ -92,7 +100,8 @@ export function SequenciaAbertura({ className }: { className?: string }) {
 
     const ajustarCanvas = () => {
       const escala = Math.min(window.devicePixelRatio || 1, 2);
-      const { width, height } = canvas.getBoundingClientRect();
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
       canvas.width = Math.round(width * escala);
       canvas.height = Math.round(height * escala);
       desenharQuadro(quadroAtual);
@@ -134,5 +143,11 @@ export function SequenciaAbertura({ className }: { className?: string }) {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
+  return (
+    <div className={className} aria-hidden="true">
+      <div className={elementClassName}>
+        <canvas ref={canvasRef} className={canvasClassName} />
+      </div>
+    </div>
+  );
 }

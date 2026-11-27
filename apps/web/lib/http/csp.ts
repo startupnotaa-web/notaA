@@ -36,8 +36,8 @@ export function montarCsp(nonce: string, dev = process.env.NODE_ENV !== 'product
     // chunks carregados sob demanda, como o do three, teriam de levar nonce. 'self' + nonce cobre os dois.
     'script-src': ["'self'", `'nonce-${nonce}'`, ...(dev ? ["'unsafe-eval'"] : [])],
     'style-src': ["'self'", ...(dev ? ["'unsafe-inline'"] : [])],
-    'img-src': ["'self'", 'data:', 'blob:'],
-    'font-src': ["'self'"],
+    'img-src': ["'self'", 'data:', 'blob:', 'https://cdn.prod.website-files.com'],
+    'font-src': ["'self'", 'https://cdn.prod.website-files.com'],
     'connect-src': conexoes as string[],
     'worker-src': ["'self'", 'blob:'],
     'manifest-src': ["'self'"],

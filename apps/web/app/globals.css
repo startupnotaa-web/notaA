@@ -10,3 +10,11 @@
 * {
   border-color: var(--line);
 }
+
+html:has(#sobre) {
+  scrollbar-width: none;
+}
+
+html:has(#sobre)::-webkit-scrollbar {
+  display: none;
+}

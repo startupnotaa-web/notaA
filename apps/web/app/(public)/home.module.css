@@ -802,6 +802,23 @@
   background: var(--surface);
 }
 
+.ribbonCallout {
+  position: absolute;
+  z-index: 1;
+  top: 11.15em;
+  right: 6em;
+  width: 14ch;
+  margin: 0;
+  color: #3b308f;
+  font-family: ClubHand, cursive;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  opacity: 0.75;
+  text-align: center;
+  transform: rotate(-10deg);
+}
+
 .footerTransition {
   position: relative;
   z-index: 1;
@@ -865,7 +882,7 @@
       stroke-dasharray: 1;
       animation: ribbon-unroll linear both;
       animation-timeline: --home-ribbon;
-      animation-range: entry 0% cover 58%;
+      animation-range: entry 0% cover 40%;
     }
   }
 }
@@ -1540,7 +1557,7 @@
 
     .faqScrollRibbon path {
       animation-timeline: --faq-section;
-      animation-range: entry 0% cover 55%;
+      animation-range: entry 0% cover 40%;
     }
 
     @media (min-width: 992px) {
@@ -1620,80 +1637,156 @@
   }
 }
 
-.clubNav {
-  position: absolute !important;
-  z-index: 10;
+.refHeader {
+  position: fixed;
+  z-index: 1000;
   top: 0;
+  right: 0;
   left: 0;
+  display: flex;
   width: 100%;
-  max-width: none;
-  min-height: 92px;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px clamp(16px, 1.25vw, 28px);
-  color: #080808;
+  height: 6.625em;
+  align-items: center;
+  color: #000;
+  font-family: ClubDegular, Arial, sans-serif;
+  font-size: clamp(8px, 0.833333vw, 16px);
+  font-weight: 600;
+  pointer-events: none;
 }
 
-.clubNav nav {
-  gap: 8px;
-  margin-left: auto;
+.refHeaderInner {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 0.5em;
+  align-items: center;
+  padding-inline: 1.5em;
 }
 
-.clubNav nav a {
-  min-height: 54px;
-  border-radius: 999px;
-  background: #ffed9b;
-  padding-inline: 18px;
-  color: #090909;
-  font-size: 15px;
+.refHeaderBrand { grid-column: span 3; }
+.refHeaderBrand a { display: inline-block; pointer-events: auto; }
+.refHeaderLogo { display: block; width: 14.625em; height: auto; margin-top: -0.5625em; }
+.refHeaderNav { grid-column: span 6; }
+
+.refHeaderNavList,
+.refHeaderSubList {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.clubNav nav a:hover {
-  background: #fff6c9;
+.refHeaderNavList li,
+.refHeaderSubList li { display: flex; pointer-events: auto; }
+.refHeaderSub { grid-column: span 3; }
+.refHeaderSubList { justify-content: flex-end; }
+
+.refPill {
+  position: relative;
+  display: inline-grid;
+  height: 3.5em;
+  align-items: center;
+  padding: 0;
+  color: #000;
+  font-family: ClubDegular, Arial, sans-serif;
+  font-size: 1em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  pointer-events: auto;
 }
 
-.clubNav > div:last-child > a:last-child {
-  min-height: 54px;
-  border-radius: 9px;
-  background: #ffa21b;
-  padding-inline: 20px;
-  color: #080808;
+.refButtonBg {
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  grid-area: 1 / 1;
+  border-radius: 6.25em;
+  background: #faed8f;
 }
 
-.clubNav > div:last-child > a:last-child:hover { background: #ffb43f; }
+.refButtonInner {
+  z-index: 1;
+  display: flex;
+  min-height: 100%;
+  grid-area: 1 / 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.refButtonText { padding-inline: 1em; font-size: 1.5em; }
+
+.refAltButton {
+  position: relative;
+  display: inline-flex;
+  height: 3.5em;
+  align-items: stretch;
+  padding: 0;
+  color: #000;
+  font-family: ClubDegular, Arial, sans-serif;
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.refAltTextWrap,
+.clubButtonTextWrap { display: grid; flex-shrink: 0; pointer-events: none; }
+.refAltBg { z-index: 0; display: block; width: 100%; height: 100%; grid-area: 1 / 1; border-radius: 0.5em; background: #f9a220; }
+.refAltTextOuter,
+.clubButtonTextOuter { z-index: 1; display: flex; width: 100%; height: 100%; grid-area: 1 / 1; align-items: center; justify-content: center; }
+.refAltText { padding-inline: 1.25em; font-size: 1.25em; }
+.refAltIconWrap,
+.clubButtonIconWrap { position: relative; display: grid; width: 3.5em; height: 3.5em; flex-shrink: 0; aspect-ratio: 1; margin-left: -0.0625em; pointer-events: none; }
+.refAltIconOuter,
+.clubButtonIconOuter { z-index: 1; display: flex; width: 100%; height: 100%; grid-area: 1 / 1; align-items: center; justify-content: center; }
+.refAltIconOuter svg,
+.clubButtonIconOuter svg { width: 0.875em; height: 0.75em; flex: none; }
+.refAltButton .refAltBg { background: #f9a220; }
+.refAltButton:hover .refAltBg { background: #fddaa6; }
+
+.refSocialLink { position: relative; display: inline-grid; width: 3em; height: 3em; color: #faed8f; text-decoration: none; pointer-events: auto; }
+.refSocialInner { display: grid; width: 100%; height: 100%; grid-area: 1 / 1; }
+.refSocialBg { width: 100%; height: 100%; grid-area: 1 / 1; border-radius: 50%; background: #000; }
+.refSocialIcon { z-index: 1; display: flex; width: 100%; height: 100%; grid-area: 1 / 1; align-items: center; justify-content: center; }
+.refSocialIcon svg { width: 1.5em; height: 1.5em; }
+
+.refHeaderMenu { display: none; }
 
 .clubHero {
   position: relative;
   isolation: isolate;
-  overflow: clip;
-  min-height: clamp(1000px, 115svh, 1500px);
-  border-radius: 0 0 clamp(42px, 7vw, 120px) clamp(42px, 7vw, 120px);
-  background: #ffd34d;
+  overflow: hidden;
+  display: flex;
+  width: 100%;
+  height: 87.5em;
+  clip-path: inset(0% round 0 0 10em 10em);
+  background: #ffd24a;
+  font-size: clamp(8px, 0.833333vw, 16px);
 }
+
 
 .clubHeroBackdrop {
   position: absolute;
-  z-index: -1;
-  inset: -2% -1% -8%;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  display: flex;
   width: 100%;
-  height: 112%;
-  color: #fff19b;
-  opacity: 1;
+  height: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  color: #faed8f;
   pointer-events: none;
-}
-
-.clubHeroBackdrop path + path {
-  opacity: 1;
-}
-
-.clubHeroContent {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: none;
-  min-height: inherit;
-  margin: 0;
-  padding: clamp(220px, 19vw, 320px) clamp(18px, 1.1vw, 28px) 90px;
 }
 
 .clubHeroSequence {
@@ -1702,99 +1795,124 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  overflow: clip;
   pointer-events: none;
-  transform: translate(-3%, -5%) scale(1.1);
 }
+
+.clubHeroSequenceElement {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  translate: -3% -5%;
+  scale: 1.1;
+}
+
+.clubHeroSequenceCanvas { position: relative; width: 100%; height: 100%; padding: 0; }
+
+.clubHeroContainer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding-inline: 1.5em;
+}
+
+.clubHeroInner { display: flex; flex-flow: column; gap: 3.375em; }
+
+.clubHeroContent {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-flow: column;
+  align-items: flex-start;
+  gap: 1em;
+  margin-left: -0.25em;
+  padding-top: 15em;
+}
+
+.clubHeroCopy { display: flex; flex-flow: column; align-items: flex-start; gap: 2em; }
 
 .clubHeroTitle {
   max-width: 11ch;
   margin: 0;
-  color: #050505;
-  font-family: ClubChamp, var(--font-display), Arial, sans-serif;
-  font-size: clamp(5.2rem, 9.65vw, 11.75rem);
+  color: #000;
+  font-family: ClubChamp, Arial, sans-serif;
+  font-size: 10em;
   font-weight: 700;
-  letter-spacing: -0.065em;
+  letter-spacing: -0.01em;
   line-height: 0.8;
-  text-wrap: initial;
 }
 
-.clubHeroTitle span { display: block; }
+.clubHeroTitle span { display: inline-block; }
 
 .clubHeroParagraph {
-  width: min(100%, 390px);
-  margin: 46px 0 0;
-  color: #090909;
-  font-family: ClubDegular, var(--font-text), Arial, sans-serif;
-  font-size: clamp(1.15rem, 1.35vw, 1.45rem);
-  line-height: 1.38;
-}
-
-.clubHeroActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-  margin-top: 22px;
+  max-width: 30.25ch;
+  margin: 0;
+  color: #000;
+  font-family: ClubDegular, Arial, sans-serif;
+  font-size: 1.5em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .clubHeroAction {
+  position: relative;
   display: inline-flex;
-  min-height: 58px;
-  align-items: center;
-  gap: 26px;
-  border-radius: 8px;
-  background: #f60091;
-  padding: 0 20px;
+  height: 3.5em;
+  align-items: stretch;
+  padding: 0;
   color: #fff;
-  font-family: ClubDegular, var(--font-text), Arial, sans-serif;
-  font-size: 16px;
+  font-family: ClubDegular, Arial, sans-serif;
+  font-size: 1em;
   font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.5;
   text-decoration: none;
-  transition: background 180ms ease, transform 180ms ease;
+  white-space: nowrap;
 }
 
-.clubHeroAction:hover { background: #d9007f; transform: translateY(-2px); }
+.clubButtonText { padding-inline: 1.25em; font-size: 1.25em; }
+.clubHeroAction .clubButtonBg { border-radius: 0.5em; background: #ff008c; }
+.clubHeroAction:hover .clubButtonBg { background: #fd48f2; }
 
-.clubHeroLogin {
-  color: #101010;
-  font-family: ClubDegular, var(--font-text), Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  text-underline-offset: 4px;
+.clubHeroTextWrap { width: 0; height: 0; opacity: 0.75; }
+
+.clubHeroTextOuter {
+  position: absolute;
+  right: 3em;
+  bottom: 15em;
+  transform: rotate(4deg);
 }
 
 .clubHeroNote {
-  position: absolute;
-  top: 57%;
-  right: 4%;
-  z-index: 2;
-  max-width: 12ch;
+  max-width: 9ch;
   margin: 0;
-  color: #7257b4;
-  font-family: ClubDegular, var(--font-text), cursive;
-  font-size: clamp(1.2rem, 2vw, 2.1rem);
-  font-style: italic;
-  font-weight: 650;
-  line-height: 1.15;
+  color: #3b308f;
+  font-family: ClubHand, cursive;
+  font-size: 2em;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
   text-align: center;
-  transform: rotate(-6deg);
 }
 
 .clubHeroMark {
   position: absolute;
-  z-index: 3;
-  right: 30px;
-  bottom: 30px;
-  display: grid;
-  width: 76px;
-  aspect-ratio: 1;
-  place-items: center;
-  border: 2px solid white;
-  border-radius: 50%;
-  color: white;
+  z-index: 5;
+  top: 0;
+  right: 0.625em;
+  display: flex;
+  height: min(100svh, 80em);
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 1.5em 3.375em 0;
 }
 
-.clubHeroMark svg { width: 54px; height: auto; }
+.clubHeroMark a { display: block; width: 5em; height: 5em; color: #fff; }
+.clubHeroMark svg { display: block; width: 100%; height: 100%; }
 
 @font-face {
   font-family: ClubChamp;
@@ -1804,72 +1922,55 @@
 
 @font-face {
   font-family: ClubDegular;
-  src: url('/brand/aardvark-degular.woff2') format('woff2');
+  src: url('https://cdn.prod.website-files.com/696173cb00865d1b386e4af8/69c51e46ef7236cf68eaef2e_degular-semibold.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: ClubDegular;
+  src: url('https://cdn.prod.website-files.com/696173cb00865d1b386e4af8/69c520c7360396435501e587_degular-bold.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: ClubDegular;
+  src: url('https://cdn.prod.website-files.com/696173cb00865d1b386e4af8/6a329ba7d02bd3d351e01fc6_Degular-Medium.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: ClubHand;
+  src: url('https://cdn.prod.website-files.com/696173cb00865d1b386e4af8/6963d3bce4c07135f1d68628_hello-organichand-webfont.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
   font-display: swap;
 }
 
 @media (max-width: 760px) {
-  .clubNav {
-    min-height: 76px;
-    flex-wrap: nowrap;
-    background: #ffd34d;
-  }
-
-  .clubNav nav { display: none; }
-
-  .clubNav > div { margin-left: auto; }
-
-  .clubNav > div a:first-child { display: none; }
-
-  .clubNav > div:last-child > a:last-child {
-    min-height: 44px;
-    padding-inline: 14px;
-    font-size: 13px;
-  }
-
-  .clubHero {
-    min-height: 0;
-    padding-top: 76px;
-  }
-
-  .clubHeroContent {
-    min-height: 950px;
-    padding: 90px 18px 48px;
-  }
-
-  .clubHeroSequence {
-    top: 265px;
-    height: 685px;
-    transform: translate(-1%, 0) scale(1.35);
-  }
-
-  .clubHeroTitle {
-    max-width: 10ch;
-    font-size: clamp(4.5rem, 17vw, 7rem);
-  }
-
-  .clubHeroParagraph {
-    width: min(82%, 330px);
-    margin-top: 28px;
-    font-size: 1.05rem;
-  }
-
-  .clubHeroActions { gap: 12px; margin-top: 18px; }
-
-  .clubHeroAction {
-    min-height: 52px;
-    gap: 14px;
-    padding-inline: 14px;
-    font-size: 14px;
-  }
-
-  .clubHeroLogin { font-size: 14px; }
-
-  .clubHeroNote { top: 64%; right: 3%; font-size: 1.1rem; }
-
-  .clubHeroMark { right: 16px; bottom: 16px; width: 58px; }
-
-  .clubHeroMark svg { width: 41px; }
+  .refHeader { height: 7em; font-size: clamp(12px, 3.4vw, 16px); }
+  .refHeaderInner { display: flex; justify-content: space-between; padding-inline: 1.25em; }
+  .refHeaderLogo { width: 11.6875em; margin-top: -0.4375em; }
+  .refHeaderNav,
+  .refHeaderSub { display: none; }
+  .refHeaderMenu { display: inline-flex; align-items: center; gap: 0.5em; border: 0; background: transparent; color: #000; font: 700 1em ClubDegular, Arial, sans-serif; pointer-events: auto; }
+  .refHeaderMenu svg { width: 1.5em; height: 1.5em; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 2; }
+  .clubHero { height: 87.5em; font-size: clamp(12px, 4vw, 16px); }
+  .clubHeroContainer { padding-inline: 1.25em; }
+  .clubHeroContent { margin-left: 0; padding-top: 12.25em; }
+  .clubHeroCopy { gap: 1em; }
+  .clubHeroTitle { max-width: 11ch; font-size: 5em; }
+  .clubHeroParagraph { max-width: 100%; }
+  .clubHeroTextOuter { top: 8em; right: auto; bottom: auto; }
+  .clubHeroNote { max-width: 11ch; }
+  .clubHeroMark,
+  .clubHeroBackdrop { display: none; }
+  .clubHeroSequence { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

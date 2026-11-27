@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowUpRight } from 'lucide-react';
-import { Cabecalho } from '../_landing/componentes/Cabecalho';
+import { ArrowUpRight } from 'lucide-react';
+import { CabecalhoAbertura } from './CabecalhoAbertura';
 import { FormularioLead } from '../_landing/componentes/FormularioLead';
 import { NotaASimbolo } from '@notaa/ui';
 import { DADOS_JURIDICOS, juridicoCompleto } from '../../lib/publico/juridico';
@@ -80,59 +80,57 @@ function CaixaHome() {
 export default function Home() {
   return (
     <div data-theme="light" className="min-h-screen overflow-x-clip bg-surface font-text text-ink">
-      <div className={styles.homeIntro} aria-hidden="true">
-        <svg className={styles.homeIntroRibbon} viewBox="0 0 1000 1000" preserveAspectRatio="none">
-          <path
-            d="M-75 -140C-41 65 22 523 135 542C251 560 229 71 355 77C478 83 410 820 523 900C650 988 638 409 773 425C884 438 866 968 1010 1125"
-            pathLength="1"
-          />
-        </svg>
-        <div className={styles.homeIntroMark}>
-          <NotaASimbolo className="h-auto w-full" />
-        </div>
-      </div>
       <div>
-        <Cabecalho
-          className={styles.clubNav}
-          links={[
-            { href: '#ambientes', rotulo: 'Soluções' },
-            { href: '#sobre', rotulo: 'Sobre' },
-            { href: '#base', rotulo: 'Plataforma' },
-            { href: '#contato', rotulo: 'Contato' },
-          ]}
-          secundario={{ href: '/login', rotulo: 'Entrar' }}
-          acao={
-            <a href="#contato" className={`${BOTAO_HOME.primario} ${BOTAO_HOME.compacto}`}>
-              Agendar demonstração
-            </a>
-          }
-        />
+        <CabecalhoAbertura />
         <main id="conteudo" tabIndex={-1}>
           <section id="sobre" className={styles.clubHero}>
-            <FundoAbertura className={styles.clubHeroBackdrop} />
-            <SequenciaAbertura className={styles.clubHeroSequence} />
-            <div className={`${LARGURA} ${styles.clubHeroContent}`}>
-              <div className={styles.heroIntroCopy}>
-                <h1 className={styles.clubHeroTitle}>
-                  <span>Educação</span>
-                  <span>para</span>
-                  <span>transformar</span>
-                  <span>futuros</span>
-                </h1>
-                <p className={styles.clubHeroParagraph}>
-                  Trilhas de estudo, simulados e ferramentas para aprender, ensinar e evoluir com
-                  confiança.
-                </p>
-                <div className={styles.clubHeroActions}>
-                  <a href="#ambientes" className={`${styles.clubHeroAction} ${FOCO}`}>
-                    Descubra seu ambiente <ArrowDown size={16} aria-hidden="true" />
+            <div className={styles.clubHeroContainer}>
+              <div className={styles.clubHeroInner}>
+                <div className={styles.clubHeroContent}>
+                  <div className={styles.clubHeroCopy}>
+                    <h1 className={styles.clubHeroTitle}>Unbox stories worth talking about</h1>
+                    <p className={styles.clubHeroParagraph}>
+                      Join the book club that’s anything but traditional. Choose up to 3 new reads every month, delivered to your door. Then dive into the stories, and the conversations.
+                    </p>
+                  </div>
+                  <a className={styles.clubHeroAction} href="https://app.aardvarkbookclub.com/books" target="_blank" rel="noreferrer">
+                    <span className={styles.clubButtonTextWrap}>
+                      <span className={styles.clubButtonBg} />
+                      <span className={styles.clubButtonTextOuter}>
+                        <span className={styles.clubButtonText}>Log-in / Sign-up now</span>
+                      </span>
+                    </span>
+                    <span className={styles.clubButtonIconWrap}>
+                      <span className={styles.clubButtonBg} />
+                      <span className={styles.clubButtonIconOuter}>
+                        <svg viewBox="0 0 14 13" aria-hidden="true">
+                          <path d="M13.58 5.66v.845l-5.994 5.66-1.71-2.063a61.427 61.427 0 0 1 4.265-2.988l-.02-.078c-1.828.196-4.107.294-6.387.294H0V4.835h3.734c2.28 0 4.56.098 6.387.294l.02-.059a67.638 67.638 0 0 1-4.265-3.006L7.586 0l5.994 5.66Z" fill="currentColor" />
+                        </svg>
+                      </span>
+                    </span>
                   </a>
-                  <Link href="/login" className={styles.clubHeroLogin}>Já tem uma conta? Entrar</Link>
+                  <div className={styles.clubHeroTextWrap}>
+                    <div className={styles.clubHeroTextOuter}>
+                      <p className={styles.clubHeroNote}>Shipping to the USA &amp; Canada</p>
+                    </div>
+                  </div>
                 </div>
-                <p className={styles.clubHeroNote}>Uma jornada de aprendizagem feita para você.</p>
               </div>
             </div>
-            <div className={styles.clubHeroMark} aria-hidden="true"><NotaASimbolo /></div>
+            <div className={styles.clubHeroMark}>
+              <a href="https://app.aardvarkbookclub.com/books" aria-label="Show Sign up">
+                <svg viewBox="0 0 80 80" aria-hidden="true">
+                  <path fill="currentColor" d="m53.332 55.909-9.81-22.05c1.253-3.071 4.434-12.573 1.132-24.425a.845.845 0 0 0-.602-.6.82.82 0 0 0-.82.24c-.096.12-2.651 2.711-4.507 6.19-2.58 4.799-2.531 8.854.12 11.78 2.917 3.192 3.062 5.423 2.893 6.431l-.555.048c-.988-2.111-4.29-8.062-12.51-13.82a.734.734 0 0 0-.698-.072c-.242.096-.386.336-.41.576-.314 3.839.723 11.3 6.893 12.212 3.881.576 5.183 1.68 5.593 2.136-.121.816-.41 1.871-.989 3.239l-7.28 16.651h-.023a1.456 1.456 0 0 1-.12.288l-.097.192c-1.157 2.471-5.327 6.766-6.99 8.446-.41.431-.7.72-.796.84-.096.12-.385.575.169 1.175.771.84 3.182 1.895 4.315 1.104.337-.24.53-.48.747-.768.627-.816 4.001-4.559 9.424-9.261 0 0 1.76-2.184 4.435-2.52h1.616c1.205 0 2.169.288 2.723 1.512l.892 2.04c.844 1.943.844 2.998-2 3.454v1.296h11.642v-1.248c-2.363-.432-2.869-1.727-4.387-5.086Zm-13.233-7.27a2.284 2.284 0 0 1-2.29-2.28 2.284 2.284 0 0 1 2.29-2.279 2.284 2.284 0 0 1 2.29 2.28c0 1.247-1.037 2.279-2.29 2.279Z" />
+                  <path fill="currentColor" fillRule="evenodd" d="M40.922 0C63.522 0 80 18.401 80 41.1 80 63.8 63.522 80 40.922 80S0 63.8 0 41.1C0 18.402 18.321 0 40.922 0Zm22.857 15.697c-13.817-13.474-36.234-13.754-49.77 0C.473 29.45 2.035 50.379 15.852 63.853 29.67 77.327 52.823 79.81 66.36 66.055c13.537-13.754 11.237-36.884-2.58-50.358Z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+            <FundoAbertura className={styles.clubHeroBackdrop} />
+            <SequenciaAbertura
+              className={styles.clubHeroSequence}
+              elementClassName={styles.clubHeroSequenceElement}
+              canvasClassName={styles.clubHeroSequenceCanvas}
+            />
           </section>
 
           <section aria-labelledby="manifesto" className={styles.ribbonSection}>
@@ -150,11 +148,12 @@ export default function Home() {
                 </linearGradient>
               </defs>
               <path
-                d="M-110 122C61 104 257 9 388 67C491 113 521 196 483 290C415 452 259 519 144 474C35 431 68 308 198 245C348 169 621 176 822 265C962 326 1027 443 1130 451C1235 459 1328 369 1420 422C1470 451 1512 468 1570 447"
+                d="M-260 122C-70 104 257 9 388 67C491 113 521 196 483 290C415 452 259 519 144 474C35 431 68 308 198 245C348 169 621 176 822 265C962 326 1027 443 1130 451C1235 459 1328 369 1420 422C1510 451 1580 468 1710 447"
                 pathLength="1"
                 vectorEffect="non-scaling-stroke"
               />
             </svg>
+            <p className={styles.ribbonCallout}>Discover hidden gems and buzzy new releases</p>
             <div className={`${LARGURA} ${styles.ribbonContent}`}>
               <h2 id="manifesto" className={TITULO}>
                 De quem aprende
@@ -279,7 +278,7 @@ export default function Home() {
               aria-hidden="true"
             >
               <path
-                d="M1514 34C1430 40 1381 48 1331 92C1261 156 1294 285 1194 278C1108 272 1150 71 1057 67C979 64 968 131 867 144C711 164 535 50 300 47C112 45 112 215 -105 159"
+                d="M1660 34C1510 40 1381 48 1331 92C1261 156 1294 285 1194 278C1108 272 1150 71 1057 67C979 64 968 131 867 144C711 164 535 50 300 47C112 45 112 215 -250 159"
                 pathLength="1"
                 vectorEffect="non-scaling-stroke"
               />
